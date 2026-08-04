@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { TokenName } from "../core/state.ts";
 
 const tokenStyle: Record<TokenName, { label: string; icon: string; color: string }> = {
@@ -12,11 +13,21 @@ const tokenStyle: Record<TokenName, { label: string; icon: string; color: string
   crit: { label: "치", icon: "◎", color: "var(--artemis)" },
 };
 
-export function tokenBadge(token: TokenName, stacks = 1): string {
+function TokenBadge({ token, stacks = 1 }: { token: TokenName; stacks?: number }) {
   const style = tokenStyle[token];
-  return `<span class="token-badge" style="--token-color:${style.color}" title="${token}"><i>${style.icon}</i><b>${style.label}</b><small>${stacks}</small></span>`;
+  return (
+    <span
+      className="token-badge"
+      style={{ "--token-color": style.color } as CSSProperties}
+      title={token}
+    >
+      <i>{style.icon}</i>
+      <b>{style.label}</b>
+      <small>{stacks}</small>
+    </span>
+  );
 }
 
-export function tokenLegend(): string {
-  return (Object.keys(tokenStyle) as TokenName[]).map((token) => tokenBadge(token)).join("");
+export function TokenLegend() {
+  return (Object.keys(tokenStyle) as TokenName[]).map((token) => <TokenBadge key={token} token={token} />);
 }

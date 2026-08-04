@@ -6,6 +6,7 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
     "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
     "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
@@ -14,5 +15,5 @@
     "strict": true,
     "types": ["vitest/globals", "node"]
   },
-  "include": ["core", "sim", "test", "tools", "ui", "main.ts", "vite.config.ts"]
+  "include": ["core", "sim", "test", "tools", "ui", "main.tsx", "vite.config.ts"]
 }

@@ -2,6 +2,8 @@
 
 브라우저에서는 네 번의 갈림길을 선택하고, 전투는 결정론적 룰 봇이 자동으로 진행하는 덱빌딩 프로토타입입니다.
 
+브라우저 UI는 React 19와 Motion으로 구성하며, Vite가 GitHub Pages용 정적 파일을 빌드합니다.
+
 배포 예정 URL: <https://bongseop-kim.github.io/god-scales/>
 
 현재 저장소 지침상 커밋·푸시를 수행하지 않았으므로, 위 URL은 기본 브랜치 반영 및 GitHub Pages 활성화 후 열립니다.
