@@ -6,4 +6,5 @@
 npm test
 npm run build
 npm test -- dsl
+npm test -- combat
 ```

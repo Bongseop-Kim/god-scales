@@ -24,10 +24,13 @@ export type ActorState = {
 };
 
 export type EnemyState = ActorState & { patternIndex: number };
+export type CombatOutcome = "ongoing" | "victory" | "defeat" | "timeout";
 
 export type CombatState = {
   turn: number;
   energy: number;
+  outcome: CombatOutcome;
+  timeout: boolean;
   player: ActorState;
   drawPile: CardId[];
   hand: CardId[];

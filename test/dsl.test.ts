@@ -20,6 +20,8 @@ const state = (): GameState => ({
   combat: {
     turn: 3,
     energy: 0,
+    outcome: "ongoing",
+    timeout: false,
     player: actor("player", 20),
     drawPile: ["a", "b"],
     hand: [],

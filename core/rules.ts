@@ -62,15 +62,15 @@ export function dealDamage(attacker: ActorState, target: ActorState, amount: num
   }
 
   if (consumeToken(attacker, "crit")) amount *= 2;
+  const blocked = Math.min(target.block, amount);
+  target.block -= blocked;
+  amount -= blocked;
   const bulwark = Math.min(target.tokens.bulwark ?? 0, amount);
   if (bulwark > 0) {
     target.tokens.bulwark = (target.tokens.bulwark ?? 0) - bulwark;
     if (target.tokens.bulwark === 0) delete target.tokens.bulwark;
     amount -= bulwark;
   }
-  const blocked = Math.min(target.block, amount);
-  target.block -= blocked;
-  amount -= blocked;
   target.hp = Math.max(0, target.hp - amount);
   return amount;
 }
