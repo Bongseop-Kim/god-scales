@@ -1,0 +1,5 @@
+{
+  "seed": 44,
+  "actions": [{ "type": "path", "choice": "combat" }, { "type": "path", "choice": "combat" }, { "type": "path", "choice": "rest" }, { "type": "path", "choice": "rest" }],
+  "replay_mode": "action_log"
+}

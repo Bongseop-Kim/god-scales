@@ -1,0 +1,179 @@
+[
+  {
+    "id": "enemy_under_pressure",
+    "name": "저승의 추격자",
+    "region": "underworld",
+    "tier": "normal",
+    "role": "pressure",
+    "hp": 40,
+    "intent_visible": true,
+    "pattern": [
+      {
+        "op": "damage",
+        "value": 10
+      }
+    ],
+    "pattern_mode": "cycle",
+    "groups": [
+      {
+        "id": "group_under_pressure_solo",
+        "with": []
+      },
+      {
+        "id": "group_under_pair",
+        "with": [
+          "enemy_under_attrition"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "enemy_under_attrition",
+    "name": "망각의 파수꾼",
+    "region": "underworld",
+    "tier": "normal",
+    "role": "attrition",
+    "hp": 50,
+    "intent_visible": true,
+    "pattern": [
+      {
+        "op": "damage",
+        "value": 4
+      }
+    ],
+    "pattern_mode": "cycle",
+    "groups": [
+      {
+        "id": "group_under_attrition_pair",
+        "with": [
+          "enemy_under_pressure"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "enemy_under_boss",
+    "name": "저승문지기",
+    "region": "underworld",
+    "tier": "boss",
+    "role": "attrition",
+    "hp": 130,
+    "intent_visible": true,
+    "pattern": [
+      {
+        "op": "damage",
+        "value": 18
+      },
+      {
+        "op": "block",
+        "value": 8
+      }
+    ],
+    "pattern_mode": "cycle"
+  },
+  {
+    "id": "enemy_surface_pressure",
+    "name": "지상의 돌격병",
+    "region": "surface",
+    "tier": "normal",
+    "role": "pressure",
+    "hp": 45,
+    "intent_visible": true,
+    "pattern": [
+      {
+        "op": "damage",
+        "value": 10
+      }
+    ],
+    "pattern_mode": "cycle",
+    "groups": [
+      {
+        "id": "group_surface_pair",
+        "with": [
+          "enemy_surface_attrition"
+        ]
+      },
+      {
+        "id": "group_surface_trio",
+        "with": [
+          "enemy_surface_attrition",
+          "enemy_surface_applier"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "enemy_surface_attrition",
+    "name": "지상의 수호병",
+    "region": "surface",
+    "tier": "normal",
+    "role": "attrition",
+    "hp": 55,
+    "intent_visible": true,
+    "pattern": [
+      {
+        "op": "damage",
+        "value": 6
+      }
+    ],
+    "pattern_mode": "cycle",
+    "groups": [
+      {
+        "id": "group_surface_attrition_pair",
+        "with": [
+          "enemy_surface_pressure"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "enemy_surface_applier",
+    "name": "지상의 사제",
+    "region": "surface",
+    "tier": "normal",
+    "role": "applier",
+    "hp": 45,
+    "intent_visible": true,
+    "pattern": [
+      {
+        "op": "apply_token",
+        "token": "soaked",
+        "stacks": 1
+      },
+      {
+        "op": "damage",
+        "value": 4
+      }
+    ],
+    "pattern_mode": "cycle",
+    "groups": [
+      {
+        "id": "group_surface_applier_trio",
+        "with": [
+          "enemy_surface_pressure",
+          "enemy_surface_attrition"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "enemy_surface_boss",
+    "name": "올림포스의 집행자",
+    "region": "surface",
+    "tier": "boss",
+    "role": "bulwark",
+    "hp": 190,
+    "intent_visible": true,
+    "pattern": [
+      {
+        "op": "damage",
+        "value": 24
+      },
+      {
+        "op": "block",
+        "value": 12
+      }
+    ],
+    "pattern_mode": "cycle"
+  }
+]

@@ -1,0 +1,9 @@
+{
+  "id": "card_broken_dsl",
+  "name": "순간이동",
+  "patron": "zeus",
+  "cost": 1,
+  "target": "enemy",
+  "effects": [{ "op": "teleport", "value": 6 }],
+  "tags": ["utility"]
+}

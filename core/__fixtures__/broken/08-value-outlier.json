@@ -1,0 +1,9 @@
+{
+  "id": "card_broken_value",
+  "name": "과도한 타격",
+  "patron": "ares",
+  "cost": 1,
+  "target": "enemy",
+  "effects": [{ "op": "damage", "value": 20 }],
+  "tags": ["attack"]
+}

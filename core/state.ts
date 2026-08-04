@@ -42,5 +42,6 @@ export type GameState = {
   seed: number;
   combat: CombatState;
   favor: Record<string, number>;
+  grace: Record<string, number>;
   map: { node: number; completed: string[] };
 };

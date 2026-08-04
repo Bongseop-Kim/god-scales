@@ -2,7 +2,7 @@ import type { ActorState, GameState, TokenName } from "./state.ts";
 import { resolveChainTargets, resolveTargets, type Target } from "./targeting.ts";
 
 export type GodId = "zeus" | "poseidon" | "athena" | "ares" | "artemis";
-export type Tag = "attack" | "defend" | "utility" | "multi" | "token" | "favor" | "exhaust";
+export type Tag = "attack" | "defend" | "utility" | "multi" | "token" | "favor" | "exhaust" | "fused";
 export type Op =
   | "damage"
   | "block"
@@ -32,6 +32,7 @@ export type Card = {
   target: Target;
   effects: Effect[];
   tags: Tag[];
+  upgraded?: boolean;
 };
 
 export function loadCards(cards: Card[]): Card[] {
@@ -136,19 +137,21 @@ export function executeCard(state: GameState, card: Card, enemyId?: string, deck
   loadCards([card]);
   const targets = resolveTargets(state.combat, card.target, enemyId);
   const chainTargets = card.target === "enemy" ? resolveChainTargets(state.combat, targets[0].id) : [];
+  const selfTokens = new Set<TokenName>(["bulwark", "deflect", "crit", "frenzy"]);
 
   for (const effect of card.effects) {
     if (effect.when && !evaluateCondition(effect.when, { state, card, target: targets[0], deckCards })) continue;
     const value = effect.value ?? 0;
     if (effect.op === "damage") for (const target of targets) dealDamage(state.combat.player, target, value);
-    else if (effect.op === "block") for (const target of targets) target.block += value;
+    else if (effect.op === "block") state.combat.player.block += value;
     else if (effect.op === "draw") for (let count = 0; count < value && state.combat.drawPile.length > 0; count += 1) state.combat.hand.push(state.combat.drawPile.shift()!);
     else if (effect.op === "energy") state.combat.energy += value;
-    else if (effect.op === "heal") for (const target of targets) target.hp = Math.min(target.maxHp, target.hp + value);
+    else if (effect.op === "heal") state.combat.player.hp = Math.min(state.combat.player.maxHp, state.combat.player.hp + value);
     else if (effect.op === "self_damage") state.combat.player.hp = Math.max(0, state.combat.player.hp - value);
     else if (effect.op === "apply_token") {
       if (!effect.token) throw new Error(`${card.id}: apply_token requires token`);
-      for (const target of targets) addToken(target, effect.token, effect.stacks ?? 1);
+      const tokenTargets = selfTokens.has(effect.token) ? [state.combat.player] : targets;
+      for (const target of tokenTargets) addToken(target, effect.token, effect.stacks ?? 1);
     } else if (effect.op === "favor_shift") {
       const god = effect.god ?? card.patron;
       if (!god) throw new Error(`${card.id}: favor_shift requires god`);

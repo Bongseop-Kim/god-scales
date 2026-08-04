@@ -1,0 +1,12 @@
+[
+  { "id": "card_zeus_retry_01", "name": "번개 통찰", "patron": "zeus", "cost": 1, "target": "enemy", "effects": [{ "op": "damage", "value": 3 }, { "op": "draw", "value": 1 }], "tags": ["attack", "utility"] },
+  { "id": "card_zeus_retry_02", "name": "급속 방전", "patron": "zeus", "cost": 1, "target": "enemy", "effects": [{ "op": "damage", "value": 3 }, { "op": "energy", "value": 1 }], "tags": ["attack", "utility"] },
+  { "id": "card_zeus_retry_03", "name": "온기의 섬광", "patron": "zeus", "cost": 1, "target": "enemy", "effects": [{ "op": "damage", "value": 4 }, { "op": "heal", "value": 2 }], "tags": ["attack", "utility"] },
+  { "id": "card_zeus_retry_04", "name": "감전 보호막", "patron": "zeus", "cost": 1, "target": "self", "effects": [{ "op": "block", "value": 3 }, { "op": "apply_token", "token": "shock", "stacks": 2 }], "tags": ["defend", "token"] },
+  { "id": "card_zeus_retry_05", "name": "삼중 전류", "patron": "zeus", "cost": 1, "target": "enemy", "effects": [{ "op": "damage", "value": 2 }, { "op": "chain", "value": 2 }, { "op": "apply_token", "token": "shock", "stacks": 1 }], "tags": ["attack", "multi", "token"] },
+  { "id": "card_zeus_retry_06", "name": "신뢰의 벼락", "patron": "zeus", "cost": 1, "target": "enemy", "effects": [{ "op": "damage", "value": 5 }, { "op": "favor_shift", "value": 1, "god": "zeus" }], "tags": ["attack", "favor"] },
+  { "id": "card_zeus_retry_07", "name": "폭풍의 합주", "patron": "zeus", "cost": 2, "target": "enemy", "effects": [{ "op": "damage", "value": 5 }, { "op": "chain", "value": 5 }, { "op": "apply_token", "token": "shock", "stacks": 1 }], "tags": ["attack", "multi", "token"] },
+  { "id": "card_zeus_retry_bad_scope", "name": "재생성 출혈", "patron": "zeus", "cost": 1, "target": "enemy", "effects": [{ "op": "damage", "value": 5 }, { "op": "apply_token", "token": "bleed", "stacks": 1 }], "tags": ["attack", "token"] },
+  { "id": "card_zeus_retry_bad_value", "name": "재생성 과잉", "patron": "zeus", "cost": 1, "target": "enemy", "effects": [{ "op": "damage", "value": 30 }], "tags": ["attack"] },
+  { "id": "card_zeus_retry_bad_duplicate", "name": "번개 통찰 복제", "patron": "zeus", "cost": 1, "target": "enemy", "effects": [{ "op": "damage", "value": 3 }, { "op": "draw", "value": 1 }], "tags": ["attack", "utility"] }
+]

@@ -1,70 +1,61 @@
-import { createCombat, endTurn, playCard, startTurn, type EnemyDefinition } from "../core/combat.ts";
-import { createRng } from "../core/rng.ts";
-import type { Card } from "../core/rules.ts";
-import type { GameState } from "../core/state.ts";
-import { chooseCard, chooseTarget } from "./bots/rule.ts";
-import { renderPlay } from "./log.ts";
-import { renderReport, summarize, type RunResult } from "./report.ts";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { resumeAgentRun, startAgentRun } from "./bots/llm.ts";
+import { run, simulate, simulateStratified } from "./engine.ts";
+import type { GodId } from "../core/rules.ts";
+import { readReplay } from "./replay.ts";
+import { renderReport, summarize } from "./report.ts";
+import type { Scenario } from "./engine.ts";
 
-const cards: Card[] = [
-  { id: "strike", name: "타격", patron: "ares", cost: 1, target: "enemy", effects: [{ op: "damage", value: 7 }], tags: ["attack"] },
-  { id: "guard", name: "방어", patron: "athena", cost: 1, target: "self", effects: [{ op: "block", value: 6 }], tags: ["defend"] },
-  { id: "spark", name: "불꽃", patron: "zeus", cost: 1, target: "enemy", effects: [{ op: "damage", value: 4 }, { op: "apply_token", token: "shock", stacks: 1 }], tags: ["attack", "token"] },
-];
-const startingDeck = ["strike", "strike", "strike", "strike", "strike", "guard", "guard", "guard", "spark", "spark"];
-
-function encounter(seed: number): EnemyDefinition[] {
-  if (seed % 3 === 0) return [{ id: "brute", hp: 75, pattern: [{ damage: 14 }, { damage: 8 }] }];
-  if (seed % 3 === 1) return [{ id: "raider", hp: 45, pattern: [{ damage: 9 }] }];
-  return [
-    { id: "raider_a", hp: 32, pattern: [{ damage: 7 }] },
-    { id: "raider_b", hp: 32, pattern: [{ damage: 10 }] },
-  ];
-}
-
-export function run(seed: number): RunResult {
-  const enemies = encounter(seed);
-  const cardMap = new Map(cards.map((card) => [card.id, card]));
-  const enemyMap = new Map(enemies.map((enemy) => [enemy.id, enemy]));
-  const random = createRng(seed);
-  const state: GameState = {
-    seed,
-    combat: createCombat(seed, startingDeck, enemies),
-    favor: { zeus: 50, athena: 50, ares: 50 },
-    map: { node: 0, completed: [] },
-  };
-  const log: string[] = [];
-
-  while (state.combat.outcome === "ongoing") {
-    startTurn(state.combat, random);
-    while (state.combat.outcome === "ongoing") {
-      const cardId = chooseCard(state.combat, cardMap, enemyMap);
-      if (!cardId) break;
-      const card = cardMap.get(cardId)!;
-      const target = chooseTarget(card, state.combat, enemyMap);
-      playCard(state, cardMap, cardId, target);
-      log.push(renderPlay(state.combat, card, target));
-    }
-    if (state.combat.outcome === "ongoing") endTurn(state.combat, enemyMap);
-  }
-  log.push(`outcome=${state.combat.outcome} turns=${state.combat.turn} hp=${state.combat.player.hp}`);
-  return { won: state.combat.outcome === "victory", turns: state.combat.turn, log };
-}
-
-export function simulate(runs: number): RunResult[] {
-  return Array.from({ length: runs }, (_, index) => run(index + 1));
-}
-
-function parseRuns(args: string[]): { runs: number; log: boolean } {
+function parseRuns(args: string[]): { runs: number; log: boolean; stratified: boolean; scenario?: Scenario; replays: string[] } {
   const index = args.indexOf("--runs");
   const runs = index < 0 ? 200 : Number(args[index + 1]);
   if (!Number.isInteger(runs) || runs < 1) throw new Error("--runs must be a positive integer");
-  return { runs, log: args.includes("--log") };
+  const scenarioIndex = args.indexOf("--scenario");
+  const scenario = scenarioIndex < 0 ? undefined : args[scenarioIndex + 1];
+  if (scenario !== undefined && scenario !== "grace_4" && scenario !== "grace_6" && scenario !== "fused_deck") throw new Error("--scenario must be grace_4, grace_6, or fused_deck");
+  const replayIndex = args.indexOf("--replay");
+  const replays = replayIndex < 0 ? [] : args.slice(replayIndex + 1).filter((value) => !value.startsWith("--"));
+  return { runs, log: args.includes("--log"), stratified: args.includes("--stratified"), scenario, replays };
 }
 
 if (process.argv[1]?.endsWith("runner.ts")) {
-  const options = parseRuns(process.argv.slice(2));
-  const results = simulate(options.runs);
-  if (options.log) console.log(results[0].log.join("\n"));
-  console.log(renderReport(summarize(results)));
+  const actorIndex = process.argv.indexOf("--actor");
+  if (process.argv[actorIndex + 1] === "llm_agent") {
+    const runIdIndex = process.argv.indexOf("--run-id");
+    const runId = process.argv[runIdIndex + 1];
+    if (!runId) throw new Error("--run-id is required for llm_agent");
+    if (!process.argv.includes("--resume")) {
+      mkdirSync(`decisions/${runId}`, { recursive: true });
+      startAgentRun(runId);
+      console.log(`pending=decisions/${runId}/pending.json`);
+    } else {
+      const resumed = resumeAgentRun(runId);
+      if (!resumed.complete) console.log(`pending=decisions/${runId}/pending.json`);
+      else {
+        const parts = resumed.state.pairing?.split("+");
+        if (!parts || parts.length !== 2) throw new Error("agent result is missing a patron pair");
+        const patrons: import("./engine.ts").PatronPair = [parts[0] as GodId, parts[1] as GodId];
+        const result = run(resumed.state.seed, undefined, resumed.state.actions, patrons);
+        const actorResult = {
+          run_id: runId,
+          actor: "llm_agent",
+          replay_mode: "action_log",
+          pairing: resumed.state.pairing,
+          won: result.won,
+          fusion_rate: result.fused ? 1 : 0,
+          fallbacks: resumed.state.fallbacks,
+          decisions: resumed.state.decisions,
+          actions: resumed.state.actions,
+        };
+        writeFileSync(`decisions/${runId}/result.json`, `${JSON.stringify(actorResult, null, 2)}\n`);
+        console.log(`complete=decisions/${runId}/result.json won=${result.won}`);
+      }
+    }
+  } else {
+    const options = parseRuns(process.argv.slice(2));
+    const replays = options.replays.map(readReplay);
+    const results = replays.length ? replays.map((replay) => run(replay.seed, undefined, replay.actions)) : options.stratified ? simulateStratified(options.runs) : simulate(options.runs, options.scenario);
+    if (options.log) console.log(results[0].log.join("\n"));
+    console.log(renderReport(summarize(results)));
+  }
 }

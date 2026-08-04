@@ -1,0 +1,8 @@
+{
+  "id": "demand_broken_ares_axis",
+  "patron": "ares",
+  "condition": "turns >= 4",
+  "axis": "turn_economy",
+  "polarity": "+",
+  "min_enemies": 1
+}

@@ -1,0 +1,28 @@
+{
+  "run_id": "002",
+  "actor": "llm_agent",
+  "replay_mode": "action_log",
+  "pairing": "zeus+athena",
+  "won": false,
+  "fusion_rate": 0,
+  "fallbacks": 0,
+  "decisions": 5,
+  "actions": [
+    {
+      "type": "path",
+      "choice": "combat"
+    },
+    {
+      "type": "path",
+      "choice": "combat"
+    },
+    {
+      "type": "path",
+      "choice": "rest"
+    },
+    {
+      "type": "path",
+      "choice": "rest"
+    }
+  ]
+}

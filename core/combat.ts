@@ -126,6 +126,7 @@ export function runCombat(
     seed,
     combat: createCombat(seed, deck, enemyList),
     favor: {},
+    grace: {},
     map: { node: 0, completed: [] },
   };
   const snapshots: string[] = [];

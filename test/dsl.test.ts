@@ -16,6 +16,7 @@ const actor = (id: string, hp = 20): ActorState => ({ id, hp, maxHp: hp, block: 
 const state = (): GameState => ({
   seed: 1,
   favor: { zeus: 70, poseidon: 20 },
+  grace: {},
   map: { node: 0, completed: [] },
   combat: {
     turn: 3,
@@ -46,6 +47,13 @@ const card = (target: Card["target"], effects: Card["effects"]): Card => ({
 describe("DSL operators", () => {
   it("executes every common operator", () => {
     for (const fixture of operatorCards) executeCard(state(), fixture, "a");
+  });
+
+  it("routes beneficial effects on mixed fusion cards to the player", () => {
+    const combat = state();
+    executeCard(combat, card("enemy", [{ op: "damage", value: 4 }, { op: "block", value: 3 }, { op: "apply_token", token: "bulwark", stacks: 2 }]), "a");
+    expect(combat.combat.enemies[0]).toMatchObject({ hp: 16, block: 0, tokens: {} });
+    expect(combat.combat.player).toMatchObject({ block: 3, tokens: { bulwark: 2 } });
   });
 
   it("chains only to secondary enemies", () => {

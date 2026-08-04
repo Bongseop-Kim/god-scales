@@ -3,9 +3,16 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "art": "node --experimental-strip-types tools/art.ts",
     "sim": "node --experimental-strip-types sim/runner.ts",
-    "test": "vitest run"
+    "play": "node --experimental-strip-types sim/play.ts",
+    "report": "node --experimental-strip-types sim/heatmap.ts",
+    "size": "node --experimental-strip-types tools/size.ts",
+    "tune": "node --experimental-strip-types tools/tune.ts",
+    "test": "vitest run",
+    "validate": "node --experimental-strip-types tools/validate.ts"
   },
   "devDependencies": {
     "@types/node": "^26.1.2",

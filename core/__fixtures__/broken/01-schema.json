@@ -1,0 +1,10 @@
+{
+  "id": "card_broken_schema",
+  "name": "잘못된 소유",
+  "patron": "zeus",
+  "patron_pair": ["poseidon", "zeus"],
+  "cost": 1,
+  "target": "enemy",
+  "effects": [{ "op": "damage", "value": 6 }],
+  "tags": ["attack"]
+}

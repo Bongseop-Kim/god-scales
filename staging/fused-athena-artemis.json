@@ -1,0 +1,1 @@
+{ "id": "card_fused_athena_artemis", "name": "달의 아이기스", "patron_pair": ["artemis", "athena"], "cost": 2, "target": "enemy", "effects": [{ "op": "apply_token", "token": "mark", "stacks": 1 }, { "op": "damage", "value": 8 }, { "op": "apply_token", "token": "bulwark", "stacks": 2 }], "tags": ["attack", "fused", "token"] }

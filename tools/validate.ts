@@ -1,0 +1,226 @@
+import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { isValueAllowed } from "./value.ts";
+
+export type FailureKey = "schema" | "dsl_parse" | "token_scope" | "fusion_scope" | "demand_axis" | "duplicate" | "value_outlier";
+type Item = Record<string, unknown>;
+type Card = Item & { id: string; name: string; patron?: string; patron_pair?: string[]; cost: number; target: string; effects: Effect[]; tags: string[] };
+type Effect = { op: string; value?: number; token?: string; stacks?: number; when?: string };
+type Demand = Item & { id: string; patron: string; condition: string; axis: string; polarity: string; min_enemies: number };
+type Enemy = Item & {
+  id: string;
+  region: "underworld" | "surface";
+  tier: "normal" | "boss";
+  hp: number;
+  pattern: (Effect & { repeat?: number })[];
+  groups?: { id: string; with: string[] }[];
+};
+
+const required: Record<string, string[]> = {
+  card: ["id", "name", "cost", "target", "effects", "tags"],
+  enemy: ["id", "name", "region", "tier", "role", "hp", "intent_visible", "pattern", "pattern_mode"],
+  demand: ["id", "patron", "condition", "axis", "polarity", "min_enemies"],
+  god: ["id", "name", "tokens", "ops", "rivals", "demands"],
+};
+
+const gods: Record<string, { tokens: string[]; ops: string[]; rivals: string[] }> = {
+  zeus: { tokens: ["shock"], ops: ["chain"], rivals: ["poseidon"] },
+  poseidon: { tokens: ["displace", "soaked"], ops: [], rivals: ["zeus"] },
+  athena: { tokens: ["bulwark", "deflect"], ops: [], rivals: ["ares"] },
+  ares: { tokens: ["bleed", "frenzy"], ops: [], rivals: ["athena"] },
+  artemis: { tokens: ["mark", "crit"], ops: [], rivals: [] },
+};
+const commonOps = ["damage", "block", "draw", "energy", "heal", "self_damage", "apply_token", "favor_shift"];
+const allTokens = Object.values(gods).flatMap(({ tokens }) => tokens);
+const conditionPatterns = [
+  /^favor\((patron|[a-z_]+)\) (>=|<) \d+$/,
+  /^has_token\(target, [a-z_]+\) >= \d+$/,
+  /^turn > \d+$/,
+  /^hp_pct\(self\) < \d+$/,
+  /^deck_count\([a-z_]+\) >= \d+$/,
+  /^enemy_count\(\) >= \d+$/,
+];
+const axes = ["target_spread", "damage_taken", "turn_economy", "token_load"];
+const baselineCards: Card[] = [{
+  id: "card_existing_strike",
+  name: "기존 타격",
+  patron: "ares",
+  cost: 1,
+  target: "enemy",
+  effects: [{ op: "damage", value: 6 }],
+  tags: ["attack"],
+}];
+const baselineDemands: Demand[] = [
+  { id: "demand_zeus_solo", patron: "zeus", condition: "hit_targets_in_turn >= 1", axis: "target_spread", polarity: "+", min_enemies: 1 },
+  { id: "demand_poseidon_solo", patron: "poseidon", condition: "hit_targets_in_turn <= 1", axis: "target_spread", polarity: "-", min_enemies: 1 },
+  { id: "demand_athena_safe", patron: "athena", condition: "damage_taken == 0", axis: "damage_taken", polarity: "-", min_enemies: 1 },
+  { id: "demand_ares_hurt", patron: "ares", condition: "damage_taken > 0", axis: "damage_taken", polarity: "+", min_enemies: 1 },
+  { id: "demand_artemis_mark", patron: "artemis", condition: "tokens >= 1", axis: "token_load", polarity: "+", min_enemies: 1 },
+];
+
+function kindOf(item: Item): string {
+  const id = String(item.id ?? "");
+  if (id.startsWith("card_")) return "card";
+  if (id.startsWith("enemy_")) return "enemy";
+  if (id.startsWith("demand_")) return "demand";
+  if (gods[id]) return "god";
+  return "unknown";
+}
+
+// ponytail: required keys plus the one cross-field rule the schema was buying us (patron XOR patron_pair).
+function schemaFailure(item: Item, kind: string): boolean {
+  if (!required[kind] || required[kind].some((key) => item[key] === undefined)) return true;
+  if (kind !== "card") return false;
+  const card = item as Card;
+  return Boolean(card.patron) === Boolean(card.patron_pair)
+    || (card.patron_pair !== undefined && card.patron_pair.length !== 2)
+    || ![0, 1, 2, 3].includes(card.cost)
+    || !["self", "enemy", "all_enemies"].includes(card.target)
+    || card.effects.length === 0
+    || card.effects.some(({ op }) => typeof op !== "string");
+}
+
+function dslFailure(card: Card): boolean {
+  return card.effects.some((effect) =>
+    ![...commonOps, "chain"].includes(effect.op)
+    || (effect.token !== undefined && !allTokens.includes(effect.token))
+    || (effect.when !== undefined && !conditionPatterns.some((pattern) => pattern.test(effect.when!))),
+  );
+}
+
+function vocabularyUsed(card: Card, god: string): boolean {
+  return card.effects.some(({ op, token }) => gods[god].ops.includes(op) || (token !== undefined && gods[god].tokens.includes(token)));
+}
+
+function tokenScopeFailure(card: Card): boolean {
+  const owners = card.patron_pair ?? (card.patron ? [card.patron] : []);
+  return card.effects.some(({ op, token }) =>
+    (op === "chain" && (card.target !== "enemy" || !owners.includes("zeus")))
+    || (token !== undefined && !owners.some((god) => gods[god]?.tokens.includes(token))),
+  );
+}
+
+function fusionFailure(card: Card): boolean {
+  if (!card.patron_pair) return false;
+  const sorted = [...card.patron_pair].sort();
+  return sorted.some((god, index) => god !== card.patron_pair![index])
+    || card.tags.includes("exhaust")
+    || card.patron_pair.some((god) => !vocabularyUsed(card, god));
+}
+
+function demandFailure(demand: Demand, demands: Demand[]): boolean {
+  if (!axes.includes(demand.axis)) return true;
+  const requiredEnemies = Number(demand.condition.match(/hit_targets_in_turn >= (\d+)/)?.[1] ?? demand.min_enemies);
+  if (requiredEnemies !== demand.min_enemies) return true;
+  const rivals = gods[demand.patron]?.rivals ?? [];
+  return rivals.length > 0 && !demands.some((other) =>
+    rivals.includes(other.patron) && other.axis === demand.axis && other.polarity !== demand.polarity,
+  );
+}
+
+function fingerprint(card: Card): string {
+  return card.effects.map(({ op, value, stacks }) => `${op}:${Math.floor((value ?? stacks ?? 0) / 3)}`).join("|");
+}
+
+function duplicateFailure(card: Card, existing: Card[]): boolean {
+  return existing.some((other) => fingerprint(card) === fingerprint(other) || card.name === other.name);
+}
+
+function stageEffectScopeFailure(god: Item): boolean {
+  const definition = gods[String(god.id)];
+  const effects = Object.values((god.stage_effects ?? {}) as Record<string, { on_encounter_start?: Effect }>).flatMap((stage) => stage.on_encounter_start ?? []);
+  return effects.some(({ op, token }) =>
+    (!commonOps.includes(op) && !definition.ops.includes(op))
+    || (token !== undefined && !definition.tokens.includes(token)),
+  );
+}
+
+function encounterThresholdFailure(enemy: Enemy, enemies: Enemy[]): boolean {
+  if (enemy.tier === "boss") return enemy.hp !== (enemy.region === "underworld" ? 130 : 190) || enemy.groups !== undefined;
+  if (!enemy.groups?.length) return true;
+  const limits = enemy.region === "underworld"
+    ? { hp: [40, 90], damage: [8, 14], count: [1, 2] }
+    : { hp: [90, 170], damage: [14, 22], count: [2, 3] };
+  const effectiveHp = (member: Enemy) => member.hp + member.pattern.reduce((total, effect) => total + (effect.op === "apply_token" && effect.token === "bulwark" ? effect.stacks ?? 1 : 0), 0);
+  const intent = (member: Enemy) => member.pattern.reduce((total, effect) => total + (effect.op === "damage" ? (effect.value ?? 0) * (effect.repeat ?? 1) : 0), 0) / member.pattern.length;
+  return enemy.groups.some((group) => {
+    const members = [enemy, ...group.with.map((id) => enemies.find((candidate) => candidate.id === id))];
+    if (members.some((member) => !member)) return true;
+    const complete = members as Enemy[];
+    const hp = complete.reduce((total, member) => total + effectiveHp(member), 0);
+    const damage = complete.reduce((total, member) => total + intent(member), 0);
+    return complete.length < limits.count[0] || complete.length > limits.count[1]
+      || hp < limits.hp[0] || hp > limits.hp[1]
+      || damage < limits.damage[0] || damage > limits.damage[1];
+  });
+}
+
+function failureFor(item: Item, cards: Card[], demands: Demand[], enemies: Enemy[]): FailureKey | undefined {
+  const kind = kindOf(item);
+  if (schemaFailure(item, kind)) return "schema";
+  if (kind === "card") {
+    const card = item as Card;
+    if (dslFailure(card)) return "dsl_parse";
+    if (tokenScopeFailure(card)) return "token_scope";
+    if (fusionFailure(card)) return "fusion_scope";
+    if (duplicateFailure(card, cards)) return "duplicate";
+    if (!isValueAllowed(card)) return "value_outlier";
+  }
+  if (kind === "demand" && demandFailure(item as Demand, demands)) return "demand_axis";
+  if (kind === "god" && stageEffectScopeFailure(item)) return "token_scope";
+  if (kind === "enemy" && encounterThresholdFailure(item as Enemy, enemies)) return "value_outlier";
+  return undefined;
+}
+
+export function validateItems(items: Item[]): { accepted: Item[]; rejected: { id: string; failure: FailureKey }[]; pass_rate: number; by_pairing: Record<string, number>; failure_breakdown: Partial<Record<FailureKey, number>> } {
+  const accepted: Item[] = [];
+  const rejected: { id: string; failure: FailureKey }[] = [];
+  const failure_breakdown: Partial<Record<FailureKey, number>> = {};
+  const cards = [...baselineCards];
+  const demands = [...baselineDemands, ...items.filter((item) => kindOf(item) === "demand") as Demand[]];
+  const enemies = items.filter((item) => kindOf(item) === "enemy") as Enemy[];
+
+  for (const item of items) {
+    const failure = failureFor(item, cards, demands, enemies);
+    if (failure) {
+      rejected.push({ id: String(item.id), failure });
+      failure_breakdown[failure] = (failure_breakdown[failure] ?? 0) + 1;
+    } else {
+      accepted.push(item);
+      if (kindOf(item) === "card") cards.push(item as Card);
+    }
+  }
+  const fusionItems = items.filter((item) => Array.isArray(item.patron_pair));
+  const by_pairing = Object.fromEntries([...new Set(fusionItems.map((item) => (item.patron_pair as string[]).join("+")))].map((pairing) => {
+    const total = fusionItems.filter((item) => (item.patron_pair as string[]).join("+") === pairing).length;
+    const passed = accepted.filter((item) => Array.isArray(item.patron_pair) && (item.patron_pair as string[]).join("+") === pairing).length;
+    return [pairing, passed / total];
+  }));
+  return { accepted, rejected, pass_rate: items.length ? accepted.length / items.length : 0, by_pairing, failure_breakdown };
+}
+
+function runCli(args: string[]): void {
+  const inputs = args.filter((argument) => !argument.startsWith("--"));
+  if (inputs.length === 0) throw new Error("Usage: npm run validate -- <path...> [--apply]");
+  const items = inputs.flatMap((input) => statSync(input).isDirectory()
+    ? readdirSync(input).filter((file) => file.endsWith(".json")).sort().map((file) => JSON.parse(readFileSync(join(input, file), "utf8")) as Item)
+    : [JSON.parse(readFileSync(input, "utf8")) as Item | Item[]].flat());
+  const report = validateItems(items);
+  if (args.includes("--apply")) {
+    mkdirSync("data", { recursive: true });
+    for (const kind of ["card", "enemy", "demand", "god"]) {
+      const accepted = report.accepted.filter((item) => kindOf(item) === kind);
+      if (accepted.length === 0) continue;
+      const output = `data/${kind === "demand" ? "demands" : kind === "enemy" ? "enemies" : `${kind}s`}.json`;
+      const existing = (() => {
+        try { return JSON.parse(readFileSync(output, "utf8")) as Item[]; }
+        catch { return []; }
+      })();
+      const merged = new Map([...existing, ...accepted].map((item) => [String(item.id), item]));
+      writeFileSync(output, `${JSON.stringify([...merged.values()], null, 2)}\n`);
+    }
+  }
+  console.log(JSON.stringify(report, null, 2));
+}
+
+if (process.argv[1]?.endsWith("validate.ts")) runCli(process.argv.slice(2));

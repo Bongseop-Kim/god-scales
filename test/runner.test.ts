@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { run, simulate } from "../sim/runner";
+import { run, simulate } from "../sim/engine";
 import { summarize } from "../sim/report";
 
 describe("headless runner", () => {

@@ -1,0 +1,1 @@
+{ "id": "card_fused_zeus_ares", "name": "피의 낙뢰", "patron_pair": ["ares", "zeus"], "cost": 2, "target": "enemy", "effects": [{ "op": "apply_token", "token": "bleed", "stacks": 2 }, { "op": "apply_token", "token": "shock", "stacks": 1 }, { "op": "damage", "value": 5 }, { "op": "chain", "value": 3 }], "tags": ["attack", "fused", "multi", "token"] }
