@@ -1,12 +1,38 @@
 export type CardId = string;
 
-export type CombatState = {
+export const tokenNames = [
+  "shock",
+  "displace",
+  "soaked",
+  "bulwark",
+  "deflect",
+  "bleed",
+  "frenzy",
+  "mark",
+  "crit",
+] as const;
+
+export type TokenName = (typeof tokenNames)[number];
+export type Tokens = Partial<Record<TokenName, number>>;
+
+export type ActorState = {
+  id: string;
   hp: number;
+  maxHp: number;
   block: number;
-  deck: CardId[];
+  tokens: Tokens;
+};
+
+export type EnemyState = ActorState & { patternIndex: number };
+
+export type CombatState = {
+  turn: number;
+  energy: number;
+  player: ActorState;
+  drawPile: CardId[];
   hand: CardId[];
-  discard: CardId[];
-  enemies: { id: string; hp: number; block: number }[];
+  discardPile: CardId[];
+  enemies: EnemyState[];
 };
 
 export type GameState = {

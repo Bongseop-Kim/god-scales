@@ -5,4 +5,5 @@
 ```bash
 npm test
 npm run build
+npm test -- dsl
 ```
