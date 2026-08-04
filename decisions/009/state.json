@@ -1,0 +1,25 @@
+{
+  "seed": 9,
+  "index": 5,
+  "actions": [
+    {
+      "type": "path",
+      "choice": "combat"
+    },
+    {
+      "type": "path",
+      "choice": "combat"
+    },
+    {
+      "type": "path",
+      "choice": "combat"
+    },
+    {
+      "type": "path",
+      "choice": "rest"
+    }
+  ],
+  "fallbacks": 0,
+  "decisions": 5,
+  "pairing": "athena+artemis"
+}

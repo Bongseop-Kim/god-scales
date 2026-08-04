@@ -1,0 +1,21 @@
+{
+  "runs_by_actor": {
+    "rule_bot": 1000,
+    "llm_agent": 10
+  },
+  "fusion_rate": {
+    "rule_bot": 0.104,
+    "llm_agent": 0
+  },
+  "rival_gap": {
+    "rule_bot": 0,
+    "llm_agent": 0
+  },
+  "agent_fallbacks": 0,
+  "division_of_labor": "에이전트는 전략 층만 근사한다. 전투 층의 체감은 합성 플레이테스트가 답한다.",
+  "unavailable_phases": [
+    "요구 선택",
+    "전투 보상",
+    "은총 대상 선택"
+  ]
+}

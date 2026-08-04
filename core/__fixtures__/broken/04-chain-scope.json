@@ -1,0 +1,9 @@
+{
+  "id": "card_broken_chain_scope",
+  "name": "전체 연쇄",
+  "patron": "zeus",
+  "cost": 1,
+  "target": "all_enemies",
+  "effects": [{ "op": "chain", "value": 4 }],
+  "tags": ["attack", "multi"]
+}

@@ -1,0 +1,9 @@
+{
+  "id": "card_broken_token_scope",
+  "name": "제우스의 출혈",
+  "patron": "zeus",
+  "cost": 1,
+  "target": "enemy",
+  "effects": [{ "op": "damage", "value": 5 }, { "op": "apply_token", "token": "bleed", "stacks": 1 }],
+  "tags": ["attack", "token"]
+}

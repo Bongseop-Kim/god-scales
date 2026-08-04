@@ -1,0 +1,9 @@
+{
+  "id": "card_broken_duplicate",
+  "name": "복제 타격",
+  "patron": "ares",
+  "cost": 1,
+  "target": "enemy",
+  "effects": [{ "op": "damage", "value": 6 }],
+  "tags": ["attack"]
+}

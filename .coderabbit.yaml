@@ -1,0 +1,13 @@
+reviews:
+  path_filters:
+    # 의도적으로 깨진 픽스처 — 게이트가 잡아야 할 대상. 리뷰가 버그로 오탐함
+    - "!core/__fixtures__/broken/**"
+    # LLM 생성 데이터 — tools/validate.ts + gate 테스트가 검증함
+    - "!data/**"
+    - "!staging/**"
+    # 문서·프롬프트·로그 — 코드 리뷰 대상 아님
+    - "!plans/**"
+    - "!seed/**"
+    - "!prompts/**"
+    - "!logs/**"
+    - "!package-lock.json"

@@ -1,0 +1,22 @@
+{
+  "seed": 35,
+  "actions": [
+    {
+      "type": "path",
+      "choice": "rest"
+    },
+    {
+      "type": "path",
+      "choice": "rest"
+    },
+    {
+      "type": "path",
+      "choice": "rest"
+    },
+    {
+      "type": "path",
+      "choice": "rest"
+    }
+  ],
+  "replay_mode": "action_log"
+}

@@ -1,0 +1,8 @@
+[
+  { "id": "demand_zeus_multi", "patron": "zeus", "condition": "hit_targets_in_turn >= 3", "axis": "target_spread", "polarity": "+", "min_enemies": 3 },
+  { "id": "demand_zeus_solo", "patron": "zeus", "condition": "hit_targets_in_turn >= 1", "axis": "target_spread", "polarity": "+", "min_enemies": 1 },
+  { "id": "demand_poseidon_solo", "patron": "poseidon", "condition": "hit_targets_in_turn <= 1", "axis": "target_spread", "polarity": "-", "min_enemies": 1 },
+  { "id": "demand_athena_safe", "patron": "athena", "condition": "damage_taken == 0", "axis": "damage_taken", "polarity": "-", "min_enemies": 1 },
+  { "id": "demand_ares_hurt", "patron": "ares", "condition": "damage_taken > 0", "axis": "damage_taken", "polarity": "+", "min_enemies": 1 },
+  { "id": "demand_artemis_mark", "patron": "artemis", "condition": "tokens_applied >= 1", "axis": "token_load", "polarity": "+", "min_enemies": 1 }
+]

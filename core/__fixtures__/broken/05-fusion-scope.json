@@ -1,0 +1,9 @@
+{
+  "id": "card_broken_fusion_scope",
+  "name": "반쪽 합성",
+  "patron_pair": ["poseidon", "zeus"],
+  "cost": 1,
+  "target": "enemy",
+  "effects": [{ "op": "apply_token", "token": "soaked", "stacks": 1 }, { "op": "damage", "value": 6 }],
+  "tags": ["attack", "fused"]
+}

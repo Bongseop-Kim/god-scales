@@ -1,0 +1,1 @@
+{ "id": "card_fused_poseidon_ares", "name": "핏빛 해류", "patron_pair": ["ares", "poseidon"], "cost": 2, "target": "enemy", "effects": [{ "op": "apply_token", "token": "bleed", "stacks": 2 }, { "op": "apply_token", "token": "soaked", "stacks": 1 }, { "op": "damage", "value": 9 }], "tags": ["attack", "fused", "token"] }

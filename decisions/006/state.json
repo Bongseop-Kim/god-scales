@@ -1,0 +1,25 @@
+{
+  "seed": 6,
+  "index": 5,
+  "actions": [
+    {
+      "type": "path",
+      "choice": "rest"
+    },
+    {
+      "type": "path",
+      "choice": "combat"
+    },
+    {
+      "type": "path",
+      "choice": "rest"
+    },
+    {
+      "type": "path",
+      "choice": "rest"
+    }
+  ],
+  "fallbacks": 0,
+  "decisions": 5,
+  "pairing": "poseidon+ares"
+}
