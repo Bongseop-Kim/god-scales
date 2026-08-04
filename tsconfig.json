@@ -13,5 +13,5 @@
     "strict": true,
     "types": ["vitest/globals", "node"]
   },
-  "include": ["core", "test", "main.ts"]
+  "include": ["core", "sim", "test", "main.ts"]
 }

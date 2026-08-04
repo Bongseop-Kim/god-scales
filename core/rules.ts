@@ -1,5 +1,5 @@
-import type { ActorState, GameState, TokenName } from "./state";
-import { resolveChainTargets, resolveTargets, type Target } from "./targeting";
+import type { ActorState, GameState, TokenName } from "./state.ts";
+import { resolveChainTargets, resolveTargets, type Target } from "./targeting.ts";
 
 export type GodId = "zeus" | "poseidon" | "athena" | "ares" | "artemis";
 export type Tag = "attack" | "defend" | "utility" | "multi" | "token" | "favor" | "exhaust";

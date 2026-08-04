@@ -1,6 +1,6 @@
-import { createRng } from "./rng";
-import { dealDamage, executeCard, takeEnemyTurn, tickBleed, type Card } from "./rules";
-import type { CombatState, EnemyState, GameState, TokenName } from "./state";
+import { createRng } from "./rng.ts";
+import { dealDamage, executeCard, takeEnemyTurn, tickBleed, type Card } from "./rules.ts";
+import type { CombatState, EnemyState, GameState, TokenName } from "./state.ts";
 
 export const MAX_HP = 100;
 export const ENERGY_PER_TURN = 3;

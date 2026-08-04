@@ -1,4 +1,4 @@
-import type { ActorState, CombatState } from "./state";
+import type { ActorState, CombatState } from "./state.ts";
 
 export type Target = "self" | "enemy" | "all_enemies";
 
