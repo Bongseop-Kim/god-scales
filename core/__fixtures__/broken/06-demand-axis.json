@@ -2,6 +2,7 @@
   "id": "demand_broken_ares_axis",
   "patron": "ares",
   "condition": "turns >= 4",
+  "text": "네 턴 안에 끝내라.",
   "axis": "turn_economy",
   "polarity": "+",
   "min_enemies": 1

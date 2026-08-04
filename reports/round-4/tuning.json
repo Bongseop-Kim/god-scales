@@ -1,0 +1,23 @@
+{
+  "loop_iteration": 4,
+  "variance_before": null,
+  "variance_after": 0.07029070703124998,
+  "auto_adjusted": 0,
+  "enemy_adjusted": 0,
+  "pairing_flagged": [],
+  "simulation_runs": 16000,
+  "discarded": 1,
+  "condition_rate_estimate": null,
+  "average_enemy_count": 1.6286035872485658,
+  "human_intervened": [
+    "P-09: enemyDamageScale 1.0→0.65, 최초 완주율 0% 보정",
+    "P-13: 합성 사용자 8런과 층화 시뮬을 근거로 enemyDamageScale 0.65→0.45",
+    "P-13: 브라우저 UI 밀도 점검은 사용자 지시로 제외",
+    "P-20: 조합 라벨만 바뀌던 실행 결함을 수정하고 botPolicyVersion v1→v2로 올린 뒤 이전 회차 데이터를 폐기·재생성",
+    "N-04: 카드 보상 도입 후 배포 조합(제우스+아테나) 승률이 0.704로 밴드 상한을 넘어 enemyDamageScale 0.45→0.55, globalParamVersion v1→v2"
+  ],
+  "ai_failures": [
+    "초기 층화 러너가 실제 후원 조합 대신 제우스+아테나 규칙을 공통 실행함; P-20에서 실제 조합 덱·호의·합성을 실행하도록 수정",
+    "N-04: shock·soaked·mark·frenzy 토큰이 core에 구현돼 있지 않다. 카드 풀이 실제 플레이에 들어오자 아테나 조합만 이기고(0.42~0.63) 나머지 여섯 조합이 0~2%로 무너져 pairing_win_stddev가 0.005→0.257이 됐다; 토큰 구현 전에는 enemyDamageScale로 되돌릴 수 없다"
+  ]
+}

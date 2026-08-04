@@ -2,20 +2,28 @@ import { AnimatePresence, LazyMotion, domAnimation, m, useReducedMotion } from "
 import { useRef, useState } from "react";
 import type { CSSProperties, FormEvent, RefObject } from "react";
 import { mapNode } from "../core/map.ts";
-import { run } from "../sim/engine.ts";
+import { runSteps, type Decision, type MapDecision } from "../sim/engine.ts";
 import type { ReplayAction } from "../sim/replay.ts";
 import type { RunResult } from "../sim/report.ts";
 import { GameCard } from "./card.tsx";
+import { DemandScreen, GraceScreen, RestScreen } from "./choices.tsx";
+import { CombatScreen } from "./combat.tsx";
+import { godName, regionName, RunHeader } from "./header.tsx";
+import { RewardScreen } from "./reward.tsx";
 import { downloadReplay } from "./export.ts";
 import { playSound, sound } from "./sfx.ts";
 import { TokenLegend } from "./tokens.tsx";
 import "./motion.css";
 import "./style.css";
 
-type Screen = "setup" | "map" | "result";
 type PathChoice = "combat" | "rest";
+type Steps = Generator<Decision, RunResult, string>;
 
-const choiceFloors = ["지하 3층", "지하 5층", "지상 3층", "지상 5층"];
+/** 화면 전환 애니메이션의 key. 여기 없는 phase는 이름 그대로 자기 화면이다 */
+const screens: Partial<Record<Decision["phase"], string>> = { path: "map", rest_card: "rest", card: "combat", target: "combat" };
+
+/** 갈림길이 열리는 노드. MapPanel의 칸 표시와 "n / 4" 카운터가 같은 목록을 읽는다 */
+const choiceNodes = [2, 4, 8, 10];
 const godColors = [
   ["제우스", "#f2c94c"],
   ["포세이돈", "#43b9d6"],
@@ -27,17 +35,27 @@ const godColors = [
 const screenTransition = { duration: 0.18, ease: [0.23, 1, 0.32, 1] } as const;
 
 export function App() {
-  const [screen, setScreen] = useState<Screen>("setup");
   const [seedInput, setSeedInput] = useState("1");
   const [seed, setSeed] = useState(1);
   const [actions, setActions] = useState<ReplayAction[]>([]);
+  const [pending, setPending] = useState<Decision>();
   const [result, setResult] = useState<RunResult>();
   const [soundEnabled, setSoundEnabled] = useState(sound.enabled);
   const seedField = useRef<HTMLInputElement>(null);
+  const steps = useRef<Steps>(null);
+  // 퇴장 애니메이션 중인 카드의 onClick은 옛 pending을 클로저에 들고 있다. 판정은 언제나 최신 결정으로 한다
+  const latest = useRef<Decision>(null);
   const reducedMotion = useReducedMotion();
+  const screen = result ? "result" : pending ? screens[pending.phase] ?? pending.phase : "setup";
+
+  const show = (decision?: Decision) => {
+    latest.current = decision ?? null;
+    setPending(decision);
+  };
 
   const reset = () => {
-    setScreen("setup");
+    steps.current = null;
+    show(undefined);
     setActions([]);
     setResult(undefined);
     setSeedInput(String(seed));
@@ -53,17 +71,24 @@ export function App() {
     }
 
     setSeed(nextSeed);
-    setScreen("map");
+    steps.current = runSteps(nextSeed);
+    const step = steps.current.next();
+    if (step.done) setResult(step.value);
+    else show(step.value);
     playSound("start");
   };
 
-  const choosePath = (choice: PathChoice) => {
-    const nextActions: ReplayAction[] = [...actions, { type: "path", choice }];
-    setActions(nextActions);
-    if (nextActions.length === choiceFloors.length) {
-      setResult(run(seed, undefined, nextActions));
-      setScreen("result");
-    }
+  // 엔진이 물은 phase 그대로 답한다. UI는 게임 상태를 갖지 않는다 — 그린 것은 전부 마지막 yield의 observation이다
+  const answer = (choice: string) => {
+    const current = latest.current;
+    // options에 없는 값은 엔진에 보내지 않는다. 이미 지나간 결정에 눌린 카드가 여기서 걸린다
+    if (!current || !steps.current || !current.options.includes(choice)) return;
+    const step = steps.current.next(choice);
+    setActions((all) => [...all, { type: current.phase, choice } as ReplayAction]);
+    if (step.done) {
+      show(undefined);
+      setResult(step.value);
+    } else show(step.value);
   };
 
   const toggleSound = () => {
@@ -97,7 +122,24 @@ export function App() {
               onToggleSound={toggleSound}
             />
           )}
-          {screen === "map" && <MapScreen seed={seed} actions={actions} onChoosePath={choosePath} />}
+          {pending?.phase === "path" && (
+            <MapScreen seed={seed} decision={pending} actions={actions} onChoosePath={answer} />
+          )}
+          {(pending?.phase === "card" || pending?.phase === "target") && (
+            <CombatScreen seed={seed} decision={pending} onAnswer={answer} />
+          )}
+          {(pending?.phase === "rest" || pending?.phase === "rest_card") && (
+            <RestScreen seed={seed} decision={pending} onAnswer={answer} />
+          )}
+          {pending?.phase === "reward" && (
+            <RewardScreen seed={seed} decision={pending} onAnswer={answer} />
+          )}
+          {pending?.phase === "grace" && (
+            <GraceScreen seed={seed} decision={pending} onAnswer={answer} />
+          )}
+          {pending?.phase === "demand" && (
+            <DemandScreen seed={seed} decision={pending} onAnswer={answer} />
+          )}
           {screen === "result" && result && (
             <ResultScreen seed={seed} actions={actions} result={result} onReset={reset} />
           )}
@@ -128,7 +170,7 @@ function SetupScreen({
     <form className="shell setup" onSubmit={onStart}>
       <p className="eyebrow">결정론적 덱빌딩 프로토타입</p>
       <h1>신들의 저울</h1>
-      <p className="lead">제우스와 아테나의 호의를 관리하며 지하에서 지상까지 12층을 돌파하세요.</p>
+      <p className="lead">두 신의 호의를 관리하며 지하에서 지상까지 12층을 돌파하세요.</p>
       <div className="god-legend">
         {godColors.map(([name, color]) => (
           <span key={name}>
@@ -157,26 +199,23 @@ function SetupScreen({
           {soundEnabled ? "소리 켜짐" : "소리 꺼짐"}
         </button>
       </div>
-      <p className="hint">전투는 룰 봇이 자동 진행합니다. 당신은 네 번의 갈림길을 결정합니다.</p>
+      <p className="hint">갈림길·카드·대상·보상·휴식·은총·요구를 전부 당신이 고릅니다. 룰 봇이 대신 정하는 것은 없습니다.</p>
     </form>
   );
 }
 
-function MapScreen({ seed, actions, onChoosePath }: {
+export function MapScreen({ seed, decision, actions, onChoosePath }: {
   seed: number;
+  decision: MapDecision;
   actions: ReplayAction[];
   onChoosePath: (choice: PathChoice) => void;
 }) {
-  const label = choiceFloors[actions.length];
+  const view = decision.observation;
   return (
     <div className="shell run-layout">
-      <header>
-        <div><p className="eyebrow">시드 {seed} · 제우스 + 아테나</p><h1>경로 선택</h1></div>
-        <strong>{actions.length + 1} / {choiceFloors.length}</strong>
-      </header>
-      <MapPanel actions={actions} />
+      <RunHeader seed={seed} view={view} title="경로 선택" badge={`${choiceNodes.indexOf(view.node) + 1} / ${choiceNodes.length}`} />
+      <MapPanel choices={pathChoices(actions)} current={view.node} />
       <div className="decision-panel">
-        <p className="eyebrow">{label}</p>
         <h2>어디로 향할까요?</h2>
         <PathButton choice="combat" onChoose={onChoosePath} />
         <PathButton choice="rest" onChoose={onChoosePath} />
@@ -196,20 +235,21 @@ function PathButton({ choice, onChoose }: { choice: PathChoice; onChoose: (choic
   );
 }
 
-function MapPanel({ actions }: { actions: ReplayAction[] }) {
+const pathChoices = (actions: ReplayAction[]) => actions.filter(({ type }) => type === "path").map(({ choice }) => choice);
+
+function MapPanel({ choices, current }: { choices: string[]; current?: number }) {
   return (
     <div className="map-panel">
       <h2>12층 지도</h2>
       <ol>
         {Array.from({ length: 12 }, (_, index) => {
           const node = mapNode(index);
-          const optionalIndex = [2, 4, 8, 10].indexOf(index);
-          const chosen = optionalIndex >= 0 ? actions[optionalIndex]?.choice : undefined;
+          const optionalIndex = choiceNodes.indexOf(index);
+          const chosen = optionalIndex >= 0 ? choices[optionalIndex] : undefined;
           const symbol = node.options[0] === "boss" ? "보" : chosen === "rest" ? "휴" : "전";
-          const region = node.region === "underworld" ? "지하" : "지상";
           return (
-            <li className={`map-node${chosen ? ` ${chosen}` : ""}`} key={index}>
-              <span>{symbol}</span>{region} {node.floor}층
+            <li className={`map-node${chosen ? ` ${chosen}` : ""}${index === current ? " current" : ""}`} key={index}>
+              <span>{symbol}</span>{regionName(node.region)} {node.floor}층
             </li>
           );
         })}
@@ -236,11 +276,13 @@ function ResultScreen({ seed, actions, result, onReset }: {
       <div className="summary-grid">
         <Summary label="최종 체력" value={result.hpCurve.at(-1) ?? 0} />
         <Summary label="전투 횟수" value={result.encounters} />
-        <Summary label="제우스 호의" value={finalFavor.zeus ?? 0} />
-        <Summary label="아테나 호의" value={finalFavor.athena ?? 0} />
+        {/* 조합은 결과에 적혀 온다 — 신 이름을 상수로 박으면 다른 조합을 돌릴 때 빈칸이 된다 */}
+        {(result.pairing?.split("+") ?? []).map((god) => (
+          <Summary key={god} label={`${godName(god)} 호의`} value={finalFavor[god] ?? 0} />
+        ))}
       </div>
       <div className="result-columns">
-        <MapPanel actions={actions} />
+        <MapPanel choices={result.pathChoices} />
         <div className="combat-log">
           <h2>전투 기록</h2>
           <div className="used-cards">

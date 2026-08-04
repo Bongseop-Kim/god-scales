@@ -28,7 +28,7 @@ CLI 플레이는 아래처럼 실행합니다. 시드와 네 경로를 차례로
 
 ```bash
 npm run play
-npm run sim -- --replay logs/human/run-1.json
+npm run sim -- --replay logs/human/run-31.json
 ```
 
 ## 검증
@@ -66,7 +66,7 @@ npm run validate -- staging/enemies-underworld.json --apply
 npm run validate -- staging/fused-*.json --apply
 npm run sim -- --runs 200 --scenario fused_deck
 npm run play
-npm run sim -- --replay logs/human/run-1.json
+npm run sim -- --replay logs/human/run-31.json
 npm run sim -- --runs 2000 --stratified
 npm run report -- --heatmap
 npm run tune -- --iteration 1
@@ -76,4 +76,13 @@ npm run report -- --compare rule_bot llm_agent
 npm run tune -- --iteration 2
 npm run tune -- --iteration 3
 npm run report -- --rounds 1,2,3
+npm run validate -- staging/cards-zeus-defense.json --apply
+npm run validate -- staging/cards-ares-defense.json --apply
+npm run validate -- staging/cards-artemis-defense.json --apply
+npm run validate -- staging/cards-reprice.json --apply
+npm run validate -- staging/cards-reprice-bulwark.json --apply
+npm run validate -- staging/demands-tighten.json --apply
+npm test -- steps
+npm test -- matrix
+npm run tune -- --iteration 5
 ```

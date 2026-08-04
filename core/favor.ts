@@ -8,7 +8,8 @@ export const rivalDemandPenalty = -18;
 export const nonRivalDemandPenalty = -9;
 export const favorBoundaries = { devotion: 70, calm: 30, anger: 10, wrath: 0 } as const;
 export const graceMilestones = [2, 4, 6] as const;
-export const globalParamVersion = "v1";
+/** v3: shock·soaked·mark·frenzy 구현, deflect/displace/bulwark 재가격, 헌신·진노 오라 연결, baseCardBalance 0 */
+export const globalParamVersion = "v3";
 
 export type FavorStage = keyof typeof favorBoundaries;
 export type FavorUses = Record<string, number>;

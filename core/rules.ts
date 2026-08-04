@@ -63,6 +63,14 @@ export function dealDamage(attacker: ActorState, target: ActorState, amount: num
   }
 
   if (consumeToken(attacker, "crit")) amount *= 2;
+  // 공격자 쪽 보정 둘(광란 +2, 침수 -1), 대상 쪽 보정 둘. tools/value.ts의 tokenWeights와 같은 눈금이다
+  if (consumeToken(attacker, "frenzy")) amount += 2;
+  if (consumeToken(attacker, "soaked")) amount = Math.max(0, amount - 1);
+  // 감전은 스택마다 +1로 이번 턴의 모든 피해를 키운다(턴 끝에 사라진다). 한 방에 소모되면 후속타가 없는
+  // 대상에서 그냥 버려져 기본 피해보다 못하다 — 제우스의 chain 여러 대상 타격과 맞물리는 자리다
+  amount += target.tokens.shock ?? 0;
+  // 표식만 소모되지 않는다 — 전투가 끝날 때까지 그 적이 1.5배로 맞는다. 그래서 스택이 아니라 배수다
+  if ((target.tokens.mark ?? 0) > 0) amount *= 1.5;
   const blocked = Math.min(target.block, amount);
   target.block -= blocked;
   amount -= blocked;
@@ -133,11 +141,13 @@ export function evaluateCondition(expression: string, context: ConditionContext)
   throw new Error(`Invalid condition: ${expression}`);
 }
 
+/** 카드의 target이 무엇이든 플레이어에게 붙는 토큰. 나머지는 target으로 간다 — 게이트도 이 목록을 읽는다 */
+export const selfTokens = new Set<TokenName>(["bulwark", "deflect", "crit", "frenzy"]);
+
 export function executeCard(state: GameState, card: Card, enemyId?: string, deckCards?: Card[]): void {
   loadCards([card]);
   const targets = resolveTargets(state.combat, card.target, enemyId);
   const chainTargets = card.target === "enemy" ? resolveChainTargets(state.combat, targets[0].id) : [];
-  const selfTokens = new Set<TokenName>(["bulwark", "deflect", "crit", "frenzy"]);
 
   for (const effect of card.effects) {
     if (effect.when && !evaluateCondition(effect.when, { state, card, target: targets[0], deckCards })) continue;

@@ -1,17 +1,19 @@
 import type { CSSProperties } from "react";
-import type { TokenName } from "../core/state.ts";
+import type { TokenName, Tokens } from "../core/state.ts";
 
-const tokenStyle: Record<TokenName, { label: string; icon: string; color: string }> = {
-  shock: { label: "감", icon: "ϟ", color: "var(--zeus)" },
-  displace: { label: "지", icon: "◴", color: "var(--poseidon)" },
-  soaked: { label: "침", icon: "◉", color: "var(--poseidon)" },
-  bulwark: { label: "벽", icon: "⬟", color: "var(--athena)" },
-  deflect: { label: "반", icon: "◇", color: "var(--athena)" },
-  bleed: { label: "혈", icon: "◆", color: "var(--ares)" },
-  frenzy: { label: "광", icon: "✦", color: "var(--ares)" },
-  mark: { label: "표", icon: "⌖", color: "var(--artemis)" },
-  crit: { label: "치", icon: "◎", color: "var(--artemis)" },
+const tokenStyle: Record<TokenName, { label: string; name: string; icon: string; color: string }> = {
+  shock: { label: "감", name: "감전", icon: "ϟ", color: "var(--zeus)" },
+  displace: { label: "지", name: "밀려남", icon: "◴", color: "var(--poseidon)" },
+  soaked: { label: "침", name: "침수", icon: "◉", color: "var(--poseidon)" },
+  bulwark: { label: "벽", name: "방벽", icon: "⬟", color: "var(--athena)" },
+  deflect: { label: "반", name: "반사", icon: "◇", color: "var(--athena)" },
+  bleed: { label: "혈", name: "출혈", icon: "◆", color: "var(--ares)" },
+  frenzy: { label: "광", name: "광란", icon: "✦", color: "var(--ares)" },
+  mark: { label: "표", name: "표식", icon: "⌖", color: "var(--artemis)" },
+  crit: { label: "치", name: "치명", icon: "◎", color: "var(--artemis)" },
 };
+
+export const tokenName = (token: TokenName) => tokenStyle[token].name;
 
 function TokenBadge({ token, stacks = 1 }: { token: TokenName; stacks?: number }) {
   const style = tokenStyle[token];
@@ -26,6 +28,12 @@ function TokenBadge({ token, stacks = 1 }: { token: TokenName; stacks?: number }
       <small>{stacks}</small>
     </span>
   );
+}
+
+export function TokenRow({ tokens }: { tokens: Tokens }) {
+  return (Object.entries(tokens) as [TokenName, number][])
+    .filter(([, stacks]) => stacks > 0)
+    .map(([token, stacks]) => <TokenBadge key={token} token={token} stacks={stacks} />);
 }
 
 export function TokenLegend() {

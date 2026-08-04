@@ -1,0 +1,49 @@
+[
+  {
+    "id": "card_artemis_21",
+    "name": "사냥꾼의 엄폐",
+    "patron": "artemis",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      { "op": "block", "value": 6 },
+      { "op": "heal", "value": 2 }
+    ],
+    "tags": ["defend", "utility"]
+  },
+  {
+    "id": "card_artemis_22",
+    "name": "은빛 장막",
+    "patron": "artemis",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      { "op": "block", "value": 12 },
+      { "op": "draw", "value": 1 }
+    ],
+    "tags": ["defend", "utility"]
+  },
+  {
+    "id": "card_artemis_23",
+    "name": "추격의 발놀림",
+    "patron": "artemis",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      { "op": "block", "value": 5 },
+      { "op": "apply_token", "token": "mark", "stacks": 1 }
+    ],
+    "tags": ["defend", "token"]
+  },
+  {
+    "id": "card_artemis_24",
+    "name": "달의 방벽",
+    "patron": "artemis",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      { "op": "block", "value": 8 }
+    ],
+    "tags": ["defend"]
+  }
+]

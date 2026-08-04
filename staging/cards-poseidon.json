@@ -1,0 +1,22 @@
+[
+  { "id": "card_poseidon_01", "name": "밀물 창", "patron": "poseidon", "cost": 1, "target": "enemy", "effects": [{ "op": "damage", "value": 4 }, { "op": "apply_token", "token": "soaked", "stacks": 1 }], "tags": ["attack", "token"] },
+  { "id": "card_poseidon_02", "name": "파도 방벽", "patron": "poseidon", "cost": 1, "target": "self", "effects": [{ "op": "block", "value": 6 }], "tags": ["defend"] },
+  { "id": "card_poseidon_03", "name": "조류 읽기", "patron": "poseidon", "cost": 1, "target": "self", "effects": [{ "op": "draw", "value": 2 }], "tags": ["utility"] },
+  { "id": "card_poseidon_04", "name": "해류 가속", "patron": "poseidon", "cost": 1, "target": "self", "effects": [{ "op": "energy", "value": 2 }], "tags": ["utility"] },
+  { "id": "card_poseidon_05", "name": "치유의 샘", "patron": "poseidon", "cost": 1, "target": "self", "effects": [{ "op": "heal", "value": 7 }], "tags": ["utility"] },
+  { "id": "card_poseidon_06", "name": "밀쳐내기", "patron": "poseidon", "cost": 1, "target": "enemy", "effects": [{ "op": "apply_token", "token": "displace", "stacks": 1 }, { "op": "damage", "value": 3 }], "tags": ["attack", "token"] },
+  { "id": "card_poseidon_07", "name": "젖은 사슬", "patron": "poseidon", "cost": 2, "target": "enemy", "effects": [{ "op": "apply_token", "token": "soaked", "stacks": 3 }, { "op": "damage", "value": 7 }], "tags": ["attack", "token"] },
+  { "id": "card_poseidon_08", "name": "격랑", "patron": "poseidon", "cost": 2, "target": "all_enemies", "effects": [{ "op": "damage", "value": 5 }], "tags": ["attack", "multi"] },
+  { "id": "card_poseidon_09", "name": "해일", "patron": "poseidon", "cost": 2, "target": "enemy", "effects": [{ "op": "damage", "value": 7 }, { "op": "damage", "value": 4, "when": "favor(patron) >= 70" }], "tags": ["attack"] },
+  { "id": "card_poseidon_10", "name": "심해 압력", "patron": "poseidon", "cost": 2, "target": "enemy", "effects": [{ "op": "damage", "value": 6 }, { "op": "apply_token", "token": "displace", "stacks": 2 }], "tags": ["attack", "token"] },
+  { "id": "card_poseidon_11", "name": "방파제", "patron": "poseidon", "cost": 2, "target": "self", "effects": [{ "op": "block", "value": 12 }], "tags": ["defend"] },
+  { "id": "card_poseidon_12", "name": "조류 전환", "patron": "poseidon", "cost": 2, "target": "self", "effects": [{ "op": "draw", "value": 3 }, { "op": "energy", "value": 1 }], "tags": ["utility"] },
+  { "id": "card_poseidon_13", "name": "삼지창 강타", "patron": "poseidon", "cost": 1, "target": "enemy", "effects": [{ "op": "damage", "value": 6 }, { "op": "self_damage", "value": 1 }], "tags": ["attack"] },
+  { "id": "card_poseidon_14", "name": "소용돌이", "patron": "poseidon", "cost": 2, "target": "all_enemies", "effects": [{ "op": "damage", "value": 3 }, { "op": "apply_token", "token": "soaked", "stacks": 3 }], "tags": ["attack", "multi", "token"] },
+  { "id": "card_poseidon_15", "name": "깊은 숨", "patron": "poseidon", "cost": 1, "target": "self", "effects": [{ "op": "block", "value": 4 }, { "op": "draw", "value": 1 }], "tags": ["defend", "utility"] },
+  { "id": "card_poseidon_16", "name": "만조의 은총", "patron": "poseidon", "cost": 1, "target": "enemy", "effects": [{ "op": "damage", "value": 4 }, { "op": "favor_shift", "value": 1, "god": "poseidon" }], "tags": ["attack", "favor"] },
+  { "id": "card_poseidon_bad_scope", "name": "번개 물살", "patron": "poseidon", "cost": 1, "target": "enemy", "effects": [{ "op": "damage", "value": 4 }, { "op": "apply_token", "token": "shock", "stacks": 1 }], "tags": ["attack", "token"] },
+  { "id": "card_poseidon_bad_chain", "name": "연쇄 파도", "patron": "poseidon", "cost": 2, "target": "enemy", "effects": [{ "op": "damage", "value": 5 }, { "op": "chain", "value": 3 }], "tags": ["attack", "multi"] },
+  { "id": "card_poseidon_bad_low", "name": "침수", "patron": "poseidon", "cost": 2, "target": "all_enemies", "effects": [{ "op": "apply_token", "token": "soaked", "stacks": 2 }], "tags": ["token"] },
+  { "id": "card_poseidon_bad_value", "name": "대해일", "patron": "poseidon", "cost": 1, "target": "enemy", "effects": [{ "op": "damage", "value": 14 }], "tags": ["attack"] }
+]

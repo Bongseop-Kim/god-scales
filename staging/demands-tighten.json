@@ -1,0 +1,29 @@
+[
+  {
+    "id": "demand_zeus_solo",
+    "patron": "zeus",
+    "condition": "hit_targets_in_turn >= 2",
+    "text": "물러서지 마라. 한 턴에 둘은 맞아야 한다.",
+    "axis": "target_spread",
+    "polarity": "+",
+    "min_enemies": 2
+  },
+  {
+    "id": "demand_ares_hurt",
+    "patron": "ares",
+    "condition": "damage_taken > 10",
+    "text": "피를 흘려라. 대가 없는 승리를 나는 인정하지 않는다.",
+    "axis": "damage_taken",
+    "polarity": "+",
+    "min_enemies": 1
+  },
+  {
+    "id": "demand_artemis_mark",
+    "patron": "artemis",
+    "condition": "tokens_applied >= 10",
+    "text": "먹잇감을 표식으로 덮어라. 사냥은 조준에서 시작된다.",
+    "axis": "token_load",
+    "polarity": "+",
+    "min_enemies": 1
+  }
+]

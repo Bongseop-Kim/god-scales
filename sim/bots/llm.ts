@@ -1,5 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { consumeAnswer, writePending, type PendingDecision } from "../handoff.ts";
+import { godDecks } from "../engine.ts";
+import type { GodId } from "../../core/rules.ts";
 import type { ReplayAction } from "../replay.ts";
 
 type AgentState = {
@@ -26,7 +28,7 @@ function pendingFor(state: AgentState): PendingDecision {
   return {
     turn: state.index,
     phase: "path",
-    observation: { favor: { first: 50, second: 50 }, remaining_choice_nodes: 5 - state.index, deck: ["strike", "guard", "spark"] },
+    observation: { favor: { first: 50, second: 50 }, remaining_choice_nodes: 5 - state.index, deck: godDecks[(state.pairing?.split("+")[0] ?? "zeus") as GodId] },
     options: ["combat", "rest"],
   };
 }

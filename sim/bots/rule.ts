@@ -1,9 +1,12 @@
 import type { EnemyDefinition } from "../../core/combat.ts";
 import type { Card } from "../../core/rules.ts";
 import type { CombatState } from "../../core/state.ts";
-import { demandPenalty, type Demand } from "../../core/demands.ts";
+import { demandPenalty } from "../../core/demands.ts";
+import { favorBoundaries, favorInitial } from "../../core/favor.ts";
+import { expectedValue, tokenWeights } from "../../tools/value.ts";
 
-export const botPolicyVersion = "v2";
+/** v4: 토큰 값을 게이트 표(`tokenWeights`)에서 읽고, 요구 답이 조건 판정을 전제로 바뀌었다 */
+export const botPolicyVersion = "v4";
 
 function intent(combat: CombatState, definitions: ReadonlyMap<string, EnemyDefinition>): number {
   return combat.enemies.reduce((total, enemy) => {
@@ -27,7 +30,8 @@ export function cardValue(card: Card, combat: CombatState, incoming: number, fav
     else if (effect.op === "heal") value += amount;
     else if (effect.op === "draw") value += amount * 1.5;
     else if (effect.op === "energy") value += amount * 2;
-    else if (effect.op === "apply_token") value += amount * 4;
+    // 토큰 값은 게이트와 같은 표에서 온다. 전부 4점으로 보면 crit(3)을 과소, shock(1)을 4배 과대평가한다
+    else if (effect.op === "apply_token") value += amount * (tokenWeights[effect.token ?? ""] ?? 1);
     else if (effect.op === "self_damage") value -= amount;
   }
   if (value > 0 && card.patron && (favor[card.patron] ?? 50) <= 15) value += 1;
@@ -54,10 +58,23 @@ export function chooseRestCard(deck: string[], cards: ReadonlyMap<string, Card>,
   })[0];
 }
 
+/**
+ * 보상 시점에는 살아 있는 전투가 없다 — `cardValue`의 block 항과 all_enemies 배수가 전부 0이 되어
+ * 방어·광역 카드를 구조적으로 못 고른다. 그래서 게이트가 카드를 재는 데 쓰는 기대값으로 고른다.
+ */
+export function chooseReward(options: string[], cards: ReadonlyMap<string, Card>): string {
+  return [...options].sort((left, right) => expectedValue(cards.get(right)!) - expectedValue(cards.get(left)!))[0];
+}
+
 export function chooseGraceCard(cards: ReadonlyMap<string, Card>, patron: string, combat: CombatState): string | undefined {
   return [...cards.values()]
     .filter((card) => card.patron === patron)
     .sort((left, right) => cardValue(right, combat, 0, {}) / Math.max(right.cost, 0.5) - cardValue(left, combat, 0, {}) / Math.max(left.cost, 0.5))[0]?.id;
+}
+
+/** 거절에 벌금은 없다. 그러니 상대를 진노로 떨어뜨릴 때만 거절하고, 그 밖에는 받는다 */
+export function chooseDemandAnswer(favor: Record<string, number>, patron: string, other: string): "accept" | "reject" {
+  return (favor[other] ?? favorInitial) + demandPenalty(patron, other).amount >= favorBoundaries.anger ? "accept" : "reject";
 }
 
 export function chooseCard(
@@ -81,22 +98,6 @@ export function chooseCard(
   })[0];
   if (!selected || lethal) return selected;
   return cardValue(cards.get(selected)!, combat, incoming, favor) > 0 ? selected : undefined;
-}
-
-export function chooseDemand(
-  options: Demand[],
-  otherGod: string,
-  favor: Record<string, number>,
-  completionProbability: Record<string, number>,
-): Demand {
-  return [...options].sort((a, b) => {
-    const score = (demand: Demand) => {
-      const penalty = -demandPenalty(demand.patron, otherGod).amount;
-      const wrathRisk = (favor[otherGod] ?? 50) - penalty <= 9 ? 20 : 0;
-      return (completionProbability[demand.id] ?? 0) * 12 - penalty - wrathRisk;
-    };
-    return score(b) - score(a);
-  })[0];
 }
 
 export function chooseTarget(

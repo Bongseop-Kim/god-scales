@@ -1,0 +1,37 @@
+[
+  {
+    "id": "card_zeus_retry_04",
+    "name": "감전 보호막",
+    "patron": "zeus",
+    "cost": 1,
+    "target": "all_enemies",
+    "effects": [
+      { "op": "block", "value": 3 },
+      { "op": "apply_token", "token": "shock", "stacks": 1 }
+    ],
+    "tags": ["defend", "token"]
+  },
+  {
+    "id": "card_zeus_21",
+    "name": "구름 방패",
+    "patron": "zeus",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      { "op": "block", "value": 7 }
+    ],
+    "tags": ["defend"]
+  },
+  {
+    "id": "card_zeus_22",
+    "name": "정적의 갑주",
+    "patron": "zeus",
+    "cost": 2,
+    "target": "all_enemies",
+    "effects": [
+      { "op": "block", "value": 9 },
+      { "op": "apply_token", "token": "shock", "stacks": 1 }
+    ],
+    "tags": ["defend", "token"]
+  }
+]

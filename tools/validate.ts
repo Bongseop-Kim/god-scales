@@ -1,5 +1,6 @@
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { selfTokens } from "../core/rules.ts";
 import { isValueAllowed } from "./value.ts";
 
 export type FailureKey = "schema" | "dsl_parse" | "token_scope" | "fusion_scope" | "demand_axis" | "duplicate" | "value_outlier";
@@ -19,17 +20,15 @@ type Enemy = Item & {
 const required: Record<string, string[]> = {
   card: ["id", "name", "cost", "target", "effects", "tags"],
   enemy: ["id", "name", "region", "tier", "role", "hp", "intent_visible", "pattern", "pattern_mode"],
-  demand: ["id", "patron", "condition", "axis", "polarity", "min_enemies"],
+  demand: ["id", "patron", "condition", "text", "axis", "polarity", "min_enemies"],
   god: ["id", "name", "tokens", "ops", "rivals", "demands"],
 };
 
-const gods: Record<string, { tokens: string[]; ops: string[]; rivals: string[] }> = {
-  zeus: { tokens: ["shock"], ops: ["chain"], rivals: ["poseidon"] },
-  poseidon: { tokens: ["displace", "soaked"], ops: [], rivals: ["zeus"] },
-  athena: { tokens: ["bulwark", "deflect"], ops: [], rivals: ["ares"] },
-  ares: { tokens: ["bleed", "frenzy"], ops: [], rivals: ["athena"] },
-  artemis: { tokens: ["mark", "crit"], ops: [], rivals: [] },
-};
+/** 신의 어휘는 data/gods.json이 정한다 — 게이트가 사본을 들면 데이터가 바뀔 때 조용히 어긋난다 */
+type GodData = { id: string; tokens: string[]; ops: string[]; rivals: string[] };
+const gods: Record<string, GodData> = Object.fromEntries(
+  (JSON.parse(readFileSync(new URL("../data/gods.json", import.meta.url), "utf8")) as GodData[]).map((god) => [god.id, god]),
+);
 const commonOps = ["damage", "block", "draw", "energy", "heal", "self_damage", "apply_token", "favor_shift"];
 const allTokens = Object.values(gods).flatMap(({ tokens }) => tokens);
 const conditionPatterns = [
@@ -96,7 +95,9 @@ function tokenScopeFailure(card: Card): boolean {
   const owners = card.patron_pair ?? (card.patron ? [card.patron] : []);
   return card.effects.some(({ op, token }) =>
     (op === "chain" && (card.target !== "enemy" || !owners.includes("zeus")))
-    || (token !== undefined && !owners.some((god) => gods[god]?.tokens.includes(token))),
+    || (token !== undefined && !owners.some((god) => gods[god]?.tokens.includes(token)))
+    // target=self인 카드가 적 토큰을 붙이면 그 디버프는 플레이어에게 간다. 기대값 표는 그것을 이득으로 센다
+    || (op === "apply_token" && card.target === "self" && token !== undefined && !(selfTokens as ReadonlySet<string>).has(token)),
   );
 }
 

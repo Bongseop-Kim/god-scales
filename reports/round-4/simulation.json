@@ -1,0 +1,303 @@
+{
+  "runs": 16000,
+  "bot_policy_version": "v2",
+  "global_param_version": "v2",
+  "wins": 3493,
+  "winRate": 0.2183125,
+  "averageTurns": 70.0343125,
+  "scenario_runs": 0,
+  "favor_curve": [
+    {
+      "zeus": 50,
+      "poseidon": 50
+    },
+    {
+      "zeus": 64,
+      "poseidon": 34
+    },
+    {
+      "zeus": 76,
+      "poseidon": 18
+    },
+    {
+      "zeus": 78,
+      "poseidon": 20
+    },
+    {
+      "zeus": 78,
+      "poseidon": 22
+    },
+    {
+      "zeus": 75,
+      "poseidon": 19
+    },
+    {
+      "zeus": 89,
+      "poseidon": 3
+    },
+    {
+      "zeus": 100,
+      "poseidon": 0
+    },
+    {
+      "zeus": 97,
+      "poseidon": 0
+    }
+  ],
+  "devotion_ratio": 0.32756119167695535,
+  "anger_ratio": 0.08325486010839768,
+  "wrath_ratio": 0.05480570029505932,
+  "favor_floor": {
+    "zeus": 44,
+    "poseidon": 0,
+    "athena": 0,
+    "ares": 0,
+    "artemis": 41
+  },
+  "conflict_outcomes": {
+    "zeus": 6400,
+    "poseidon": 4800,
+    "athena": 3200,
+    "ares": 1600
+  },
+  "conflict_penalty_dist": {
+    "zeus+poseidon": {
+      "rival_18": 1600
+    },
+    "zeus+athena": {
+      "non_rival_9": 1600
+    },
+    "zeus+ares": {
+      "non_rival_9": 1600
+    },
+    "zeus+artemis": {
+      "none": 1600
+    },
+    "poseidon+athena": {
+      "non_rival_9": 1600
+    },
+    "poseidon+ares": {
+      "non_rival_9": 1600
+    },
+    "poseidon+artemis": {
+      "none": 1600
+    },
+    "athena+ares": {
+      "rival_18": 1600
+    },
+    "athena+artemis": {
+      "none": 1600
+    },
+    "ares+artemis": {
+      "none": 1600
+    }
+  },
+  "hp_curve": [
+    100,
+    69.80000000000001,
+    68.50000000000003,
+    40.40000000000003,
+    34.300000000000026,
+    59.300000000000026,
+    34.500000000000014,
+    2.2000000000000117,
+    0
+  ],
+  "path_choices": {
+    "combat": 22465,
+    "rest": 17193
+  },
+  "rest_choices": {
+    "heal": 17193
+  },
+  "region_clear_rate": {
+    "underworld": 0.645875,
+    "surface": 0.2183125
+  },
+  "low_rest_clear_rate": 0.1266875,
+  "grace_earned": {
+    "zeus": 20141,
+    "poseidon": 16566,
+    "athena": 14800,
+    "ares": 4254,
+    "artemis": 0
+  },
+  "grace_milestones": {
+    "2": 0.823125,
+    "4": 0.470125,
+    "6": 0.25775
+  },
+  "upgrade_rate": 0.823125,
+  "enemy_count_dist": {
+    "1": 52883,
+    "2": 45318,
+    "3": 11967
+  },
+  "target_spread": {
+    "single": 2932019,
+    "multi": 112414
+  },
+  "block_efficiency": 0.5825082187278836,
+  "fusion_rate": 0.0211875,
+  "runs_by_pairing": {
+    "zeus+poseidon": 1600,
+    "zeus+athena": 1600,
+    "zeus+ares": 1600,
+    "zeus+artemis": 1600,
+    "poseidon+athena": 1600,
+    "poseidon+ares": 1600,
+    "poseidon+artemis": 1600,
+    "athena+ares": 1600,
+    "athena+artemis": 1600,
+    "ares+artemis": 1600
+  },
+  "win_rate_matrix": {
+    "zeus": {
+      "zeus": null,
+      "poseidon": 0.02,
+      "athena": 0.50875,
+      "ares": 0.000625,
+      "artemis": 0.000625
+    },
+    "poseidon": {
+      "zeus": 0.02,
+      "poseidon": null,
+      "athena": 0.676875,
+      "ares": 0.02,
+      "artemis": 0.00625
+    },
+    "athena": {
+      "zeus": 0.50875,
+      "poseidon": 0.676875,
+      "athena": null,
+      "ares": 0.55375,
+      "artemis": 0.39375
+    },
+    "ares": {
+      "zeus": 0.000625,
+      "poseidon": 0.02,
+      "athena": 0.55375,
+      "ares": null,
+      "artemis": 0.0025
+    },
+    "artemis": {
+      "zeus": 0.000625,
+      "poseidon": 0.00625,
+      "athena": 0.39375,
+      "ares": 0.0025,
+      "artemis": null
+    }
+  },
+  "pairing_win_stddev": 0.2651239465443474,
+  "card_win_delta": {
+    "card_poseidon_01": 0,
+    "card_poseidon_02": 0.00008259212198221105,
+    "card_zeus_02": 0,
+    "card_zeus_01": 0,
+    "card_poseidon_03": 0.0006596212836795527,
+    "card_poseidon_06": 0.055147755871951934,
+    "card_zeus_07": 0.004809568853928097,
+    "card_zeus_03": 0.00027765370679178503,
+    "card_zeus_20": 0.02065817896717457,
+    "card_zeus_11": -0.01967532467532469,
+    "card_athena_01": 0.0000865775484678033,
+    "card_athena_06": 0,
+    "card_athena_04": 0.0016211657147820885,
+    "card_athena_retry_01": 0.14722303338601117,
+    "card_zeus_retry_02": 0.010884092160100653,
+    "card_athena_14": 0.09694912344387256,
+    "card_ares_10": 0,
+    "card_ares_01": 0,
+    "card_ares_04": 0.0004991182338215065,
+    "card_ares_06": 0.005231951596568209,
+    "card_ares_retry_01": 0.006244032919810216,
+    "card_artemis_01": 0,
+    "card_artemis_10": 0.0012210067834537838,
+    "card_artemis_11": 0.008584680599369085,
+    "card_artemis_retry_01": 0.015203130804831197,
+    "card_artemis_03": 0.00030732245977574526,
+    "card_athena_02": 0.15822764641590825,
+    "card_poseidon_14": -0.026245522456782557,
+    "card_poseidon_12": 0.010415522522449289,
+    "card_athena_08": 0.018748668659198137,
+    "card_poseidon_15": 0.017999940946513193,
+    "card_ares_14": 0.05853573235974552,
+    "card_poseidon_retry_02": 0.024637693533697626,
+    "card_ares_02": 0.0015270483193277474,
+    "card_artemis_14": 0.024934153018034595,
+    "card_athena_05": 0.06656049346278489,
+    "card_athena_09": 0.21793510729633409,
+    "card_ares_16": -0.000985066362275959,
+    "card_artemis_02": 0.02968671170827069,
+    "card_poseidon_retry_04": -0.045838068181818174,
+    "card_zeus_retry_03": 0.036193239057964816,
+    "card_athena_retry_04": 0.16644902087270708,
+    "card_athena_retry_03": 0.05933927937512,
+    "card_zeus_04": 0.014789396195762541,
+    "card_zeus_08": 0.011374446902654857,
+    "card_ares_retry_04": -0.0023065032544563433,
+    "card_ares_13": 0.013829450362265357,
+    "card_artemis_retry_04": 0.003418866771274263,
+    "card_ares_05": 0.035429592029931456,
+    "card_poseidon_05": 0.12287369197610985,
+    "card_athena_16": 0.4374342861755795,
+    "card_athena_12": 0.06826020486918812,
+    "card_artemis_07": 0.025396375565212393,
+    "card_zeus_09": 0.015356370440572514,
+    "card_zeus_retry_01": 0.013087196762926339,
+    "card_artemis_09": 0.007614739974937341,
+    "card_athena_07": 0.10894486324004514,
+    "card_ares_07": 0.003516206051386078,
+    "card_zeus_10": 0.019727220318615093,
+    "card_zeus_14": -0.005449672276934236,
+    "card_ares_15": 0.004660452988792032,
+    "card_artemis_12": 0.03475773602057002,
+    "card_poseidon_10": 0.08032693466284051,
+    "card_athena_15": 0.2519762958385596,
+    "card_artemis_05": 0.11122494645042841,
+    "card_artemis_15": 0.015519116300366304,
+    "card_ares_09": 0.009781867856039555,
+    "card_zeus_06": 0.0028810663021189313,
+    "card_zeus_retry_05": 0.010238185017596768,
+    "card_zeus_retry_07": -0.017966083043967344,
+    "card_athena_10": 0.3946411267813498,
+    "card_poseidon_04": 0.03617393961580031,
+    "card_poseidon_08": -0.0015751863651507461,
+    "card_zeus_15": 0.010357142857142839,
+    "card_artemis_16": 0.052643407534246574,
+    "card_fused_zeus_artemis": -0.000625,
+    "card_poseidon_13": 0.026939834499980716,
+    "card_fused_athena_artemis": 0.5660893574297188,
+    "card_zeus_retry_06": 0.0026298190401258725,
+    "card_poseidon_07": -0.02376618408662899,
+    "card_zeus_19": -0.004899722637081305,
+    "card_zeus_18": 0.008762414840351295,
+    "card_artemis_13": 0.04044408748701974,
+    "card_zeus_17": 0.0032142857142856947,
+    "card_athena_13": 0.08917233516498742,
+    "card_artemis_06": 0.04812114477503628,
+    "card_athena_11": -0.0327560399159664,
+    "card_ares_03": 0.0703104707792208,
+    "card_ares_11": 0.10578125000000001,
+    "card_artemis_04": 0.0023933531746031717,
+    "card_poseidon_retry_01": 0.05532986111111112,
+    "card_poseidon_11": 0.010934973086722298,
+    "card_artemis_retry_03": 0.020329861111111108,
+    "card_ares_08": -0.005329861111111096,
+    "card_artemis_08": -0.0007812499999999917,
+    "card_zeus_retry_04": -0.04159090909090909,
+    "card_athena_03": 0.49124999999999996,
+    "card_zeus_16": 0.4346527777777778,
+    "card_athena_retry_02": 0.27559294871794876,
+    "card_zeus_12": -0.02380434782608697,
+    "card_ares_retry_03": 0.008541666666666671,
+    "card_fused_poseidon_artemis": 0.99375,
+    "card_ares_12": -0.000625,
+    "card_poseidon_09": 0.0033096590909090866,
+    "card_ares_retry_02": -0.2771875,
+    "card_poseidon_retry_03": 0.03171874999999999,
+    "card_zeus_05": -0.004687500000000018,
+    "card_artemis_retry_02": -0.0015625,
+    "card_fused_ares_artemis": 0.4975
+  }
+}

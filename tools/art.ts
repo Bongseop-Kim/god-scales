@@ -1,13 +1,12 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { godDecks } from "../sim/engine.ts";
 
 type CardData = { id: string; name: string; patron?: string; patron_pair?: string[]; effects: { op: string; value?: number; token?: string; stacks?: number }[] };
-const starters: CardData[] = [
-  { id: "strike", name: "타격", patron: "zeus", effects: [{ op: "damage", value: 7 }] },
-  { id: "guard", name: "방어", patron: "athena", effects: [{ op: "block", value: 6 }] },
-  { id: "spark", name: "불꽃", patron: "zeus", effects: [{ op: "damage", value: 4 }, { op: "apply_token", token: "shock", stacks: 1 }] },
-];
-const generated = JSON.parse(readFileSync(new URL("../data/cards.json", import.meta.url), "utf8")) as CardData[];
-const cards = [...starters, ...generated];
+const cards = JSON.parse(readFileSync(new URL("../data/cards.json", import.meta.url), "utf8")) as CardData[];
+// 시작 덱 15장이 필수다 — 모든 런의 첫 손패에 뜬다. 나머지는 보상으로 뽑혀야 화면에 나온다
+const starterIds = new Set(Object.values(godDecks).flat());
+const starters = cards.filter(({ id }) => starterIds.has(id));
+const generated = cards.filter(({ id }) => !starterIds.has(id));
 const existing = new Set(existsSync("art/cards") ? readdirSync("art/cards").filter((name) => name.endsWith(".webp")).map((name) => name.replace(/\.webp$/, "")) : []);
 const missing = cards.filter(({ id }) => !existing.has(id));
 

@@ -1,8 +1,56 @@
 [
-  { "id": "demand_zeus_multi", "patron": "zeus", "condition": "hit_targets_in_turn >= 3", "axis": "target_spread", "polarity": "+", "min_enemies": 3 },
-  { "id": "demand_zeus_solo", "patron": "zeus", "condition": "hit_targets_in_turn >= 1", "axis": "target_spread", "polarity": "+", "min_enemies": 1 },
-  { "id": "demand_poseidon_solo", "patron": "poseidon", "condition": "hit_targets_in_turn <= 1", "axis": "target_spread", "polarity": "-", "min_enemies": 1 },
-  { "id": "demand_athena_safe", "patron": "athena", "condition": "damage_taken == 0", "axis": "damage_taken", "polarity": "-", "min_enemies": 1 },
-  { "id": "demand_ares_hurt", "patron": "ares", "condition": "damage_taken > 0", "axis": "damage_taken", "polarity": "+", "min_enemies": 1 },
-  { "id": "demand_artemis_mark", "patron": "artemis", "condition": "tokens_applied >= 1", "axis": "token_load", "polarity": "+", "min_enemies": 1 }
+  {
+    "id": "demand_zeus_multi",
+    "patron": "zeus",
+    "condition": "hit_targets_in_turn >= 3",
+    "text": "한 번의 벼락으로 셋을 쳐라. 흩어진 적에게 자비를 두지 마라.",
+    "axis": "target_spread",
+    "polarity": "+",
+    "min_enemies": 3
+  },
+  {
+    "id": "demand_zeus_solo",
+    "patron": "zeus",
+    "condition": "hit_targets_in_turn >= 2",
+    "text": "물러서지 마라. 한 턴에 둘은 맞아야 한다.",
+    "axis": "target_spread",
+    "polarity": "+",
+    "min_enemies": 2
+  },
+  {
+    "id": "demand_poseidon_solo",
+    "patron": "poseidon",
+    "condition": "hit_targets_in_turn <= 1",
+    "text": "한 놈만 노려라. 파도는 갈라지지 않는다.",
+    "axis": "target_spread",
+    "polarity": "-",
+    "min_enemies": 1
+  },
+  {
+    "id": "demand_athena_safe",
+    "patron": "athena",
+    "condition": "damage_taken == 0",
+    "text": "상처 없이 이겨라. 맞고 이기는 것은 승리가 아니다.",
+    "axis": "damage_taken",
+    "polarity": "-",
+    "min_enemies": 1
+  },
+  {
+    "id": "demand_ares_hurt",
+    "patron": "ares",
+    "condition": "damage_taken > 10",
+    "text": "피를 흘려라. 대가 없는 승리를 나는 인정하지 않는다.",
+    "axis": "damage_taken",
+    "polarity": "+",
+    "min_enemies": 1
+  },
+  {
+    "id": "demand_artemis_mark",
+    "patron": "artemis",
+    "condition": "tokens_applied >= 10",
+    "text": "먹잇감을 표식으로 덮어라. 사냥은 조준에서 시작된다.",
+    "axis": "token_load",
+    "polarity": "+",
+    "min_enemies": 1
+  }
 ]

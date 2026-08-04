@@ -1,0 +1,982 @@
+{
+  "seed": 1,
+  "actions": [
+    {
+      "type": "card",
+      "choice": "guard"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "strike"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "stormguard"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "stormguard"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "spark"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "stormguard"
+    },
+    {
+      "type": "card",
+      "choice": "stormguard"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "strike"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "stormguard"
+    },
+    {
+      "type": "card",
+      "choice": "guard"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "spark"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "stormguard"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "strike"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "aegis"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "spark"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "stormguard"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "guard"
+    },
+    {
+      "type": "card",
+      "choice": "spark"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "aegis"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "strike"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "guard"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "stormguard"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "spark"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "strike"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "aegis"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "guard"
+    },
+    {
+      "type": "card",
+      "choice": "spark"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "path",
+      "choice": "combat"
+    },
+    {
+      "type": "card",
+      "choice": "strike"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "strike"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "guard"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "aegis"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "strike"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "strike"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "spark"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "aegis"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "spark"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "strike"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "stormguard"
+    },
+    {
+      "type": "card",
+      "choice": "stormguard"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "strike"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "aegis"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "stormguard"
+    },
+    {
+      "type": "card",
+      "choice": "strike"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "strike"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "stormguard"
+    },
+    {
+      "type": "card",
+      "choice": "spark"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "path",
+      "choice": "combat"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "spark"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "stormguard"
+    },
+    {
+      "type": "card",
+      "choice": "strike"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "strike"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "strike"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "spark"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "stormguard"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "aegis"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "strike"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "strike"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "spark"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "guard"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "stormguard"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "strike"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "aegis"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "stormguard"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "stormguard"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "strike"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "spark"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "aegis"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "strike"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "strike"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "aegis"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "stormguard"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "stormguard"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "guard"
+    },
+    {
+      "type": "card",
+      "choice": "strike"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "aegis"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_surface_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "spear"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_surface_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "spark"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_surface_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "strike"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_surface_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "guard"
+    },
+    {
+      "type": "card",
+      "choice": "strike"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_surface_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "guard"
+    },
+    {
+      "type": "card",
+      "choice": "strike"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_surface_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "aegis"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_surface_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    }
+  ],
+  "replay_mode": "action_log"
+}

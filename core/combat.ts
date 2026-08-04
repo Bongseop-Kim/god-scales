@@ -101,6 +101,8 @@ export function endTurn(combat: CombatState, definitions: ReadonlyMap<string, En
 
   tickBleed(combat.player);
   for (const enemy of combat.enemies) tickBleed(enemy);
+  // 감전은 한 턴짜리다. 적의 공격까지 끝난 뒤에 지운다 — 플레이어에게 걸린 감전도 그 턴에 값을 해야 한다
+  for (const actor of [combat.player, ...combat.enemies]) delete actor.tokens.shock;
   updateOutcome(combat);
 }
 

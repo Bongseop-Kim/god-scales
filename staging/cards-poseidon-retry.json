@@ -1,0 +1,6 @@
+[
+  { "id": "card_poseidon_retry_01", "name": "해무", "patron": "poseidon", "cost": 1, "target": "enemy", "effects": [{ "op": "damage", "value": 3 }, { "op": "apply_token", "token": "soaked", "stacks": 1 }, { "op": "block", "value": 1 }], "tags": ["attack", "token", "defend"] },
+  { "id": "card_poseidon_retry_02", "name": "격류 밀침", "patron": "poseidon", "cost": 2, "target": "enemy", "effects": [{ "op": "apply_token", "token": "displace", "stacks": 1 }, { "op": "damage", "value": 7 }], "tags": ["attack", "token"] },
+  { "id": "card_poseidon_retry_03", "name": "잔물결 치유", "patron": "poseidon", "cost": 2, "target": "self", "effects": [{ "op": "heal", "value": 9 }, { "op": "block", "value": 3 }], "tags": ["utility", "defend"] },
+  { "id": "card_poseidon_retry_04", "name": "해신의 부름", "patron": "poseidon", "cost": 3, "target": "all_enemies", "effects": [{ "op": "apply_token", "token": "soaked", "stacks": 3 }, { "op": "damage", "value": 5 }], "tags": ["attack", "multi", "token"] }
+]

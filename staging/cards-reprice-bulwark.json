@@ -1,0 +1,49 @@
+[
+  {
+    "id": "card_athena_02",
+    "name": "성벽",
+    "patron": "athena",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      { "op": "apply_token", "token": "bulwark", "stacks": 3 }
+    ],
+    "tags": ["token", "defend"]
+  },
+  {
+    "id": "card_athena_09",
+    "name": "굳건한 진형",
+    "patron": "athena",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      { "op": "block", "value": 8 },
+      { "op": "apply_token", "token": "bulwark", "stacks": 2 }
+    ],
+    "tags": ["defend", "token"]
+  },
+  {
+    "id": "card_athena_retry_01",
+    "name": "밀집 방어",
+    "patron": "athena",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      { "op": "block", "value": 4 },
+      { "op": "apply_token", "token": "bulwark", "stacks": 1 }
+    ],
+    "tags": ["defend", "token"]
+  },
+  {
+    "id": "card_athena_retry_04",
+    "name": "창벽 반격",
+    "patron": "athena",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 5 },
+      { "op": "apply_token", "token": "bulwark", "stacks": 3 }
+    ],
+    "tags": ["attack", "token", "defend"]
+  }
+]

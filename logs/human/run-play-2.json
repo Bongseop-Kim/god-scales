@@ -1,0 +1,1062 @@
+{
+  "seed": 1,
+  "actions": [
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_02"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_02"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_01"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_02"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_01"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_03"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "reward",
+      "choice": "card_athena_11"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_11"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_01"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_11"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_02"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "reward",
+      "choice": "card_zeus_06"
+    },
+    {
+      "type": "path",
+      "choice": "combat"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_11"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_11"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_02"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_11"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_11"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "reward",
+      "choice": "card_zeus_retry_06"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_11"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_02"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_11"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_pressure"
+    },
+    {
+      "type": "reward",
+      "choice": "card_zeus_11"
+    },
+    {
+      "type": "path",
+      "choice": "rest"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_11"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_02"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_11"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_11"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_11"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_11"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_11"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_11"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_02"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_retry_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_11"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_11"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_retry_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_02"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_11"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_11"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_under_boss"
+    },
+    {
+      "type": "reward",
+      "choice": "card_zeus_retry_06"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_retry_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_surface_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_11"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_surface_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    },
+    {
+      "type": "card",
+      "choice": "card_zeus_01"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_surface_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_surface_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "card_athena_06"
+    },
+    {
+      "type": "target",
+      "choice": "enemy_surface_attrition"
+    },
+    {
+      "type": "card",
+      "choice": "end_turn"
+    }
+  ],
+  "replay_mode": "action_log"
+}
