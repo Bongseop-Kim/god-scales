@@ -1,6 +1,6 @@
 # P-21 · 에셋 투입 — 동결 후
 
-`plans/21-assets.md` · [◀ P-20](20-rounds.md) · [색인](00-index.md)
+`plans/21-assets.md` · [◀ P-20](20-rounds.md) · [색인](00-index.md) · [P-22 ▶](22-steppable.md)
 
 **크기** 제작 시간에 좌우됨 · **착수 조건** P-20 (콘텐츠 동결)
 
