@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { operatorCards } from "../core/__fixtures__/cards";
 import {
-  clearEncounterTokens,
   dealDamage,
   evaluateCondition,
   executeCard,
@@ -27,6 +26,7 @@ const state = (): GameState => ({
     drawPile: ["a", "b"],
     hand: [],
     discardPile: [],
+    powers: [],
     enemies: [
       { ...actor("a", 20), patternIndex: 0 },
       { ...actor("b", 20), patternIndex: 0 },
@@ -99,12 +99,14 @@ describe("tokens", () => {
     expect(displaced.patternIndex).toBe(2);
   });
 
-  it("keeps encounter tokens until combat ends", () => {
-    const combat = state();
-    for (const token of ["shock", "soaked", "frenzy", "mark"] as const) combat.combat.player.tokens[token] = 1;
-    expect(combat.combat.player.tokens).toMatchObject({ shock: 1, soaked: 1, frenzy: 1, mark: 1 });
-    clearEncounterTokens(combat);
-    expect(combat.combat.player.tokens).toEqual({});
+  // 적 패턴은 `target: self`로 아무 토큰이나 붙일 수 있다 — 양쪽이 가시를 들면 반사가 무한히 튕겼다
+  it("stops thorns at one bounce", () => {
+    const left = actor("left", 100);
+    const right = actor("right", 100);
+    left.tokens.thorns = 1;
+    right.tokens.thorns = 1;
+    expect(dealDamage(left, right, 5)).toBe(5);
+    expect([right.hp, left.hp]).toEqual([95, 99]);
   });
 });
 

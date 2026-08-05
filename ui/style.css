@@ -68,6 +68,8 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .enemy .hp small { position: relative; }
 .enemy .badges { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .enemy .badges em { color: #9de0c7; font-size: .74rem; font-style: normal; }
+/* 패시브는 소모품이 아니다 — 방어·토큰 배지와 색을 나눈다. 소모되는 ward·guard는 숫자가 줄어든다 */
+.enemy .badges em.passive { color: #bfa8e0; padding: 0 5px; border: 1px solid #4a4260; border-radius: 4px; }
 .enemy:not(:disabled):hover { border-color: #efa198; }
 
 /* 의도 표시와 겹치지 않게 아래쪽에서 떠오른다 */

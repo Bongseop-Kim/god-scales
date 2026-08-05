@@ -2230,13 +2230,13 @@
     "target": "enemy",
     "effects": [
       {
+        "op": "damage",
+        "value": 7
+      },
+      {
         "op": "apply_token",
         "token": "crit",
         "stacks": 1
-      },
-      {
-        "op": "damage",
-        "value": 7
       }
     ],
     "tags": [
@@ -2673,6 +2673,144 @@
     "tags": [
       "defend",
       "utility"
+    ]
+  },
+  {
+    "id": "card_zeus_23",
+    "name": "천 개의 벼락",
+    "patron": "zeus",
+    "cost": 1,
+    "target": "enemy",
+    "trigger": "on_play",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "shock",
+        "stacks": 1
+      },
+      {
+        "op": "chain",
+        "value": 1
+      }
+    ],
+    "tags": [
+      "power",
+      "token",
+      "multi"
+    ]
+  },
+  {
+    "id": "card_poseidon_17",
+    "name": "젖은 상처",
+    "patron": "poseidon",
+    "cost": 2,
+    "target": "enemy",
+    "trigger": "on_unblocked",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "soaked",
+        "stacks": 1
+      },
+      {
+        "op": "damage",
+        "value": 3
+      }
+    ],
+    "tags": [
+      "power",
+      "token"
+    ]
+  },
+  {
+    "id": "card_athena_17",
+    "name": "청동 심장",
+    "patron": "athena",
+    "cost": 2,
+    "target": "self",
+    "trigger": "turn_end",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "bulwark",
+        "stacks": 1
+      },
+      {
+        "op": "heal",
+        "value": 2
+      }
+    ],
+    "tags": [
+      "power",
+      "token"
+    ]
+  },
+  {
+    "id": "card_athena_18",
+    "name": "가시 방패",
+    "patron": "athena",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 3
+      },
+      {
+        "op": "apply_token",
+        "token": "thorns",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "attack",
+      "token"
+    ]
+  },
+  {
+    "id": "card_ares_24",
+    "name": "광전사의 각성",
+    "patron": "ares",
+    "cost": 2,
+    "target": "self",
+    "trigger": "turn_start",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "frenzy",
+        "stacks": 1
+      },
+      {
+        "op": "draw",
+        "value": 1
+      }
+    ],
+    "tags": [
+      "power",
+      "token"
+    ]
+  },
+  {
+    "id": "card_artemis_23",
+    "name": "사냥의 호흡",
+    "patron": "artemis",
+    "cost": 2,
+    "target": "enemy",
+    "trigger": "turn_start",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 2
+      },
+      {
+        "op": "apply_token",
+        "token": "crit",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "power",
+      "token"
     ]
   }
 ]

@@ -29,6 +29,10 @@ export type RunResult = {
   cardsPlayed: string[];
   /** 요구 id별 [수락, 지킴]. 조건 판정이 실제로 걸리는지 보는 자리다 */
   demandOutcomes: Record<string, [number, number]>;
+  /** 조우 편성별 돌파 여부. 정책 행렬이 「어느 조우에서 어느 정책이 1위인가」를 여기서 읽는다 */
+  encounterOutcomes: { key: string; cleared: boolean }[];
+  /** 패배한 조우의 맥락. 「승률이 내려갔다」와 「guard 조우에서만 내려갔다」를 가르는 다섯 줄 */
+  defeatContext?: { region: string; floor: number; enemies: string[]; passives: string[] };
   /** 지금 낼 수 없어서 봇 답으로 대체된 기록된 결정의 수. 0이 아니면 그 로그는 이 규칙판이 아니다 */
   substituted?: number;
 };
@@ -72,6 +76,8 @@ export function summarize(results: RunResult[]) {
    */
   const pairing_win_cv = rateMean ? pairing_win_stddev / rateMean : 0;
   const cardIds = [...new Set(paired.flatMap(({ cardsPlayed }) => cardsPlayed))];
+  /** 장당 사용 횟수. `card_win_delta`는 쓰인 카드만 재므로 **안 쓰이는 카드**는 여기서만 보인다 */
+  const card_play_count = count(paired.flatMap(({ cardsPlayed }) => cardsPlayed));
   const card_win_delta = Object.fromEntries(cardIds.map((cardId) => {
     const deltas = Object.entries(pairingRates).flatMap(([pairing, baseline]) => {
       const used = paired.filter((result) => result.pairing === pairing && result.cardsPlayed.includes(cardId));
@@ -79,6 +85,15 @@ export function summarize(results: RunResult[]) {
     });
     return [cardId, deltas.length ? deltas.reduce((sum, value) => sum + value, 0) / deltas.length : 0];
   }));
+  const encounterKeys = [...new Set(results.flatMap(({ encounterOutcomes }) => encounterOutcomes.map(({ key }) => key)))].sort();
+  const encounter_clear_rate = Object.fromEntries(encounterKeys.map((key) => {
+    const tries = results.flatMap(({ encounterOutcomes }) => encounterOutcomes.filter((outcome) => outcome.key === key));
+    return [key, tries.filter(({ cleared }) => cleared).length / tries.length];
+  }));
+  const defeats = results.flatMap(({ defeatContext }) => defeatContext ? [defeatContext] : []);
+  /** 패시브별 패배 점유율. 합이 1을 넘는다 — 한 조우에 패시브가 둘까지 겹친다 */
+  const defeat_by_passive = Object.fromEntries([...new Set(defeats.flatMap(({ passives }) => passives))].sort()
+    .map((passive) => [passive, defeats.filter(({ passives }) => passives.includes(passive)).length / defeats.length]));
   return {
     runs: baseResults.length,
     bot_policy_version: botPolicyVersion,
@@ -115,6 +130,8 @@ export function summarize(results: RunResult[]) {
     grace_milestones: Object.fromEntries([2, 4, 6].map((milestone) => [milestone, results.length ? results.filter(({ grace }) => Object.values(grace).some((value) => value >= milestone)).length / results.length : 0])),
     upgrade_rate: results.length ? results.filter(({ upgrades }) => upgrades > 0).length / results.length : 0,
     enemy_count_dist: count(results.flatMap(({ enemyCounts }) => enemyCounts.map(String))),
+    encounter_clear_rate,
+    defeat_by_passive,
     target_spread: count(results.flatMap(({ targetSpread }) => targetSpread)),
     block_efficiency: results.reduce((sum, { blockAbsorbed }) => sum + blockAbsorbed, 0) / (results.reduce((sum, { blockBuilt }) => sum + blockBuilt, 0) || 1),
     fusion_rate: results.length ? results.filter(({ fused }) => fused).length / results.length : 0,
@@ -125,6 +142,7 @@ export function summarize(results: RunResult[]) {
     pairing_win_stddev,
     pairing_win_cv,
     card_win_delta,
+    card_play_count,
   };
 }
 
@@ -139,8 +157,10 @@ export function renderReport(report: ReturnType<typeof summarize>): string {
     `region_clear_rate=${JSON.stringify(report.region_clear_rate)} low_rest_clear_rate=${report.low_rest_clear_rate.toFixed(3)}`,
     `scenario_runs=${report.scenario_runs} grace_earned=${JSON.stringify(report.grace_earned)} grace_milestones=${JSON.stringify(report.grace_milestones)} upgrade_rate=${report.upgrade_rate.toFixed(3)}`,
     `enemy_count_dist=${JSON.stringify(report.enemy_count_dist)} target_spread=${JSON.stringify(report.target_spread)} block_efficiency=${report.block_efficiency.toFixed(3)}`,
+    `encounter_clear_rate=${JSON.stringify(report.encounter_clear_rate)} defeat_by_passive=${JSON.stringify(report.defeat_by_passive)}`,
     `fusion_rate=${report.fusion_rate.toFixed(3)}`,
     `runs_by_pairing=${JSON.stringify(report.runs_by_pairing)} pairing_win_stddev=${report.pairing_win_stddev.toFixed(3)} pairing_win_cv=${report.pairing_win_cv.toFixed(3)}`,
     `win_rate_matrix=${JSON.stringify(report.win_rate_matrix)} card_win_delta=${JSON.stringify(report.card_win_delta)}`,
+    `card_play_count=${JSON.stringify(report.card_play_count)}`,
   ].join("\n");
 }

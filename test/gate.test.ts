@@ -19,7 +19,17 @@ describe("validation gate", () => {
       "value_outlier",
       // target=self 카드가 적 토큰을 붙이면 그 디버프는 플레이어에게 걸린다
       "token_scope",
+      // 없는 이름을 적은 패시브는 어떤 훅도 읽지 않는다
+      "passive_coverage",
+      // 없는 훅에 걸린 파워는 영원히 발동하지 않는다
+      "dsl_parse",
     ]);
+  });
+
+  // 커버리지가 비면 그 패시브의 훅은 아무도 부르지 않는 코드다 — 목록만 내면 다음 회차에 조용히 생긴다
+  it("wires every passive to a shipped enemy", () => {
+    const enemies = JSON.parse(readFileSync("data/enemies.json", "utf8"));
+    expect(validateItems(enemies).passive_coverage).toEqual([]);
   });
 
   it("accepts valid single-patron and fusion cards", () => {

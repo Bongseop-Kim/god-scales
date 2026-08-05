@@ -1,11 +1,12 @@
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { selfTokens } from "../core/rules.ts";
-import { expectedValue, isValueAllowed, mitigationValue } from "./value.ts";
+import { passiveNames, triggers, type Passives } from "../core/state.ts";
+import { expectedValue, isValueAllowed, mitigationTokens, mitigationValue, tokenWeights } from "./value.ts";
 
-export type FailureKey = "schema" | "dsl_parse" | "token_scope" | "fusion_scope" | "demand_axis" | "duplicate" | "value_outlier" | "pool_ratio";
+export type FailureKey = "schema" | "dsl_parse" | "token_scope" | "fusion_scope" | "demand_axis" | "duplicate" | "value_outlier" | "pool_ratio" | "passive_coverage";
 type Item = Record<string, unknown>;
-type Card = Item & { id: string; name: string; patron?: string; patron_pair?: string[]; cost: number; target: string; effects: Effect[]; tags: string[] };
+type Card = Item & { id: string; name: string; patron?: string; patron_pair?: string[]; cost: number; target: string; effects: Effect[]; tags: string[]; trigger?: string };
 type Effect = { op: string; value?: number; token?: string; stacks?: number; when?: string };
 type Demand = Item & { id: string; patron: string; condition: string; axis: string; polarity: string; min_enemies: number };
 type Enemy = Item & {
@@ -13,7 +14,8 @@ type Enemy = Item & {
   region: "underworld" | "surface";
   tier: "normal" | "boss";
   hp: number;
-  pattern: (Effect & { repeat?: number })[];
+  pattern: (Effect & { repeat?: number; target?: string })[];
+  passives?: Passives;
   groups?: { id: string; with: string[] }[];
 };
 
@@ -80,6 +82,9 @@ function schemaFailure(item: Item, kind: string): boolean {
 }
 
 function dslFailure(card: Card): boolean {
+  // 없는 훅을 적은 파워는 아무 트리거도 부르지 않고, 훅만 적힌 비파워 카드는 즉시 실행된다 — 둘 다 죽은 데이터다
+  if (card.tags.includes("power") !== (card.trigger !== undefined)) return true;
+  if (card.trigger !== undefined && !(triggers as readonly string[]).includes(card.trigger)) return true;
   return card.effects.some((effect) =>
     ![...commonOps, "chain"].includes(effect.op)
     || (effect.token !== undefined && !allTokens.includes(effect.token))
@@ -136,14 +141,36 @@ function stageEffectScopeFailure(god: Item): boolean {
   );
 }
 
+/** 「한 대」의 크기. `guard`가 스택마다 아군 대신 한 대를 받는다 — 배포된 82개 damage 효과의 중앙값 */
+const medianCardDamage = 6;
+/** 적 행동의 대상이 자기편인가. 없으면 피해·토큰은 플레이어를 향한다(`core/combat.ts`의 기본값과 같다) */
+const friendly = (effect: { target?: string }) => effect.target !== undefined && effect.target !== "player";
+
 function encounterThresholdFailure(enemy: Enemy, enemies: Enemy[]): boolean {
   if (enemy.tier === "boss") return enemy.hp !== (enemy.region === "underworld" ? 130 : 190) || enemy.groups !== undefined;
   if (!enemy.groups?.length) return true;
   const limits = enemy.region === "underworld"
     ? { hp: [40, 90], damage: [8, 14], count: [1, 2] }
     : { hp: [90, 170], damage: [14, 22], count: [2, 3] };
-  const effectiveHp = (member: Enemy) => member.hp + member.pattern.reduce((total, effect) => total + (effect.op === "apply_token" && effect.token === "bulwark" ? effect.stacks ?? 1 : 0), 0);
-  const intent = (member: Enemy) => member.pattern.reduce((total, effect) => total + (effect.op === "damage" ? (effect.value ?? 0) * (effect.repeat ?? 1) : 0), 0) / member.pattern.length;
+  /**
+   * 세기 환산은 `tools/value.ts`의 `tokenWeights`를 그대로 읽는다 — **두 번째 눈금을 만들지 않는다.**
+   * 다만 자기편에게 붙는 완화 토큰은 흡수량이 곧 체력이라 스택 수를 그대로 쓴다(가중치 2.5는 카드가
+   * 사는 지속 프리미엄이지 흡수량이 아니다). 방어·회복도 플레이어가 더 써야 하는 피해라 같은 쪽이다
+   */
+  const effectiveHp = (member: Enemy) => member.hp
+    + member.pattern.reduce((total, effect) => total
+      + (effect.op === "block" || effect.op === "heal" ? effect.value ?? 0 : 0)
+      + (effect.op === "apply_token" && friendly(effect) && mitigationTokens.has(effect.token ?? "") ? effect.stacks ?? 1 : 0), 0)
+    // 반응형 패시브 셋만 실효 체력이다. `angry`·`rally`·`spite`는 플레이어가 무엇을 하느냐에 달려
+    // 보장된 값이 없으므로 세지 않는다 — 세면 조우 밴드가 일어나지 않은 일을 세게 된다
+    + (member.passives?.curl ?? 0)
+    + (member.passives?.shell ?? 0)
+    + (member.passives?.guard ?? 0) * medianCardDamage;
+  const intent = (member: Enemy) => member.pattern.reduce((total, effect) => total
+    + (effect.op === "damage" ? (effect.value ?? 0) * (effect.repeat ?? 1) : 0)
+    + (effect.op === "apply_token" && !(friendly(effect) && mitigationTokens.has(effect.token ?? "")) ? (tokenWeights[effect.token ?? ""] ?? 0) * (effect.stacks ?? 1) : 0), 0) / member.pattern.length
+    // ramp는 매 턴 확정으로 쌓이므로 패턴이 아니라 여기에 더한다
+    + (member.passives?.ramp ?? 0) * tokenWeights.frenzy;
   return enemy.groups.some((group) => {
     const members = [enemy, ...group.with.map((id) => enemies.find((candidate) => candidate.id === id))];
     if (members.some((member) => !member)) return true;
@@ -199,6 +226,12 @@ function poolRejects(cards: Card[]): Set<string> {
   return rejects;
 }
 
+/** 없는 이름을 적은 패시브는 어떤 훅도 읽지 않는다 — 오타 하나가 곧 죽은 코드다 */
+function passiveFailure(enemy: Enemy): boolean {
+  return Object.entries(enemy.passives ?? {}).some(([name, stacks]) =>
+    !(passiveNames as readonly string[]).includes(name) || !Number.isInteger(stacks) || (stacks as number) <= 0);
+}
+
 function failureFor(item: Item, cards: Card[], demands: Demand[], enemies: Enemy[]): FailureKey | undefined {
   const kind = kindOf(item);
   if (schemaFailure(item, kind)) return "schema";
@@ -212,11 +245,12 @@ function failureFor(item: Item, cards: Card[], demands: Demand[], enemies: Enemy
   }
   if (kind === "demand" && demandFailure(item as Demand, demands)) return "demand_axis";
   if (kind === "god" && stageEffectScopeFailure(item)) return "token_scope";
+  if (kind === "enemy" && passiveFailure(item as Enemy)) return "passive_coverage";
   if (kind === "enemy" && encounterThresholdFailure(item as Enemy, enemies)) return "value_outlier";
   return undefined;
 }
 
-export function validateItems(items: Item[], basePool: Card[] = []): { accepted: Item[]; rejected: { id: string; failure: FailureKey }[]; pass_rate: number; by_pairing: Record<string, number>; failure_breakdown: Partial<Record<FailureKey, number>>; pools: Record<string, PoolStat> } {
+export function validateItems(items: Item[], basePool: Card[] = []): { accepted: Item[]; rejected: { id: string; failure: FailureKey }[]; pass_rate: number; by_pairing: Record<string, number>; failure_breakdown: Partial<Record<FailureKey, number>>; pools: Record<string, PoolStat>; passive_coverage: string[] } {
   const accepted: Item[] = [];
   const rejected: { id: string; failure: FailureKey }[] = [];
   const failure_breakdown: Partial<Record<FailureKey, number>> = {};
@@ -254,7 +288,14 @@ export function validateItems(items: Item[], basePool: Card[] = []): { accepted:
     const passed = accepted.filter((item) => Array.isArray(item.patron_pair) && (item.patron_pair as string[]).join("+") === pairing).length;
     return [pairing, passed / total];
   }));
-  return { accepted, rejected, pass_rate: items.length ? accepted.length / items.length : 0, by_pairing, failure_breakdown, pools };
+  /**
+   * 어느 적에게도 붙지 않은 패시브. 항목 하나로는 판정이 안 되는 데이터셋 규칙이라 `pool_ratio`와
+   * 같은 자리에 선다 — 다만 탓할 항목이 없으므로 반려가 아니라 목록으로 낸다. 비어 있지 않으면
+   * 그 패시브의 훅은 아무도 부르지 않는 코드다(N-06의 사문 셋과 같은 부채)
+   */
+  const covered = new Set(accepted.filter((item) => kindOf(item) === "enemy").flatMap((item) => Object.keys((item as Enemy).passives ?? {})));
+  const passive_coverage = enemies.length ? passiveNames.filter((name) => !covered.has(name)) : [];
+  return { accepted, rejected, pass_rate: items.length ? accepted.length / items.length : 0, by_pairing, failure_breakdown, pools, passive_coverage };
 }
 
 function runCli(args: string[]): void {

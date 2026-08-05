@@ -7,24 +7,16 @@
     "role": "pressure",
     "hp": 40,
     "intent_visible": true,
+    "passives": { "ramp": 1 },
     "pattern": [
-      {
-        "op": "damage",
-        "value": 10
-      }
+      { "op": "damage", "value": 6 },
+      { "op": "damage", "value": 6 },
+      { "op": "damage", "value": 12 }
     ],
     "pattern_mode": "cycle",
     "groups": [
-      {
-        "id": "group_under_pressure_solo",
-        "with": []
-      },
-      {
-        "id": "group_under_pair",
-        "with": [
-          "enemy_under_attrition"
-        ]
-      }
+      { "id": "group_under_pressure_solo", "with": [] },
+      { "id": "group_under_pair", "with": ["enemy_under_attrition"] }
     ]
   },
   {
@@ -33,22 +25,87 @@
     "region": "underworld",
     "tier": "normal",
     "role": "attrition",
-    "hp": 50,
+    "hp": 35,
     "intent_visible": true,
+    "passives": { "shell": 8 },
     "pattern": [
-      {
-        "op": "damage",
-        "value": 4
-      }
+      { "op": "block", "value": 4 },
+      { "op": "damage", "value": 4 }
     ],
     "pattern_mode": "cycle",
     "groups": [
-      {
-        "id": "group_under_attrition_pair",
-        "with": [
-          "enemy_under_pressure"
-        ]
-      }
+      { "id": "group_under_attrition_pair", "with": ["enemy_under_pressure"] }
+    ]
+  },
+  {
+    "id": "enemy_under_brute",
+    "name": "저승의 광포자",
+    "region": "underworld",
+    "tier": "normal",
+    "role": "brute",
+    "hp": 40,
+    "intent_visible": true,
+    "passives": { "angry": 1 },
+    "pattern": [
+      { "op": "damage", "value": 16 },
+      { "op": "block", "value": 4 }
+    ],
+    "pattern_mode": "cycle",
+    "groups": [
+      { "id": "group_under_brute_solo", "with": [] },
+      { "id": "group_under_brute_swarm", "with": ["enemy_under_swarm"] }
+    ]
+  },
+  {
+    "id": "enemy_under_swarm",
+    "name": "재의 무리",
+    "region": "underworld",
+    "tier": "normal",
+    "role": "swarm",
+    "hp": 25,
+    "intent_visible": true,
+    "passives": { "curl": 6 },
+    "pattern": [
+      { "op": "damage", "value": 3 }
+    ],
+    "pattern_mode": "cycle",
+    "groups": [
+      { "id": "group_under_swarm_brute", "with": ["enemy_under_brute"] }
+    ]
+  },
+  {
+    "id": "enemy_under_guardian",
+    "name": "저승의 방패병",
+    "region": "underworld",
+    "tier": "normal",
+    "role": "guardian",
+    "hp": 30,
+    "intent_visible": true,
+    "passives": { "guard": 2 },
+    "pattern": [
+      { "op": "apply_token", "token": "bulwark", "stacks": 3, "target": "self" },
+      { "op": "damage", "value": 4 }
+    ],
+    "pattern_mode": "cycle",
+    "groups": [
+      { "id": "group_under_forcing", "with": ["enemy_under_zealot"] }
+    ]
+  },
+  {
+    "id": "enemy_under_zealot",
+    "name": "저승의 광신도",
+    "region": "underworld",
+    "tier": "normal",
+    "role": "zealot",
+    "hp": 35,
+    "intent_visible": true,
+    "passives": { "spite": 1 },
+    "pattern": [
+      { "op": "damage", "value": 8 }
+    ],
+    "pattern_mode": "cycle",
+    "groups": [
+      { "id": "group_under_zealot_forcing", "with": ["enemy_under_guardian"] }
     ]
   },
   {
@@ -56,18 +113,13 @@
     "name": "저승문지기",
     "region": "underworld",
     "tier": "boss",
-    "role": "attrition",
+    "role": "boss",
     "hp": 130,
     "intent_visible": true,
+    "passives": { "ward": 2 },
     "pattern": [
-      {
-        "op": "damage",
-        "value": 18
-      },
-      {
-        "op": "block",
-        "value": 8
-      }
+      { "op": "damage", "value": 18 },
+      { "op": "block", "value": 8 }
     ],
     "pattern_mode": "cycle"
   },
@@ -77,29 +129,17 @@
     "region": "surface",
     "tier": "normal",
     "role": "pressure",
-    "hp": 45,
+    "hp": 40,
     "intent_visible": true,
     "pattern": [
-      {
-        "op": "damage",
-        "value": 10
-      }
+      { "op": "damage", "value": 8 },
+      { "op": "damage", "value": 8 },
+      { "op": "damage", "value": 16 }
     ],
     "pattern_mode": "cycle",
     "groups": [
-      {
-        "id": "group_surface_pair",
-        "with": [
-          "enemy_surface_attrition"
-        ]
-      },
-      {
-        "id": "group_surface_trio",
-        "with": [
-          "enemy_surface_attrition",
-          "enemy_surface_applier"
-        ]
-      }
+      { "id": "group_surface_pair", "with": ["enemy_surface_attrition"] },
+      { "id": "group_surface_trio", "with": ["enemy_surface_applier", "enemy_surface_support"] }
     ]
   },
   {
@@ -108,22 +148,16 @@
     "region": "surface",
     "tier": "normal",
     "role": "attrition",
-    "hp": 55,
+    "hp": 40,
     "intent_visible": true,
+    "passives": { "shell": 8 },
     "pattern": [
-      {
-        "op": "damage",
-        "value": 6
-      }
+      { "op": "block", "value": 6 },
+      { "op": "damage", "value": 8 }
     ],
     "pattern_mode": "cycle",
     "groups": [
-      {
-        "id": "group_surface_attrition_pair",
-        "with": [
-          "enemy_surface_pressure"
-        ]
-      }
+      { "id": "group_surface_attrition_pair", "with": ["enemy_surface_pressure"] }
     ]
   },
   {
@@ -132,28 +166,69 @@
     "region": "surface",
     "tier": "normal",
     "role": "applier",
-    "hp": 45,
+    "hp": 40,
     "intent_visible": true,
     "pattern": [
-      {
-        "op": "apply_token",
-        "token": "soaked",
-        "stacks": 1
-      },
-      {
-        "op": "damage",
-        "value": 4
-      }
+      { "op": "apply_token", "token": "soaked", "stacks": 1 },
+      { "op": "apply_token", "token": "shock", "stacks": 2 },
+      { "op": "damage", "value": 6 }
     ],
     "pattern_mode": "cycle",
     "groups": [
-      {
-        "id": "group_surface_applier_trio",
-        "with": [
-          "enemy_surface_pressure",
-          "enemy_surface_attrition"
-        ]
-      }
+      { "id": "group_surface_applier_trio", "with": ["enemy_surface_pressure", "enemy_surface_support"] },
+      { "id": "group_surface_applier_forcing", "with": ["enemy_surface_zealot", "enemy_surface_guardian"] }
+    ]
+  },
+  {
+    "id": "enemy_surface_support",
+    "name": "올림포스의 전령",
+    "region": "surface",
+    "tier": "normal",
+    "role": "support",
+    "hp": 35,
+    "intent_visible": true,
+    "passives": { "rally": 2 },
+    "pattern": [
+      { "op": "apply_token", "token": "frenzy", "stacks": 1, "target": "ally" },
+      { "op": "heal", "value": 4, "target": "ally" }
+    ],
+    "pattern_mode": "cycle",
+    "groups": [
+      { "id": "group_surface_support_trio", "with": ["enemy_surface_pressure", "enemy_surface_applier"] }
+    ]
+  },
+  {
+    "id": "enemy_surface_guardian",
+    "name": "지상의 방패병",
+    "region": "surface",
+    "tier": "normal",
+    "role": "guardian",
+    "hp": 35,
+    "intent_visible": true,
+    "passives": { "guard": 2 },
+    "pattern": [
+      { "op": "apply_token", "token": "bulwark", "stacks": 2, "target": "self" },
+      { "op": "damage", "value": 6 }
+    ],
+    "pattern_mode": "cycle",
+    "groups": [
+      { "id": "group_surface_guardian_forcing", "with": ["enemy_surface_zealot", "enemy_surface_applier"] }
+    ]
+  },
+  {
+    "id": "enemy_surface_zealot",
+    "name": "올림포스의 광신도",
+    "region": "surface",
+    "tier": "normal",
+    "role": "zealot",
+    "hp": 35,
+    "intent_visible": true,
+    "pattern": [
+      { "op": "damage", "value": 10 }
+    ],
+    "pattern_mode": "cycle",
+    "groups": [
+      { "id": "group_surface_zealot_forcing", "with": ["enemy_surface_guardian", "enemy_surface_applier"] }
     ]
   },
   {
@@ -161,18 +236,13 @@
     "name": "올림포스의 집행자",
     "region": "surface",
     "tier": "boss",
-    "role": "bulwark",
+    "role": "boss",
     "hp": 190,
     "intent_visible": true,
+    "passives": { "ward": 2 },
     "pattern": [
-      {
-        "op": "damage",
-        "value": 24
-      },
-      {
-        "op": "block",
-        "value": 12
-      }
+      { "op": "damage", "value": 24 },
+      { "op": "block", "value": 12 }
     ],
     "pattern_mode": "cycle"
   }

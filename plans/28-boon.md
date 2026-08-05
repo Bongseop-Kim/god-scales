@@ -88,7 +88,7 @@ npm run tune                                       # ⚠(|차이| ≤ 0.10) 늘�
 
 효과는 카드와 같은 `Effect` DSL이다(`core/rules.ts:17`). **두 번째 진실을 만들지 않는다.**
 
-[P-31](31-powers.md)이 그 DSL에 `power` 태그와 `thorns`를 더한다(`doom`은 뺐다 — `bleed`가 이미 `shell`을 통과한다). 은혜를 뽑기 전에 어휘가 굳어야 한다 — 아니면 은혜를 두 번 만든다.
+[P-31](../reviews/31-powers.md)이 그 DSL에 `power` 태그와 `thorns`를 더한다(`doom`은 뺐다 — `bleed`가 이미 `shell`을 통과한다). 은혜를 뽑기 전에 어휘가 굳어야 한다 — 아니면 은혜를 두 번 만든다.
 
 ### 2 · tier — 한 숫자가 등급이자 레벨이다
 

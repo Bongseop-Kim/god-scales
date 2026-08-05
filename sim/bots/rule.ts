@@ -3,9 +3,13 @@ import type { Card } from "../../core/rules.ts";
 import type { CombatState } from "../../core/state.ts";
 import { demandPenalty } from "../../core/demands.ts";
 import { favorBoundaries, favorInitial } from "../../core/favor.ts";
-import { expectedValue, tokenWeights } from "../../tools/value.ts";
+import { expectedValue, powerTurns, tokenWeights } from "../../tools/value.ts";
 
-/** v4: 토큰 값을 게이트 표(`tokenWeights`)에서 읽고, 요구 답이 조건 판정을 전제로 바뀌었다 */
+/**
+ * v4: 토큰 값을 게이트 표(`tokenWeights`)에서 읽고, 요구 답이 조건 판정을 전제로 바뀌었다.
+ * P-31의 파워 배수는 v4를 유지한다 — 기존 123장에 `power` 태그가 하나도 없어 옛 입력에서 정책이
+ * 한 자리도 다르지 않다. 판을 올리면 원장의 v4 비교가 끊긴다
+ */
 export const botPolicyVersion = "v4";
 
 /**
@@ -25,6 +29,26 @@ function noisyPick<T>(options: T[], rng?: () => number): T | undefined {
   return options[Math.floor(rng() * options.length)];
 }
 
+/**
+ * 고정 정책 넷. **봇을 넷 만들지 않는다** — `cardValue`가 이미 효과별 항을 더하므로 정책은 그 항에
+ * 곱하는 가중치 넷이다. 두 번째 봇을 만들면 `v4` 기준선과 비교가 끊긴다.
+ * 어느 정책도 모든 조우에서 1등이 아니면 조우가 다채로운 것이다 — `--policy-matrix`가 그것을 잰다
+ */
+export const policies = ["single", "spread", "turtle", "token"] as const;
+export type Policy = (typeof policies)[number];
+type PolicyWeight = { attack: number; multi: number; block: number; token: number };
+const neutral: PolicyWeight = { attack: 1, multi: 1, block: 1, token: 1 };
+const policyWeights: Record<Policy, PolicyWeight> = {
+  single: { attack: 1, multi: 0.3, block: 1, token: 1 },
+  spread: { attack: 1, multi: 3, block: 1, token: 1 },
+  turtle: { attack: 0.4, multi: 0.4, block: 3, token: 1 },
+  token: { attack: 1, multi: 1, block: 1, token: 3 },
+};
+export let policy: Policy | undefined;
+export function setPolicy(value?: Policy): void {
+  policy = value;
+}
+
 function intent(combat: CombatState, definitions: ReadonlyMap<string, EnemyDefinition>): number {
   return combat.enemies.reduce((total, enemy) => {
     if (enemy.hp <= 0 || (enemy.tokens.displace ?? 0) > 0) return total;
@@ -35,22 +59,25 @@ function intent(combat: CombatState, definitions: ReadonlyMap<string, EnemyDefin
 
 export function cardValue(card: Card, combat: CombatState, incoming: number, favor: Record<string, number>): number {
   const living = combat.enemies.filter(({ hp }) => hp > 0).length;
+  const weight = policy ? policyWeights[policy] : neutral;
   let value = 0;
   for (const effect of card.effects) {
     const amount = effect.value ?? effect.stacks ?? 0;
-    if (effect.op === "damage") value += amount * (card.target === "all_enemies" ? living : 1);
-    else if (effect.op === "chain") value += amount * Math.max(0, living - 1);
+    if (effect.op === "damage") value += amount * (card.target === "all_enemies" ? living * weight.multi : weight.attack);
+    else if (effect.op === "chain") value += amount * Math.max(0, living - 1) * weight.multi;
     else if (effect.op === "block") {
       const needed = Math.max(0, incoming - combat.player.block);
-      value += needed >= amount * 0.8 ? Math.min(amount, needed) : 0;
+      value += (needed >= amount * 0.8 ? Math.min(amount, needed) : 0) * weight.block;
     }
     else if (effect.op === "heal") value += amount;
     else if (effect.op === "draw") value += amount * 1.5;
     else if (effect.op === "energy") value += amount * 2;
     // 토큰 값은 게이트와 같은 표에서 온다. 전부 4점으로 보면 crit(3)을 과소, shock(1)을 4배 과대평가한다
-    else if (effect.op === "apply_token") value += amount * (tokenWeights[effect.token ?? ""] ?? 1);
+    else if (effect.op === "apply_token") value += amount * (tokenWeights[effect.token ?? ""] ?? 1) * weight.token;
     else if (effect.op === "self_damage") value -= amount;
   }
+  // 파워도 게이트와 같은 배수로 본다 — 한 번짜리로 재면 봇이 절대 내지 않고 그 카드는 죽은 데이터다
+  if (card.tags.includes("power")) value *= powerTurns;
   if (value > 0 && card.patron && (favor[card.patron] ?? 50) <= 15) value += 1;
   else if (value > 0 && card.patron && (favor[card.patron] ?? 50) < 30) value += 0.5;
   else if (value > 0 && card.patron && (favor[card.patron] ?? 50) < 70) value += 0.25;

@@ -1,6 +1,6 @@
 # P-27 · 루트와 층별 편성
 
-`plans/27-map.md` · [◀ P-31](31-powers.md) · [색인](../reviews/00-index.md) · [P-30 ▶](30-intervention.md)
+`plans/27-map.md` · [◀ P-31](../reviews/31-powers.md) · [색인](../reviews/00-index.md) · [P-30 ▶](30-intervention.md)
 
 **크기** 큼 · **착수 조건** P-25 + P-31 완료 (배치할 개성이 있어야 한다)
 
@@ -183,7 +183,7 @@ surface     hp [90,170]   damage [14,22]  count [2,3]
 
 **`logs/human/` 22개를 `logs/human/v1/`로 아카이브하고 다시 따지 않는다.** 이유는 지도가 아니다 — P-25가 적을, P-31이 토큰을 바꾸는 순간 그 로그들은 이미 다른 게임의 기록이다. **재생 결정론은 엔진 검사지 기록 보관이 아니다.** 검사는 `test/combat.test.ts:30`처럼 같은 실행 안에서 두 런을 맞대면 그대로 서고, 배포본 전 구간 검사는 `npm run e2e -- --dist` 한 번(반출 → CLI 재생 일치)이 P-24에서 이미 하고 있다.
 
-**이 결정이 뒤 세 계획에서 요구사항 하나씩을 지운다** — [P-28](28-boon.md)의 `Action.grace` 병존, [P-29](29-quest.md)의 `"accept"` 별칭, [P-31](31-powers.md)의 「전 로그 재생 일치」. 셋 다 그 계획에서 이미 지웠고, 근거는 이 절이다.
+**이 결정이 뒤 세 계획에서 요구사항 하나씩을 지운다** — [P-28](28-boon.md)의 `Action.grace` 병존, [P-29](29-quest.md)의 `"accept"` 별칭, [P-31](../reviews/31-powers.md)의 「전 로그 재생 일치」. 셋 다 그 계획에서 이미 지웠고, 근거는 이 절이다.
 
 아카이브 사실과 사유를 리뷰에 적는다.
 
