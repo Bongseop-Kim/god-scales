@@ -16,7 +16,7 @@ import { addToken, dealDamage, type Card } from "../core/rules";
 import type { ActorState, CombatState, GameState } from "../core/state";
 
 /** `startTurn`·`endTurn`이 파워를 발동하려면 `GameState`가 필요하다 — 전투만 있는 테스트는 여기서 감싼다 */
-const wrap = (combat: CombatState): GameState => ({ seed: 1, combat, favor: {}, grace: {}, map: { node: 0, completed: [] } });
+const wrap = (combat: CombatState): GameState => ({ seed: 1, combat, favor: {}, grace: {}, graceSlots: {}, map: { depth: 0, lane: 1, grid: [], completed: [] } });
 
 const strike: Card = {
   id: "strike",

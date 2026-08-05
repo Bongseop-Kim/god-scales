@@ -1,3 +1,4 @@
+import type { GraceSlot } from "./grace.ts";
 import { tokenNames, type ActorState, type CombatState, type GameState, type TokenName, type Trigger } from "./state.ts";
 import { resolveChainTargets, resolveTargets, type Target } from "./targeting.ts";
 
@@ -34,7 +35,6 @@ export type Card = {
   tags: Tag[];
   /** `power` 태그가 붙은 카드만 갖는다 — 즉시 실행하지 않고 이 훅에 등록한다 */
   trigger?: Trigger;
-  upgraded?: boolean;
 };
 
 export function loadCards(cards: Card[]): Card[] {
@@ -186,6 +186,11 @@ export function evaluateCondition(expression: string, context: ConditionContext)
 export const selfTokens = new Set<TokenName>(["bulwark", "deflect", "crit", "frenzy", "thorns"]);
 /** 이로운 넷의 여집합이다 — 세 번째 목록을 만들지 않는다. `ward`와 P-26의 HUD 색이 같은 집합을 읽는다 */
 export const harmfulTokens = new Set(tokenNames.filter((token) => !selfTokens.has(token)));
+/**
+ * 소모 경로가 `takeEnemyTurn`뿐인 토큰. 플레이어에게 붙으면 영원히 안 지워지고 아무 일도 하지 않는다 —
+ * 포세이돈 진노가 그 자리였다. 게이트가 이 목록으로 「죽은 개입」을 반려한다
+ */
+export const enemyOnlyTokens = new Set<TokenName>(["displace"]);
 
 /**
  * `guard`가 스택마다 한 번, 아군에게 갈 피해를 대신 받는다 — 「센 카드로 한 놈만」의 직접 대응이다.
@@ -218,6 +223,18 @@ export function firePowers(state: GameState, trigger: Trigger, enemyId?: string)
   }
 }
 
+/**
+ * 이 카드가 실제로 내는 효과 — 카드의 것 + 그 카드의 태그에 걸린 은혜의 것. 태그가 곧 슬롯이라
+ * 공격 카드 한 장이 아니라 **공격 행동 전체**가 바뀐다. 태그가 둘이면 은혜도 둘 붙는다.
+ *
+ * 세는 쪽(`sim/engine.ts`의 토큰·방어 집계)도 같은 목록을 읽는다 — 화면에 붙은 토큰을 요구가
+ * 세지 않으면 그게 두 번째 진실이다
+ */
+export function cardEffects(state: GameState, card: Card): Effect[] {
+  const graced = card.tags.flatMap((tag) => state.graceSlots[tag as GraceSlot]?.effects ?? []);
+  return graced.length ? [...card.effects, ...graced] : card.effects;
+}
+
 export function executeCard(state: GameState, card: Card, enemyId?: string, deckCards?: Card[]): void {
   loadCards([card]);
   const targets = resolveTargets(state.combat, card.target, enemyId);
@@ -232,7 +249,7 @@ export function executeCard(state: GameState, card: Card, enemyId?: string, deck
     if (dealt > 0 && target.hp > 0 && !card.tags.includes("power")) firePowers(state, "on_unblocked", target.id);
   };
 
-  for (const effect of card.effects) {
+  for (const effect of cardEffects(state, card)) {
     if (effect.when && !evaluateCondition(effect.when, { state, card, target: targets[0], deckCards })) continue;
     const value = effect.value ?? 0;
     if (effect.op === "damage") for (const target of targets) strike(card.target === "enemy" ? guardFor(state.combat, target) : target, value);

@@ -14,7 +14,7 @@ const opLabels: Record<string, string> = {
   chain: "연쇄",
 };
 
-/** 값은 엔진이 준 것을 그대로 읽는다 — 은총 강화가 런 중에 수치를 바꾸므로 UI가 계산하면 어긋난다 */
+/** 값은 엔진이 준 것을 그대로 읽는다 — UI가 data/cards.json을 따로 읽으면 같은 사실에 두 경로가 생긴다 */
 export function effectText({ target, effects }: Pick<CardView, "target" | "effects">): string {
   const text = effects
     .map(({ op, value, token, stacks, when }) =>
@@ -25,7 +25,7 @@ export function effectText({ target, effects }: Pick<CardView, "target" | "effec
 
 export const cardCaption = (card: CardView) => `${card.cost} 에너지 · ${effectText(card)}`;
 
-/** 보상·은총·제거가 같은 격자를 쓴다. 손패만 퇴장 애니메이션 때문에 따로 그린다 */
+/** 보상과 카드 제거가 같은 격자를 쓴다. 손패만 퇴장 애니메이션 때문에 따로 그린다 — 은혜는 카드가 아니라 `Choice`다 */
 export function CardRow({ cards, options, onSelect }: {
   cards: CardView[];
   options: string[];

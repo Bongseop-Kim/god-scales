@@ -11,6 +11,9 @@ import { CombatScreen } from "../ui/combat.tsx";
 import { replayPayload } from "../ui/export.ts";
 import { RewardScreen } from "../ui/reward.tsx";
 
+/** 갈래는 `"lane:type"`이다. 그 종류가 열려 있으면 고르고 없으면 봇 답을 쓴다 */
+const pickPath = (decision: Decision, type: string) => decision.options.find((option) => option.endsWith(`:${type}`)) ?? decision.bot;
+
 /** 브라우저가 하는 일과 같다 — 엔진이 묻는 결정에 사람이 전부 답하고, 전부 로그에 남는다 */
 function playByHand(seed: number, pick: (decision: Decision) => string): { result: RunResult; actions: ReplayAction[] } {
   const steps = runSteps(seed);
@@ -33,7 +36,7 @@ describe("browser replay export", () => {
   it("renders every decision screen from its observation alone", () => {
     // 머리글이 조합·위치·체력을 관측에서 읽는지 본다 — 상수로 박혀 있으면 다른 조합에서 거짓말을 한다
     const screens: Record<string, (decision: never) => ReactElement> = {
-      path: (decision) => createElement(MapScreen, { seed: 4, decision, actions: [], onChoosePath: () => {} }),
+      path: (decision) => createElement(MapScreen, { seed: 4, decision, onChoosePath: () => {} }),
       card: (decision) => createElement(CombatScreen, { seed: 4, decision, onAnswer: () => {} }),
       target: (decision) => createElement(CombatScreen, { seed: 4, decision, onAnswer: () => {} }),
       rest: (decision) => createElement(RestScreen, { seed: 4, decision, onAnswer: () => {} }),
@@ -55,7 +58,7 @@ describe("browser replay export", () => {
         expect(markup, phase).toContain(`체력 ${step.value.observation.hp}/${step.value.observation.maxHp}`);
         seen.add(phase);
       }
-      step = steps.next(phase === "path" ? "rest" : phase === "rest" ? "remove" : bot);
+      step = steps.next(phase === "path" ? pickPath(step.value, "rest") : phase === "rest" ? "remove" : bot);
     }
     expect(seen).toEqual(new Set(Object.keys(screens)));
   });
@@ -69,7 +72,8 @@ describe("browser replay export", () => {
   });
 
   it("replays the same outcome, progress, and final favor", () => {
-    const actions: ReplayAction[] = ["combat", "rest", "combat", "rest"].map((choice) => ({ type: "path", choice } as ReplayAction));
+    // 봇이 실제로 걸은 갈래를 기록으로 되먹인다 — 갈래 문자열이 이제 격자에 달려 있어 상수로 못 적는다
+    const actions: ReplayAction[] = run(42).actions.filter(({ type }) => type === "path");
     const browser = run(42, undefined, actions);
     const replay = replayPayload(42, actions);
     const cli = run(replay.seed, undefined, replay.actions);
@@ -86,10 +90,11 @@ describe("browser replay export", () => {
     // 갈림길은 쉼터로, 휴식은 제거로, 요구는 수락으로 고정하고 첫 카드 한 장만 봇과 다르게 낸다.
     // 전투를 내내 봇 반대로 고르면 은총 마일스톤에 닿기 전에 죽는다 — 요구가 조건 판정을 받게 된 뒤로는
     // 호의가 천천히 올라서 300개 시드 안에 그런 런이 없다.
-    // 시드 4 → 14 → 5: P-22의 아테나 풀 교체, 다음은 P-25의 적 패시브로 그 앞 시드가 은총 전에 끝났다
+    // 시드 4 → 14 → 5 → 11: 갈래가 격자에서 오면서 5가 은총 전에 끝났다. 단언은 그대로다
     let diverged = false;
-    const { result: browser, actions } = playByHand(5, ({ phase, options, bot }) => {
-      if (phase === "path") return "rest";
+    const { result: browser, actions } = playByHand(11, (decision) => {
+      const { phase, options, bot } = decision;
+      if (phase === "path") return pickPath(decision, "rest");
       if (phase === "rest") return "remove";
       if (phase === "demand") return "accept";
       if (phase !== "card" || diverged) return bot;
@@ -97,7 +102,7 @@ describe("browser replay export", () => {
       diverged = Boolean(other);
       return other ?? bot;
     });
-    const replay = replayPayload(5, actions);
+    const replay = replayPayload(11, actions);
     const cli = run(replay.seed, undefined, replay.actions);
 
     // 반출에 사람이 고른 여덟 종류가 전부 있어야 한다 — 빠지면 재생 때 봇이 대신 채운다
@@ -110,6 +115,6 @@ describe("browser replay export", () => {
       favor: browser.favorCurve.at(-1),
       cards: browser.cardsPlayed,
     });
-    expect(cli.cardsPlayed).not.toEqual(run(5).cardsPlayed);
+    expect(cli.cardsPlayed).not.toEqual(run(11).cardsPlayed);
   });
 });

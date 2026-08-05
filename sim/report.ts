@@ -1,10 +1,14 @@
 import { favorStage } from "../core/favor.ts";
 import type { PenaltyKey } from "../core/demands.ts";
 import { globalParamVersion } from "../core/favor.ts";
+import type { GraceHeld } from "../core/grace.ts";
+import type { MapGrid } from "../core/map.ts";
 import { botPolicyVersion } from "./bots/rule.ts";
 
 export type RunResult = {
   won: boolean;
+  /** 이 런의 격자. 결과 화면이 걸어온 길을 그린다 — 시드로 다시 풀면 같은 사실에 두 경로가 생긴다 */
+  grid: MapGrid;
   turns: number;
   log: string[];
   favorCurve: Record<string, number>[];
@@ -14,11 +18,14 @@ export type RunResult = {
   encounters: number;
   restCount: number;
   hpCurve: number[];
-  pathChoices: ("combat" | "rest")[];
+  /** `"1:elite"` 꼴 — 갈래와 종류를 같이 든다 */
+  pathChoices: string[];
   restChoices: ("heal" | "remove")[];
   regionsCleared: string[];
+  /** 신별 은혜 획득 수 */
   grace: Record<string, number>;
-  upgrades: number;
+  /** 런이 끝났을 때 채워진 슬롯. 「은혜가 빌드를 만들었는가」는 이 표가 답한다 */
+  graceSlots: GraceHeld;
   scenario?: "grace_4" | "grace_6" | "fused_deck";
   enemyCounts: number[];
   targetSpread: ("single" | "multi")[];
@@ -29,8 +36,11 @@ export type RunResult = {
   cardsPlayed: string[];
   /** 요구 id별 [수락, 지킴]. 조건 판정이 실제로 걸리는지 보는 자리다 */
   demandOutcomes: Record<string, [number, number]>;
-  /** 조우 편성별 돌파 여부. 정책 행렬이 「어느 조우에서 어느 정책이 1위인가」를 여기서 읽는다 */
-  encounterOutcomes: { key: string; cleared: boolean }[];
+  /**
+   * `region:floor:type`별 돌파 여부. 정책 행렬이 「어느 층에서 어느 정책이 1위인가」를 여기서 읽고,
+   * `--aura-matrix`가 `passives`(그 조우의 패시브)와 `devoted`(들어설 때 헌신이던 신)로 개입을 잰다
+   */
+  encounterOutcomes: { key: string; cleared: boolean; passives: string[]; devoted: string[]; hpLost: number }[];
   /** 패배한 조우의 맥락. 「승률이 내려갔다」와 「guard 조우에서만 내려갔다」를 가르는 다섯 줄 */
   defeatContext?: { region: string; floor: number; enemies: string[]; passives: string[] };
   /** 지금 낼 수 없어서 봇 답으로 대체된 기록된 결정의 수. 0이 아니면 그 로그는 이 규칙판이 아니다 */
@@ -119,7 +129,10 @@ export function summarize(results: RunResult[]) {
       return all;
     }, {})).map(([id, [accepted, kept]]) => [id, accepted ? kept / accepted : 0])),
     hp_curve: results[0]?.hpCurve ?? [],
-    path_choices: count(results.flatMap(({ pathChoices }) => pathChoices)),
+    /** 고른 칸의 종류. 넷이 다 0이 아니어야 갈래가 장식이 아니다 */
+    path_choices: count(results.flatMap(({ pathChoices }) => pathChoices.map((choice) => choice.split(":")[1]))),
+    /** 고른 갈래 번호. 한 갈래로 쏠리면 격자가 일렬과 다를 게 없다 */
+    lane_choices: count(results.flatMap(({ pathChoices }) => pathChoices.map((choice) => choice.split(":")[0]))),
     rest_choices: count(results.flatMap(({ restChoices }) => restChoices)),
     region_clear_rate: Object.fromEntries(["underworld", "surface"].map((region) => [region, results.length ? results.filter(({ regionsCleared }) => regionsCleared.includes(region)).length / results.length : 0])),
     low_rest_clear_rate: results.length ? results.filter(({ won, restCount }) => won && restCount <= 1).length / results.length : 0,
@@ -128,7 +141,8 @@ export function summarize(results: RunResult[]) {
       return all;
     }, {}),
     grace_milestones: Object.fromEntries([2, 4, 6].map((milestone) => [milestone, results.length ? results.filter(({ grace }) => Object.values(grace).some((value) => value >= milestone)).length / results.length : 0])),
-    upgrade_rate: results.length ? results.filter(({ upgrades }) => upgrades > 0).length / results.length : 0,
+    /** 런 끝에 채워진 슬롯 수의 평균. 은혜가 빌드를 만들었는지는 이 하나로 읽는다 */
+    grace_slots_filled: results.length ? results.reduce((sum, { graceSlots }) => sum + Object.keys(graceSlots).length, 0) / results.length : 0,
     enemy_count_dist: count(results.flatMap(({ enemyCounts }) => enemyCounts.map(String))),
     encounter_clear_rate,
     defeat_by_passive,
@@ -153,9 +167,9 @@ export function renderReport(report: ReturnType<typeof summarize>): string {
     `devotion_ratio=${report.devotion_ratio.toFixed(3)} anger_ratio=${report.anger_ratio.toFixed(3)} wrath_ratio=${report.wrath_ratio.toFixed(3)}`,
     `conflict_outcomes=${JSON.stringify(report.conflict_outcomes)} conflict_penalty_dist=${JSON.stringify(report.conflict_penalty_dist)}`,
     `demand_kept_rate=${JSON.stringify(report.demand_kept_rate)} substituted_actions=${report.substituted_actions}`,
-    `hp_curve=${JSON.stringify(report.hp_curve)} path_choices=${JSON.stringify(report.path_choices)} rest_choices=${JSON.stringify(report.rest_choices)}`,
+    `hp_curve=${JSON.stringify(report.hp_curve)} path_choices=${JSON.stringify(report.path_choices)} lane_choices=${JSON.stringify(report.lane_choices)} rest_choices=${JSON.stringify(report.rest_choices)}`,
     `region_clear_rate=${JSON.stringify(report.region_clear_rate)} low_rest_clear_rate=${report.low_rest_clear_rate.toFixed(3)}`,
-    `scenario_runs=${report.scenario_runs} grace_earned=${JSON.stringify(report.grace_earned)} grace_milestones=${JSON.stringify(report.grace_milestones)} upgrade_rate=${report.upgrade_rate.toFixed(3)}`,
+    `scenario_runs=${report.scenario_runs} grace_earned=${JSON.stringify(report.grace_earned)} grace_milestones=${JSON.stringify(report.grace_milestones)} grace_slots_filled=${report.grace_slots_filled.toFixed(2)}`,
     `enemy_count_dist=${JSON.stringify(report.enemy_count_dist)} target_spread=${JSON.stringify(report.target_spread)} block_efficiency=${report.block_efficiency.toFixed(3)}`,
     `encounter_clear_rate=${JSON.stringify(report.encounter_clear_rate)} defeat_by_passive=${JSON.stringify(report.defeat_by_passive)}`,
     `fusion_rate=${report.fusion_rate.toFixed(3)}`,

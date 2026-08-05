@@ -4,14 +4,16 @@ import cardDataJson from "../data/cards.json" with { type: "json" };
 import demandDataJson from "../data/demands.json" with { type: "json" };
 import enemyDataJson from "../data/enemies.json" with { type: "json" };
 import godDataJson from "../data/gods.json" with { type: "json" };
-import { applyFavorStageEffects, awardGrace, demandReward, finishCombatFavor, recordCardFavor, type FavorGod, type FavorUses } from "../core/favor.ts";
+import graceDataJson from "../data/graces.json" with { type: "json" };
+import mapDataJson from "../data/map.json" with { type: "json" };
+import { applyFavorStageEffects, awardGrace, demandReward, favorInitial, favorStage, finishCombatFavor, recordCardFavor, type FavorGod, type FavorUses } from "../core/favor.ts";
 import { demandPenalty, demandSatisfied, resolveDemand, type Demand } from "../core/demands.ts";
-import { advanceMap, enemyDamageScale, mapNode, takeRest } from "../core/map.ts";
-import { reduceCardCost, upgradeCard } from "../core/upgrade.ts";
+import { graceOffer, graceSlots, graceTier, takeGrace, type Grace, type GraceSlot } from "../core/grace.ts";
+import { advanceMap, bossLane, enemyDamageScale, enterNode, generateMap, laneCount, mapSlot, reachableLanes, takeRest, type MapGrid, type MapNodeType } from "../core/map.ts";
 import { canFuse } from "../core/fusion.ts";
-import type { Card, GodId } from "../core/rules.ts";
+import { cardEffects, type Card, type GodId } from "../core/rules.ts";
 import type { GameState, Passives, Tokens } from "../core/state.ts";
-import { chooseCard, chooseDemandAnswer, chooseGraceCard, choosePath, chooseRest, chooseRestCard, chooseReward, chooseTarget } from "./bots/rule.ts";
+import { chooseCard, chooseDemandAnswer, chooseGrace, choosePath, chooseRest, chooseRestCard, chooseReward, chooseTarget } from "./bots/rule.ts";
 import { renderPlay } from "./log.ts";
 import type { RunResult } from "./report.ts";
 import type { ReplayAction } from "./replay.ts";
@@ -26,8 +28,25 @@ const cards = (cardDataJson as CardData[]).map(({ patron_pair, ...card }) => (pa
 const fusionCards = cards.filter(({ patronPair }) => patronPair);
 /** 헌신·진노 오라의 정의. 조합 밖의 신은 호의가 없어 calm으로 읽히므로 다섯을 다 넘겨도 자기 필터가 된다 */
 const godData = godDataJson as FavorGod[];
+/** 은혜 45줄 = 설계 열다섯 × tier 셋. 슬롯 적용은 `cardEffects` 하나뿐이다 */
+const graces = graceDataJson as Grace[];
+/**
+ * `--aura-matrix`가 **헌신 개입만** 끄고 같은 시드를 다시 돌린다 — 기여는 두 열의 차이로만 잰다.
+ * 진노는 끄지 않는다: 그쪽은 처벌이고 도달률로 따로 잰다
+ */
+let devotionOff = false;
+export function setDevotionAura(off: boolean): void { devotionOff = off; }
+const auraGods = (): FavorGod[] => devotionOff
+  ? godData.map((god) => ({ ...god, stage_effects: { wrath: god.stage_effects.wrath } }))
+  : godData;
 /** 화면에는 `text`만 나간다 — `condition` DSL은 사람이 읽을 문장이 아니다 */
 const demandData = demandDataJson as Demand[];
+/** 층별 편성과 텍스트. 지역 하나가 아니라 `(층, 종류)`가 조우를 고르는 단위가 됐다 */
+type MapSlotData = { id: string; region: string; floor: number; text: string; groups: Partial<Record<"combat" | "elite", string[]>> };
+const mapData = mapDataJson as MapSlotData[];
+const mapSlots = new Map(mapData.map((slot) => [`${slot.region}:${slot.floor}`, slot]));
+/** 정예를 놓을 수 있는 층 = 정예 편성이 있는 층. 층을 코드로 열면 없는 편성을 찾게 된다 */
+export const eliteSlots = new Set(mapData.filter(({ groups }) => groups.elite?.length).map(({ region, floor }) => `${region}:${floor}`));
 
 /** 시작 덱의 3장은 신별 태그가 정한다 — 공격 1 · 방어 1 · 유틸 1, 같은 비용이면 데이터 순서 */
 function starterCards(god: GodId): [string, string, string] {
@@ -85,27 +104,37 @@ function enemyDefinition(enemy: EnemyData): EnemyDefinition {
   };
 }
 
-function encounter(seed: number, region: string, boss = false): EnemyDefinition[] {
-  const candidates = enemyData.filter((enemy) => enemy.region === region && (enemy.tier === "boss") === boss);
-  const root = candidates[seed % candidates.length];
-  if (boss) return [enemyDefinition(root)];
-  const group = root.groups![seed % root.groups!.length];
+/**
+ * 조우는 지역이 아니라 `(층, 종류)`가 고른다 — `data/map.json`이 그 자리의 편성 후보를 갖는다.
+ * 시드에 갈래가 섞여 있어야 같은 층의 두 `combat` 갈래가 다른 적을 뱉는다
+ */
+function encounter(seed: number, region: string, floor: number, type: MapNodeType): EnemyDefinition[] {
+  if (type === "boss") {
+    const bosses = enemyData.filter((enemy) => enemy.region === region && enemy.tier === "boss");
+    return [enemyDefinition(bosses[seed % bosses.length])];
+  }
+  const candidates = mapSlots.get(`${region}:${floor}`)?.groups[type === "elite" ? "elite" : "combat"] ?? [];
+  if (!candidates.length) throw new Error(`${region} ${floor}: no ${type} group`);
+  const groupId = candidates[seed % candidates.length];
+  const root = enemyData.find((enemy) => enemy.groups?.some(({ id }) => id === groupId));
+  const group = root?.groups?.find(({ id }) => id === groupId);
+  if (!root || !group) throw new Error(`Unknown encounter group: ${groupId}`);
   return [root, ...group.with.map((id) => enemyData.find((enemy) => enemy.id === id)!)].map(enemyDefinition);
 }
 
 type EnemyView = { id: string; hp: number; maxHp: number; block: number; tokens: Tokens; passives: Passives; intent?: EnemyAction };
-/** 이름·비용·효과는 은총 강화로 런 중에 바뀐다. UI가 data/cards.json을 따로 읽으면 두 번째 진실이 된다 */
+/** UI가 data/cards.json을 따로 읽으면 두 번째 진실이 된다 — 카드는 엔진이 준 것만 그린다 */
 export type CardView = { id: string; name: string; cost: number; target: Card["target"]; effects: Card["effects"] };
 const cardView = ({ id, name, cost, target, effects }: Card): CardView => ({ id, name, cost, target, effects });
 const runView = (state: GameState, patrons: PatronPair): RunView => {
-  const { region, floor } = mapNode(state.map.node);
-  return { node: state.map.node, region, floor, hp: state.combat.player.hp, maxHp: state.combat.player.maxHp, patrons };
+  const { region, floor } = mapSlot(state.map.depth);
+  return { depth: state.map.depth, lane: state.map.lane, region, floor, hp: state.combat.player.hp, maxHp: state.combat.player.maxHp, patrons, grid: state.map.grid };
 };
 /**
  * 모든 관측이 공유한다. `patrons`는 런 내내 고정이고, 화면 머리글이 조합 이름을 여기서 읽는다.
- * 위치도 여기 있다 — UI가 node로 mapNode를 다시 풀면 같은 사실에 두 경로가 생긴다
+ * 위치도 격자도 여기 있다 — UI가 시드로 `generateMap`을 다시 풀면 같은 사실에 두 경로가 생긴다
  */
-export type RunView = { node: number; region: string; floor: number; hp: number; maxHp: number; patrons: PatronPair };
+export type RunView = { depth: number; lane: number; region: string; floor: number; hp: number; maxHp: number; patrons: PatronPair; grid: MapGrid };
 export type CombatObservation = RunView & {
   turn: number;
   block: number;
@@ -121,10 +150,15 @@ export type CombatObservation = RunView & {
   /** target phase에서 지금 내려는 카드 */
   card?: string;
 };
-type MapObservation = RunView & { deck: CardView[] };
+/** `text`는 그 층의 문장이다 — 지도 화면이 지금 어디 서 있는지 한 줄로 읽는다 */
+type MapObservation = RunView & { deck: CardView[]; text: string };
 type RewardObservation = RunView & { deck: number; cards: CardView[] };
-/** 마일스톤 2는 강화, 6은 비용 감소다. `cards`는 **덱에 있는** 그 신의 카드뿐이다 */
-type GraceObservation = RunView & { god: string; milestone: number; cards: CardView[] };
+/**
+ * 은혜 후보 하나. `cards`는 지금 덱에 있는 그 슬롯의 카드 수 — 은혜가 몇 장에 붙는지가 결정의 근거다.
+ * `replaces`는 그 슬롯이 이미 든 은혜의 문장으로, **무엇을 밀어내는지** 화면에 서야 한다
+ */
+type GraceOffer = { id: string; slot: GraceSlot; tier: number; text: string; effects: Card["effects"]; cards: number; replaces?: string };
+type GraceObservation = RunView & { god: string; tier: number; offer: GraceOffer[] };
 type DemandObservation = RunView & { patron: string; other: string; text: string; reward: number; penalty: number };
 /** 봇이 고를 값(`bot`)을 같이 내보낸다 — 답을 채우지 않으면 이것이 쓰이고, 정책은 엔진 안에만 남는다 */
 export type CombatDecision = { phase: "card" | "target"; options: string[]; bot: string; observation: CombatObservation };
@@ -140,7 +174,6 @@ type EncounterResult = {
   blockBuilt: number;
   blockAbsorbed: number;
   targetSpread: ("single" | "multi")[];
-  uses: FavorUses;
   cardsPlayed: string[];
   /** `demandSatisfied`가 읽는 이름들이다 — 요구 조건 DSL의 좌변과 같은 키여야 한다 */
   facts: Record<string, number>;
@@ -152,7 +185,7 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
   const hp = state.combat.player.hp;
   state.combat = createCombat(seed, deck, enemies);
   state.combat.player.hp = hp;
-  applyFavorStageEffects(state, godData);
+  applyFavorStageEffects(state, auraGods());
   const uses: FavorUses = {};
   let blockBuilt = 0;
   let blockAbsorbed = 0;
@@ -221,17 +254,19 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
           observation: { card: cardId, ...observation() },
         }
         : undefined;
-      blockBuilt += card.effects.reduce((sum, effect) => sum + (effect.op === "block" ? effect.value ?? 0 : 0), 0);
-      targetSpread.push(card.target === "all_enemies" || card.effects.some(({ op }) => op === "chain") ? "multi" : "single");
+      // 카드 것 + 그 슬롯 은혜 것을 같이 센다 — 화면에 붙은 토큰을 요구가 세지 않으면 두 번째 진실이다
+      const played = cardEffects(state, card);
+      blockBuilt += played.reduce((sum, effect) => sum + (effect.op === "block" ? effect.value ?? 0 : 0), 0);
+      targetSpread.push(card.target === "all_enemies" || played.some(({ op }) => op === "chain") ? "multi" : "single");
       const beforeCard = healthBar();
       playCard(state, cardMap, cardId, target);
       recordHits(beforeCard, true);
       // 조건 없는 토큰만 센다 — `when`이 걸린 효과는 붙었는지 여기서 알 수 없으므로 세지 않는다
-      const applied = card.effects.reduce((sum, effect) => sum + (effect.op === "apply_token" && !effect.when ? effect.stacks ?? 1 : 0), 0);
+      const applied = played.reduce((sum, effect) => sum + (effect.op === "apply_token" && !effect.when ? effect.stacks ?? 1 : 0), 0);
       facts.tokens_applied += applied;
       turnTokens += applied;
       if (card.patron) recordCardFavor(state.favor, card.patron, uses);
-      log.push(`node=${state.map.node + 1} ${renderPlay(state.combat, card, target)}`);
+      log.push(`node=${state.map.depth + 1}:${state.map.lane} ${renderPlay(state.combat, card, target)}`);
     }
     facts.hit_targets_in_turn = Math.max(facts.hit_targets_in_turn, turnTargets.size);
     turnTargets = new Set();
@@ -247,7 +282,7 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
     }
   }
   finishCombatFavor(state.favor, [...patrons], uses);
-  return { turns: state.combat.turn, blockBuilt, blockAbsorbed, targetSpread, uses, cardsPlayed, facts };
+  return { turns: state.combat.turn, blockBuilt, blockAbsorbed, targetSpread, cardsPlayed, facts };
 }
 
 export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair = ["zeus", "athena"]): Generator<Decision, RunResult, string> {
@@ -264,8 +299,9 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
     seed,
     combat: createCombat(seed, deck, []),
     favor: { [patrons[0]]: graced ? 70 : 50, [patrons[1]]: 50 },
-    grace: { [patrons[0]]: graced, [patrons[1]]: 0 },
-    map: { node: 0, completed: [] },
+    grace: { [patrons[0]]: 0, [patrons[1]]: 0 },
+    graceSlots: {},
+    map: { depth: 0, lane: bossLane, grid: generateMap(seed, eliteSlots), completed: [] },
   };
   const log: string[] = [];
   // ε 동전은 전투·셔플·보상과 겹치지 않는 스트림에서 뽑는다. 겹치면 ε을 켜는 것만으로 적 뽑기까지
@@ -273,13 +309,13 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
   const noise = createRng(seed ^ 0x5eed);
   const favorCurve = [{ ...state.favor }];
   const hpCurve = [state.combat.player.hp];
-  const pathChoices: ("combat" | "rest")[] = [];
+  /** `"1:elite"` 꼴. 갈래와 종류를 같이 들어야 옛 로그가 어느 갈래였는지 못 갖는 것이 드러난다 */
+  const pathChoices: string[] = [];
   const restChoices: ("heal" | "remove")[] = [];
   const regionsCleared: string[] = [];
   let encounters = 0;
   let restCount = 0;
   let turns = 0;
-  let upgrades = 0;
   let blockBuilt = 0;
   let blockAbsorbed = 0;
   const enemyCounts: number[] = [];
@@ -294,23 +330,43 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
   const demandOutcomes: Record<string, [number, number]> = {};
   const view = () => runView(state, patrons);
 
-  /** 덱에 없는 카드를 강화하면 아무 일도 일어나지 않는다. 그래서 후보는 덱 안의 그 신의 카드뿐이다 */
-  function* grantMilestone(god: string, milestone: number): Generator<Decision, void, string> {
-    const options = [...new Set(deck.filter((id) => cardMap.get(id)?.patron === god))];
-    if (!options.length) return;
-    const cardId = yield {
+  /** 지금 덱의 슬롯별 카드 수. 은혜 값은 이 장수만큼 곱해져 들어가므로 봇도 화면도 이것을 읽는다 */
+  const deckSlotCards = (): Record<string, number> => Object.fromEntries(graceSlots
+    .map((slot) => [slot, deck.filter((id) => cardMap.get(id)?.tags.includes(slot)).length]));
+
+  /**
+   * 은혜 3택1. 옛 판은 「덱에 있는 그 신의 카드 한 장」이었고 그건 결정이 아니라 절차였다 — 지금은
+   * 어느 슬롯에 부을지, 넓게 갈지 깊게 갈지가 결정이다. 은혜는 카드가 아니므로 후보는 은혜 id다
+   */
+  function* grantGrace(god: string): Generator<Decision, void, string> {
+    const tier = graceTier(state.grace[god] ?? 0);
+    const offer = graceOffer(graces, god, state.graceSlots, tier);
+    if (!offer.length) return;
+    const options = offer.map(({ id }) => id);
+    const slotCards = deckSlotCards();
+    const held = state.graceSlots;
+    const choice = yield {
       phase: "grace",
       options,
-      bot: chooseGraceCard(new Map(options.map((id) => [id, cardMap.get(id)!])), god, state.combat) ?? options[0],
-      observation: { ...view(), god, milestone, cards: options.map((id) => cardView(cardMap.get(id)!)) },
+      bot: chooseGrace(offer, held, slotCards) ?? options[0],
+      observation: {
+        ...view(),
+        god,
+        tier,
+        offer: offer.map(({ id, slot, tier: level, text, effects }) => ({
+          id,
+          slot,
+          tier: Math.max(level, held[slot]?.tier ?? 0),
+          text,
+          effects,
+          cards: slotCards[slot] ?? 0,
+          replaces: graces.find((grace) => grace.id === held[slot]?.id && grace.tier === held[slot]?.tier)?.text,
+        })),
+      },
     };
-    if (!options.includes(cardId)) throw new Error(`Invalid grace action: ${cardId}`);
-    if (milestone === 2) {
-      cardMap.set(cardId, upgradeCard(cardMap.get(cardId)!));
-      upgrades += 1;
-    }
-    if (milestone === 6) cardMap.set(cardId, reduceCardCost(cardMap.get(cardId)!));
-    actions.push({ type: "grace", choice: cardId });
+    if (!options.includes(choice)) throw new Error(`Invalid grace action: ${choice}`);
+    takeGrace(graces, state.graceSlots, offer.find(({ id }) => id === choice)!);
+    actions.push({ type: "grace", choice });
   }
 
   /**
@@ -318,15 +374,36 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
    * 판정해야 한다 — 수락은 약속이고, 보상은 지켰을 때만 들어간다
    */
   type DemandPromise = { demand: Demand; patron: GodId; other: GodId; answer: "accept" | "reject" };
-  function* askDemand(enemies: EnemyDefinition[]): Generator<Decision, DemandPromise | undefined, string> {
-    if ((seed + state.map.node) % 5 >= 3) return undefined;
-    const seekFusion = patrons.includes("artemis") && (state.grace[patrons[0]] ?? 0) >= 6;
-    const demandIndex = seekFusion ? (seed + state.map.node) % 2 : 0;
-    const patron = patrons[demandIndex];
-    const other = patrons[1 - demandIndex];
+  function* askDemand(enemyCount: number, nodeSeed: number, mustAsk = false): Generator<Decision, DemandPromise | undefined, string> {
+    /**
+     * 요구는 **모든 조우 앞에** 선다. 전에는 `(seed + nodeSeed) % 5 >= 3`으로 60%만 물었다 —
+     * 진노는 라이벌 요구 −18로만 닿을 수 있고 조합당 두세 번으로는 문턱을 넘지 못했다.
+     * 빈도는 결정의 횟수지 세기가 아니다: 승률은 0.400 → 0.397로 안 움직이고 은총은 같이 올랐다
+     */
+    /**
+     * 첫 신이 은혜를 하나 받은 뒤부터 요구를 두 신에 **번갈아** 건다. 늘 `patrons[0]`만 올리면 상대는
+     * 헌신에 닿지 못하고 은혜도 합성도 한 신으로만 간다 — 요구는 patron을 올리고 상대를 내린다.
+     * 처음부터 번갈아 걸면 반대로 나빠진다(합성률 0.245 → 0.134): 호의가 갈려 **아무도** 헌신에 못
+     * 서고 은총 2 도달이 0.715 → 0.667로 떨어진다. 한 신을 먼저 올려 사다리를 열고 그다음 상대를 올린다.
+     * 옛 판은 `artemis`를 이름으로 박아 두고 은혜 6을 기다리는 예외 하나였다
+     */
+    const seekFusion = (state.grace[patrons[0]] ?? 0) >= 1;
+    const demandIndex = seekFusion ? (seed + nodeSeed) % 2 : 0;
     // 적이 둘뿐인 전투에 "셋을 쳐라"를 띄우면 지킬 수 없는 약속이다
-    const asked = demandData.filter(({ patron: god, min_enemies }) => god === patron && min_enemies <= enemies.length);
-    const demand = asked[(seed + state.map.node) % asked.length];
+    const askable = (god: GodId) => demandData.filter(({ patron, min_enemies }) => patron === god && min_enemies <= enemyCount);
+    /**
+     * `omen`에서만 상대 신으로 넘긴다. 제우스의 요구는 둘 다 적 둘 이상을 요구하는데 `omen`은 다음
+     * 조우의 크기를 모르므로 1로 묻는다 — 넘기지 않으면 제우스가 걸린 `omen` 칸이 조용히 아무 일도
+     * 안 한다(omen 방문의 43.7%였다). 칸 하나가 통째로 그 질문이라 물을 것이 없으면 칸이 없다.
+     *
+     * 전투 칸은 넘기지 않는다: 거기서 안 묻는 것은 「지킬 수 있는 요구가 없다」는 맞는 답이고,
+     * 넘기면 조합마다 요구 수가 달라져 원장의 P-28 줄이 다른 규칙판의 숫자가 된다
+     */
+    const index = !mustAsk || askable(patrons[demandIndex]).length ? demandIndex : 1 - demandIndex;
+    const patron = patrons[index];
+    const other = patrons[1 - index];
+    const asked = askable(patron);
+    const demand = asked[(seed + nodeSeed) % asked.length];
     if (!demand) return undefined;
     const answer = yield {
       phase: "demand",
@@ -339,9 +416,9 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
     return { demand, patron, other, answer };
   }
 
-  function* offerReward(): Generator<Decision, void, string> {
+  function* offerReward(nodeSeed: number): Generator<Decision, void, string> {
     // 전투/셔플과 겹치지 않는 새 스트림이다. 겹치면 기존 replay 재생이 깨진다
-    const offer = rewardOffer(createRng(seed * 1000 + state.map.node), patrons);
+    const offer = rewardOffer(createRng(seed * 1000 + nodeSeed), patrons);
     const picked = yield {
       phase: "reward",
       options: [...offer, skipReward],
@@ -353,27 +430,45 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
     actions.push({ type: "reward", choice: picked });
   }
 
-  if (graced >= 2) yield* grantMilestone(patrons[0], 2);
-  if (graced >= 6) yield* grantMilestone(patrons[0], 6);
+  // 시나리오는 은혜를 미리 받은 상태에서 출발한다 — 획득 순서대로 tier가 오르므로 한 개씩 준다
+  for (let earned = 1; earned <= graced; earned += 1) {
+    state.grace[patrons[0]] = earned;
+    yield* grantGrace(patrons[0]);
+  }
 
-  while (state.map.node < 12 && state.combat.player.hp > 0) {
-    const node = mapNode(state.map.node);
-    const optional = node.options.includes("rest");
-    const mapObservation: MapObservation = { ...view(), deck: deck.map((id) => cardView(cardMap.get(id)!)) };
-    let path = node.options[0];
-    if (optional) {
+  /**
+   * `omen`에서 걸어 둔 약속. 판정은 다음 조우의 사실이 하므로 **하나만** 든다 — 둘을 걸면 같은
+   * 전투 하나로 호의가 두 번 들어오고, 그건 요구가 아니라 수도꼭지다
+   */
+  let carried: DemandPromise | undefined;
+
+  while (state.map.depth < 12 && state.combat.player.hp > 0) {
+    const { region, floor } = mapSlot(state.map.depth);
+    const row = state.map.grid[state.map.depth];
+    const options = reachableLanes(state.map.depth, state.map.lane).map((lane) => `${lane}:${row[lane]}`);
+    const mapObservation: MapObservation = { ...view(), deck: deck.map((id) => cardView(cardMap.get(id)!)), text: mapSlots.get(`${region}:${floor}`)!.text };
+    // 갈래가 하나뿐인 자리는 보스 층뿐이다 — 물을 것이 없으면 묻지 않는다
+    if (options.length > 1) {
       const choice = yield {
         phase: "path",
-        options: [...node.options],
-        bot: choosePath(state.combat.player.hp, state.combat.player.maxHp),
+        options,
+        bot: choosePath(options, state.combat.player.hp, state.combat.player.maxHp, state.map.grid, state.map.depth),
         observation: mapObservation,
       };
-      if (choice !== "combat" && choice !== "rest") throw new Error(`Invalid path action: ${choice}`);
-      path = choice;
+      if (!options.includes(choice)) throw new Error(`Invalid path action: ${choice}`);
       pathChoices.push(choice);
       actions.push({ type: "path", choice });
-    }
-    if (path === "rest") {
+      enterNode(state, Number(choice.split(":")[0]));
+    } else enterNode(state, Number(options[0].split(":")[0]));
+    const path = row[state.map.lane]!;
+    /** 조우·보상·요구가 같은 갈래에서 같은 값을 읽는다. 갈래가 빠지면 세 갈래가 같은 적을 뱉는다 */
+    const nodeSeed = state.map.depth * laneCount + state.map.lane;
+    if (path === "omen") {
+      // 두 번째 `omen`은 걸어 둔 약속을 **교체한다**. 삼키면 그 칸이 아무 일도 안 하고, 둘 다 들면
+      // 같은 전투 하나로 호의가 두 번 들어온다 — 교체는 둘 다 아니다
+      carried = (yield* askDemand(1, nodeSeed, true)) ?? carried;
+      advanceMap(state);
+    } else if (path === "rest") {
       const rest = yield {
         phase: "rest",
         options: ["heal", "remove"],
@@ -394,11 +489,15 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
       if (cardId !== undefined) actions.push({ type: "rest_card", choice: cardId });
       restChoices.push(rest);
       restCount += 1;
-      advanceMap(state, "rest");
+      advanceMap(state);
     } else {
-      const enemies = encounter(seed + state.map.node, node.region, path === "boss");
-      const promise = yield* askDemand(enemies);
-      const result = yield* playEncounter(state, seed * 100 + state.map.node, deck, cardMap, enemies, log, patrons, noise);
+      const enemies = encounter(seed + nodeSeed, region, floor, path);
+      /** 이 조우가 무엇을 요구했는지. `--aura-matrix`가 개입의 부호를 여기서 갈라 읽는다 */
+      const passives = [...new Set(enemies.flatMap(({ passives: own }) => Object.keys(own ?? {})))].sort();
+      const devoted = patrons.filter((god) => favorStage(state.favor[god] ?? favorInitial) === "devotion");
+      const promise = yield* askDemand(enemies.length, nodeSeed);
+      const hpBefore = state.combat.player.hp;
+      const result = yield* playEncounter(state, seed * 100 + nodeSeed, deck, cardMap, enemies, log, patrons, noise);
       turns += result.turns;
       blockBuilt += result.blockBuilt;
       blockAbsorbed += result.blockAbsorbed;
@@ -406,46 +505,45 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
       cardsPlayed.push(...result.cardsPlayed);
       enemyCounts.push(enemies.length);
       encounters += 1;
-      encounterOutcomes.push({ key: enemies.map(({ id }) => id).join("+"), cleared: state.combat.outcome === "victory" });
+      // 편성 이름이 아니라 **자리**로 센다 — 층별 정책이 갈리는지 보려면 열이 층이어야 한다
+      encounterOutcomes.push({ key: `${region}:${floor}:${path}`, cleared: state.combat.outcome === "victory", passives, devoted, hpLost: hpBefore - state.combat.player.hp });
       if (state.combat.outcome !== "victory") {
-        defeatContext = {
-          region: node.region,
-          floor: node.floor,
-          enemies: enemies.map(({ id }) => id),
-          passives: [...new Set(enemies.flatMap(({ passives }) => Object.keys(passives ?? {})))].sort(),
-        };
+        defeatContext = { region, floor, enemies: enemies.map(({ id }) => id), passives };
         favorCurve.push({ ...state.favor });
         hpCurve.push(state.combat.player.hp);
         break;
       }
-      if (promise) {
+      // 전투 앞의 요구와 `omen`에서 걸어 둔 약속을 같은 사실로 판정한다
+      for (const kept of [promise, carried]) {
+        if (!kept) continue;
         // 지키지 못한 약속은 아무것도 움직이지 않는다 — 실패 벌금은 만들지 않는다 (R-5)
-        const accept = promise.answer === "accept";
-        const kept = accept && demandSatisfied(promise.demand, result.facts);
-        resolveDemand(state.favor, promise.patron, promise.other, kept);
-        demandSides.push(kept ? promise.patron : promise.other);
-        const [accepted, keptCount] = demandOutcomes[promise.demand.id] ?? [0, 0];
-        demandOutcomes[promise.demand.id] = [accepted + (accept ? 1 : 0), keptCount + (kept ? 1 : 0)];
+        const accept = kept.answer === "accept";
+        const held = accept && demandSatisfied(kept.demand, result.facts);
+        resolveDemand(state.favor, kept.patron, kept.other, held);
+        demandSides.push(held ? kept.patron : kept.other);
+        const [accepted, heldCount] = demandOutcomes[kept.demand.id] ?? [0, 0];
+        demandOutcomes[kept.demand.id] = [accepted + (accept ? 1 : 0), heldCount + (held ? 1 : 0)];
       }
-      yield* offerReward();
-      if (!fused && canFuse(state.favor, result.uses, patrons)) {
+      carried = undefined;
+      yield* offerReward(nodeSeed);
+      // 은혜를 먼저 준다 — 합성 전제가 은혜 보유이므로 이 순서라야 마지막 은혜가 그 자리에서 합성을 연다
+      for (const god of awardGrace(state.favor, state.grace, [...patrons])) yield* grantGrace(god);
+      if (!fused && canFuse(state.grace, patrons)) {
         deck.push(fusedCard.id);
         fused = true;
       }
-      const god = awardGrace(state.favor, state.grace, [...patrons]);
-      if (god && [2, 6].includes(state.grace[god])) yield* grantMilestone(god, state.grace[god]);
-      advanceMap(state, path);
-      if (node.floor === 6) regionsCleared.push(node.region);
+      advanceMap(state);
+      if (floor === 6) regionsCleared.push(region);
     }
     favorCurve.push({ ...state.favor });
     hpCurve.push(state.combat.player.hp);
   }
-  const won = state.map.node === 12 && state.combat.player.hp > 0;
+  const won = state.map.depth === 12 && state.combat.player.hp > 0;
   log.push(`outcome=${won ? "victory" : state.combat.outcome} encounters=${encounters} turns=${turns} hp=${state.combat.player.hp}`);
   // 런당 요구는 최대 아홉 번이다 — 최빈값을 세는 데 정렬 한 줄이면 된다
   const conflictChoice = [...demandSides].sort((left, right) =>
     demandSides.filter((god) => god === right).length - demandSides.filter((god) => god === left).length)[0];
-  return { won, turns, log, favorCurve, encounters, restCount, hpCurve, pathChoices, restChoices, regionsCleared, grace: state.grace, upgrades, scenario, enemyCounts, encounterOutcomes, defeatContext, targetSpread, blockBuilt, blockAbsorbed, fused, actions, cardsPlayed, conflictChoice, demandOutcomes, pairing: patrons.join("+") };
+  return { won, grid: state.map.grid, turns, log, favorCurve, encounters, restCount, hpCurve, pathChoices, restChoices, regionsCleared, grace: state.grace, graceSlots: state.graceSlots, scenario, enemyCounts, encounterOutcomes, defeatContext, targetSpread, blockBuilt, blockAbsorbed, fused, actions, cardsPlayed, conflictChoice, demandOutcomes, pairing: patrons.join("+") };
 }
 
 /**

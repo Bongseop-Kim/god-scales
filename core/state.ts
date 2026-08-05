@@ -1,3 +1,5 @@
+import type { GraceHeld } from "./grace.ts";
+import type { MapGrid } from "./map.ts";
 import type { Card } from "./rules.ts";
 
 export type CardId = string;
@@ -64,6 +66,13 @@ export type GameState = {
   seed: number;
   combat: CombatState;
   favor: Record<string, number>;
+  /**
+   * 그 신에게서 받은 은혜 **수**. tier 사다리의 입력이고 그것뿐이다 — 고른 은혜는 `graceSlots`가 든다.
+   * P-28이 셋 중 「뜻을 유지하고 은혜는 별도 필드」를 골랐다(사유는 reviews/28-boon.md)
+   */
   grace: Record<string, number>;
-  map: { node: number; completed: string[] };
+  /** 슬롯당 은혜 하나. `cardEffects`가 카드 태그로 읽는다 — 태그가 곧 슬롯이다 */
+  graceSlots: GraceHeld;
+  /** `lane`은 런 시작에 `bossLane`이다 — 그래야 1층에서 세 갈래가 다 열린다 */
+  map: { depth: number; lane: number; grid: MapGrid; completed: string[] };
 };

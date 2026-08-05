@@ -1,16 +1,19 @@
 import type { EnemyDefinition } from "../../core/combat.ts";
+import type { Grace, GraceHeld } from "../../core/grace.ts";
+import { floorsPerRegion, type MapGrid } from "../../core/map.ts";
 import type { Card } from "../../core/rules.ts";
 import type { CombatState } from "../../core/state.ts";
 import { demandPenalty } from "../../core/demands.ts";
 import { favorBoundaries, favorInitial } from "../../core/favor.ts";
-import { expectedValue, powerTurns, tokenWeights } from "../../tools/value.ts";
+import { expectedValue, graceValue, powerTurns, tokenWeights } from "../../tools/value.ts";
 
 /**
- * v4: 토큰 값을 게이트 표(`tokenWeights`)에서 읽고, 요구 답이 조건 판정을 전제로 바뀌었다.
- * P-31의 파워 배수는 v4를 유지한다 — 기존 123장에 `power` 태그가 하나도 없어 옛 입력에서 정책이
- * 한 자리도 다르지 않다. 판을 올리면 원장의 v4 비교가 끊긴다
+ * v5: `choosePath`가 「쉴까 말까」가 아니라 갈래를 고른다(P-27). 입력과 반환이 통째로 달라 옛 판과
+ * 같은 결정을 낼 수가 없다 — 이때만 판을 올린다. v4는 토큰 값을 게이트 표에서 읽고 요구 답이 조건
+ * 판정을 전제로 바뀐 판이었고, P-31의 파워 배수는 옛 입력에서 한 자리도 다르지 않아 v4를 유지했다
+ * v6: 은총이 「카드 한 장 고르기」에서 「은혜 슬롯 3택1」이 됐다(P-28) — 고르는 것 자체가 다르다
  */
-export const botPolicyVersion = "v4";
+export const botPolicyVersion = "v6";
 
 /**
  * 확률 ε로 합법수를 무작위로 고른다. 실력을 낮춘 두 번째 열(`승률(ε)`)을 만들어 조합마다 결정이
@@ -84,8 +87,42 @@ export function cardValue(card: Card, combat: CombatState, incoming: number, fav
   return card.tags.includes("exhaust") ? value * 0.6 : value;
 }
 
-export function choosePath(hp: number, maxHp: number): "combat" | "rest" {
-  return hp < maxHp * 0.5 ? "rest" : "combat";
+/**
+ * 갈래를 고른다. 옵션은 `"lane:type"`이고 갈래마다 종류가 다르므로 정책은 **종류의 순위** 하나다.
+ *
+ * 다친 뒤에는 쉼터가 1순위고, 아니면 전투 → 예고 → 정예 → 쉼터 순이다. 정예가 전투보다 뒤인 이유는
+ * 지금 정예의 보상이 전투와 같기 때문이다 — 은혜(P-28)가 붙으면 여기가 뒤집힐 자리다. 갈래가
+ * `lane ±1`로 묶여 있어 원하는 종류에 못 닿는 층이 있고, 그때 정예가 실제로 선택된다
+ */
+/** 다치면 전부 쉼터가 1순위다 — 살아남는 것에는 취향이 없다 */
+const hurtRank = ["rest", "omen", "combat", "elite"];
+/**
+ * 갈래 순위는 정책마다 다르다. 정책 넷은 이미 「어떻게 싸우는가」의 가중치인데 그것이 「어디로
+ * 가는가」로 이어지지 않으면 같은 시드에서 넷이 같은 길을 걷는다 — 그러면 격자가 결정을 만들지
+ * 못한 것이다. 새 정책을 만들지 않고 있는 넷에 경로 취향을 붙인다:
+ * `spread`는 적이 많은 정예를, `turtle`은 체력을, `token`은 요구가 한 번 더 오는 예고를 먼저 본다
+ */
+const healthyRank: Record<Policy | "none", string[]> = {
+  none: ["combat", "omen", "elite", "rest"],
+  single: ["combat", "omen", "elite", "rest"],
+  spread: ["elite", "combat", "omen", "rest"],
+  turtle: ["rest", "combat", "omen", "elite"],
+  token: ["omen", "combat", "elite", "rest"],
+};
+
+export function choosePath(options: string[], hp: number, maxHp: number, grid: MapGrid, depth: number): string {
+  const rank = hp < maxHp * 0.5 ? hurtRank : healthyRank[policy ?? "none"];
+  const score = (option: string) => rank.indexOf(option.split(":")[1]);
+  /**
+   * 종류가 같으면 **앞의 가장 가까운 쉼터로 가는 길목**을 고른다. 갈래가 `lane ±1`로 묶여 있어 지금
+   * 고르는 칸이 몇 층 뒤에 닿을 수 있는 칸을 정한다 — 5층 쉼터가 보장되어 있으므로 이것이 무승부를
+   * 가르는 유일한 근거다. 갈래 번호로 가르면 봇이 seed와 무관하게 한쪽 끝만 걷는다
+   */
+  const end = Math.min(grid.length, (Math.floor(depth / floorsPerRegion) + 1) * floorsPerRegion);
+  let restLane = -1;
+  for (let ahead = depth; ahead < end && restLane < 0; ahead += 1) restLane = grid[ahead].indexOf("rest");
+  const detour = (option: string) => (restLane < 0 ? 0 : Math.abs(Number(option.split(":")[0]) - restLane));
+  return [...options].sort((left, right) => score(left) - score(right) || detour(left) - detour(right) || (left < right ? -1 : 1))[0];
 }
 
 export function chooseRest(hp: number, maxHp: number): "heal" | "remove" {
@@ -110,10 +147,17 @@ export function chooseReward(options: string[], cards: ReadonlyMap<string, Card>
   return noisyPick(options, rng) ?? [...options].sort((left, right) => expectedValue(cards.get(right)!) - expectedValue(cards.get(left)!))[0];
 }
 
-export function chooseGraceCard(cards: ReadonlyMap<string, Card>, patron: string, combat: CombatState): string | undefined {
-  return [...cards.values()]
-    .filter((card) => card.patron === patron)
-    .sort((left, right) => cardValue(right, combat, 0, {}) / Math.max(right.cost, 0.5) - cardValue(left, combat, 0, {}) / Math.max(left.cost, 0.5))[0]?.id;
+/**
+ * 은혜는 지금 덱의 그 태그 카드 수만큼 곱해져 들어간다 — 게이트가 쓰는 환산(`graceValue`)을 그대로
+ * 쓴다. 이미 찬 슬롯을 고르는 것은 **차액**만 얻는 것이라 그만큼 깎는다: 그래서 빈 슬롯이 먼저 차고,
+ * tier가 올라 차액이 커지면 그때 같은 슬롯을 다시 부어 깊게 간다
+ */
+export function chooseGrace(offer: Grace[], held: GraceHeld, slotCards: Record<string, number>): string | undefined {
+  const gain = (grace: Grace) => {
+    const cards = slotCards[grace.slot] ?? 0;
+    return graceValue(grace.effects, cards) - graceValue(held[grace.slot]?.effects ?? [], cards);
+  };
+  return [...offer].sort((left, right) => gain(right) - gain(left) || (left.id < right.id ? -1 : 1))[0]?.id;
 }
 
 /** 거절에 벌금은 없다. 그러니 상대를 진노로 떨어뜨릴 때만 거절하고, 그 밖에는 받는다 */

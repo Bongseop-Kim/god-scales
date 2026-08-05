@@ -1,0 +1,703 @@
+[
+  {
+    "id": "grace_zeus_attack_shock",
+    "patron": "zeus",
+    "slot": "attack",
+    "tier": 2,
+    "text": "네 손끝에서 갈라진다.",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "shock",
+        "stacks": 1
+      }
+    ]
+  },
+  {
+    "id": "grace_zeus_attack_shock",
+    "patron": "zeus",
+    "slot": "attack",
+    "tier": 4,
+    "text": "네 손끝에서 갈라진다.",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "shock",
+        "stacks": 2
+      }
+    ]
+  },
+  {
+    "id": "grace_zeus_attack_shock",
+    "patron": "zeus",
+    "slot": "attack",
+    "tier": 6,
+    "text": "네 손끝에서 갈라진다.",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "shock",
+        "stacks": 2
+      },
+      {
+        "op": "apply_token",
+        "token": "shock",
+        "stacks": 1,
+        "when": "turn > 3"
+      }
+    ]
+  },
+  {
+    "id": "grace_zeus_defend_block",
+    "patron": "zeus",
+    "slot": "defend",
+    "tier": 2,
+    "text": "천둥이 먼저 오고 벼락이 뒤에 온다. 그 사이가 네 방패다.",
+    "effects": [
+      {
+        "op": "block",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "id": "grace_zeus_defend_block",
+    "patron": "zeus",
+    "slot": "defend",
+    "tier": 4,
+    "text": "천둥이 먼저 오고 벼락이 뒤에 온다. 그 사이가 네 방패다.",
+    "effects": [
+      {
+        "op": "block",
+        "value": 2
+      }
+    ]
+  },
+  {
+    "id": "grace_zeus_defend_block",
+    "patron": "zeus",
+    "slot": "defend",
+    "tier": 6,
+    "text": "천둥이 먼저 오고 벼락이 뒤에 온다. 그 사이가 네 방패다.",
+    "effects": [
+      {
+        "op": "block",
+        "value": 2
+      },
+      {
+        "op": "block",
+        "value": 1,
+        "when": "turn > 3"
+      }
+    ]
+  },
+  {
+    "id": "grace_zeus_utility_draw",
+    "patron": "zeus",
+    "slot": "utility",
+    "tier": 2,
+    "text": "하늘은 네가 보기 전에 읽는다.",
+    "effects": [
+      {
+        "op": "draw",
+        "value": 1,
+        "when": "turn > 3"
+      }
+    ]
+  },
+  {
+    "id": "grace_zeus_utility_draw",
+    "patron": "zeus",
+    "slot": "utility",
+    "tier": 4,
+    "text": "하늘은 네가 보기 전에 읽는다.",
+    "effects": [
+      {
+        "op": "draw",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "id": "grace_zeus_utility_draw",
+    "patron": "zeus",
+    "slot": "utility",
+    "tier": 6,
+    "text": "하늘은 네가 보기 전에 읽는다.",
+    "effects": [
+      {
+        "op": "draw",
+        "value": 1
+      },
+      {
+        "op": "draw",
+        "value": 1,
+        "when": "turn > 3"
+      }
+    ]
+  },
+  {
+    "id": "grace_poseidon_attack_soaked",
+    "patron": "poseidon",
+    "slot": "attack",
+    "tier": 2,
+    "text": "닿은 것은 모두 젖는다.",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "soaked",
+        "stacks": 1,
+        "when": "turn > 3"
+      }
+    ]
+  },
+  {
+    "id": "grace_poseidon_attack_soaked",
+    "patron": "poseidon",
+    "slot": "attack",
+    "tier": 4,
+    "text": "닿은 것은 모두 젖는다.",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "soaked",
+        "stacks": 1
+      }
+    ]
+  },
+  {
+    "id": "grace_poseidon_attack_soaked",
+    "patron": "poseidon",
+    "slot": "attack",
+    "tier": 6,
+    "text": "닿은 것은 모두 젖는다.",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "soaked",
+        "stacks": 1
+      },
+      {
+        "op": "apply_token",
+        "token": "soaked",
+        "stacks": 1,
+        "when": "turn > 3"
+      }
+    ]
+  },
+  {
+    "id": "grace_poseidon_defend_draw",
+    "patron": "poseidon",
+    "slot": "defend",
+    "tier": 2,
+    "text": "물러서는 자리에서 해류가 보인다.",
+    "effects": [
+      {
+        "op": "draw",
+        "value": 1,
+        "when": "turn > 3"
+      }
+    ]
+  },
+  {
+    "id": "grace_poseidon_defend_draw",
+    "patron": "poseidon",
+    "slot": "defend",
+    "tier": 4,
+    "text": "물러서는 자리에서 해류가 보인다.",
+    "effects": [
+      {
+        "op": "draw",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "id": "grace_poseidon_defend_draw",
+    "patron": "poseidon",
+    "slot": "defend",
+    "tier": 6,
+    "text": "물러서는 자리에서 해류가 보인다.",
+    "effects": [
+      {
+        "op": "draw",
+        "value": 1
+      },
+      {
+        "op": "draw",
+        "value": 1,
+        "when": "turn > 3"
+      }
+    ]
+  },
+  {
+    "id": "grace_poseidon_token_heal",
+    "patron": "poseidon",
+    "slot": "token",
+    "tier": 2,
+    "text": "밀물은 상처를 씻고 돌아간다.",
+    "effects": [
+      {
+        "op": "heal",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "id": "grace_poseidon_token_heal",
+    "patron": "poseidon",
+    "slot": "token",
+    "tier": 4,
+    "text": "밀물은 상처를 씻고 돌아간다.",
+    "effects": [
+      {
+        "op": "heal",
+        "value": 2
+      }
+    ]
+  },
+  {
+    "id": "grace_poseidon_token_heal",
+    "patron": "poseidon",
+    "slot": "token",
+    "tier": 6,
+    "text": "밀물은 상처를 씻고 돌아간다.",
+    "effects": [
+      {
+        "op": "heal",
+        "value": 2
+      },
+      {
+        "op": "heal",
+        "value": 1,
+        "when": "turn > 3"
+      }
+    ]
+  },
+  {
+    "id": "grace_athena_attack_damage",
+    "patron": "athena",
+    "slot": "attack",
+    "tier": 2,
+    "text": "지혜는 급소를 먼저 안다.",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 1,
+        "when": "turn > 3"
+      }
+    ]
+  },
+  {
+    "id": "grace_athena_attack_damage",
+    "patron": "athena",
+    "slot": "attack",
+    "tier": 4,
+    "text": "지혜는 급소를 먼저 안다.",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "id": "grace_athena_attack_damage",
+    "patron": "athena",
+    "slot": "attack",
+    "tier": 6,
+    "text": "지혜는 급소를 먼저 안다.",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 1
+      },
+      {
+        "op": "damage",
+        "value": 1,
+        "when": "turn > 3"
+      }
+    ]
+  },
+  {
+    "id": "grace_athena_defend_bulwark",
+    "patron": "athena",
+    "slot": "defend",
+    "tier": 2,
+    "text": "지혜는 같은 벽을 두 번 쌓지 않는다.",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "bulwark",
+        "stacks": 1,
+        "when": "turn > 3"
+      }
+    ]
+  },
+  {
+    "id": "grace_athena_defend_bulwark",
+    "patron": "athena",
+    "slot": "defend",
+    "tier": 4,
+    "text": "지혜는 같은 벽을 두 번 쌓지 않는다.",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "bulwark",
+        "stacks": 1
+      }
+    ]
+  },
+  {
+    "id": "grace_athena_defend_bulwark",
+    "patron": "athena",
+    "slot": "defend",
+    "tier": 6,
+    "text": "지혜는 같은 벽을 두 번 쌓지 않는다.",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "bulwark",
+        "stacks": 1
+      },
+      {
+        "op": "apply_token",
+        "token": "bulwark",
+        "stacks": 1,
+        "when": "turn > 3"
+      }
+    ]
+  },
+  {
+    "id": "grace_athena_utility_thorns",
+    "patron": "athena",
+    "slot": "utility",
+    "tier": 2,
+    "text": "방패에는 언제나 가장자리가 있다.",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "thorns",
+        "stacks": 1,
+        "when": "hp_pct(self) < 50"
+      }
+    ]
+  },
+  {
+    "id": "grace_athena_utility_thorns",
+    "patron": "athena",
+    "slot": "utility",
+    "tier": 4,
+    "text": "방패에는 언제나 가장자리가 있다.",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "thorns",
+        "stacks": 1
+      }
+    ]
+  },
+  {
+    "id": "grace_athena_utility_thorns",
+    "patron": "athena",
+    "slot": "utility",
+    "tier": 6,
+    "text": "방패에는 언제나 가장자리가 있다.",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "thorns",
+        "stacks": 1
+      },
+      {
+        "op": "apply_token",
+        "token": "thorns",
+        "stacks": 1,
+        "when": "turn > 3"
+      }
+    ]
+  },
+  {
+    "id": "grace_ares_attack_bleed",
+    "patron": "ares",
+    "slot": "attack",
+    "tier": 2,
+    "text": "상처는 네가 떠난 뒤에 일한다.",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "bleed",
+        "stacks": 1,
+        "when": "turn > 3"
+      }
+    ]
+  },
+  {
+    "id": "grace_ares_attack_bleed",
+    "patron": "ares",
+    "slot": "attack",
+    "tier": 4,
+    "text": "상처는 네가 떠난 뒤에 일한다.",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "bleed",
+        "stacks": 1
+      }
+    ]
+  },
+  {
+    "id": "grace_ares_attack_bleed",
+    "patron": "ares",
+    "slot": "attack",
+    "tier": 6,
+    "text": "상처는 네가 떠난 뒤에 일한다.",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "bleed",
+        "stacks": 1
+      },
+      {
+        "op": "apply_token",
+        "token": "bleed",
+        "stacks": 1,
+        "when": "turn > 3"
+      }
+    ]
+  },
+  {
+    "id": "grace_ares_defend_frenzy",
+    "patron": "ares",
+    "slot": "defend",
+    "tier": 2,
+    "text": "버틴 만큼 화가 쌓인다.",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "frenzy",
+        "stacks": 1,
+        "when": "turn > 3"
+      }
+    ]
+  },
+  {
+    "id": "grace_ares_defend_frenzy",
+    "patron": "ares",
+    "slot": "defend",
+    "tier": 4,
+    "text": "버틴 만큼 화가 쌓인다.",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "frenzy",
+        "stacks": 1
+      }
+    ]
+  },
+  {
+    "id": "grace_ares_defend_frenzy",
+    "patron": "ares",
+    "slot": "defend",
+    "tier": 6,
+    "text": "버틴 만큼 화가 쌓인다.",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "frenzy",
+        "stacks": 1
+      },
+      {
+        "op": "apply_token",
+        "token": "frenzy",
+        "stacks": 1,
+        "when": "turn > 3"
+      }
+    ]
+  },
+  {
+    "id": "grace_ares_token_block",
+    "patron": "ares",
+    "slot": "token",
+    "tier": 2,
+    "text": "낙인을 새기는 손은 비어 있지 않다.",
+    "effects": [
+      {
+        "op": "block",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "id": "grace_ares_token_block",
+    "patron": "ares",
+    "slot": "token",
+    "tier": 4,
+    "text": "낙인을 새기는 손은 비어 있지 않다.",
+    "effects": [
+      {
+        "op": "block",
+        "value": 2
+      }
+    ]
+  },
+  {
+    "id": "grace_ares_token_block",
+    "patron": "ares",
+    "slot": "token",
+    "tier": 6,
+    "text": "낙인을 새기는 손은 비어 있지 않다.",
+    "effects": [
+      {
+        "op": "block",
+        "value": 2
+      },
+      {
+        "op": "block",
+        "value": 1,
+        "when": "turn > 3"
+      }
+    ]
+  },
+  {
+    "id": "grace_artemis_attack_mark",
+    "patron": "artemis",
+    "slot": "attack",
+    "tier": 2,
+    "text": "겨눈 것은 이미 맞은 것이다.",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "mark",
+        "stacks": 1,
+        "when": "turn > 3"
+      }
+    ]
+  },
+  {
+    "id": "grace_artemis_attack_mark",
+    "patron": "artemis",
+    "slot": "attack",
+    "tier": 4,
+    "text": "겨눈 것은 이미 맞은 것이다.",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "mark",
+        "stacks": 1
+      }
+    ]
+  },
+  {
+    "id": "grace_artemis_attack_mark",
+    "patron": "artemis",
+    "slot": "attack",
+    "tier": 6,
+    "text": "겨눈 것은 이미 맞은 것이다.",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "mark",
+        "stacks": 1
+      },
+      {
+        "op": "damage",
+        "value": 1,
+        "when": "turn > 3"
+      }
+    ]
+  },
+  {
+    "id": "grace_artemis_token_block",
+    "patron": "artemis",
+    "slot": "token",
+    "tier": 2,
+    "text": "숲은 사냥꾼을 숨겨 준다.",
+    "effects": [
+      {
+        "op": "block",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "id": "grace_artemis_token_block",
+    "patron": "artemis",
+    "slot": "token",
+    "tier": 4,
+    "text": "숲은 사냥꾼을 숨겨 준다.",
+    "effects": [
+      {
+        "op": "block",
+        "value": 2
+      }
+    ]
+  },
+  {
+    "id": "grace_artemis_token_block",
+    "patron": "artemis",
+    "slot": "token",
+    "tier": 6,
+    "text": "숲은 사냥꾼을 숨겨 준다.",
+    "effects": [
+      {
+        "op": "block",
+        "value": 2
+      },
+      {
+        "op": "block",
+        "value": 1,
+        "when": "turn > 3"
+      }
+    ]
+  },
+  {
+    "id": "grace_artemis_utility_crit",
+    "patron": "artemis",
+    "slot": "utility",
+    "tier": 2,
+    "text": "사냥은 한 번에 끝난다.",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "crit",
+        "stacks": 1,
+        "when": "enemy_count() >= 2"
+      }
+    ]
+  },
+  {
+    "id": "grace_artemis_utility_crit",
+    "patron": "artemis",
+    "slot": "utility",
+    "tier": 4,
+    "text": "사냥은 한 번에 끝난다.",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "crit",
+        "stacks": 1
+      }
+    ]
+  },
+  {
+    "id": "grace_artemis_utility_crit",
+    "patron": "artemis",
+    "slot": "utility",
+    "tier": 6,
+    "text": "사냥은 한 번에 끝난다.",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "crit",
+        "stacks": 1
+      },
+      {
+        "op": "apply_token",
+        "token": "crit",
+        "stacks": 1,
+        "when": "turn > 3"
+      }
+    ]
+  }
+]

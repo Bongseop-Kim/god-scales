@@ -1,0 +1,7 @@
+{
+  "id": "map_broken_layout",
+  "region": "underworld",
+  "floor": 2,
+  "text": "2층에 정예를 적은 배치. 정예·휴식은 3층부터다.",
+  "groups": { "combat": ["group_under_brute_solo"], "elite": ["group_under_pair"] }
+}

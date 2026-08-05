@@ -14,20 +14,23 @@
     ],
     "stage_effects": {
       "devotion": {
-        "on_encounter_start": {
-          "op": "apply_token",
-          "token": "shock",
-          "stacks": 1,
-          "target": "all_enemies"
-        }
+        "on_encounter_start": [
+          {
+            "op": "damage",
+            "value": 8,
+            "target": "enemy"
+          }
+        ]
       },
       "wrath": {
-        "on_encounter_start": {
-          "op": "apply_token",
-          "token": "shock",
-          "stacks": 2,
-          "target": "self"
-        }
+        "on_encounter_start": [
+          {
+            "op": "apply_token",
+            "token": "shock",
+            "stacks": 2,
+            "target": "self"
+          }
+        ]
       }
     },
     "demands": [
@@ -48,20 +51,24 @@
     ],
     "stage_effects": {
       "devotion": {
-        "on_encounter_start": {
-          "op": "apply_token",
-          "token": "soaked",
-          "stacks": 1,
-          "target": "all_enemies"
-        }
+        "on_encounter_start": [
+          {
+            "op": "apply_token",
+            "token": "soaked",
+            "stacks": 1,
+            "target": "all_enemies"
+          }
+        ]
       },
       "wrath": {
-        "on_encounter_start": {
-          "op": "apply_token",
-          "token": "displace",
-          "stacks": 1,
-          "target": "self"
-        }
+        "on_encounter_start": [
+          {
+            "op": "apply_token",
+            "token": "soaked",
+            "stacks": 2,
+            "target": "self"
+          }
+        ]
       }
     },
     "demands": [
@@ -82,20 +89,24 @@
     ],
     "stage_effects": {
       "devotion": {
-        "on_encounter_start": {
-          "op": "apply_token",
-          "token": "bulwark",
-          "stacks": 4,
-          "target": "self"
-        }
+        "on_encounter_start": [
+          {
+            "op": "apply_token",
+            "token": "deflect",
+            "stacks": 1,
+            "target": "self"
+          }
+        ]
       },
       "wrath": {
-        "on_encounter_start": {
-          "op": "apply_token",
-          "token": "bulwark",
-          "stacks": 5,
-          "target": "all_enemies"
-        }
+        "on_encounter_start": [
+          {
+            "op": "apply_token",
+            "token": "bulwark",
+            "stacks": 5,
+            "target": "all_enemies"
+          }
+        ]
       }
     },
     "demands": [
@@ -115,20 +126,24 @@
     ],
     "stage_effects": {
       "devotion": {
-        "on_encounter_start": {
-          "op": "apply_token",
-          "token": "frenzy",
-          "stacks": 1,
-          "target": "self"
-        }
+        "on_encounter_start": [
+          {
+            "op": "apply_token",
+            "token": "bleed",
+            "stacks": 1,
+            "target": "all_enemies"
+          }
+        ]
       },
       "wrath": {
-        "on_encounter_start": {
-          "op": "apply_token",
-          "token": "bleed",
-          "stacks": 2,
-          "target": "self"
-        }
+        "on_encounter_start": [
+          {
+            "op": "apply_token",
+            "token": "bleed",
+            "stacks": 2,
+            "target": "self"
+          }
+        ]
       }
     },
     "demands": [
@@ -146,20 +161,24 @@
     "rivals": [],
     "stage_effects": {
       "devotion": {
-        "on_encounter_start": {
-          "op": "apply_token",
-          "token": "mark",
-          "stacks": 1,
-          "target": "enemy"
-        }
+        "on_encounter_start": [
+          {
+            "op": "apply_token",
+            "token": "mark",
+            "stacks": 1,
+            "target": "enemy"
+          }
+        ]
       },
       "wrath": {
-        "on_encounter_start": {
-          "op": "apply_token",
-          "token": "mark",
-          "stacks": 1,
-          "target": "self"
-        }
+        "on_encounter_start": [
+          {
+            "op": "apply_token",
+            "token": "mark",
+            "stacks": 1,
+            "target": "self"
+          }
+        ]
       }
     },
     "demands": [

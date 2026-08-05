@@ -1,0 +1,15 @@
+{
+  "id": "ares",
+  "name": "아레스",
+  "tokens": ["bleed", "frenzy"],
+  "ops": [],
+  "rivals": ["athena"],
+  "stage_effects": {
+    "wrath": {
+      "on_encounter_start": [
+        { "op": "damage", "value": 8, "target": "self" }
+      ]
+    }
+  },
+  "demands": ["demand_ares_multi"]
+}
