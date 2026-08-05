@@ -250,7 +250,9 @@ export function executeCard(state: GameState, card: Card, enemyId?: string, deck
       if (!god) throw new Error(`${card.id}: favor_shift requires god`);
       state.favor[god] = (state.favor[god] ?? 0) + value;
     } else if (effect.op === "chain") {
-      for (const target of chainTargets) strike(target, value);
+      // 대상은 카드 시작에 골랐다 — 앞 효과나 그것이 깨운 파워가 죽였을 수 있다. 시체를 때리면
+      // 가시가 되돌아오고 angry가 광란을 쌓는다(「마무리 일격은 세지 않는다」와 같은 자리다)
+      for (const target of chainTargets) if (target.hp > 0) strike(target, value);
     }
   }
 }

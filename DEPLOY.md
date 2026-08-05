@@ -8,7 +8,7 @@ GitHub Pages · <https://bongseop-kim.github.io/god-scales/>
 ## 게이트
 
 ```bash
-npm test                                    # 19파일 64테스트 (조합 승률 하한 0.05 포함)
+npm test                                    # 19파일 75테스트 (조합 승률 하한 0.05 포함)
 npm run tune                                # 릴리스 목표: 모든 조합 ≥ 0.25 — 사람이 읽고 판정한다
 npm run build
 grep -rE "sk-ant|ANTHROPIC_API_KEY|OPENAI|api_key" dist/   # 결과 없음
@@ -52,7 +52,7 @@ open -a Aside   # 앱이 떠 있어야 확장이 붙는다
 ```
 
 Aside는 CDP `Emulation.*`을 막는다 — 뷰포트는 앱 창 크기가 그대로 쓰인다.
-크레딧(402)으로 막히면 헤드리스 검증 + 사용자 육안 확인으로 대체하고 리뷰에 적는다.
+크레딧(402)으로 막히면 **대체하지 않는다** — 그 회차는 「미검증」으로 적고 나중에 다시 돌린다.
 공개 URL 200과 반출 재생 일치는 크레딧 없이 확인된다.
 
 ## 남은 것

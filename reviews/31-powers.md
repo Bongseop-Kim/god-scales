@@ -184,10 +184,14 @@ P-25의 최대 부채가 절반쯤 풀렸다. 이유는 파워가 아니라 **�
 | 2 | `card_artemis_23`·`card_artemis_06` 효과 순서 | `[치명 1, 피해 X]`는 방금 준 치명을 자기 `damage`가 `consumeToken(attacker, "crit")`으로 먹는다. `expectedValue`는 효과 순서를 안 보므로 표는 치명 3점을 값에 넣었고 엔진은 그것을 삼켰다 — 봇이 없는 값을 보고 카드를 골랐다 |
 | 3 | `clearEncounterTokens` 삭제 | 이 회차가 여기에 `powers = []`를 넣었지만 **호출부가 테스트뿐이다.** 실제로는 `playEncounter`가 조우마다 `createCombat`으로 다시 만들고 hp만 옮긴다(`sim/engine.ts`). 아무도 실행하지 않는 함수를 정확하게 만든 셈이었다 |
 | 4 | `fingerprint` 순서 축 | 함정 3 옆에 적었다. 고치지 않고 남긴다 |
+| 5 | `playCard`가 파워를 버림더미에 넣었다 | 등록한 파워가 다시 뽑혀 **한 장이 스스로 두 번 등록**했다. 위 「상한은 없다 — 두 장 넣은 것 자체가 비용이다」가 그 자리에서 공짜였다. 지금은 `exhaust`와 같은 줄에서 빠진다 |
+| 6 | `chain`이 시체를 때렸다 | 연쇄 대상은 카드 시작에 골라 두는데 앞 효과나 그것이 깨운 `on_unblocked` 파워가 그 사이에 죽일 수 있다. 시체를 때리면 가시가 되돌아오고 `angry`가 광란을 쌓았다 — 「마무리 일격은 세지 않는다」와 같은 자리다 |
 
 1번은 `test/dsl.test.ts`의 `stops thorns at one bounce`가 잠근다. 2번의 재측정은 하지 않았다 — `npm run tune` 하한이 최저 셀 **9.3%로 이 회차와 동일**해서 게이트가 움직이지 않았고, 사용·delta를 다시 재는 것은 다음 회차의 몫이다.
 
-`npx tsc --noEmit` 통과 · `npm test` **74**통과(19파일) · `npm run build` 통과 · `npm run validate -- data/enemies.json` 반려 0 `passive_coverage` 빈 배열 · `staging/cards-powers.json` 반려 0 · `npm run tune` 하한 통과(최저 셀 9.3%).
+**5번은 수치를 움직였다.** 파워가 덱에서 빠져 덱이 얇아지므로 오히려 세진다 — `npm run tune` 3,000런에서 승률 31.4% → **37.3%**, 최저 셀 9.3% → **9.7%**(zeus+ares), 릴리스 목표 0.25 미달 4 → **3**. 하한은 그대로 통과라 수치 조정은 하지 않았다. 부작용으로 `demands.test` 시드 57이 요구를 전부 지켜버려 **70**으로 다시 골랐다(단언은 그대로다 — P-22·P-25가 했던 것과 같은 방식). 6번은 최저 셀을 바꾸지 않았다. 위 본문의 표는 그때의 동작에서 나온 값이라 손대지 않았다.
+
+`npx tsc --noEmit` 통과 · `npm test` **75**통과(19파일) · `npm run build` 통과 · `npm run size` 위반 0 · `npm run validate -- data/enemies.json` 반려 0 `passive_coverage` 빈 배열 · `staging/cards-powers.json` 반려 0 · `npm run tune` 하한 통과(최저 셀 9.7%).
 
 ## 남은 것
 

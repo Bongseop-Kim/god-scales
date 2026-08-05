@@ -38,11 +38,12 @@ describe("demands", () => {
     // 요구는 전투 **앞에서** 묻고 그 전투로 판정한다. 두 시드 모두 첫 결정이 요구이므로
     // favorCurve[1]의 차이는 그 요구 하나가 만든 것이다
     const refuse: ReplayAction[] = [{ type: "demand", choice: "reject" }];
-    // 시드 25 → 57: P-31의 파워로 시드 25가 요구 셋을 전부 지켜버려 아래 `kept < accepted`가 깨졌다
-    const played = run(57);
-    const refusedRun = run(57, undefined, refuse);
+    // 시드 25 → 57 → 70: 파워가 한 장으로 자기를 두 번 등록하던 것을 막자 시드 57이 요구를
+    // 전부 지켜버려 아래 `kept < accepted`가 또 깨졌다. 단언은 그대로다
+    const played = run(70);
+    const refusedRun = run(70, undefined, refuse);
 
-    // 시드 57의 첫 요구는 지켜진다 — 보상과 상대 신의 벌금이 그때 들어간다
+    // 시드 70의 첫 요구는 지켜진다 — 보상과 상대 신의 벌금이 그때 들어간다
     const kept = played.favorCurve[1];
     const refused = refusedRun.favorCurve[1];
     expect(kept.zeus - refused.zeus).toBe(demandReward);
@@ -53,13 +54,13 @@ describe("demands", () => {
 
     // 편든 신은 "지킨 신"이다 — 전부 거절하면 상대 쪽으로 넘어간다
     const all: ReplayAction[] = Array.from({ length: 12 }, () => ({ type: "demand", choice: "reject" }));
-    const rejected = run(57, undefined, all);
+    const rejected = run(70, undefined, all);
     expect(rejected.actions.filter(({ type }) => type === "demand").map(({ choice }) => choice)).toContain("reject");
     expect([played.conflictChoice, rejected.conflictChoice]).toEqual(["zeus", "athena"]);
 
     // 수락 대비 지킴 비율이 실제로 1이 아니다 — 조건 판정이 걸린다는 증거다
     const outcome = played.demandOutcomes.demand_zeus_solo;
-    expect(outcome, "demand_zeus_solo not asked in seed 57").toBeDefined();
+    expect(outcome, "demand_zeus_solo not asked in seed 70").toBeDefined();
     const [accepted, keptCount] = outcome;
     expect(keptCount).toBeGreaterThan(0);
     expect(keptCount).toBeLessThan(accepted);

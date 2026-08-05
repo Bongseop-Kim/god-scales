@@ -167,6 +167,18 @@ describe("enemy passives", () => {
     expect(combat.player.tokens.thorns, "가시는 소모되지 않는다").toBe(3);
   });
 
+  it("wakes angry before the thorns bounce, so the bounce spends that frenzy", () => {
+    // 한 배우가 angry와 thorns를 다 들면 순서가 눈에 보인다. 주 피해가 광란을 주고 **그 뒤에** 터지는
+    // 반사가 그 광란을 소모해 3 + 2로 나간다. 반사를 앞에 두면 때린 쪽이 그 광란을 먹는다
+    const spiky = { ...idle, passives: { angry: 1 } };
+    const combat = createCombat(1, [], [spiky]);
+    combat.enemies[0].tokens.thorns = 3;
+    dealDamage(combat.player, combat.enemies[0], 6);
+    expect(combat.enemies[0].hp, "주 피해 6").toBe(44);
+    expect(combat.enemies[0].tokens.frenzy, "반사가 방금 깨운 광란을 썼다").toBeUndefined();
+    expect(combat.player.hp, "가시 3 + 광란 2").toBe(MAX_HP - 5);
+  });
+
   it("sends ally actions to another enemy and never to the player", () => {
     const healer: EnemyDefinition = { id: "healer", hp: 30, pattern: [{ heal: 4, target: "ally" }] };
     const wounded = { ...idle, id: "wounded" };

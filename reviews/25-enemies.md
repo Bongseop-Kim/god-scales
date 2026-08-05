@@ -57,7 +57,7 @@
 
 **엔진** — `EnemyAction`에 `heal`·`target`(`player`·`self`·`ally`·`all_allies`). 기본값이 둘이다: 피해·토큰은 `player`, 방어·회복은 `self`. 그래서 기존 `{block: 8}` 패턴이 한 줄도 안 고치고 그대로 돈다.
 
-**패시브 8종** — `EnemyDefinition.passives`. 계획은 `Passive[]`였지만 **표(`Partial<Record<PassiveName, number>>`)로 만들었다.** 값이 전부 스택 수라 훅마다 `find(p => p.kind === …)`를 도는 대신 `actor.passives?.shell` 한 번이면 된다. 자리는 `ActorState`다 — [P-31](../plans/31-powers.md)의 `thorns`가 플레이어 쪽 같은 칸에 들어간다.
+**패시브 8종** — `EnemyDefinition.passives`. 계획은 `Passive[]`였지만 **표(`Partial<Record<PassiveName, number>>`)로 만들었다.** 값이 전부 스택 수라 훅마다 `find(p => p.kind === …)`를 도는 대신 `actor.passives?.shell` 한 번이면 된다. 자리는 `ActorState`다 — [P-31](31-powers.md)의 `thorns`가 플레이어 쪽 같은 칸에 들어간다.
 
 | 패시브 | 훅 | 자리 |
 |---|---|---|
@@ -175,7 +175,7 @@ spite 0.003 · ramp 0.002 · angry 0.002 · curl 0.001
 - **저승이 공짜다.** 여섯 조우가 네 정책 모두 99.5% 위 — 패시브 넷이 켜져 있지만 결정을 만들지 않는다
 - **조우 밴드가 패시브를 못 잰다.** 지상 조우가 밴드 하한에 눌려 있다
 - **포세이돈 `pool_ratio` 0.2994.** `soaked` 0.903을 채택하는 순간 넘는다
-- [P-31](../plans/31-powers.md)은 **같은 세션이 아니었다.** 계획은 `dealDamage`를 두 번 수술하게 된다고 경고했는데, `shell`·`curl`·`angry` 훅을 `amount > 0` 뒤 한 자리에 모아 뒀으므로 `thorns`는 그 옆 한 줄이다. 재수술은 없되 회귀는 한 번 더 돌려야 한다
+- [P-31](31-powers.md)은 **같은 세션이 아니었다.** 계획은 `dealDamage`를 두 번 수술하게 된다고 경고했는데, `shell`·`curl`·`angry` 훅을 `amount > 0` 뒤 한 자리에 모아 뒀으므로 `thorns`는 그 옆 한 줄이다. 재수술은 없되 회귀는 한 번 더 돌려야 한다
   - **[사후 수정 4]** 그 「옆 한 줄」이 무한 재귀였다. `dealDamage`가 자기를 다시 부르는데 종료 조건이 없었고, 근거로 적힌 「가시는 아테나 전용이라 적에게 붙는 경로가 없다」는 **코드가 보장하지 않는다** — 적 패턴의 `apply_token`은 `target: self`로 아무 토큰이나 붙일 수 있고(`bulwark`가 그렇게 산다) `tokenScopeFailure`는 카드만 본다. 자세한 것은 [R-31의 사후 수정](31-powers.md#사후-수정--라운드가-닫힌-뒤) 1번
 - **`harmfulTokens`가 배열이었다.** `addToken`마다 선형 탐색이었고, 짝인 `selfTokens`는 이미 `Set`이다. `Set`으로 바꿨다(같은 길이)
 - `npm run e2e`는 Aside 앱이 필요해 이 세션에서 돌리지 않았다 — DEPLOY.md의 게이트지 이 계획의 게이트가 아니다

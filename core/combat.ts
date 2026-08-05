@@ -100,7 +100,9 @@ export function playCard(
   if (!card.tags.includes("attack")) {
     for (const enemy of state.combat.enemies) if (enemy.hp > 0 && enemy.passives?.spite) addToken(enemy, "frenzy", enemy.passives.spite);
   }
-  if (!card.tags.includes("exhaust")) state.combat.discardPile.push(cardId);
+  // 등록한 파워는 덱으로 돌아가지 않는다 — 버림더미에 두면 다시 뽑혀 한 장이 스스로 두 번 등록한다.
+  // 스택은 덱에 두 장을 넣은 대가여야 한다(`test/combat.test.ts`의 「상한은 없다」)
+  if (!card.tags.includes("exhaust") && !card.tags.includes("power")) state.combat.discardPile.push(cardId);
   updateOutcome(state.combat);
 }
 

@@ -1,6 +1,6 @@
 # P-23 리뷰 · 6회차와 B-0 3번 첫 판정
 
-`reviews/23-round6.md` · [◀ P-22](22-pool.md) · [색인](00-index.md) · [P-24 ▶](../plans/24-finish.md)
+`reviews/23-round6.md` · [◀ P-22](22-pool.md) · [색인](00-index.md) · [P-24 ▶](24-finish.md)
 
 판정: **통과. 분산은 줄었다.** 0.0829063173828125 → **0.03533884008789062**. `pairing_win_stddev` 0.28793 → **0.18799**.
 
