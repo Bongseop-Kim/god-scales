@@ -102,8 +102,14 @@ export function App() {
   return (
     <LazyMotion features={domAnimation}>
       <AnimatePresence mode="wait" initial={false}>
+        {/**
+         * E2E(`npm run e2e`)가 읽는 두 값이다. `data-phase`는 지금 무엇을 묻는지, `data-step`은 답한
+         * 결정의 수 — 클릭이 실제로 엔진을 한 칸 움직였는지 이것 하나로 안다. 화면 텍스트를 긁는 것보다 짧다
+         */}
         <m.section
           key={screen}
+          data-phase={pending?.phase ?? screen}
+          data-step={actions.length}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

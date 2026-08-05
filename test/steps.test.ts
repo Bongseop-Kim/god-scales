@@ -60,9 +60,12 @@ describe("steppable engine", () => {
     expect(first.value.observation.hits).toEqual([]);
 
     // 첫 카드가 적을 때린다 → 다음 결정이 그 피해를 싣고 온다
-    const attack = first.value.observation.hand.find(({ effects }) => effects.some(({ op }) => op === "damage"))!;
+    const attack = first.value.observation.hand.find(({ effects }) => effects.some(({ op }) => op === "damage"));
+    if (!attack) throw new Error("expected a damage card in the opening hand");
     const target = steps.next(attack.id);
     if (target.done || target.value.phase !== "target") throw new Error("expected a target decision");
+    // 카드를 아직 내지 않았으므로 새 피해가 없다 — seq는 그대로여야 한다
+    expect(target.value.observation.hitSeq).toBe(first.value.observation.hitSeq);
     const enemyId = target.value.options[0];
     const after = steps.next(enemyId);
     if (after.done || after.value.phase !== "card") throw new Error("expected a card decision");
@@ -92,8 +95,9 @@ describe("steppable engine", () => {
 
   it("consumes a scripted action only when the phase matches", () => {
     const first = runSteps(3).next();
-    if (first.done) throw new Error("no decision");
-    const other = first.value.options.find((id) => id !== first.value.bot && id !== endTurnAction)!;
+    if (first.done || first.value.phase !== "card") throw new Error("expected a card decision");
+    const other = first.value.options.find((id) => id !== first.value.bot && id !== endTurnAction);
+    if (!other) throw new Error("expected a second affordable card");
     const paths: ReplayAction[] = [{ type: "path", choice: "rest" }, { type: "path", choice: "rest" }];
 
     const scripted = run(3, undefined, [{ type: "card", choice: other }, ...paths]);

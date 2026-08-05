@@ -18,6 +18,6 @@
   ],
   "ai_failures": [
     "초기 층화 러너가 실제 후원 조합 대신 제우스+아테나 규칙을 공통 실행함; P-20에서 실제 조합 덱·호의·합성을 실행하도록 수정",
-    "N-04: shock·soaked·mark·frenzy 토큰이 core에 구현돼 있지 않다. 카드 풀이 실제 플레이에 들어오자 아테나 조합만 이기고(0.42~0.63) 나머지 여섯 조합이 0~2%로 무너져 pairing_win_stddev가 0.005→0.257이 됐다; 토큰 구현 전에는 enemyDamageScale로 되돌릴 수 없다"
+    "N-04: shock·soaked·mark·frenzy 토큰이 core에 구현돼 있지 않다. 카드 풀이 실제 플레이에 들어오자 아테나 조합만 이기고(0.42~0.63) 나머지 여섯 조합이 0~2%로 무너져 pairing_win_stddev가 0.005→0.265가 됐다(round-4/simulation.json, 16000런); 토큰 구현 전에는 enemyDamageScale로 되돌릴 수 없다"
   ]
 }

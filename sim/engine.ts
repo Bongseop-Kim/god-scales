@@ -34,7 +34,9 @@ function starterCards(god: GodId): [string, string, string] {
   const own = cards.filter((card) => card.patron === god).sort((a, b) => a.cost - b.cost);
   const picked: string[] = [];
   for (const tag of ["attack", "defend", "utility"] as const) {
-    picked.push(own.find(({ id, tags }) => tags.includes(tag) && !picked.includes(id))!.id);
+    const card = own.find(({ id, tags }) => tags.includes(tag) && !picked.includes(id));
+    if (!card) throw new Error(`${god}: starter deck needs a ${tag} card`);
+    picked.push(card.id);
   }
   return picked as [string, string, string];
 }
@@ -44,6 +46,8 @@ export const godDecks = Object.fromEntries(gods.map((god) => [god, starterCards(
 export const skipReward = "";
 function rewardOffer(random: () => number, patrons: PatronPair): string[] {
   const candidates = cards.filter(({ patron }) => patron && patrons.includes(patron));
+  // 후보가 셋보다 적으면 아래 루프가 영원히 돈다 — 멈추는 대신 왜 멈췄는지 말한다
+  if (new Set(candidates.map(({ id }) => id)).size < 3) throw new Error(`${patrons.join("+")}: reward offer needs 3 cards`);
   const offer: string[] = [];
   while (offer.length < 3) {
     const { id } = candidates[Math.floor(random() * candidates.length)];
@@ -235,7 +239,8 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
 }
 
 export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair = ["zeus", "athena"]): Generator<Decision, RunResult, string> {
-  const fusedCard = fusionCards.find(({ patronPair }) => patrons.every((god) => patronPair?.includes(god)))!;
+  const fusedCard = fusionCards.find(({ patronPair }) => patronPair?.every((god) => patrons.includes(god)));
+  if (!fusedCard) throw new Error(`${patrons.join("+")}: no fused card for this pairing`);
   const startingDeck = [
     godDecks[patrons[0]][0], godDecks[patrons[0]][0], godDecks[patrons[0]][1], godDecks[patrons[0]][1], godDecks[patrons[0]][2],
     godDecks[patrons[1]][0], godDecks[patrons[1]][0], godDecks[patrons[1]][0], godDecks[patrons[1]][1], godDecks[patrons[1]][2],

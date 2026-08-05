@@ -35,6 +35,7 @@ npm run sim -- --replay logs/human/run-31.json
 
 ```bash
 npm test
+npm run e2e          # Aside 브라우저로 실제 클릭 · 반출 JSON을 CLI가 재생하는지까지
 npm run build
 npm run art -- --list
 npm run art -- --check

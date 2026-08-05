@@ -24,6 +24,11 @@ function playByHand(seed: number, pick: (decision: Decision) => string): { resul
   return { result: step.value, actions };
 }
 
+/**
+ * 여기서 보는 것은 화면이 관측값만으로 그려지는지와 반출물이 재생되는지다.
+ * App의 이벤트 배선·화면 전환·반출 버튼을 진짜 클릭으로 지나는 것은 `npm run e2e`(tools/e2e.ts)가 한다 —
+ * dev 서버와 Aside 브라우저가 필요해 vitest에 들어가지 않는다
+ */
 describe("browser replay export", () => {
   it("renders every decision screen from its observation alone", () => {
     // 머리글이 조합·위치·체력을 관측에서 읽는지 본다 — 상수로 박혀 있으면 다른 조합에서 거짓말을 한다

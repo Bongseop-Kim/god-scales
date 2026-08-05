@@ -17,7 +17,7 @@
 
 ## 덮은 것 — 조합 여섯이 무너졌다
 
-```
+```text
              zeus  poseidon  athena  ares  artemis
 zeus            —     0.02    0.45   0.00    0.00
 poseidon     0.02        —    0.63   0.01    0.015
@@ -75,7 +75,7 @@ artemis      0.00     0.015   0.415  0.00       —
 
 `sim/engine.ts`에 카드 리터럴이 없다. 시작 덱 3장은 신별 태그가 정한다 — **공격 1 · 방어 1 · 유틸 1**, 같은 비용이면 데이터 순서다. 결과가 전부 코스트 1로 떨어졌다.
 
-```
+```text
 zeus     card_zeus_01(피해4) card_zeus_02(방어5) card_zeus_03(뽑기2)
 poseidon card_poseidon_01(피해4+침수1) card_poseidon_02(방어6) card_poseidon_03(뽑기2)
 athena   card_athena_06(피해4+방어2) card_athena_01(방어6) card_athena_04(뽑기2)

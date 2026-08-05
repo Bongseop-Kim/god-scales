@@ -38,10 +38,12 @@ describe("demands", () => {
     // 요구는 전투 **앞에서** 묻고 그 전투로 판정한다. 두 시드 모두 첫 결정이 요구이므로
     // favorCurve[1]의 차이는 그 요구 하나가 만든 것이다
     const refuse: ReplayAction[] = [{ type: "demand", choice: "reject" }];
+    const played = run(5);
+    const refusedRun = run(5, undefined, refuse);
 
     // 시드 5의 첫 요구는 지켜진다 — 보상과 상대 신의 벌금이 그때 들어간다
-    const kept = run(5).favorCurve[1];
-    const refused = run(5, undefined, refuse).favorCurve[1];
+    const kept = played.favorCurve[1];
+    const refused = refusedRun.favorCurve[1];
     expect(kept.zeus - refused.zeus).toBe(demandReward);
     expect(refused.athena - kept.athena).toBe(-nonRivalDemandPenalty);
 
@@ -52,10 +54,12 @@ describe("demands", () => {
     const all: ReplayAction[] = Array.from({ length: 12 }, () => ({ type: "demand", choice: "reject" }));
     const rejected = run(5, undefined, all);
     expect(rejected.actions.filter(({ type }) => type === "demand").map(({ choice }) => choice)).toContain("reject");
-    expect([run(5).conflictChoice, rejected.conflictChoice]).toEqual(["zeus", "athena"]);
+    expect([played.conflictChoice, rejected.conflictChoice]).toEqual(["zeus", "athena"]);
 
     // 수락 대비 지킴 비율이 실제로 1이 아니다 — 조건 판정이 걸린다는 증거다
-    const [accepted, keptCount] = run(5).demandOutcomes.demand_zeus_solo;
+    const outcome = played.demandOutcomes.demand_zeus_solo;
+    expect(outcome, "demand_zeus_solo not asked in seed 5").toBeDefined();
+    const [accepted, keptCount] = outcome;
     expect(keptCount).toBeGreaterThan(0);
     expect(keptCount).toBeLessThan(accepted);
   });

@@ -28,7 +28,9 @@ function pendingFor(state: AgentState): PendingDecision {
   return {
     turn: state.index,
     phase: "path",
-    observation: { favor: { first: 50, second: 50 }, remaining_choice_nodes: 5 - state.index, deck: godDecks[(state.pairing?.split("+")[0] ?? "zeus") as GodId] },
+    // 덱은 두 신의 시작 3장을 합친 것이다 — 첫 신만 보내면 에이전트가 절반만 보고 고른다.
+    // `pairing`은 consumeAnswer가 options로 검증한 값이라 항상 유효한 신 둘이다
+    observation: { favor: { first: 50, second: 50 }, remaining_choice_nodes: 5 - state.index, deck: (state.pairing?.split("+") ?? ["zeus"]).flatMap((god) => godDecks[god as GodId]) },
     options: ["combat", "rest"],
   };
 }

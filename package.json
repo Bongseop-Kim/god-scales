@@ -12,6 +12,7 @@
     "size": "node --experimental-strip-types tools/size.ts",
     "tune": "node --experimental-strip-types tools/tune.ts",
     "test": "vitest run",
+    "e2e": "node --experimental-strip-types tools/e2e.ts",
     "validate": "node --experimental-strip-types tools/validate.ts"
   },
   "devDependencies": {

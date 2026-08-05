@@ -28,7 +28,7 @@
 
 ### `conflict_outcomes`가 이제 진짜 숫자다
 
-```
+```text
 전: {"zeus":800,"poseidon":600,"athena":400,"ares":200}   ← 조합 라벨 pairing[0]을 센 것
 후: {"zeus":792,"poseidon":607,"athena":324,"ares":276}   ← 실제로 편든 신을 센 것
 ```
