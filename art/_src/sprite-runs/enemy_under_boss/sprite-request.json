@@ -1,0 +1,110 @@
+{
+  "version": 1,
+  "kind": "sprite-gen-request",
+  "engine": "component-row",
+  "character": {
+    "id": "enemy_under_boss",
+    "description": "케르베로스 (6층 보스), facing left",
+    "base_image": "base-source.png"
+  },
+  "cell": {
+    "shape": "square",
+    "width": 256,
+    "height": 256,
+    "safe_margin_x": 20,
+    "safe_margin_y": 20,
+    "size": 256,
+    "safe_margin": 20
+  },
+  "chroma_key": {
+    "name": "magenta",
+    "hex": "#FF00FF",
+    "rgb": [
+      255,
+      0,
+      255
+    ],
+    "selection": "auto",
+    "score": 226.01,
+    "min_subject_distance": 209.25,
+    "background": {
+      "mode": "transparent",
+      "opaque_border_fraction": 0.134,
+      "subject_pixels": 29248
+    },
+    "candidates": [
+      {
+        "name": "magenta",
+        "hex": "#FF00FF",
+        "score": 226.01,
+        "min_subject_distance": 209.25,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "green",
+        "hex": "#00FF00",
+        "score": 208.86,
+        "min_subject_distance": 205.62,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "cyan",
+        "hex": "#00FFFF",
+        "score": 222.5,
+        "min_subject_distance": 203.27,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "blue",
+        "hex": "#004DFF",
+        "score": 179.03,
+        "min_subject_distance": 170.29,
+        "clears_erase_radius": true
+      }
+    ],
+    "selection_reason": "highest 1st-percentile subject distance among the 4 candidate(s) clearing the 96 erase radius"
+  },
+  "states": {
+    "idle": {
+      "frames": 4,
+      "fps": 4,
+      "loop": true,
+      "action": "four-frame subtle guarded idle breathing loop, facing left; preserve the exact stance and identity"
+    },
+    "attack": {
+      "frames": 2,
+      "fps": 8,
+      "loop": false,
+      "action": "two-frame short attack toward the left: anticipation then committed strike; keep all anatomy, weapons, and asymmetric damage consistent"
+    },
+    "hit": {
+      "frames": 1,
+      "fps": 6,
+      "loop": false,
+      "action": "one-frame hit reaction recoiling away from an impact from the left; no new wounds or detached parts"
+    },
+    "death": {
+      "frames": 2,
+      "fps": 4,
+      "loop": false,
+      "action": "two-frame death: body gives way, then collapsed still on the ground; preserve existing asymmetry, anatomy, and equipment"
+    }
+  },
+  "style": "match the attached canonical pixel-art sprite exactly: large uniform square pixel blocks, hard dark outline, no anti-aliasing, limited desaturated grim-dark palette, flat shading",
+  "motion_phase_guides": false,
+  "layout": "taxonomy/v1",
+  "fit": {
+    "resample": "kcentroid",
+    "align_x": "alpha-centroid",
+    "align_y": "bottom",
+    "pixel_unfake": true,
+    "logical_height": 48,
+    "palette_size": 16,
+    "outline": true
+  },
+  "chroma": {
+    "mode": "rgb",
+    "unmix_reach": 4,
+    "spill_max_fraction": 0.005
+  }
+}

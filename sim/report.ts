@@ -34,15 +34,21 @@ export type RunResult = {
   fused: boolean;
   actions: import("./replay.ts").ReplayAction[];
   cardsPlayed: string[];
-  /** 요구 id별 [수락, 지킴]. 조건 판정이 실제로 걸리는지 보는 자리다 */
+  /**
+   * `요구 id:단`별 [고름, 지킴]. 단이 키에 들어가므로 단별 지킴률을 리포트가 따로 세지 않는다 —
+   * 그 단의 대가는 `data/demands.json`이 든다. 거절은 여기 없다(`actions`가 선택 분포를 든다)
+   */
   demandOutcomes: Record<string, [number, number]>;
   /**
    * `region:floor:type`별 돌파 여부. 정책 행렬이 「어느 층에서 어느 정책이 1위인가」를 여기서 읽고,
    * `--aura-matrix`가 `passives`(그 조우의 패시브)와 `devoted`(들어설 때 헌신이던 신)로 개입을 잰다
    */
-  encounterOutcomes: { key: string; cleared: boolean; passives: string[]; devoted: string[]; hpLost: number }[];
-  /** 패배한 조우의 맥락. 「승률이 내려갔다」와 「guard 조우에서만 내려갔다」를 가르는 다섯 줄 */
-  defeatContext?: { region: string; floor: number; enemies: string[]; passives: string[] };
+  encounterOutcomes: { key: string; cleared: boolean; passives: string[]; devoted: string[]; hpLost: number; trial: boolean }[];
+  /**
+   * 패배한 조우의 맥락. 「승률이 내려갔다」와 「guard 조우에서만 내려갔다」를 가르는 다섯 줄.
+   * `trial`은 선불 대가를 지고 그 조우에 들어섰는지다 — 시련이 죽음을 만드는지 여기서 읽는다 (P-29)
+   */
+  defeatContext?: { region: string; floor: number; enemies: string[]; passives: string[]; trial: boolean };
   /** 지금 낼 수 없어서 봇 답으로 대체된 기록된 결정의 수. 0이 아니면 그 로그는 이 규칙판이 아니다 */
   substituted?: number;
 };
@@ -121,13 +127,27 @@ export function summarize(results: RunResult[]) {
     conflict_outcomes,
     conflict_penalty_dist,
     substituted_actions: results.reduce((sum, { substituted }) => sum + (substituted ?? 0), 0),
-    /** 요구 id → 수락한 것 중 지킨 비율. 0에 붙으면 지킬 수 없는 요구, 1에 붙으면 공짜 요구다 */
+    /** `요구 id:단` → 고른 것 중 지킨 비율. 0에 붙으면 지킬 수 없는 단, 1에 붙으면 공짜 단이다 */
     demand_kept_rate: Object.fromEntries(Object.entries(results.reduce<Record<string, [number, number]>>((all, { demandOutcomes }) => {
       for (const [id, [accepted, kept]] of Object.entries(demandOutcomes)) {
         all[id] = [(all[id]?.[0] ?? 0) + accepted, (all[id]?.[1] ?? 0) + kept];
       }
       return all;
     }, {})).map(([id, [accepted, kept]]) => [id, accepted ? kept / accepted : 0])),
+    /**
+     * 세 답이 실제로 갈리는가. `actions`를 그대로 센다 — 별도 관측을 만들면 두 번째 진실이 된다.
+     * 하나로 쏠리면 선택지가 아니라 장식이고, 그게 P-29의 판정이다
+     */
+    demand_choices: count(results.flatMap(({ actions }) => actions.flatMap((action) => (action.type === "demand" ? [action.choice] : [])))),
+    /**
+     * 패배 중 시련의 선불 대가를 지고 있던 비율. 이 값 하나만 보면 **노출**과 **치명**을 못 가른다 —
+     * 시련을 자주 고르면 그만큼의 패배가 우연히 시련 중이다. 바로 아래 조우 쪽 비율이 그 기준선이다
+     */
+    defeat_in_trial: defeats.length ? defeats.filter(({ trial }) => trial).length / defeats.length : 0,
+    encounters_in_trial: (() => {
+      const all = results.flatMap(({ encounterOutcomes }) => encounterOutcomes);
+      return all.length ? all.filter(({ trial }) => trial).length / all.length : 0;
+    })(),
     hp_curve: results[0]?.hpCurve ?? [],
     /** 고른 칸의 종류. 넷이 다 0이 아니어야 갈래가 장식이 아니다 */
     path_choices: count(results.flatMap(({ pathChoices }) => pathChoices.map((choice) => choice.split(":")[1]))),
@@ -167,6 +187,7 @@ export function renderReport(report: ReturnType<typeof summarize>): string {
     `devotion_ratio=${report.devotion_ratio.toFixed(3)} anger_ratio=${report.anger_ratio.toFixed(3)} wrath_ratio=${report.wrath_ratio.toFixed(3)}`,
     `conflict_outcomes=${JSON.stringify(report.conflict_outcomes)} conflict_penalty_dist=${JSON.stringify(report.conflict_penalty_dist)}`,
     `demand_kept_rate=${JSON.stringify(report.demand_kept_rate)} substituted_actions=${report.substituted_actions}`,
+    `demand_choices=${JSON.stringify(report.demand_choices)} defeat_in_trial=${report.defeat_in_trial.toFixed(3)} encounters_in_trial=${report.encounters_in_trial.toFixed(3)}`,
     `hp_curve=${JSON.stringify(report.hp_curve)} path_choices=${JSON.stringify(report.path_choices)} lane_choices=${JSON.stringify(report.lane_choices)} rest_choices=${JSON.stringify(report.rest_choices)}`,
     `region_clear_rate=${JSON.stringify(report.region_clear_rate)} low_rest_clear_rate=${report.low_rest_clear_rate.toFixed(3)}`,
     `scenario_runs=${report.scenario_runs} grace_earned=${JSON.stringify(report.grace_earned)} grace_milestones=${JSON.stringify(report.grace_milestones)} grace_slots_filled=${report.grace_slots_filled.toFixed(2)}`,

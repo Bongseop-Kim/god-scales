@@ -6,13 +6,13 @@ import enemyDataJson from "../data/enemies.json" with { type: "json" };
 import godDataJson from "../data/gods.json" with { type: "json" };
 import graceDataJson from "../data/graces.json" with { type: "json" };
 import mapDataJson from "../data/map.json" with { type: "json" };
-import { applyFavorStageEffects, awardGrace, demandReward, favorInitial, favorStage, finishCombatFavor, recordCardFavor, type FavorGod, type FavorUses } from "../core/favor.ts";
-import { demandPenalty, demandSatisfied, resolveDemand, type Demand } from "../core/demands.ts";
+import { applyFavorStageEffects, awardGrace, favorInitial, favorStage, finishCombatFavor, recordCardFavor, type FavorGod, type FavorUses } from "../core/favor.ts";
+import { demandPenalty, demandSatisfied, payDemandCost, resolveDemand, tierEnemies, type Demand, type DemandOffer, type DemandTier } from "../core/demands.ts";
 import { graceOffer, graceSlots, graceTier, takeGrace, type Grace, type GraceSlot } from "../core/grace.ts";
 import { advanceMap, bossLane, enemyDamageScale, enterNode, floorsPerRegion, generateMap, laneCount, mapDepth, mapSlot, reachableLanes, takeRest, type MapGrid, type MapNodeType } from "../core/map.ts";
 import { canFuse } from "../core/fusion.ts";
 import { cardEffects, type Card, type GodId } from "../core/rules.ts";
-import type { GameState, Passives, Tokens } from "../core/state.ts";
+import type { GameState, Passives, Tokens, Trigger } from "../core/state.ts";
 import { chooseCard, chooseDemandAnswer, chooseGrace, choosePath, chooseRest, chooseRestCard, chooseReward, chooseTarget } from "./bots/rule.ts";
 import { renderPlay } from "./log.ts";
 import type { RunResult } from "./report.ts";
@@ -39,7 +39,7 @@ export function setDevotionAura(off: boolean): void { devotionOff = off; }
 const auraGods = (): FavorGod[] => devotionOff
   ? godData.map((god) => ({ ...god, stage_effects: { wrath: god.stage_effects.wrath } }))
   : godData;
-/** 화면에는 `text`만 나간다 — `condition` DSL은 사람이 읽을 문장이 아니다 */
+/** 화면에는 단별 `text`만 나간다 — `condition` DSL은 사람이 읽을 문장이 아니다 */
 const demandData = demandDataJson as Demand[];
 /** 층별 편성과 텍스트. 지역 하나가 아니라 `(층, 종류)`가 조우를 고르는 단위가 됐다 */
 type MapSlotData = { id: string; region: string; floor: number; text: string; groups: Partial<Record<"combat" | "elite", string[]>> };
@@ -130,13 +130,20 @@ export type CardView = { id: string; name: string; cost: number; target: Card["t
 const cardView = ({ id, name, cost, target, effects }: Card): CardView => ({ id, name, cost, target, effects });
 const runView = (state: GameState, patrons: PatronPair): RunView => {
   const { region, floor } = mapSlot(state.map.depth);
-  return { depth: state.map.depth, lane: state.map.lane, region, floor, hp: state.combat.player.hp, maxHp: state.combat.player.maxHp, patrons, grid: state.map.grid };
+  return { depth: state.map.depth, lane: state.map.lane, region, floor, hp: state.combat.player.hp, maxHp: state.combat.player.maxHp, patrons, grid: state.map.grid, favor: { ...state.favor }, grace: { ...state.grace } };
 };
 /**
  * 모든 관측이 공유한다. `patrons`는 런 내내 고정이고, 화면 머리글이 조합 이름을 여기서 읽는다.
- * 위치도 격자도 여기 있다 — UI가 시드로 `generateMap`을 다시 풀면 같은 사실에 두 경로가 생긴다
+ * 위치도 격자도 여기 있다 — UI가 시드로 `generateMap`을 다시 풀면 같은 사실에 두 경로가 생긴다.
+ * `favor`·`grace`는 조합 둘의 것만 든다 — 나머지 셋은 아무것도 움직이지 않으므로 칸이 아예 없다(R-26)
  */
-export type RunView = { depth: number; lane: number; region: string; floor: number; hp: number; maxHp: number; patrons: PatronPair; grid: MapGrid };
+export type RunView = {
+  depth: number; lane: number; region: string; floor: number; hp: number; maxHp: number; patrons: PatronPair; grid: MapGrid;
+  favor: Record<string, number>;
+  grace: Record<string, number>;
+};
+/** 등록된 파워 하나. 카드를 그대로 실어 화면이 효과문을 손패와 같은 `effectText`로 그린다 */
+type PowerView = { trigger: Trigger; card: CardView };
 export type CombatObservation = RunView & {
   turn: number;
   block: number;
@@ -144,6 +151,8 @@ export type CombatObservation = RunView & {
   energy: number;
   draw: number;
   hand: CardView[];
+  /** 전투 내내 매 턴 일한다 — 화면에 없으면 몇 장 냈는지 플레이어가 세고 있어야 한다 */
+  powers: PowerView[];
   enemies: EnemyView[];
   /** 지난 yield 이후 깎인 체력. `id`는 적 id 또는 `player` */
   hits: { id: string; amount: number }[];
@@ -161,7 +170,11 @@ type RewardObservation = RunView & { deck: number; cards: CardView[] };
  */
 type GraceOffer = { id: string; slot: GraceSlot; tier: number; text: string; effects: Card["effects"]; cards: number; replaces?: string };
 type GraceObservation = RunView & { god: string; tier: number; offer: GraceOffer[] };
-type DemandObservation = RunView & { patron: string; other: string; text: string; reward: number; penalty: number };
+/**
+ * 요구 하나. `tiers`에는 **지금 제안되는 단만** 들어간다 — 5층과 적이 모자란 조우에서 시련이 빠지므로
+ * 화면이 두 칸짜리가 된다. `penalty`는 지켰을 때 상대 신이 잃는 관계 벌금이고 선불 대가와 별개다
+ */
+type DemandObservation = RunView & { patron: string; other: string; penalty: number; tiers: DemandOffer[] };
 /** 봇이 고를 값(`bot`)을 같이 내보낸다 — 답을 채우지 않으면 이것이 쓰이고, 정책은 엔진 안에만 남는다 */
 export type CombatDecision = { phase: "card" | "target"; options: string[]; bot: string; observation: CombatObservation };
 export type MapDecision = { phase: "path" | "rest" | "rest_card"; options: string[]; bot: string; observation: MapObservation };
@@ -184,9 +197,11 @@ type EncounterResult = {
 function* playEncounter(state: GameState, seed: number, deck: string[], cardMap: Map<string, Card>, enemies: EnemyDefinition[], log: string[], patrons: PatronPair, noise: () => number): Generator<Decision, EncounterResult, string> {
   const enemyMap = new Map(enemies.map((enemy) => [enemy.id, enemy]));
   const random = createRng(seed);
-  const hp = state.combat.player.hp;
+  // 최대 체력도 이어 받는다 — 시련의 선불 대가가 여기 걸려 있고, `createCombat`은 매번 MAX_HP로 돌린다
+  const { hp, maxHp } = state.combat.player;
   state.combat = createCombat(seed, deck, enemies);
   state.combat.player.hp = hp;
+  state.combat.player.maxHp = maxHp;
   applyFavorStageEffects(state, auraGods());
   const uses: FavorUses = {};
   let blockBuilt = 0;
@@ -222,7 +237,13 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
     tokens: { ...state.combat.player.tokens },
     energy: state.combat.energy,
     draw: state.combat.drawPile.length,
-    hand: state.combat.hand.map((id) => cardView(cardMap.get(id)!)),
+    // 손패는 **은혜가 붙은 뒤의** 효과를 싣는다 — 캡션이 카드 원문만 적으면 공격 슬롯 은혜가 붙은
+    // 카드가 화면에서 거짓말을 하고, 그러면 화면만 보고 턴을 계산할 수 없다. 낼 때 도는 목록과 같다
+    hand: state.combat.hand.map((id) => {
+      const card = cardMap.get(id)!;
+      return { ...cardView(card), effects: cardEffects(state, card) };
+    }),
+    powers: state.combat.powers.map(({ trigger, card }) => ({ trigger, card: cardView(card) })),
     enemies: living().map((enemy) => {
       const pattern = enemyMap.get(enemy.id)!.pattern;
       // 패시브는 정의가 아니라 **상태**에서 온다 — `ward`·`guard`는 소모되므로 정의를 읽으면 화면이 안 움직인다
@@ -332,6 +353,11 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
   /** 요구마다 편든 신 — 약속을 지키면 요구한 신, 아니면 상대다 */
   const demandSides: string[] = [];
   const demandOutcomes: Record<string, [number, number]> = {};
+  /**
+   * 지금 붙어 있는 시련의 선불 대가. `maxHp`는 `state.combat.player`에 이미 들어가 있고 이 칸은
+   * **남은 기간**을 든다 — 조우가 지나면 줄고 0에서 여유를 되돌려 준다(카오스의 저주가 걷히는 자리)
+   */
+  let trial: { maxHp: number; encounters: number } | undefined;
   const view = () => runView(state, patrons);
 
   /** 지금 덱의 슬롯별 카드 수. 은혜 값은 이 장수만큼 곱해져 들어가므로 봇도 화면도 이것을 읽는다 */
@@ -376,9 +402,9 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
 
   /**
    * 요구는 전투 **전에** 묻는다. 화면에 "셋을 쳐라"라고 띄웠으면 그 전투에서 정말 셋을 쳤는지로
-   * 판정해야 한다 — 수락은 약속이고, 보상은 지켰을 때만 들어간다
+   * 판정해야 한다 — 고른 단은 약속이고, 보상은 지켰을 때만 들어간다. `tier`가 없으면 거절이다
    */
-  type DemandPromise = { demand: Demand; patron: GodId; other: GodId; answer: "accept" | "reject" };
+  type DemandPromise = { demand: Demand; patron: GodId; other: GodId; choice: string; tier?: DemandTier };
   function* askDemand(enemyCount: number, nodeSeed: number, mustAsk = false): Generator<Decision, DemandPromise | undefined, string> {
     /**
      * 요구는 **모든 조우 앞에** 선다. 전에는 `(seed + nodeSeed) % 5 >= 3`으로 60%만 물었다 —
@@ -410,15 +436,40 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
     const asked = askable(patron);
     const demand = asked[(seed + nodeSeed) % asked.length];
     if (!demand) return undefined;
-    const answer = yield {
+    /**
+     * 시련이 서지 않는 자리 셋. 빠지면 화면이 두 칸이 되고 `options`가 그것을 그대로 싣는다.
+     *
+     * - **이미 시련을 지고 있으면 안 제안한다.** 겹치면 대가가 쌓여 최대 체력이 바닥으로 내려가는데,
+     *   그건 결정이 아니라 나선이다. 이 한 줄이 대가를 **기간 있는 것**으로 만든다(카오스도 저주가
+     *   붙은 동안에는 그 문이 닫혀 있다) — 그리고 시련 중에는 수락·거절이 실제 선택지가 된다
+     * - **5층에는 안 제안한다.** 하데스가 보스 앞에서 저주를 못 걷히게 막는 것과 같은 보호고, 대가가
+     *   조우 둘을 사므로 5층을 막으면 6층 보스는 선불 없이 싸운다. 6층 **자체**는 막지 않았다 —
+     *   그러면 시련 중 사망이 0.174 → 0.045로 내려가지만 합성률이 0.239 → 0.184로 빠진다(R-29)
+     * - 그 단이 요구하는 적이 이 조우에 없으면 지킬 수 없는 약속이다(`omen`은 조우 크기를 모르니 1로 묻는다)
+     */
+    const offers: DemandOffer[] = demand.tiers.flatMap((tier, index) => {
+      if (index > 0 && (trial || mapSlot(state.map.depth).floor === floorsPerRegion - 1 || tierEnemies(tier.condition, demand.min_enemies) > enemyCount)) return [];
+      return [{ action: `tier${index + 1}`, text: tier.text, cost: tier.cost, reward: tier.reward }];
+    });
+    const options = [...offers.map(({ action }) => action), "reject"];
+    const choice = yield {
       phase: "demand",
-      options: ["accept", "reject"],
-      bot: chooseDemandAnswer(state.favor, patron, other),
-      observation: { ...view(), patron, other, text: demand.text, reward: demandReward, penalty: demandPenalty(patron, other).amount },
+      options,
+      bot: chooseDemandAnswer(offers, state.favor, patron, other, state.combat.player.hp, state.combat.player.maxHp),
+      observation: { ...view(), patron, other, penalty: demandPenalty(patron, other).amount, tiers: offers },
     };
-    if (answer !== "accept" && answer !== "reject") throw new Error(`Invalid demand action: ${answer}`);
-    actions.push({ type: "demand", choice: answer });
-    return { demand, patron, other, answer };
+    if (!options.includes(choice)) throw new Error(`Invalid demand action: ${choice}`);
+    // `options`가 셋 중 하나임을 바로 위에서 잰다 — `ui/app.tsx`의 반출도 같은 자리에서 같은 단언을 쓴다
+    actions.push({ type: "demand", choice } as ReplayAction);
+    const tier = choice === "reject" ? undefined : demand.tiers[Number(choice.slice(4)) - 1];
+    if (tier?.cost) {
+      // 데이터가 적은 값이 아니라 **실제로 깎인 값**을 든다 — 그래야 기간 만료의 되돌림이 대칭이다
+      const roof = state.combat.player.maxHp;
+      payDemandCost(state, other, tier.cost);
+      // 겹치지 않는다 — 시련 중에는 시련이 안 서므로 카운터는 언제나 하나다
+      if (tier.cost.maxHp) trial = { maxHp: roof - state.combat.player.maxHp, encounters: tier.cost.encounters ?? 1 };
+    }
+    return { demand, patron, other, choice, tier };
   }
 
   function* offerReward(nodeSeed: number): Generator<Decision, void, string> {
@@ -511,23 +562,41 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
       enemyCounts.push(enemies.length);
       encounters += 1;
       // 편성 이름이 아니라 **자리**로 센다 — 층별 정책이 갈리는지 보려면 열이 층이어야 한다
-      encounterOutcomes.push({ key: `${region}:${floor}:${path}`, cleared: state.combat.outcome === "victory", passives, devoted, hpLost: hpBefore - state.combat.player.hp });
+      /** 이 조우를 선불 대가를 지고 들어섰는가. 「시련 중 사망」의 분자는 패배 맥락이고 분모가 이 줄이다 */
+      const underTrial = Boolean(trial);
+      encounterOutcomes.push({ key: `${region}:${floor}:${path}`, cleared: state.combat.outcome === "victory", passives, devoted, hpLost: hpBefore - state.combat.player.hp, trial: underTrial });
+      // 기간이 끝나면 여유를 되돌린다. 체력은 안 돌려준다 — 치른 것은 치른 것이다
+      if (trial) {
+        if (trial.encounters > 1) trial = { maxHp: trial.maxHp, encounters: trial.encounters - 1 };
+        else {
+          state.combat.player.maxHp += trial.maxHp;
+          trial = undefined;
+        }
+      }
       if (state.combat.outcome !== "victory") {
-        defeatContext = { region, floor, enemies: enemies.map(({ id }) => id), passives };
+        defeatContext = { region, floor, enemies: enemies.map(({ id }) => id), passives, trial: underTrial };
         favorCurve.push({ ...state.favor });
         hpCurve.push(state.combat.player.hp);
         break;
       }
       // 전투 앞의 요구와 `omen`에서 걸어 둔 약속을 같은 사실로 판정한다
-      for (const kept of [promise, carried]) {
-        if (!kept) continue;
-        // 지키지 못한 약속은 아무것도 움직이지 않는다 — 실패 벌금은 만들지 않는다 (R-5)
-        const accept = kept.answer === "accept";
-        const held = accept && demandSatisfied(kept.demand, result.facts);
-        resolveDemand(state.favor, kept.patron, kept.other, held);
-        demandSides.push(held ? kept.patron : kept.other);
-        const [accepted, heldCount] = demandOutcomes[kept.demand.id] ?? [0, 0];
-        demandOutcomes[kept.demand.id] = [accepted + (accept ? 1 : 0), heldCount + (held ? 1 : 0)];
+      for (const promised of [promise, carried]) {
+        if (!promised) continue;
+        const { demand, patron, other, choice, tier } = promised;
+        // 지키지 못한 약속은 아무것도 움직이지 않는다 — 실패 벌금은 만들지 않는다. 선불 대가는 이미 나갔다
+        const held = tier ? demandSatisfied(tier, result.facts) : false;
+        resolveDemand(state.favor, patron, other, held ? tier : undefined);
+        // 시련의 보상은 그 신의 은혜 하나다 — `awardGrace`와 같은 상한(6)을 쓰고 3택1을 그 자리에서 띄운다
+        if (held && tier?.reward.grace) {
+          state.grace[patron] = Math.min(6, (state.grace[patron] ?? 0) + tier.reward.grace);
+          yield* grantGrace(patron);
+        }
+        // 거절도 편을 든다 — 상대 신을 벌금에서 지켜 준 것이므로 그쪽이다
+        demandSides.push(held ? patron : other);
+        // 단이 키에 들어간다 — 단별 지킴률을 리포트가 따로 세지 않고 그대로 읽는다. 거절은 세지 않는다
+        if (!tier) continue;
+        const [asked, heldCount] = demandOutcomes[`${demand.id}:${choice}`] ?? [0, 0];
+        demandOutcomes[`${demand.id}:${choice}`] = [asked + 1, heldCount + (held ? 1 : 0)];
       }
       carried = undefined;
       yield* offerReward(nodeSeed);

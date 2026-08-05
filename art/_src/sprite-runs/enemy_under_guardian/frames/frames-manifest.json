@@ -1,0 +1,275 @@
+{
+  "ok": true,
+  "engine": "component-row",
+  "engine_revision": "9d4ecaf5ab56",
+  "extract_args": {},
+  "run_dir": "/Users/gimbongseob/git/god-scales/art/_src/sprite-runs/enemy_under_guardian",
+  "cell": {
+    "shape": "square",
+    "width": 256,
+    "height": 256,
+    "safe_margin_x": 20,
+    "safe_margin_y": 20,
+    "size": 256,
+    "safe_margin": 20
+  },
+  "chroma_key": {
+    "name": "cyan",
+    "hex": "#00FFFF",
+    "rgb": [
+      0,
+      255,
+      255
+    ],
+    "selection": "auto",
+    "score": 240.4,
+    "min_subject_distance": 222.15,
+    "background": {
+      "mode": "transparent",
+      "opaque_border_fraction": 0.043,
+      "subject_pixels": 18796
+    },
+    "candidates": [
+      {
+        "name": "magenta",
+        "hex": "#FF00FF",
+        "score": 227.53,
+        "min_subject_distance": 208.92,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "green",
+        "hex": "#00FF00",
+        "score": 209.28,
+        "min_subject_distance": 203.2,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "cyan",
+        "hex": "#00FFFF",
+        "score": 240.4,
+        "min_subject_distance": 222.15,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "blue",
+        "hex": "#004DFF",
+        "score": 191.02,
+        "min_subject_distance": 176.89,
+        "clears_erase_radius": true
+      }
+    ],
+    "selection_reason": "highest 1st-percentile subject distance among the 4 candidate(s) clearing the 96 erase radius"
+  },
+  "rows": [
+    {
+      "state": "idle",
+      "frames": 4,
+      "method": "components",
+      "files": [
+        "frames/idle/frame-0.png",
+        "frames/idle/frame-1.png",
+        "frames/idle/frame-2.png",
+        "frames/idle/frame-3.png"
+      ],
+      "frame_records": [
+        {
+          "index": 0,
+          "nontransparent_pixels": 18112,
+          "bbox": [
+            24,
+            4,
+            200,
+            236
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 0
+        },
+        {
+          "index": 1,
+          "nontransparent_pixels": 17600,
+          "bbox": [
+            24,
+            4,
+            192,
+            236
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 0
+        },
+        {
+          "index": 2,
+          "nontransparent_pixels": 17280,
+          "bbox": [
+            32,
+            12,
+            200,
+            236
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 0
+        },
+        {
+          "index": 3,
+          "nontransparent_pixels": 17728,
+          "bbox": [
+            24,
+            4,
+            192,
+            236
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 0
+        }
+      ],
+      "ok": true,
+      "engine_revision": "9d4ecaf5ab56",
+      "plain_files": [
+        "frames/idle/frame-0.plain.png",
+        "frames/idle/frame-1.plain.png",
+        "frames/idle/frame-2.plain.png",
+        "frames/idle/frame-3.plain.png"
+      ],
+      "orig_files": [
+        "frames/idle/orig/frame-0.png",
+        "frames/idle/orig/frame-1.png",
+        "frames/idle/orig/frame-2.png",
+        "frames/idle/orig/frame-3.png"
+      ]
+    },
+    {
+      "state": "attack",
+      "frames": 2,
+      "method": "components",
+      "files": [
+        "frames/attack/frame-0.png",
+        "frames/attack/frame-1.png"
+      ],
+      "frame_records": [
+        {
+          "index": 0,
+          "nontransparent_pixels": 17408,
+          "bbox": [
+            40,
+            36,
+            248,
+            236
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 0
+        },
+        {
+          "index": 1,
+          "nontransparent_pixels": 17728,
+          "bbox": [
+            0,
+            36,
+            248,
+            236
+          ],
+          "edge_pixels": 16,
+          "chroma_adjacent_pixels": 0
+        }
+      ],
+      "ok": true,
+      "engine_revision": "9d4ecaf5ab56",
+      "plain_files": [
+        "frames/attack/frame-0.plain.png",
+        "frames/attack/frame-1.plain.png"
+      ],
+      "orig_files": [
+        "frames/attack/orig/frame-0.png",
+        "frames/attack/orig/frame-1.png"
+      ]
+    },
+    {
+      "state": "hit",
+      "frames": 1,
+      "method": "components",
+      "files": [
+        "frames/hit/frame-0.png"
+      ],
+      "frame_records": [
+        {
+          "index": 0,
+          "nontransparent_pixels": 20864,
+          "bbox": [
+            0,
+            4,
+            224,
+            236
+          ],
+          "edge_pixels": 16,
+          "chroma_adjacent_pixels": 0
+        }
+      ],
+      "ok": true,
+      "engine_revision": "9d4ecaf5ab56",
+      "plain_files": [
+        "frames/hit/frame-0.plain.png"
+      ],
+      "orig_files": [
+        "frames/hit/orig/frame-0.png"
+      ]
+    },
+    {
+      "state": "death",
+      "frames": 2,
+      "method": "components",
+      "files": [
+        "frames/death/frame-0.png",
+        "frames/death/frame-1.png"
+      ],
+      "frame_records": [
+        {
+          "index": 0,
+          "nontransparent_pixels": 20416,
+          "bbox": [
+            40,
+            68,
+            256,
+            236
+          ],
+          "edge_pixels": 160,
+          "chroma_adjacent_pixels": 0
+        },
+        {
+          "index": 1,
+          "nontransparent_pixels": 13312,
+          "bbox": [
+            0,
+            148,
+            248,
+            236
+          ],
+          "edge_pixels": 16,
+          "chroma_adjacent_pixels": 0
+        }
+      ],
+      "ok": true,
+      "engine_revision": "9d4ecaf5ab56",
+      "plain_files": [
+        "frames/death/frame-0.plain.png",
+        "frames/death/frame-1.plain.png"
+      ],
+      "orig_files": [
+        "frames/death/orig/frame-0.png",
+        "frames/death/orig/frame-1.png"
+      ]
+    }
+  ],
+  "errors": [],
+  "warnings": [
+    "idle: pitch disagreement — detect 1.00x1.00 (uniformity 81.2) vs runlen 2.35x2.40 (23.9); detect kept. large gap usually means the raw was drawn finer than the cell contract — reroll with a block-count hint",
+    "idle: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:453x600, 1:434x604, 2:436x576, 3:460x600",
+    "attack: pitch disagreement — detect 1.00x1.00 (uniformity 80.6) vs runlen 2.84x2.86 (23.3); detect kept. large gap usually means the raw was drawn finer than the cell contract — reroll with a block-count hint",
+    "attack: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:728x703, 1:897x695",
+    "hit: pitch disagreement — detect 1.00x1.00 (uniformity 83.4) vs runlen 4.75x4.83 (30.2); detect kept. large gap usually means the raw was drawn finer than the cell contract — reroll with a block-count hint",
+    "hit: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:1152x1139",
+    "death: pitch disagreement — detect 1.00x1.00 (uniformity 82.4) vs runlen 2.81x2.84 (22.9); detect kept. large gap usually means the raw was drawn finer than the cell contract — reroll with a block-count hint",
+    "death: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:775x567, 1:847x279",
+    "palette: rebuilt+pinned (16 colors → palette.lock.json)",
+    "death: frame 00 has 160 non-transparent edge pixels",
+    "pixel unfake: pitch=1.0,1.0,1.0,1.0 scale=8x logical<=32x32 palette=16"
+  ]
+}

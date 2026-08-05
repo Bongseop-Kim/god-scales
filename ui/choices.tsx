@@ -1,3 +1,4 @@
+import type { DemandCost, DemandReward } from "../core/demands.ts";
 import { restHealing } from "../core/map.ts";
 import type { DemandDecision, GraceDecision, MapDecision, RunView } from "../sim/engine.ts";
 import { CardRow, effectText } from "./card.tsx";
@@ -84,19 +85,52 @@ export function GraceScreen({ seed, decision, onAnswer }: {
   );
 }
 
+/** 단 이름. 답(`tier1`·`tier2`)이 아니라 값이 있는지로 갈린다 — 대가 없는 단이 수락이다 */
+const tierName: Record<string, [string, string]> = { tier1: ["수", "수락"], tier2: ["시", "시련"] };
+
+/**
+ * 대가는 **지금** 나가는 값이다. 그래서 보상이 아니라 단 이름과 같은 줄에 선다 — 값이 앞에 서지 않으면
+ * 결정이 계산이 되지 않는다(마감은 P-26)
+ */
+const costText = (other: string, cost?: DemandCost): string => {
+  if (!cost) return "없음";
+  return [
+    cost.maxHp ? `최대 체력 −${cost.maxHp} (조우 ${cost.encounters ?? 1}회)` : "",
+    // 「즉시」가 아래 `지키면`과 갈라 준다 — 시련은 지금 한 번 치르고, 지키면 관계 벌금을 한 번 더 낸다
+    cost.favor ? `${godName(other)} 호의 −${cost.favor} 즉시` : "",
+  ].filter(Boolean).join(" · ");
+};
+
+const rewardText = (patron: string, reward: DemandReward): string =>
+  reward.grace ? `${godName(patron)}의 은혜 ${reward.grace}개` : `${godName(patron)} 호의 +${reward.favor ?? 0}`;
+
+/**
+ * 요구는 수락·시련·거절 셋이다. 시련은 값을 **선불로** 치르고 은혜를 받는다 — 5층과 적이 모자란
+ * 조우에서는 그 칸이 아예 서지 않으므로 관측이 실어 온 단만 그린다
+ */
 export function DemandScreen({ seed, decision, onAnswer }: {
   seed: number;
   decision: DemandDecision;
   onAnswer: (choice: string) => void;
 }) {
   const view = decision.observation;
-  const cost = view.penalty ? ` · ${godName(view.other)} 호의 ${view.penalty}` : "";
+  const penalty = view.penalty ? ` · ${godName(view.other)} 호의 −${Math.abs(view.penalty)}` : "";
   return (
     <Screen seed={seed} view={view} title={`${godName(view.patron)}의 요구`}>
-      <p className="lead">{view.text}</p>
-      {/* 보상은 다음 전투에서 조건을 지켰을 때만 들어간다 — 수락만으로 주지 않는다 */}
-      <Choice mark="수" label="수락" detail={`다음 전투에서 지키면 ${godName(view.patron)} 호의 +${view.reward}${cost}`} onChoose={() => onAnswer("accept")} />
-      <Choice mark="거" label="거절" detail="어느 호의도 움직이지 않습니다. 거절에도, 지키지 못해도 벌금은 없습니다." onChoose={() => onAnswer("reject")} />
+      {view.tiers.map((tier) => {
+        const [mark, name] = tierName[tier.action] ?? ["요", tier.action];
+        return (
+          <Choice
+            key={tier.action}
+            mark={mark}
+            label={`${name} · 대가 ${costText(view.other, tier.cost)}`}
+            // 보상은 다음 전투에서 조건을 지켰을 때만 들어간다 — 고르는 것만으로 주지 않는다
+            detail={`${tier.text} — 지키면 ${rewardText(view.patron, tier.reward)}${penalty}`}
+            onChoose={() => decision.options.includes(tier.action) && onAnswer(tier.action)}
+          />
+        );
+      })}
+      <Choice mark="거" label="거절 · 대가 없음" detail="어느 호의도 움직이지 않습니다. 거절에도, 지키지 못해도 벌금은 없습니다." onChoose={() => onAnswer("reject")} />
     </Screen>
   );
 }

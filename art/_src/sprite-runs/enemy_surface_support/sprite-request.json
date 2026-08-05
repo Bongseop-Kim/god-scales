@@ -1,0 +1,110 @@
+{
+  "version": 1,
+  "kind": "sprite-gen-request",
+  "engine": "component-row",
+  "character": {
+    "id": "enemy_surface_support",
+    "description": "타락한 니케, facing left",
+    "base_image": "base-source.png"
+  },
+  "cell": {
+    "shape": "square",
+    "width": 256,
+    "height": 256,
+    "safe_margin_x": 20,
+    "safe_margin_y": 20,
+    "size": 256,
+    "safe_margin": 20
+  },
+  "chroma_key": {
+    "name": "cyan",
+    "hex": "#00FFFF",
+    "rgb": [
+      0,
+      255,
+      255
+    ],
+    "selection": "auto",
+    "score": 227.91,
+    "min_subject_distance": 215.56,
+    "background": {
+      "mode": "transparent",
+      "opaque_border_fraction": 0.02,
+      "subject_pixels": 12215
+    },
+    "candidates": [
+      {
+        "name": "magenta",
+        "hex": "#FF00FF",
+        "score": 213.26,
+        "min_subject_distance": 207.81,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "green",
+        "hex": "#00FF00",
+        "score": 200.33,
+        "min_subject_distance": 158.56,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "cyan",
+        "hex": "#00FFFF",
+        "score": 227.91,
+        "min_subject_distance": 215.56,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "blue",
+        "hex": "#004DFF",
+        "score": 210.62,
+        "min_subject_distance": 200.4,
+        "clears_erase_radius": true
+      }
+    ],
+    "selection_reason": "highest 1st-percentile subject distance among the 4 candidate(s) clearing the 96 erase radius"
+  },
+  "states": {
+    "idle": {
+      "frames": 4,
+      "fps": 4,
+      "loop": true,
+      "action": "four-frame subtle guarded idle breathing loop, facing left; preserve the exact stance and identity"
+    },
+    "attack": {
+      "frames": 2,
+      "fps": 8,
+      "loop": false,
+      "action": "two-frame short attack toward the left: anticipation then committed strike; keep all anatomy, weapons, and asymmetric damage consistent"
+    },
+    "hit": {
+      "frames": 1,
+      "fps": 6,
+      "loop": false,
+      "action": "one-frame hit reaction recoiling away from an impact from the left; no new wounds or detached parts"
+    },
+    "death": {
+      "frames": 2,
+      "fps": 4,
+      "loop": false,
+      "action": "two-frame death: body gives way, then collapsed still on the ground; preserve existing asymmetry, anatomy, and equipment"
+    }
+  },
+  "style": "match the attached canonical pixel-art sprite exactly: large uniform square pixel blocks, hard dark outline, no anti-aliasing, limited desaturated grim-dark palette, flat shading",
+  "motion_phase_guides": false,
+  "layout": "taxonomy/v1",
+  "fit": {
+    "resample": "kcentroid",
+    "align_x": "alpha-centroid",
+    "align_y": "bottom",
+    "pixel_unfake": true,
+    "logical_height": 32,
+    "palette_size": 16,
+    "outline": true
+  },
+  "chroma": {
+    "mode": "rgb",
+    "unmix_reach": 4,
+    "spill_max_fraction": 0.005
+  }
+}

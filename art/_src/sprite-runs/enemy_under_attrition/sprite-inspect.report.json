@@ -1,0 +1,167 @@
+{
+  "ok": true,
+  "engine": "component-row",
+  "kind": "sprite-gen-inspect-report",
+  "run_dir": "/Users/gimbongseob/git/god-scales/art/_src/sprite-runs/enemy_under_attrition",
+  "states": [
+    "idle",
+    "attack",
+    "hit",
+    "death"
+  ],
+  "thresholds": {
+    "histogram_min": 0.0,
+    "dhash_min": 0.55,
+    "motion_min": 0.01
+  },
+  "rows": [
+    {
+      "state": "idle",
+      "source": "frames",
+      "expected_frames": 4,
+      "found_frames": 4,
+      "natural_pose_count": 4,
+      "frame_files": [
+        "frames/idle/frame-0.png",
+        "frames/idle/frame-1.png",
+        "frames/idle/frame-2.png",
+        "frames/idle/frame-3.png"
+      ],
+      "metrics": {
+        "histogram_intersection": {
+          "min": 0.9398774480355642,
+          "mean": 0.9576572950458568
+        },
+        "dhash_similarity": {
+          "min": 0.9375,
+          "mean": 0.96875
+        },
+        "motion_presence": 0.013214470358455882,
+        "centroid_sigma": {
+          "x": 3.340513102222589,
+          "y": 0.8167415503844397
+        }
+      },
+      "ok": true,
+      "errors": [],
+      "warnings": [
+        "idle: pitch crosscheck: axis ratio y/x disagrees — run-length 1.174 vs grid 1.000 (17.4%); one axis may have collapsed to the other",
+        "idle: frame 0 pitch detection inconclusive — consensus fallback 5.00x5.00",
+        "idle: frame 1 pitch detection inconclusive — consensus fallback 5.00x5.00",
+        "idle: frame 3 pitch detection inconclusive — consensus fallback 5.00x5.00",
+        "idle: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:50x142, 1:50x141, 2:50x142, 3:50x142"
+      ]
+    },
+    {
+      "state": "attack",
+      "source": "frames",
+      "expected_frames": 2,
+      "found_frames": 2,
+      "natural_pose_count": 2,
+      "frame_files": [
+        "frames/attack/frame-0.png",
+        "frames/attack/frame-1.png"
+      ],
+      "metrics": {
+        "histogram_intersection": {
+          "min": 0.9725975317307131,
+          "mean": 0.9725975317307131
+        },
+        "dhash_similarity": {
+          "min": 0.75,
+          "mean": 0.75
+        },
+        "motion_presence": 0.06530594171262255,
+        "centroid_sigma": {
+          "x": 2.399602269403985,
+          "y": 5.811779844417146
+        }
+      },
+      "ok": true,
+      "errors": [],
+      "warnings": [
+        "attack: frame 0 pitch detection inconclusive — consensus fallback 7.40x7.20",
+        "attack: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:84x85, 1:107x83",
+        "attack: frame 01 has 96 non-transparent edge pixels"
+      ]
+    },
+    {
+      "state": "hit",
+      "source": "frames",
+      "expected_frames": 1,
+      "found_frames": 1,
+      "natural_pose_count": 1,
+      "frame_files": [
+        "frames/hit/frame-0.png"
+      ],
+      "metrics": {
+        "histogram_intersection": {
+          "min": 1.0,
+          "mean": 1.0
+        },
+        "dhash_similarity": {
+          "min": 1.0,
+          "mean": 1.0
+        },
+        "motion_presence": 0.0,
+        "centroid_sigma": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "ok": true,
+      "errors": [],
+      "warnings": [
+        "hit: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:76x119",
+        "hit: motion presence is too low (0.0000 < 0.0100)"
+      ]
+    },
+    {
+      "state": "death",
+      "source": "frames",
+      "expected_frames": 2,
+      "found_frames": 2,
+      "natural_pose_count": 2,
+      "frame_files": [
+        "frames/death/frame-0.png",
+        "frames/death/frame-1.png"
+      ],
+      "metrics": {
+        "histogram_intersection": {
+          "min": 0.9344490781387181,
+          "mean": 0.9344490781387181
+        },
+        "dhash_similarity": {
+          "min": 0.734375,
+          "mean": 0.734375
+        },
+        "motion_presence": 0.12624894684436275,
+        "centroid_sigma": {
+          "x": 4.740605794556629,
+          "y": 28.677655838454783
+        }
+      },
+      "ok": true,
+      "errors": [],
+      "warnings": [
+        "death: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:68x81, 1:97x35",
+        "death: frame 01 has 96 non-transparent edge pixels"
+      ]
+    }
+  ],
+  "errors": [],
+  "warnings": [
+    "idle: pitch crosscheck: axis ratio y/x disagrees — run-length 1.174 vs grid 1.000 (17.4%); one axis may have collapsed to the other",
+    "idle: frame 0 pitch detection inconclusive — consensus fallback 5.00x5.00",
+    "idle: frame 1 pitch detection inconclusive — consensus fallback 5.00x5.00",
+    "idle: frame 3 pitch detection inconclusive — consensus fallback 5.00x5.00",
+    "idle: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:50x142, 1:50x141, 2:50x142, 3:50x142",
+    "attack: frame 0 pitch detection inconclusive — consensus fallback 7.40x7.20",
+    "attack: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:84x85, 1:107x83",
+    "attack: frame 01 has 96 non-transparent edge pixels",
+    "hit: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:76x119",
+    "hit: motion presence is too low (0.0000 < 0.0100)",
+    "death: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:68x81, 1:97x35",
+    "death: frame 01 has 96 non-transparent edge pixels"
+  ]
+}

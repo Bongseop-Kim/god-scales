@@ -4,6 +4,9 @@
   --athena: #7a8b5c;
   --ares: #9b2226;
   --artemis: #8e7ca6;
+  /* 진영색. DD2와 같은 갈래다 — 노랑 = 이로움, 파랑 = 해로움. 신 색은 아이콘에만 남는다 */
+  --boon: #e8c377;
+  --bane: #6ea8d8;
   color: #f4efe5;
   background: #11131a;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
@@ -33,16 +36,43 @@ button:not(:disabled):hover { border-color: #c6a969; }
 .hint { margin-top: 14px; color: #777e90; font-size: .8rem; }
 .sound-toggle { margin-left: 8px; }
 .token-legend { display: flex; flex-wrap: wrap; gap: 7px; margin: -16px 0 28px; }
-.token-badge { position: relative; display: grid; width: 38px; height: 38px; place-items: center; color: var(--token-color); border: 1px solid currentColor; border-radius: 50%; background: #181c27; }
-.token-badge i { font-style: normal; opacity: .35; }
-.token-badge b { position: absolute; color: #fff; font-size: .75rem; }
-.token-badge small { position: absolute; right: -3px; bottom: -3px; display: grid; width: 16px; height: 16px; place-items: center; border-radius: 50%; color: #151821; background: var(--token-color); font-size: .62rem; }
+/* 테두리는 진영, 안쪽 고리는 신, 바깥 고리는 지속 — 셋이 겹치지 않는 채널을 하나씩 갖는다 */
+.token-badge { position: relative; display: grid; width: 38px; height: 38px; place-items: center; border: 1px solid currentColor; border-radius: 50%; background: #181c27; box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--token-color) 60%, transparent); }
+/* 색만으로 진영을 말하면 색각 이상에서 사라진다 — 해로움은 채움, 이로움은 외곽이다 */
+.token-badge.boon { color: var(--boon); }
+.token-badge.harmful { color: var(--bane); background: color-mix(in srgb, var(--bane) 30%, #181c27); }
+/* 지속 셋: 이번 턴은 점선, 1회 소모는 기본, 전투 내내는 고리 하나 더 */
+.token-badge.turn { border-style: dotted; }
+.token-badge.combat { outline: 1px solid color-mix(in srgb, currentColor 60%, transparent); outline-offset: 2px; }
+.token-badge i { color: var(--token-color); font-style: normal; opacity: .4; }
+.token-badge b { position: absolute; color: #fff; font-size: .75rem; text-shadow: 0 1px 3px #11131a; }
+.token-badge small { position: absolute; right: -3px; bottom: -3px; display: grid; width: 16px; height: 16px; place-items: center; border-radius: 50%; color: #151821; background: currentColor; font-size: .62rem; font-weight: 750; }
+/* 배우 위 한 줄. 텍스트 줄에 섞이지 않는 것이 이 줄의 존재 이유다 */
+.actor-tokens { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.actor-tokens em { color: #9298aa; font-size: .74rem; font-style: normal; }
 
 header { display: flex; align-items: start; justify-content: space-between; gap: 20px; margin-bottom: 34px; }
 header h1 { font-size: clamp(2.6rem, 7vw, 5rem); }
 header > strong { color: #c6a969; font-size: 1.1rem; }
+/**
+ * 여덟 화면의 눈금. 제목은 장식이고 값은 eyebrow와 badge가 든다 — 5rem 제목과 64px 여백은
+ * 1440×900에서 세로를 먹고, 전투에는 이제 우호도·토큰·파워 줄이 더 선다
+ */
+.shell:has(.run-header) { padding: 28px 0; }
+.run-header { align-items: baseline; margin-bottom: 16px; }
+.run-header h1 { margin-bottom: 0; font-size: clamp(1.9rem, 3.4vw, 2.3rem); }
+/* 칸 사이는 격자 gap 하나로만 띈다 — 여덟 화면이 같은 간격을 쓰는 자리다 */
+.decision-panel .hint { margin-top: 0; }
 .run-layout { display: grid; grid-template-columns: minmax(260px, .8fr) minmax(320px, 1.2fr); gap: 28px; }
 .run-layout header { grid-column: 1 / -1; }
+/**
+ * 전투만 좌우가 반대다 — **병사가 왼쪽에 서고 적이 오른쪽에 선다**(P-32 §1 「방향」). 스프라이트를
+ * 그 방향으로 그리므로(병사는 오른쪽을, 적은 왼쪽을 본다) 배치가 반대면 둘이 등을 지고 싸운다.
+ * 넓은 칸(1.2fr)은 손패가 든 `.decision-panel` 쪽이라 열 폭도 같이 뒤집는다. `order`로만 옮겨
+ * DOM 순서는 그대로 둔다 — 읽기 순서는 「적 → 내 손패」가 맞고, 720px 아래 1열도 그 순서를 쓴다
+ */
+.combat-layout { grid-template-columns: minmax(320px, 1.2fr) minmax(260px, .8fr); }
+.combat-layout .enemy-panel { order: 1; }
 .map-panel, .decision-panel, .combat-log, .enemy-panel, .summary-grid article { padding: 24px; border: 1px solid #303648; border-radius: 14px; background: rgba(21, 25, 35, .86); }
 .map-panel ol { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .map-panel li { display: grid; grid-template-columns: 40px repeat(3, 1fr); align-items: center; gap: 8px; }
@@ -67,19 +97,44 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .enemy-panel { display: grid; align-content: start; gap: 12px; }
 .enemy { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; padding: 14px; text-align: left; }
 .enemy:disabled { cursor: default; opacity: .82; }
+.enemy .actor-tokens { grid-column: 1 / -1; }
+.enemy .actor-tokens:empty { display: none; }
+.enemy .name { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
 .enemy b { align-self: center; }
-.enemy .intent { justify-self: end; color: #efa198; font-size: .8rem; }
+/**
+ * 의도는 복합 행동이 다 서야 한다 — 「공격 10 + 아군 회복 4」가 한 글자씩 세로로 접히면 대상 선택이
+ * 도박이 된다. 접히는 쪽은 이름이다: 이름은 길어도 읽히고 의도는 숫자가 붙어 있어야 읽힌다
+ */
+.enemy .intent { justify-self: end; align-self: center; color: #efa198; font-size: .8rem; text-align: right; white-space: nowrap; }
 .enemy .hp { position: relative; grid-column: 1 / -1; display: grid; height: 20px; padding: 0 8px; place-items: center start; overflow: hidden; border-radius: 5px; background: #2a3040; font-size: .74rem; }
 .enemy .hp i { position: absolute; inset: 0 auto 0 0; background: #6c3b3b; transition: width 200ms var(--ease-out); }
 .enemy .hp small { position: relative; }
 .enemy .badges { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .enemy .badges em { color: #9de0c7; font-size: .74rem; font-style: normal; }
 /* 패시브는 소모품이 아니다 — 방어·토큰 배지와 색을 나눈다. 소모되는 ward·guard는 숫자가 줄어든다 */
-.enemy .badges em.passive { color: #bfa8e0; padding: 0 5px; border: 1px solid #4a4260; border-radius: 4px; }
+.enemy .passive { padding: 0 5px; border: 1px solid #4a4260; border-radius: 4px; color: #bfa8e0; font-size: .74rem; font-style: normal; white-space: nowrap; }
 .enemy:not(:disabled):hover { border-color: #efa198; }
 
 /* 의도 표시와 겹치지 않게 아래쪽에서 떠오른다 */
 .damage-pop { position: absolute; inset: auto 14px 8px auto; color: #ffb4a6; font-family: Georgia, serif; font-size: 1.5rem; text-shadow: 0 2px 10px #11131a; pointer-events: none; }
+/* 배우 하나 = 우호도 · 토큰 · 파워 · 스탯. 위에서 아래로 「신 → 나에게 붙은 것 → 매 턴 일하는 것 → 값」 */
+.player-actor { display: grid; gap: 8px; padding-bottom: 8px; border-bottom: 1px solid #303648; }
+.favor-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.favor { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 4px 8px; padding: 8px 10px; border: 1px solid #303648; border-radius: 10px; font-size: .74rem; }
+.favor small { color: #9298aa; }
+.favor b, .favor em { justify-self: end; color: currentColor; font-size: .74rem; font-style: normal; }
+.favor .meter { position: relative; grid-column: 1 / -1; height: 6px; overflow: hidden; border-radius: 3px; background: #2a3040; }
+.favor .meter i { position: absolute; inset: 0 auto 0 0; background: currentColor; transition: width 200ms var(--ease-out); }
+/* 눈금은 favorBoundaries에서 온다 — 위치를 CSS에 박으면 규칙이 바뀔 때 화면만 옛 자리에 남는다 */
+.favor .meter .tick { position: absolute; top: 0; bottom: 0; width: 1px; background: #11131a; }
+.favor.devotion { color: #f0d79a; border-color: #6b5c33; }
+.favor.calm { color: #9de0c7; }
+.favor.anger { color: #efb98a; border-color: #6b543a; }
+/* 진노는 경고다 — 그 단계의 개입이 조우 시작에 터지므로 들어서기 전에 읽혀야 한다 */
+.favor.wrath { color: #eb887d; border-color: #eb887d; background: rgba(235, 136, 125, .12); }
+.power-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.power-row em { padding: 2px 8px; border: 1px solid #5c6b8a; border-radius: 999px; background: rgba(92, 107, 138, .16); color: #cbd5ea; font-size: .72rem; font-style: normal; }
+.power-row em b { margin-left: 4px; color: #fff; }
 .player-bar { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; color: #9298aa; font-size: .78rem; }
 .player-bar b { color: #f4efe5; font-size: .95rem; }
 .hand { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }

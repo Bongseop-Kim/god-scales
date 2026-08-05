@@ -191,7 +191,7 @@ group_under_pair (pressure+attrition)  실효 체력 87 · 피해 11.5
 - `npm run e2e -- --dist` — 배포본을 브라우저로 완주(시드 170, 416결정) → 반출 → CLI 재생 일치 · `substituted = 0`
 - `npm run sim -- --replay` — 지금 규칙판에서 딴 기록이면 그대로 돈다
 
-이 결정이 뒤 세 계획에서 요구사항 하나씩을 지운다 — [R-28](28-boon.md)의 `Action.grace` 병존, [P-29](../plans/29-quest.md)의 `"accept"` 별칭, R-31의 「전 로그 재생 일치」. 셋 다 그 계획에서 이미 지웠고 근거는 이 절이다.
+이 결정이 뒤 세 계획에서 요구사항 하나씩을 지운다 — [R-28](28-boon.md)의 `Action.grace` 병존, [R-29](29-quest.md)의 `"accept"` 별칭, R-31의 「전 로그 재생 일치」. 셋 다 그 계획에서 이미 지웠고 근거는 이 절이다.
 
 ## 다르게 한 것
 

@@ -1,0 +1,20 @@
+{
+  "id": "demand_broken_athena_ladder",
+  "patron": "athena",
+  "axis": "damage_taken",
+  "polarity": "-",
+  "min_enemies": 1,
+  "tiers": [
+    {
+      "text": "넷 넘게 내주지 마라.",
+      "condition": "damage_taken <= 4",
+      "reward": { "favor": 12 }
+    },
+    {
+      "text": "열넷이다. 크게 맞고 이기는 것은 승리가 아니다.",
+      "condition": "damage_taken <= 14",
+      "cost": { "favor": 9, "maxHp": 8, "encounters": 3 },
+      "reward": { "grace": 1 }
+    }
+  ]
+}
