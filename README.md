@@ -40,13 +40,13 @@ npm run dev        # http://localhost:5173
 ## 명령어
 
 ```bash
-npm test                                   # 단위 테스트 + 밴드 (19파일 63테스트)
+npm test                                   # 단위 테스트 + 조합 하한 (19파일 64테스트)
 npm run build                              # tsc --noEmit + vite build
 npm run sim -- --runs 2000 --stratified    # 10조합 균등 시뮬
 npm run sim -- --replay <반출파일>          # 반출한 런을 CLI에서 재생
 npm run e2e -- --dist                      # 빌드 산출물을 브라우저로 완주 (Aside 필요)
 npm run validate -- <파일>                  # 카드·적·요구 게이트
-npm run tune -- --iteration N              # 회차 시뮬과 리포트
+npm run tune                               # 조합별 승률 ε=0 · ε=0.45 비교표 (3,000런 × 2, 8초)
 ```
 
 ## 문서

@@ -8,6 +8,23 @@ import { expectedValue, tokenWeights } from "../../tools/value.ts";
 /** v4: 토큰 값을 게이트 표(`tokenWeights`)에서 읽고, 요구 답이 조건 판정을 전제로 바뀌었다 */
 export const botPolicyVersion = "v4";
 
+/**
+ * 확률 ε로 합법수를 무작위로 고른다. 실력을 낮춘 두 번째 열(`승률(ε)`)을 만들어 조합마다 결정이
+ * 승률로 바뀌는지 보는 데만 쓴다. 회차 간 비교가 목적이라 값 자체엔 의미가 없다 — 한 번 정하고
+ * 만지지 않는다. ε=0이면 rng를 한 번도 당기지 않아 기존 런과 완전히 같다.
+ * ponytail: 모듈 전역 하나. 봇 객체를 만들 이유가 시뮬을 두 번 돌리는 것뿐이다
+ */
+export let epsilon = 0;
+export function setEpsilon(value: number): void {
+  epsilon = value;
+}
+
+/** ε이 터진 경우에만 무작위 합법수를 돌려준다. 아니면 undefined — 호출한 쪽이 원래 규칙을 쓴다 */
+function noisyPick<T>(options: T[], rng?: () => number): T | undefined {
+  if (!rng || epsilon <= 0 || !options.length || rng() >= epsilon) return undefined;
+  return options[Math.floor(rng() * options.length)];
+}
+
 function intent(combat: CombatState, definitions: ReadonlyMap<string, EnemyDefinition>): number {
   return combat.enemies.reduce((total, enemy) => {
     if (enemy.hp <= 0 || (enemy.tokens.displace ?? 0) > 0) return total;
@@ -62,8 +79,8 @@ export function chooseRestCard(deck: string[], cards: ReadonlyMap<string, Card>,
  * 보상 시점에는 살아 있는 전투가 없다 — `cardValue`의 block 항과 all_enemies 배수가 전부 0이 되어
  * 방어·광역 카드를 구조적으로 못 고른다. 그래서 게이트가 카드를 재는 데 쓰는 기대값으로 고른다.
  */
-export function chooseReward(options: string[], cards: ReadonlyMap<string, Card>): string {
-  return [...options].sort((left, right) => expectedValue(cards.get(right)!) - expectedValue(cards.get(left)!))[0];
+export function chooseReward(options: string[], cards: ReadonlyMap<string, Card>, rng?: () => number): string {
+  return noisyPick(options, rng) ?? [...options].sort((left, right) => expectedValue(cards.get(right)!) - expectedValue(cards.get(left)!))[0];
 }
 
 export function chooseGraceCard(cards: ReadonlyMap<string, Card>, patron: string, combat: CombatState): string | undefined {
@@ -82,9 +99,13 @@ export function chooseCard(
   cards: ReadonlyMap<string, Card>,
   definitions: ReadonlyMap<string, EnemyDefinition>,
   favor: Record<string, number> = {},
+  rng?: () => number,
 ): string | undefined {
   const incoming = intent(combat, definitions);
   const affordable = combat.hand.filter((id) => (cards.get(id)?.cost ?? Infinity) <= combat.energy);
+  // ponytail: 합법수는 손패로만 잡는다 — 무작위 턴 종료까지 넣으면 ε 열이 "아무것도 안 하는 봇"이 된다
+  const noisy = noisyPick(affordable, rng);
+  if (noisy) return noisy;
   const lethal = incoming >= combat.player.hp;
   const selected = affordable.sort((left, right) => {
     const a = cards.get(left)!;
@@ -104,8 +125,11 @@ export function chooseTarget(
   card: Card,
   combat: CombatState,
   definitions: ReadonlyMap<string, EnemyDefinition>,
+  rng?: () => number,
 ): string | undefined {
   if (card.target !== "enemy") return undefined;
+  const noisy = noisyPick(combat.enemies.filter(({ hp }) => hp > 0).map(({ id }) => id), rng);
+  if (noisy) return noisy;
   const damage = card.effects.reduce((sum, effect) => sum + (effect.op === "damage" ? effect.value ?? 0 : 0), 0);
   return [...combat.enemies]
     .filter(({ hp }) => hp > 0)

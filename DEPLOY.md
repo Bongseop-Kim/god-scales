@@ -8,7 +8,8 @@ GitHub Pages · <https://bongseop-kim.github.io/god-scales/>
 ## 게이트
 
 ```bash
-npm test                                    # 19파일 63테스트
+npm test                                    # 19파일 64테스트 (조합 승률 하한 0.05 포함)
+npm run tune                                # 릴리스 목표: 모든 조합 ≥ 0.25 — 사람이 읽고 판정한다
 npm run build
 grep -rE "sk-ant|ANTHROPIC_API_KEY|OPENAI|api_key" dist/   # 결과 없음
 grep -rlE "\bvalidate\b|\btune\b" dist/     # 결과 없음 (LLM 호출은 tools/ 빌드타임에만)
@@ -17,6 +18,16 @@ npm run e2e -- --dist                       # 최종 게이트 (아래)
 # 푸시 뒤
 curl -sI https://bongseop-kim.github.io/god-scales/ | head -1   # 200
 ```
+
+## 밸런스 게이트 — `npm run tune`
+
+조합당 시드 300개를 ε=0(강한 봇)과 ε=0.45(확률 0.45로 무작위 합법수) 두 번 돌린 표 하나다. 시드가 1~300으로 고정이라 결정적이다.
+
+- **테스트가 잠그는 것은 하한 0.05뿐이다** — 0에 붙은 조합, 즉 이길 수 없는 조합을 잡는다. `npm test`가 매번 본다
+- **0.25는 릴리스 목표이고 테스트에 없다.** 지금 제우스가 낀 네 조합이 미달이다(6.7~19.3%). 출시 전에 제우스를 손보거나 목표를 내리는 결정은 사람이 한다 — 통과 못 하는 값을 테스트에 넣으면 결국 그 값을 깎게 된다
+- 미달 조합이 있으면 **그 조합만** 손댄다. 없으면 수치 조정은 하지 않는다
+- `⚠`는 `|차이| ≤ 0.10`, 즉 봇 실력이 승률로 바뀌지 않는 조합이다 — 결정이 의미 없다는 뜻이고 **보고만** 한다. 승률 0.20 미만 셀은 절대차가 그보다 작을 수 없어 판정에서 뺀다(하한이 본다)
+- `pairing_win_stddev`·`pairing_win_cv`는 참고 출력이다. 게이트가 아니고 목표값도 없다
 
 ## 최종 게이트 — `npm run e2e -- --dist`
 

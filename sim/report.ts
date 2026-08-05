@@ -119,6 +119,8 @@ export function summarize(results: RunResult[]) {
     block_efficiency: results.reduce((sum, { blockAbsorbed }) => sum + blockAbsorbed, 0) / (results.reduce((sum, { blockBuilt }) => sum + blockBuilt, 0) || 1),
     fusion_rate: results.length ? results.filter(({ fused }) => fused).length / results.length : 0,
     runs_by_pairing,
+    /** 조합 → 승률. `win_rate_matrix`가 같은 값을 신×신으로 다시 깐 것이다 — 게이트가 읽는 쪽은 이것 */
+    win_rate_by_pairing: pairingRates,
     win_rate_matrix,
     pairing_win_stddev,
     pairing_win_cv,

@@ -142,7 +142,7 @@ type EncounterResult = {
   facts: Record<string, number>;
 };
 
-function* playEncounter(state: GameState, seed: number, deck: string[], cardMap: Map<string, Card>, enemies: EnemyDefinition[], log: string[], patrons: PatronPair): Generator<Decision, EncounterResult, string> {
+function* playEncounter(state: GameState, seed: number, deck: string[], cardMap: Map<string, Card>, enemies: EnemyDefinition[], log: string[], patrons: PatronPair, noise: () => number): Generator<Decision, EncounterResult, string> {
   const enemyMap = new Map(enemies.map((enemy) => [enemy.id, enemy]));
   const random = createRng(seed);
   const hp = state.combat.player.hp;
@@ -199,7 +199,7 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
       const cardId = yield {
         phase: "card",
         options: [...affordable, endTurnAction],
-        bot: chooseCard(state.combat, cardMap, enemyMap, state.favor) ?? endTurnAction,
+        bot: chooseCard(state.combat, cardMap, enemyMap, state.favor, noise) ?? endTurnAction,
         observation: observation(),
       };
       if (cardId === endTurnAction) break;
@@ -211,7 +211,7 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
         ? yield {
           phase: "target",
           options: targets,
-          bot: chooseTarget(card, state.combat, enemyMap)!,
+          bot: chooseTarget(card, state.combat, enemyMap, noise)!,
           observation: { card: cardId, ...observation() },
         }
         : undefined;
@@ -262,6 +262,9 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
     map: { node: 0, completed: [] },
   };
   const log: string[] = [];
+  // ε 동전은 전투·셔플·보상과 겹치지 않는 스트림에서 뽑는다. 겹치면 ε을 켜는 것만으로 적 뽑기까지
+  // 흔들려 두 열이 다른 게임이 된다. ε=0이면 아무도 당기지 않으므로 기존 replay는 그대로 재생된다
+  const noise = createRng(seed ^ 0x5eed);
   const favorCurve = [{ ...state.favor }];
   const hpCurve = [state.combat.player.hp];
   const pathChoices: ("combat" | "rest")[] = [];
@@ -334,7 +337,7 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
     const picked = yield {
       phase: "reward",
       options: [...offer, skipReward],
-      bot: chooseReward(offer, cardMap),
+      bot: chooseReward(offer, cardMap, noise),
       observation: { ...view(), deck: deck.length, cards: offer.map((id) => cardView(cardMap.get(id)!)) },
     };
     if (picked !== skipReward && !offer.includes(picked)) throw new Error(`Invalid reward action: ${picked}`);
@@ -387,7 +390,7 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
     } else {
       const enemies = encounter(seed + state.map.node, node.region, path === "boss");
       const promise = yield* askDemand(enemies);
-      const result = yield* playEncounter(state, seed * 100 + state.map.node, deck, cardMap, enemies, log, patrons);
+      const result = yield* playEncounter(state, seed * 100 + state.map.node, deck, cardMap, enemies, log, patrons, noise);
       turns += result.turns;
       blockBuilt += result.blockBuilt;
       blockAbsorbed += result.blockAbsorbed;
