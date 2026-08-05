@@ -1,0 +1,22 @@
+[
+  { "id": "card_artemis_01", "name": "표식 화살", "patron": "artemis", "cost": 1, "target": "enemy", "effects": [{ "op": "damage", "value": 3 }, { "op": "apply_token", "token": "mark", "stacks": 1 }], "tags": ["attack", "token"] },
+  { "id": "card_artemis_02", "name": "조준", "patron": "artemis", "cost": 1, "target": "self", "effects": [{ "op": "apply_token", "token": "crit", "stacks": 2 }], "tags": ["token"] },
+  { "id": "card_artemis_03", "name": "사냥꾼의 눈", "patron": "artemis", "cost": 1, "target": "self", "effects": [{ "op": "draw", "value": 2 }], "tags": ["utility"] },
+  { "id": "card_artemis_04", "name": "은빛 화살", "patron": "artemis", "cost": 1, "target": "enemy", "effects": [{ "op": "damage", "value": 5 }], "tags": ["attack"] },
+  { "id": "card_artemis_05", "name": "달빛 회복", "patron": "artemis", "cost": 1, "target": "self", "effects": [{ "op": "heal", "value": 7 }], "tags": ["utility"] },
+  { "id": "card_artemis_06", "name": "치명 사격", "patron": "artemis", "cost": 2, "target": "enemy", "effects": [{ "op": "apply_token", "token": "crit", "stacks": 1 }, { "op": "damage", "value": 7 }], "tags": ["attack", "token"] },
+  { "id": "card_artemis_07", "name": "사냥 개시", "patron": "artemis", "cost": 1, "target": "self", "effects": [{ "op": "energy", "value": 2 }], "tags": ["utility"] },
+  { "id": "card_artemis_08", "name": "관통 사격", "patron": "artemis", "cost": 2, "target": "enemy", "effects": [{ "op": "damage", "value": 9 }], "tags": ["attack"] },
+  { "id": "card_artemis_09", "name": "표적 고정", "patron": "artemis", "cost": 2, "target": "enemy", "effects": [{ "op": "apply_token", "token": "mark", "stacks": 3 }, { "op": "damage", "value": 5 }], "tags": ["attack", "token"] },
+  { "id": "card_artemis_10", "name": "숲의 은신", "patron": "artemis", "cost": 1, "target": "self", "effects": [{ "op": "block", "value": 4 }, { "op": "draw", "value": 1 }], "tags": ["defend", "utility"] },
+  { "id": "card_artemis_11", "name": "쌍둥이 화살", "patron": "artemis", "cost": 2, "target": "all_enemies", "effects": [{ "op": "apply_token", "token": "mark", "stacks": 1 }, { "op": "damage", "value": 4 }], "tags": ["attack", "multi", "token"] },
+  { "id": "card_artemis_12", "name": "달의 가호", "patron": "artemis", "cost": 2, "target": "self", "effects": [{ "op": "block", "value": 10 }, { "op": "draw", "value": 1 }], "tags": ["defend", "utility"] },
+  { "id": "card_artemis_13", "name": "급소 관통", "patron": "artemis", "cost": 3, "target": "enemy", "effects": [{ "op": "damage", "value": 12 }, { "op": "apply_token", "token": "crit", "stacks": 1 }], "tags": ["attack", "token"] },
+  { "id": "card_artemis_14", "name": "추격", "patron": "artemis", "cost": 1, "target": "enemy", "effects": [{ "op": "damage", "value": 4 }, { "op": "damage", "value": 4, "when": "has_token(target, mark) >= 1" }], "tags": ["attack"] },
+  { "id": "card_artemis_15", "name": "사냥의 준비", "patron": "artemis", "cost": 2, "target": "self", "effects": [{ "op": "apply_token", "token": "crit", "stacks": 1 }, { "op": "draw", "value": 2 }, { "op": "block", "value": 3 }], "tags": ["token", "utility", "defend"] },
+  { "id": "card_artemis_16", "name": "표식 폭발", "patron": "artemis", "cost": 2, "target": "enemy", "effects": [{ "op": "damage", "value": 8 }, { "op": "apply_token", "token": "mark", "stacks": 1 }], "tags": ["attack", "token"] },
+  { "id": "card_artemis_bad_scope", "name": "감전 화살", "patron": "artemis", "cost": 1, "target": "enemy", "effects": [{ "op": "damage", "value": 4 }, { "op": "apply_token", "token": "shock", "stacks": 1 }], "tags": ["attack", "token"] },
+  { "id": "card_artemis_bad_value", "name": "완벽한 조준", "patron": "artemis", "cost": 1, "target": "self", "effects": [{ "op": "apply_token", "token": "crit", "stacks": 4 }], "tags": ["token"] },
+  { "id": "card_artemis_bad_chain", "name": "연발 사격", "patron": "artemis", "cost": 2, "target": "enemy", "effects": [{ "op": "damage", "value": 5 }, { "op": "chain", "value": 2 }], "tags": ["attack", "multi"] },
+  { "id": "card_artemis_bad_low", "name": "빗나간 화살", "patron": "artemis", "cost": 2, "target": "enemy", "effects": [{ "op": "damage", "value": 4 }], "tags": ["attack"] }
+]

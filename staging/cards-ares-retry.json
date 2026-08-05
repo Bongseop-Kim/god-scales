@@ -1,0 +1,6 @@
+[
+  { "id": "card_ares_retry_01", "name": "깊은 자상", "patron": "ares", "cost": 1, "target": "enemy", "effects": [{ "op": "damage", "value": 3 }, { "op": "apply_token", "token": "bleed", "stacks": 1 }, { "op": "block", "value": 1 }], "tags": ["attack", "token", "defend"] },
+  { "id": "card_ares_retry_02", "name": "전투 격정", "patron": "ares", "cost": 2, "target": "self", "effects": [{ "op": "apply_token", "token": "frenzy", "stacks": 3 }, { "op": "block", "value": 5 }], "tags": ["token", "defend"] },
+  { "id": "card_ares_retry_03", "name": "쌍도끼", "patron": "ares", "cost": 2, "target": "enemy", "effects": [{ "op": "damage", "value": 11 }, { "op": "self_damage", "value": 2 }], "tags": ["attack"] },
+  { "id": "card_ares_retry_04", "name": "유혈 낭자", "patron": "ares", "cost": 3, "target": "all_enemies", "effects": [{ "op": "apply_token", "token": "bleed", "stacks": 2 }, { "op": "damage", "value": 6 }], "tags": ["attack", "multi", "token"] }
+]

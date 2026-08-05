@@ -445,7 +445,7 @@
     "name": "감전 보호막",
     "patron": "zeus",
     "cost": 1,
-    "target": "self",
+    "target": "all_enemies",
     "effects": [
       {
         "op": "block",
@@ -454,7 +454,7 @@
       {
         "op": "apply_token",
         "token": "shock",
-        "stacks": 2
+        "stacks": 1
       }
     ],
     "tags": [
@@ -866,6 +866,1789 @@
       "fused",
       "multi",
       "token"
+    ]
+  },
+  {
+    "id": "card_poseidon_01",
+    "name": "밀물 창",
+    "patron": "poseidon",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 4
+      },
+      {
+        "op": "apply_token",
+        "token": "soaked",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "attack",
+      "token"
+    ]
+  },
+  {
+    "id": "card_poseidon_02",
+    "name": "파도 방벽",
+    "patron": "poseidon",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      {
+        "op": "block",
+        "value": 6
+      }
+    ],
+    "tags": [
+      "defend"
+    ]
+  },
+  {
+    "id": "card_poseidon_03",
+    "name": "조류 읽기",
+    "patron": "poseidon",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      {
+        "op": "draw",
+        "value": 2
+      }
+    ],
+    "tags": [
+      "utility"
+    ]
+  },
+  {
+    "id": "card_poseidon_04",
+    "name": "해류 가속",
+    "patron": "poseidon",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      {
+        "op": "energy",
+        "value": 2
+      }
+    ],
+    "tags": [
+      "utility"
+    ]
+  },
+  {
+    "id": "card_poseidon_05",
+    "name": "치유의 샘",
+    "patron": "poseidon",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      {
+        "op": "heal",
+        "value": 7
+      }
+    ],
+    "tags": [
+      "utility"
+    ]
+  },
+  {
+    "id": "card_poseidon_06",
+    "name": "밀쳐내기",
+    "patron": "poseidon",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "displace",
+        "stacks": 1
+      },
+      {
+        "op": "damage",
+        "value": 3
+      }
+    ],
+    "tags": [
+      "token",
+      "attack"
+    ]
+  },
+  {
+    "id": "card_poseidon_07",
+    "name": "젖은 사슬",
+    "patron": "poseidon",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "soaked",
+        "stacks": 3
+      },
+      {
+        "op": "damage",
+        "value": 7
+      }
+    ],
+    "tags": [
+      "attack",
+      "token"
+    ]
+  },
+  {
+    "id": "card_poseidon_08",
+    "name": "격랑",
+    "patron": "poseidon",
+    "cost": 2,
+    "target": "all_enemies",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 5
+      }
+    ],
+    "tags": [
+      "attack",
+      "multi"
+    ]
+  },
+  {
+    "id": "card_poseidon_09",
+    "name": "해일",
+    "patron": "poseidon",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 7
+      },
+      {
+        "op": "damage",
+        "value": 4,
+        "when": "favor(patron) >= 70"
+      }
+    ],
+    "tags": [
+      "attack"
+    ]
+  },
+  {
+    "id": "card_poseidon_10",
+    "name": "심해 압력",
+    "patron": "poseidon",
+    "cost": 3,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 7
+      },
+      {
+        "op": "apply_token",
+        "token": "displace",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "attack",
+      "token"
+    ]
+  },
+  {
+    "id": "card_poseidon_11",
+    "name": "방파제",
+    "patron": "poseidon",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      {
+        "op": "block",
+        "value": 12
+      }
+    ],
+    "tags": [
+      "defend"
+    ]
+  },
+  {
+    "id": "card_poseidon_12",
+    "name": "조류 전환",
+    "patron": "poseidon",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      {
+        "op": "draw",
+        "value": 3
+      },
+      {
+        "op": "energy",
+        "value": 1
+      }
+    ],
+    "tags": [
+      "utility"
+    ]
+  },
+  {
+    "id": "card_poseidon_13",
+    "name": "삼지창 강타",
+    "patron": "poseidon",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 6
+      },
+      {
+        "op": "self_damage",
+        "value": 1
+      }
+    ],
+    "tags": [
+      "attack"
+    ]
+  },
+  {
+    "id": "card_poseidon_14",
+    "name": "소용돌이",
+    "patron": "poseidon",
+    "cost": 2,
+    "target": "all_enemies",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 3
+      },
+      {
+        "op": "apply_token",
+        "token": "soaked",
+        "stacks": 3
+      }
+    ],
+    "tags": [
+      "attack",
+      "multi",
+      "token"
+    ]
+  },
+  {
+    "id": "card_poseidon_15",
+    "name": "깊은 숨",
+    "patron": "poseidon",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      {
+        "op": "block",
+        "value": 4
+      },
+      {
+        "op": "draw",
+        "value": 1
+      }
+    ],
+    "tags": [
+      "defend",
+      "utility"
+    ]
+  },
+  {
+    "id": "card_poseidon_16",
+    "name": "만조의 은총",
+    "patron": "poseidon",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 4
+      },
+      {
+        "op": "favor_shift",
+        "value": 1,
+        "god": "poseidon"
+      }
+    ],
+    "tags": [
+      "attack",
+      "favor"
+    ]
+  },
+  {
+    "id": "card_poseidon_retry_01",
+    "name": "해무",
+    "patron": "poseidon",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 3
+      },
+      {
+        "op": "apply_token",
+        "token": "soaked",
+        "stacks": 1
+      },
+      {
+        "op": "block",
+        "value": 1
+      }
+    ],
+    "tags": [
+      "attack",
+      "token",
+      "defend"
+    ]
+  },
+  {
+    "id": "card_poseidon_retry_02",
+    "name": "격류 밀침",
+    "patron": "poseidon",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "displace",
+        "stacks": 1
+      },
+      {
+        "op": "damage",
+        "value": 7
+      }
+    ],
+    "tags": [
+      "attack",
+      "token"
+    ]
+  },
+  {
+    "id": "card_poseidon_retry_03",
+    "name": "잔물결 치유",
+    "patron": "poseidon",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      {
+        "op": "heal",
+        "value": 9
+      },
+      {
+        "op": "block",
+        "value": 3
+      }
+    ],
+    "tags": [
+      "utility",
+      "defend"
+    ]
+  },
+  {
+    "id": "card_poseidon_retry_04",
+    "name": "해신의 부름",
+    "patron": "poseidon",
+    "cost": 3,
+    "target": "all_enemies",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "soaked",
+        "stacks": 3
+      },
+      {
+        "op": "damage",
+        "value": 5
+      }
+    ],
+    "tags": [
+      "attack",
+      "multi",
+      "token"
+    ]
+  },
+  {
+    "id": "card_athena_01",
+    "name": "방패 세우기",
+    "patron": "athena",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      {
+        "op": "block",
+        "value": 6
+      }
+    ],
+    "tags": [
+      "defend"
+    ]
+  },
+  {
+    "id": "card_athena_02",
+    "name": "성벽",
+    "patron": "athena",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "bulwark",
+        "stacks": 3
+      }
+    ],
+    "tags": [
+      "token",
+      "defend"
+    ]
+  },
+  {
+    "id": "card_athena_03",
+    "name": "반사 태세",
+    "patron": "athena",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "deflect",
+        "stacks": 1
+      },
+      {
+        "op": "block",
+        "value": 3
+      }
+    ],
+    "tags": [
+      "token",
+      "defend"
+    ]
+  },
+  {
+    "id": "card_athena_04",
+    "name": "전술 판단",
+    "patron": "athena",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      {
+        "op": "draw",
+        "value": 2
+      }
+    ],
+    "tags": [
+      "utility"
+    ]
+  },
+  {
+    "id": "card_athena_05",
+    "name": "지혜의 숨",
+    "patron": "athena",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      {
+        "op": "energy",
+        "value": 2
+      }
+    ],
+    "tags": [
+      "utility"
+    ]
+  },
+  {
+    "id": "card_athena_06",
+    "name": "창끝 반격",
+    "patron": "athena",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 4
+      },
+      {
+        "op": "block",
+        "value": 2
+      }
+    ],
+    "tags": [
+      "attack",
+      "defend"
+    ]
+  },
+  {
+    "id": "card_athena_07",
+    "name": "방벽 강타",
+    "patron": "athena",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 7
+      },
+      {
+        "op": "apply_token",
+        "token": "bulwark",
+        "stacks": 3
+      }
+    ],
+    "tags": [
+      "attack",
+      "token"
+    ]
+  },
+  {
+    "id": "card_athena_08",
+    "name": "올빼미의 눈",
+    "patron": "athena",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      {
+        "op": "draw",
+        "value": 3
+      },
+      {
+        "op": "block",
+        "value": 4
+      }
+    ],
+    "tags": [
+      "utility",
+      "defend"
+    ]
+  },
+  {
+    "id": "card_athena_09",
+    "name": "굳건한 진형",
+    "patron": "athena",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      {
+        "op": "block",
+        "value": 8
+      },
+      {
+        "op": "apply_token",
+        "token": "bulwark",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "defend",
+      "token"
+    ]
+  },
+  {
+    "id": "card_athena_10",
+    "name": "반격의 각",
+    "patron": "athena",
+    "cost": 3,
+    "target": "self",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "deflect",
+        "stacks": 1
+      },
+      {
+        "op": "block",
+        "value": 8
+      }
+    ],
+    "tags": [
+      "token",
+      "defend"
+    ]
+  },
+  {
+    "id": "card_athena_11",
+    "name": "창 던지기",
+    "patron": "athena",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 7
+      },
+      {
+        "op": "block",
+        "value": 5,
+        "when": "hp_pct(self) < 50"
+      }
+    ],
+    "tags": [
+      "attack",
+      "defend"
+    ]
+  },
+  {
+    "id": "card_athena_12",
+    "name": "전열 정비",
+    "patron": "athena",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      {
+        "op": "block",
+        "value": 12
+      }
+    ],
+    "tags": [
+      "defend"
+    ]
+  },
+  {
+    "id": "card_athena_13",
+    "name": "결의",
+    "patron": "athena",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      {
+        "op": "block",
+        "value": 3
+      },
+      {
+        "op": "draw",
+        "value": 1
+      }
+    ],
+    "tags": [
+      "defend",
+      "utility"
+    ]
+  },
+  {
+    "id": "card_athena_14",
+    "name": "심판의 일격",
+    "patron": "athena",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 5
+      },
+      {
+        "op": "apply_token",
+        "token": "bulwark",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "attack",
+      "token"
+    ]
+  },
+  {
+    "id": "card_athena_15",
+    "name": "신중한 전진",
+    "patron": "athena",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      {
+        "op": "heal",
+        "value": 8
+      },
+      {
+        "op": "block",
+        "value": 5
+      }
+    ],
+    "tags": [
+      "defend",
+      "utility"
+    ]
+  },
+  {
+    "id": "card_athena_16",
+    "name": "아이기스",
+    "patron": "athena",
+    "cost": 3,
+    "target": "self",
+    "effects": [
+      {
+        "op": "block",
+        "value": 10
+      },
+      {
+        "op": "apply_token",
+        "token": "deflect",
+        "stacks": 1
+      },
+      {
+        "op": "draw",
+        "value": 1
+      }
+    ],
+    "tags": [
+      "defend",
+      "token",
+      "utility"
+    ]
+  },
+  {
+    "id": "card_athena_retry_01",
+    "name": "밀집 방어",
+    "patron": "athena",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      {
+        "op": "block",
+        "value": 4
+      },
+      {
+        "op": "apply_token",
+        "token": "bulwark",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "defend",
+      "token"
+    ]
+  },
+  {
+    "id": "card_athena_retry_02",
+    "name": "반사 방벽",
+    "patron": "athena",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "deflect",
+        "stacks": 2
+      },
+      {
+        "op": "block",
+        "value": 2
+      }
+    ],
+    "tags": [
+      "token",
+      "defend",
+      "exhaust"
+    ]
+  },
+  {
+    "id": "card_athena_retry_03",
+    "name": "전략적 후퇴",
+    "patron": "athena",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      {
+        "op": "block",
+        "value": 7
+      },
+      {
+        "op": "draw",
+        "value": 2
+      }
+    ],
+    "tags": [
+      "defend",
+      "utility"
+    ]
+  },
+  {
+    "id": "card_athena_retry_04",
+    "name": "창벽 반격",
+    "patron": "athena",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 5
+      },
+      {
+        "op": "apply_token",
+        "token": "bulwark",
+        "stacks": 3
+      }
+    ],
+    "tags": [
+      "attack",
+      "token",
+      "defend"
+    ]
+  },
+  {
+    "id": "card_ares_01",
+    "name": "피의 일격",
+    "patron": "ares",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 4
+      },
+      {
+        "op": "apply_token",
+        "token": "bleed",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "attack",
+      "token"
+    ]
+  },
+  {
+    "id": "card_ares_02",
+    "name": "광란",
+    "patron": "ares",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "frenzy",
+        "stacks": 3
+      }
+    ],
+    "tags": [
+      "token"
+    ]
+  },
+  {
+    "id": "card_ares_03",
+    "name": "무모한 돌진",
+    "patron": "ares",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 7
+      },
+      {
+        "op": "self_damage",
+        "value": 2
+      }
+    ],
+    "tags": [
+      "attack"
+    ]
+  },
+  {
+    "id": "card_ares_04",
+    "name": "전장의 함성",
+    "patron": "ares",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      {
+        "op": "energy",
+        "value": 2
+      }
+    ],
+    "tags": [
+      "utility"
+    ]
+  },
+  {
+    "id": "card_ares_05",
+    "name": "살육의 리듬",
+    "patron": "ares",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      {
+        "op": "draw",
+        "value": 2
+      }
+    ],
+    "tags": [
+      "utility"
+    ]
+  },
+  {
+    "id": "card_ares_06",
+    "name": "상처 벌리기",
+    "patron": "ares",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "bleed",
+        "stacks": 4
+      },
+      {
+        "op": "damage",
+        "value": 5
+      }
+    ],
+    "tags": [
+      "attack",
+      "token"
+    ]
+  },
+  {
+    "id": "card_ares_07",
+    "name": "도끼 가르기",
+    "patron": "ares",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 7
+      },
+      {
+        "op": "damage",
+        "value": 5,
+        "when": "hp_pct(self) < 50"
+      }
+    ],
+    "tags": [
+      "attack"
+    ]
+  },
+  {
+    "id": "card_ares_08",
+    "name": "피의 대가",
+    "patron": "ares",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 8
+      },
+      {
+        "op": "self_damage",
+        "value": 3
+      }
+    ],
+    "tags": [
+      "attack"
+    ]
+  },
+  {
+    "id": "card_ares_09",
+    "name": "난도질",
+    "patron": "ares",
+    "cost": 2,
+    "target": "all_enemies",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "bleed",
+        "stacks": 1
+      },
+      {
+        "op": "damage",
+        "value": 4
+      }
+    ],
+    "tags": [
+      "attack",
+      "multi",
+      "token"
+    ]
+  },
+  {
+    "id": "card_ares_10",
+    "name": "전쟁의 갑주",
+    "patron": "ares",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      {
+        "op": "block",
+        "value": 5
+      },
+      {
+        "op": "apply_token",
+        "token": "frenzy",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "defend",
+      "token"
+    ]
+  },
+  {
+    "id": "card_ares_11",
+    "name": "격노의 파동",
+    "patron": "ares",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "frenzy",
+        "stacks": 4
+      },
+      {
+        "op": "draw",
+        "value": 1
+      }
+    ],
+    "tags": [
+      "token",
+      "utility"
+    ]
+  },
+  {
+    "id": "card_ares_12",
+    "name": "처형",
+    "patron": "ares",
+    "cost": 3,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 15
+      },
+      {
+        "op": "self_damage",
+        "value": 2
+      }
+    ],
+    "tags": [
+      "attack"
+    ]
+  },
+  {
+    "id": "card_ares_13",
+    "name": "방패 부수기",
+    "patron": "ares",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 5
+      },
+      {
+        "op": "block",
+        "value": 1
+      }
+    ],
+    "tags": [
+      "attack",
+      "defend"
+    ]
+  },
+  {
+    "id": "card_ares_14",
+    "name": "피의 갈증",
+    "patron": "ares",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 6
+      },
+      {
+        "op": "heal",
+        "value": 6
+      },
+      {
+        "op": "self_damage",
+        "value": 1
+      }
+    ],
+    "tags": [
+      "attack",
+      "utility"
+    ]
+  },
+  {
+    "id": "card_ares_15",
+    "name": "광전사의 돌격",
+    "patron": "ares",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 7
+      },
+      {
+        "op": "apply_token",
+        "token": "frenzy",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "attack",
+      "token"
+    ]
+  },
+  {
+    "id": "card_ares_16",
+    "name": "출혈 확산",
+    "patron": "ares",
+    "cost": 3,
+    "target": "all_enemies",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 5
+      },
+      {
+        "op": "apply_token",
+        "token": "bleed",
+        "stacks": 3
+      }
+    ],
+    "tags": [
+      "attack",
+      "multi",
+      "token"
+    ]
+  },
+  {
+    "id": "card_ares_retry_01",
+    "name": "깊은 자상",
+    "patron": "ares",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 3
+      },
+      {
+        "op": "apply_token",
+        "token": "bleed",
+        "stacks": 1
+      },
+      {
+        "op": "block",
+        "value": 1
+      }
+    ],
+    "tags": [
+      "attack",
+      "token",
+      "defend"
+    ]
+  },
+  {
+    "id": "card_ares_retry_02",
+    "name": "전투 격정",
+    "patron": "ares",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "frenzy",
+        "stacks": 3
+      },
+      {
+        "op": "block",
+        "value": 5
+      }
+    ],
+    "tags": [
+      "token",
+      "defend"
+    ]
+  },
+  {
+    "id": "card_ares_retry_03",
+    "name": "쌍도끼",
+    "patron": "ares",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 11
+      },
+      {
+        "op": "self_damage",
+        "value": 2
+      }
+    ],
+    "tags": [
+      "attack"
+    ]
+  },
+  {
+    "id": "card_ares_retry_04",
+    "name": "유혈 낭자",
+    "patron": "ares",
+    "cost": 3,
+    "target": "all_enemies",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "bleed",
+        "stacks": 2
+      },
+      {
+        "op": "damage",
+        "value": 6
+      }
+    ],
+    "tags": [
+      "attack",
+      "multi",
+      "token"
+    ]
+  },
+  {
+    "id": "card_artemis_01",
+    "name": "표식 화살",
+    "patron": "artemis",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 3
+      },
+      {
+        "op": "apply_token",
+        "token": "mark",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "attack",
+      "token"
+    ]
+  },
+  {
+    "id": "card_artemis_02",
+    "name": "조준",
+    "patron": "artemis",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "crit",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "token"
+    ]
+  },
+  {
+    "id": "card_artemis_03",
+    "name": "사냥꾼의 눈",
+    "patron": "artemis",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      {
+        "op": "draw",
+        "value": 2
+      }
+    ],
+    "tags": [
+      "utility"
+    ]
+  },
+  {
+    "id": "card_artemis_04",
+    "name": "은빛 화살",
+    "patron": "artemis",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 5
+      }
+    ],
+    "tags": [
+      "attack"
+    ]
+  },
+  {
+    "id": "card_artemis_05",
+    "name": "달빛 회복",
+    "patron": "artemis",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      {
+        "op": "heal",
+        "value": 7
+      }
+    ],
+    "tags": [
+      "utility"
+    ]
+  },
+  {
+    "id": "card_artemis_06",
+    "name": "치명 사격",
+    "patron": "artemis",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "crit",
+        "stacks": 1
+      },
+      {
+        "op": "damage",
+        "value": 7
+      }
+    ],
+    "tags": [
+      "attack",
+      "token"
+    ]
+  },
+  {
+    "id": "card_artemis_07",
+    "name": "사냥 개시",
+    "patron": "artemis",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      {
+        "op": "energy",
+        "value": 2
+      }
+    ],
+    "tags": [
+      "utility"
+    ]
+  },
+  {
+    "id": "card_artemis_08",
+    "name": "관통 사격",
+    "patron": "artemis",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 9
+      }
+    ],
+    "tags": [
+      "attack"
+    ]
+  },
+  {
+    "id": "card_artemis_09",
+    "name": "표적 고정",
+    "patron": "artemis",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "mark",
+        "stacks": 3
+      },
+      {
+        "op": "damage",
+        "value": 5
+      }
+    ],
+    "tags": [
+      "attack",
+      "token"
+    ]
+  },
+  {
+    "id": "card_artemis_10",
+    "name": "숲의 은신",
+    "patron": "artemis",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      {
+        "op": "block",
+        "value": 4
+      },
+      {
+        "op": "draw",
+        "value": 1
+      }
+    ],
+    "tags": [
+      "defend",
+      "utility"
+    ]
+  },
+  {
+    "id": "card_artemis_11",
+    "name": "쌍둥이 화살",
+    "patron": "artemis",
+    "cost": 2,
+    "target": "all_enemies",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "mark",
+        "stacks": 1
+      },
+      {
+        "op": "damage",
+        "value": 4
+      }
+    ],
+    "tags": [
+      "attack",
+      "multi",
+      "token"
+    ]
+  },
+  {
+    "id": "card_artemis_12",
+    "name": "달의 가호",
+    "patron": "artemis",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      {
+        "op": "block",
+        "value": 10
+      },
+      {
+        "op": "draw",
+        "value": 1
+      }
+    ],
+    "tags": [
+      "defend",
+      "utility"
+    ]
+  },
+  {
+    "id": "card_artemis_13",
+    "name": "급소 관통",
+    "patron": "artemis",
+    "cost": 3,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 12
+      },
+      {
+        "op": "apply_token",
+        "token": "crit",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "attack",
+      "token"
+    ]
+  },
+  {
+    "id": "card_artemis_14",
+    "name": "추격",
+    "patron": "artemis",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 4
+      },
+      {
+        "op": "damage",
+        "value": 4,
+        "when": "has_token(target, mark) >= 1"
+      }
+    ],
+    "tags": [
+      "attack"
+    ]
+  },
+  {
+    "id": "card_artemis_15",
+    "name": "사냥의 준비",
+    "patron": "artemis",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "crit",
+        "stacks": 1
+      },
+      {
+        "op": "draw",
+        "value": 2
+      },
+      {
+        "op": "block",
+        "value": 3
+      }
+    ],
+    "tags": [
+      "token",
+      "utility",
+      "defend"
+    ]
+  },
+  {
+    "id": "card_artemis_16",
+    "name": "표식 폭발",
+    "patron": "artemis",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 8
+      },
+      {
+        "op": "apply_token",
+        "token": "mark",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "attack",
+      "token"
+    ]
+  },
+  {
+    "id": "card_artemis_retry_01",
+    "name": "사냥감 표식",
+    "patron": "artemis",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "mark",
+        "stacks": 2
+      },
+      {
+        "op": "damage",
+        "value": 2
+      }
+    ],
+    "tags": [
+      "attack",
+      "token"
+    ]
+  },
+  {
+    "id": "card_artemis_retry_02",
+    "name": "정밀 조준",
+    "patron": "artemis",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "crit",
+        "stacks": 2
+      },
+      {
+        "op": "draw",
+        "value": 1
+      }
+    ],
+    "tags": [
+      "token",
+      "utility"
+    ]
+  },
+  {
+    "id": "card_artemis_retry_03",
+    "name": "삼연사",
+    "patron": "artemis",
+    "cost": 3,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 6
+      },
+      {
+        "op": "damage",
+        "value": 6
+      },
+      {
+        "op": "apply_token",
+        "token": "mark",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "attack",
+      "token"
+    ]
+  },
+  {
+    "id": "card_artemis_retry_04",
+    "name": "달의 화살비",
+    "patron": "artemis",
+    "cost": 3,
+    "target": "all_enemies",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 5
+      },
+      {
+        "op": "apply_token",
+        "token": "mark",
+        "stacks": 1
+      },
+      {
+        "op": "draw",
+        "value": 1
+      }
+    ],
+    "tags": [
+      "attack",
+      "multi",
+      "utility"
+    ]
+  },
+  {
+    "id": "card_zeus_21",
+    "name": "구름 방패",
+    "patron": "zeus",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      {
+        "op": "block",
+        "value": 7
+      }
+    ],
+    "tags": [
+      "defend"
+    ]
+  },
+  {
+    "id": "card_zeus_22",
+    "name": "정적의 갑주",
+    "patron": "zeus",
+    "cost": 2,
+    "target": "all_enemies",
+    "effects": [
+      {
+        "op": "block",
+        "value": 9
+      },
+      {
+        "op": "apply_token",
+        "token": "shock",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "defend",
+      "token"
+    ]
+  },
+  {
+    "id": "card_ares_22",
+    "name": "피의 참호",
+    "patron": "ares",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      {
+        "op": "block",
+        "value": 12
+      },
+      {
+        "op": "apply_token",
+        "token": "frenzy",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "defend",
+      "token"
+    ]
+  },
+  {
+    "id": "card_ares_23",
+    "name": "분노의 인내",
+    "patron": "ares",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      {
+        "op": "block",
+        "value": 5
+      },
+      {
+        "op": "heal",
+        "value": 3
+      }
+    ],
+    "tags": [
+      "defend",
+      "utility"
+    ]
+  },
+  {
+    "id": "card_artemis_21",
+    "name": "사냥꾼의 엄폐",
+    "patron": "artemis",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      {
+        "op": "block",
+        "value": 6
+      },
+      {
+        "op": "heal",
+        "value": 2
+      }
+    ],
+    "tags": [
+      "defend",
+      "utility"
+    ]
+  },
+  {
+    "id": "card_artemis_22",
+    "name": "은빛 장막",
+    "patron": "artemis",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      {
+        "op": "block",
+        "value": 12
+      },
+      {
+        "op": "draw",
+        "value": 1
+      }
+    ],
+    "tags": [
+      "defend",
+      "utility"
     ]
   }
 ]

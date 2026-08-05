@@ -1,0 +1,49 @@
+[
+  {
+    "id": "card_ares_21",
+    "name": "전선의 방벽",
+    "patron": "ares",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      { "op": "block", "value": 7 }
+    ],
+    "tags": ["defend"]
+  },
+  {
+    "id": "card_ares_22",
+    "name": "피의 참호",
+    "patron": "ares",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      { "op": "block", "value": 12 },
+      { "op": "apply_token", "token": "frenzy", "stacks": 1 }
+    ],
+    "tags": ["defend", "token"]
+  },
+  {
+    "id": "card_ares_23",
+    "name": "분노의 인내",
+    "patron": "ares",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      { "op": "block", "value": 5 },
+      { "op": "heal", "value": 3 }
+    ],
+    "tags": ["defend", "utility"]
+  },
+  {
+    "id": "card_ares_24",
+    "name": "광란의 벽",
+    "patron": "ares",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      { "op": "block", "value": 9 },
+      { "op": "apply_token", "token": "frenzy", "stacks": 2 }
+    ],
+    "tags": ["defend", "token"]
+  }
+]

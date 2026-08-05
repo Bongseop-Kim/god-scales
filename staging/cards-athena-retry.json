@@ -1,0 +1,6 @@
+[
+  { "id": "card_athena_retry_01", "name": "밀집 방어", "patron": "athena", "cost": 1, "target": "self", "effects": [{ "op": "block", "value": 4 }, { "op": "apply_token", "token": "bulwark", "stacks": 2 }], "tags": ["defend", "token"] },
+  { "id": "card_athena_retry_02", "name": "반사 방벽", "patron": "athena", "cost": 2, "target": "self", "effects": [{ "op": "apply_token", "token": "deflect", "stacks": 2 }, { "op": "block", "value": 6 }], "tags": ["defend", "token"] },
+  { "id": "card_athena_retry_03", "name": "전략적 후퇴", "patron": "athena", "cost": 2, "target": "self", "effects": [{ "op": "block", "value": 7 }, { "op": "draw", "value": 2 }], "tags": ["defend", "utility"] },
+  { "id": "card_athena_retry_04", "name": "창벽 반격", "patron": "athena", "cost": 2, "target": "enemy", "effects": [{ "op": "damage", "value": 5 }, { "op": "apply_token", "token": "bulwark", "stacks": 5 }], "tags": ["attack", "token"] }
+]

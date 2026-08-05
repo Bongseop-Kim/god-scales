@@ -1,0 +1,6 @@
+[
+  { "id": "card_artemis_retry_01", "name": "사냥감 표식", "patron": "artemis", "cost": 1, "target": "enemy", "effects": [{ "op": "apply_token", "token": "mark", "stacks": 2 }, { "op": "damage", "value": 2 }], "tags": ["attack", "token"] },
+  { "id": "card_artemis_retry_02", "name": "정밀 조준", "patron": "artemis", "cost": 2, "target": "self", "effects": [{ "op": "apply_token", "token": "crit", "stacks": 2 }, { "op": "draw", "value": 1 }], "tags": ["token", "utility"] },
+  { "id": "card_artemis_retry_03", "name": "삼연사", "patron": "artemis", "cost": 3, "target": "enemy", "effects": [{ "op": "damage", "value": 6 }, { "op": "damage", "value": 6 }, { "op": "apply_token", "token": "mark", "stacks": 1 }], "tags": ["attack", "token"] },
+  { "id": "card_artemis_retry_04", "name": "달의 화살비", "patron": "artemis", "cost": 3, "target": "all_enemies", "effects": [{ "op": "damage", "value": 5 }, { "op": "apply_token", "token": "mark", "stacks": 1 }, { "op": "draw", "value": 1 }], "tags": ["attack", "multi", "utility"] }
+]

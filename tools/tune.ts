@@ -3,30 +3,27 @@ import { simulateStratified } from "../sim/engine.ts";
 import { summarize } from "../sim/report.ts";
 
 type Report = ReturnType<typeof summarize>;
+/** 회차마다 늘어나는 개입·실패 기록. 코드가 아니라 데이터다 — 소스에 두면 튜닝 함수가 산문으로 자란다 */
+type Notes = { human_intervened: string[]; ai_failures: string[] };
+const notes = JSON.parse(readFileSync(new URL("../reports/notes.json", import.meta.url), "utf8")) as Notes;
 
-export function buildTuningRecord(before: Report, after: Report, iteration: number, simulationRuns = after.runs) {
+export function buildTuningRecord(before: Report | undefined, after: Report, iteration: number, simulationRuns = after.runs) {
   const enemyRuns = Object.entries(after.enemy_count_dist).reduce((sum, [count, occurrences]) => sum + Number(count) * Number(occurrences), 0);
   const encounters = Object.values(after.enemy_count_dist).reduce<number>((sum, value) => sum + Number(value), 0);
   return {
     loop_iteration: iteration,
-    variance_before: before.pairing_win_stddev ** 2,
+    // 폐기된 회차의 분산을 같은 표에 두면 안 된다 — 다른 게임을 잰 숫자다. 그럴 때는 null로 남긴다
+    variance_before: before ? before.pairing_win_stddev ** 2 : null,
     variance_after: after.pairing_win_stddev ** 2,
     auto_adjusted: 0,
     enemy_adjusted: 0,
     pairing_flagged: [],
     simulation_runs: simulationRuns,
     discarded: 0,
-    condition_rate_estimate: null,
+    // 요구를 수락한 것 중 실제로 지킨 비율. 조건 판정이 붙기 전에는 잴 것이 없어 null이었다
+    condition_rate_estimate: Object.keys(after.demand_kept_rate).length ? after.demand_kept_rate : null,
     average_enemy_count: encounters ? enemyRuns / encounters : 0,
-    human_intervened: [
-      "P-09: enemyDamageScale 1.0→0.65, 최초 완주율 0% 보정",
-      "P-13: 합성 사용자 8런과 층화 시뮬을 근거로 enemyDamageScale 0.65→0.45",
-      "P-13: 브라우저 UI 밀도 점검은 사용자 지시로 제외",
-      "P-20: 조합 라벨만 바뀌던 실행 결함을 수정하고 botPolicyVersion v1→v2로 올린 뒤 이전 회차 데이터를 폐기·재생성",
-    ],
-    ai_failures: [
-      "초기 층화 러너가 실제 후원 조합 대신 제우스+아테나 규칙을 공통 실행함; P-20에서 실제 조합 덱·호의·합성을 실행하도록 수정",
-    ],
+    ...notes,
   };
 }
 
@@ -34,8 +31,13 @@ if (process.argv[1]?.endsWith("tune.ts")) {
   const iterationIndex = process.argv.indexOf("--iteration");
   const iteration = iterationIndex < 0 ? 1 : Number(process.argv[iterationIndex + 1]);
   if (!Number.isInteger(iteration) || iteration < 1) throw new Error("--iteration must be a positive integer");
+  // 직전 회차가 폐기됐으면 읽지 않는다. reports/rounds.json의 discarded가 그 목록이다
+  const discarded = (() => {
+    try { return (JSON.parse(readFileSync("reports/rounds.json", "utf8")) as { discarded?: number[] }).discarded ?? []; }
+    catch { return []; }
+  })();
   const beforePath = iteration === 1 ? "reports/round-1.json" : `reports/round-${iteration - 1}/simulation.json`;
-  const before = JSON.parse(readFileSync(beforePath, "utf8")) as Report;
+  const before = discarded.includes(iteration - 1) ? undefined : JSON.parse(readFileSync(beforePath, "utf8")) as Report;
   const simulationRuns = 2000 * 2 ** (iteration - 1);
   const after = summarize(simulateStratified(simulationRuns));
   const tuning = buildTuningRecord(before, after, iteration, simulationRuns);

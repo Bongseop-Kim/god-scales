@@ -1,0 +1,38 @@
+[
+  {
+    "id": "card_athena_09",
+    "name": "굳건한 진형",
+    "patron": "athena",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      { "op": "block", "value": 8 },
+      { "op": "apply_token", "token": "bulwark", "stacks": 2 }
+    ],
+    "tags": ["defend", "token"]
+  },
+  {
+    "id": "card_athena_10",
+    "name": "반격의 각",
+    "patron": "athena",
+    "cost": 3,
+    "target": "self",
+    "effects": [
+      { "op": "apply_token", "token": "deflect", "stacks": 1 },
+      { "op": "block", "value": 8 }
+    ],
+    "tags": ["token", "defend"]
+  },
+  {
+    "id": "card_athena_15",
+    "name": "신중한 전진",
+    "patron": "athena",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      { "op": "heal", "value": 8 },
+      { "op": "block", "value": 5 }
+    ],
+    "tags": ["defend", "utility"]
+  }
+]

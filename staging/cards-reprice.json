@@ -1,0 +1,75 @@
+[
+  {
+    "id": "card_athena_03",
+    "name": "반사 태세",
+    "patron": "athena",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      { "op": "apply_token", "token": "deflect", "stacks": 1 },
+      { "op": "block", "value": 3 }
+    ],
+    "tags": ["token", "defend"]
+  },
+  {
+    "id": "card_athena_10",
+    "name": "반격의 각",
+    "patron": "athena",
+    "cost": 3,
+    "target": "self",
+    "effects": [
+      { "op": "apply_token", "token": "deflect", "stacks": 1 },
+      { "op": "block", "value": 8 }
+    ],
+    "tags": ["token", "defend"]
+  },
+  {
+    "id": "card_athena_16",
+    "name": "아이기스",
+    "patron": "athena",
+    "cost": 3,
+    "target": "self",
+    "effects": [
+      { "op": "block", "value": 10 },
+      { "op": "apply_token", "token": "deflect", "stacks": 1 },
+      { "op": "draw", "value": 1 }
+    ],
+    "tags": ["defend", "token", "utility"]
+  },
+  {
+    "id": "card_athena_retry_02",
+    "name": "반사 방벽",
+    "patron": "athena",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      { "op": "apply_token", "token": "deflect", "stacks": 2 },
+      { "op": "block", "value": 2 }
+    ],
+    "tags": ["token", "defend", "exhaust"]
+  },
+  {
+    "id": "card_poseidon_06",
+    "name": "밀쳐내기",
+    "patron": "poseidon",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      { "op": "apply_token", "token": "displace", "stacks": 1 },
+      { "op": "damage", "value": 3 }
+    ],
+    "tags": ["token", "attack"]
+  },
+  {
+    "id": "card_poseidon_10",
+    "name": "심해 압력",
+    "patron": "poseidon",
+    "cost": 3,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 7 },
+      { "op": "apply_token", "token": "displace", "stacks": 1 }
+    ],
+    "tags": ["attack", "token"]
+  }
+]

@@ -4,7 +4,7 @@ import type { GameState } from "./state.ts";
 export const regions = ["underworld", "surface"] as const;
 export const floorsPerRegion = 6;
 export const restHealing = 25;
-export const enemyDamageScale = 0.45;
+export const enemyDamageScale = 0.55;
 export type MapNodeType = "combat" | "rest" | "boss";
 
 export function mapNode(node: number): { region: (typeof regions)[number]; floor: number; options: MapNodeType[] } {

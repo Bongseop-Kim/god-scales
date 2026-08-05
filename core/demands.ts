@@ -7,13 +7,19 @@ export type Demand = {
   id: string;
   patron: string;
   condition: string;
+  /** 화면에 나가는 문장. `condition`은 사람이 읽을 것이 아니므로 관측에 싣지 않는다 */
+  text: string;
   axis: DemandAxis;
   polarity: "+" | "-";
   min_enemies: number;
 };
 
-const rivals = new Set(["poseidon:zeus", "ares:athena"]);
-const pairKey = (left: string, right: string) => [left, right].sort().join(":");
+/**
+ * core는 data/*.json을 읽지 않는다(호출자가 넘긴다). 이 한 벌만 예외로 상수인데, demandPenalty를
+ * 부르는 모든 자리에 신 데이터를 실어보내는 것보다 싸다 — data/gods.json과 같은지는 테스트가 고정한다
+ */
+export const rivals = new Set(["poseidon:zeus", "ares:athena"]);
+export const pairKey = (left: string, right: string) => [left, right].sort().join(":");
 
 export function demandPenalty(patron: string, other: string): { amount: number; key: PenaltyKey } {
   if (patron === "artemis" || other === "artemis") return { amount: 0, key: "none" };

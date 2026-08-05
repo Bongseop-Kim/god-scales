@@ -27,6 +27,10 @@ export type RunResult = {
   fused: boolean;
   actions: import("./replay.ts").ReplayAction[];
   cardsPlayed: string[];
+  /** 요구 id별 [수락, 지킴]. 조건 판정이 실제로 걸리는지 보는 자리다 */
+  demandOutcomes: Record<string, [number, number]>;
+  /** 지금 낼 수 없어서 봇 답으로 대체된 기록된 결정의 수. 0이 아니면 그 로그는 이 규칙판이 아니다 */
+  substituted?: number;
 };
 
 export function summarize(results: RunResult[]) {
@@ -82,9 +86,18 @@ export function summarize(results: RunResult[]) {
     devotion_ratio: ratio("devotion"),
     anger_ratio: ratio("anger"),
     wrath_ratio: ratio("wrath"),
-    favor_floor: Object.fromEntries(gods.map((god) => [god, Math.min(...points.map((point) => point[god] ?? 100))])),
+    // 스프레드로 넘기면 16000런(≈20만 점)에서 콜스택이 터진다
+    favor_floor: Object.fromEntries(gods.map((god) => [god, points.reduce((low, point) => Math.min(low, point[god] ?? 100), 100)])),
     conflict_outcomes,
     conflict_penalty_dist,
+    substituted_actions: results.reduce((sum, { substituted }) => sum + (substituted ?? 0), 0),
+    /** 요구 id → 수락한 것 중 지킨 비율. 0에 붙으면 지킬 수 없는 요구, 1에 붙으면 공짜 요구다 */
+    demand_kept_rate: Object.fromEntries(Object.entries(results.reduce<Record<string, [number, number]>>((all, { demandOutcomes }) => {
+      for (const [id, [accepted, kept]] of Object.entries(demandOutcomes)) {
+        all[id] = [(all[id]?.[0] ?? 0) + accepted, (all[id]?.[1] ?? 0) + kept];
+      }
+      return all;
+    }, {})).map(([id, [accepted, kept]]) => [id, accepted ? kept / accepted : 0])),
     hp_curve: results[0]?.hpCurve ?? [],
     path_choices: count(results.flatMap(({ pathChoices }) => pathChoices)),
     rest_choices: count(results.flatMap(({ restChoices }) => restChoices)),
@@ -113,6 +126,7 @@ export function renderReport(report: ReturnType<typeof summarize>): string {
     `favor_curve=${JSON.stringify(report.favor_curve)} favor_floor=${JSON.stringify(report.favor_floor)}`,
     `devotion_ratio=${report.devotion_ratio.toFixed(3)} anger_ratio=${report.anger_ratio.toFixed(3)} wrath_ratio=${report.wrath_ratio.toFixed(3)}`,
     `conflict_outcomes=${JSON.stringify(report.conflict_outcomes)} conflict_penalty_dist=${JSON.stringify(report.conflict_penalty_dist)}`,
+    `demand_kept_rate=${JSON.stringify(report.demand_kept_rate)} substituted_actions=${report.substituted_actions}`,
     `hp_curve=${JSON.stringify(report.hp_curve)} path_choices=${JSON.stringify(report.path_choices)} rest_choices=${JSON.stringify(report.rest_choices)}`,
     `region_clear_rate=${JSON.stringify(report.region_clear_rate)} low_rest_clear_rate=${report.low_rest_clear_rate.toFixed(3)}`,
     `scenario_runs=${report.scenario_runs} grace_earned=${JSON.stringify(report.grace_earned)} grace_milestones=${JSON.stringify(report.grace_milestones)} upgrade_rate=${report.upgrade_rate.toFixed(3)}`,

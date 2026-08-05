@@ -21,5 +21,6 @@ button:active { transform: scale(.97); }
 @media (prefers-reduced-motion: reduce) {
   .fx > img { animation: none; }
   button, .token-badge, .game-card { transition-property: opacity, border-color, background-color; }
+  .enemy .hp i { transition: none; }
   button:active, .choice:hover, .game-card:hover { transform: none; }
 }

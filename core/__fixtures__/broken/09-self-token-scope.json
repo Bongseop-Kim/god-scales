@@ -1,0 +1,12 @@
+{
+  "id": "card_broken_self_shock",
+  "name": "제 몸에 감전",
+  "patron": "zeus",
+  "cost": 1,
+  "target": "self",
+  "effects": [
+    { "op": "block", "value": 3 },
+    { "op": "apply_token", "token": "shock", "stacks": 2 }
+  ],
+  "tags": ["defend", "token"]
+}

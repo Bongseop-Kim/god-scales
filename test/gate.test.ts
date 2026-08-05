@@ -17,6 +17,8 @@ describe("validation gate", () => {
       "demand_axis",
       "duplicate",
       "value_outlier",
+      // target=self 카드가 적 토큰을 붙이면 그 디버프는 플레이어에게 걸린다
+      "token_scope",
     ]);
   });
 
