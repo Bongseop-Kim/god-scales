@@ -66,6 +66,11 @@ export function summarize(results: RunResult[]) {
   const rateValues = Object.values(pairingRates) as number[];
   const rateMean = rateValues.length ? rateValues.reduce((sum, value) => sum + value, 0) / rateValues.length : 0;
   const pairing_win_stddev = rateValues.length ? Math.sqrt(rateValues.reduce((sum, value) => sum + (value - rateMean) ** 2, 0) / rateValues.length) : 0;
+  /**
+   * 척도에 불변인 짝. 승률이 내려가면 조합별 승률이 0에 눌려 표준편차가 기계적으로 작아지는데,
+   * 모든 셀에 상수를 곱하는 순수 압축은 이 값을 바꾸지 못한다 — 둘이 같이 줄어야 모양이 바뀐 것이다
+   */
+  const pairing_win_cv = rateMean ? pairing_win_stddev / rateMean : 0;
   const cardIds = [...new Set(paired.flatMap(({ cardsPlayed }) => cardsPlayed))];
   const card_win_delta = Object.fromEntries(cardIds.map((cardId) => {
     const deltas = Object.entries(pairingRates).flatMap(([pairing, baseline]) => {
@@ -116,6 +121,7 @@ export function summarize(results: RunResult[]) {
     runs_by_pairing,
     win_rate_matrix,
     pairing_win_stddev,
+    pairing_win_cv,
     card_win_delta,
   };
 }
@@ -132,7 +138,7 @@ export function renderReport(report: ReturnType<typeof summarize>): string {
     `scenario_runs=${report.scenario_runs} grace_earned=${JSON.stringify(report.grace_earned)} grace_milestones=${JSON.stringify(report.grace_milestones)} upgrade_rate=${report.upgrade_rate.toFixed(3)}`,
     `enemy_count_dist=${JSON.stringify(report.enemy_count_dist)} target_spread=${JSON.stringify(report.target_spread)} block_efficiency=${report.block_efficiency.toFixed(3)}`,
     `fusion_rate=${report.fusion_rate.toFixed(3)}`,
-    `runs_by_pairing=${JSON.stringify(report.runs_by_pairing)} pairing_win_stddev=${report.pairing_win_stddev.toFixed(3)}`,
+    `runs_by_pairing=${JSON.stringify(report.runs_by_pairing)} pairing_win_stddev=${report.pairing_win_stddev.toFixed(3)} pairing_win_cv=${report.pairing_win_cv.toFixed(3)}`,
     `win_rate_matrix=${JSON.stringify(report.win_rate_matrix)} card_win_delta=${JSON.stringify(report.card_win_delta)}`,
   ].join("\n");
 }

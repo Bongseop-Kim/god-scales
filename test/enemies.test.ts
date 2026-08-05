@@ -15,8 +15,8 @@ describe("generated enemies", () => {
     const report = summarize(simulate(500));
     expect(report.enemy_count_dist).toEqual(expect.any(Object));
     expect(report.target_spread).toEqual(expect.any(Object));
-    // 재동결 측정 (제우스+아테나 기본 조합) 0.585 — N-04 0.544에서 올랐다
-    expect(report.block_efficiency).toBeGreaterThanOrEqual(0.52);
-    expect(report.block_efficiency).toBeLessThanOrEqual(0.65);
+    // 재측정 (제우스+아테나 기본 조합) 0.867 — P-22의 아테나 완화 하향이 그대로 나타난다
+    expect(report.block_efficiency).toBeGreaterThanOrEqual(0.80);
+    expect(report.block_efficiency).toBeLessThanOrEqual(0.93);
   });
 });

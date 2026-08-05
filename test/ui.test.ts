@@ -85,9 +85,10 @@ describe("browser replay export", () => {
   it("replays a hand-played run, card actions included", () => {
     // 갈림길은 쉼터로, 휴식은 제거로, 요구는 수락으로 고정하고 첫 카드 한 장만 봇과 다르게 낸다.
     // 전투를 내내 봇 반대로 고르면 은총 마일스톤에 닿기 전에 죽는다 — 요구가 조건 판정을 받게 된 뒤로는
-    // 호의가 천천히 올라서 300개 시드 안에 그런 런이 없다
+    // 호의가 천천히 올라서 300개 시드 안에 그런 런이 없다.
+    // 시드 4 → 14: P-22의 아테나 풀 교체로 시드 4가 은총 전에 끝났다
     let diverged = false;
-    const { result: browser, actions } = playByHand(4, ({ phase, options, bot }) => {
+    const { result: browser, actions } = playByHand(14, ({ phase, options, bot }) => {
       if (phase === "path") return "rest";
       if (phase === "rest") return "remove";
       if (phase === "demand") return "accept";
@@ -96,7 +97,7 @@ describe("browser replay export", () => {
       diverged = Boolean(other);
       return other ?? bot;
     });
-    const replay = replayPayload(4, actions);
+    const replay = replayPayload(14, actions);
     const cli = run(replay.seed, undefined, replay.actions);
 
     // 반출에 사람이 고른 여덟 종류가 전부 있어야 한다 — 빠지면 재생 때 봇이 대신 채운다
@@ -109,6 +110,6 @@ describe("browser replay export", () => {
       favor: browser.favorCurve.at(-1),
       cards: browser.cardsPlayed,
     });
-    expect(cli.cardsPlayed).not.toEqual(run(4).cardsPlayed);
+    expect(cli.cardsPlayed).not.toEqual(run(14).cardsPlayed);
   });
 });

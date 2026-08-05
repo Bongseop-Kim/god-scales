@@ -8,12 +8,13 @@ describe("pairing matrix", () => {
     expect(Object.values(report.runs_by_pairing)).toEqual(Array(10).fill(20));
     const cells = Object.entries(report.win_rate_matrix).flatMap(([left, row]) => Object.entries(row).filter(([right, value]) => left < right && value !== null));
     expect(cells).toHaveLength(10);
-    // 토큰 4종을 구현하고 오라를 연결하고 신마다 완화 카드를 넣어 0.00짜리 조합 여섯을 없앴다.
-    // 그래도 0.288이다(reports/round-5/simulation.json, 32000런) — 원인은 콘텐츠 부족이 아니라 **같은 기대값을 완화에 쓰면 공격에 쓸 때보다
-    // 승률로 더 잘 바뀐다**는 것이다. 아테나는 20장 중 16장이 방어라 그 이득을 독점한다.
-    // 전역 다이얼로는 못 닫는다(enemyDamageScale·지상 배율·방어 총량 전 구간 확인) — 카드 한 장이 아니라
-    // 신 하나의 풀 구성을 제한하는 게이트 규칙이 필요하다. 그때까지 이 숫자는 덮은 것이다
-    expect(report.pairing_win_stddev).toBeLessThanOrEqual(0.35);
+    // P-22의 신별 풀 게이트(완화 비율 ≤0.30, 장당 기대값 ≤5.5)로 0.288 → 0.188이 됐다
+    // (reports/round-6/simulation.json, 64000런). 5회차 이래 덮여 있던 0.35를 실측값으로 내려 잠근다.
+    // 목표 0.08과는 아직 멀고, 승률이 0.377 → 0.302로 내려간 만큼의 압축이 섞여 있다 — reviews/23-round6.md 참조
+    expect(report.pairing_win_stddev).toBeLessThanOrEqual(0.24);
+    // 승률이 내려가면 표준편차는 기계적으로 작아진다. 척도에 불변인 짝을 같이 잠가야 그 압축으로 밴드를
+    // 통과하는 길이 막힌다 — 5회차 0.763 → 6회차 0.623(64000런), 여기 200런 측정은 0.607
+    expect(report.pairing_win_cv).toBeLessThanOrEqual(0.70);
     expect(report.card_win_delta).toEqual(expect.any(Object));
   });
 });

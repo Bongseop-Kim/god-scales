@@ -15,6 +15,9 @@ export function buildTuningRecord(before: Report | undefined, after: Report, ite
     // 폐기된 회차의 분산을 같은 표에 두면 안 된다 — 다른 게임을 잰 숫자다. 그럴 때는 null로 남긴다
     variance_before: before ? before.pairing_win_stddev ** 2 : null,
     variance_after: after.pairing_win_stddev ** 2,
+    // 척도에 불변인 짝. 승률이 내려간 회차에서 분산 감소가 수렴인지 압축인지는 이 둘을 같이 봐야 갈린다
+    cv_before: before ? before.pairing_win_stddev / before.winRate : null,
+    cv_after: after.pairing_win_stddev / after.winRate,
     auto_adjusted: 0,
     enemy_adjusted: 0,
     pairing_flagged: [],
@@ -38,7 +41,9 @@ if (process.argv[1]?.endsWith("tune.ts")) {
   })();
   const beforePath = iteration === 1 ? "reports/round-1.json" : `reports/round-${iteration - 1}/simulation.json`;
   const before = discarded.includes(iteration - 1) ? undefined : JSON.parse(readFileSync(beforePath, "utf8")) as Report;
-  const simulationRuns = 2000 * 2 ** (iteration - 1);
+  // 조합당 6,400런이면 승률 표준오차가 ±0.57%p다. 배증해봐야 ±0.41%p — 0.16%p를 사려고 메모리와 시간을
+  // 두 배 쓰는 자리다(64,000런은 이미 기본 힙에서 OOM이 난다). 6회차에서 상한을 걸었다
+  const simulationRuns = Math.min(64000, 2000 * 2 ** (iteration - 1));
   const after = summarize(simulateStratified(simulationRuns));
   const tuning = buildTuningRecord(before, after, iteration, simulationRuns);
   mkdirSync(`reports/round-${iteration}`, { recursive: true });

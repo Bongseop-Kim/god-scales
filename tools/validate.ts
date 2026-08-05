@@ -1,9 +1,9 @@
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { selfTokens } from "../core/rules.ts";
-import { isValueAllowed } from "./value.ts";
+import { expectedValue, isValueAllowed, mitigationValue } from "./value.ts";
 
-export type FailureKey = "schema" | "dsl_parse" | "token_scope" | "fusion_scope" | "demand_axis" | "duplicate" | "value_outlier";
+export type FailureKey = "schema" | "dsl_parse" | "token_scope" | "fusion_scope" | "demand_axis" | "duplicate" | "value_outlier" | "pool_ratio";
 type Item = Record<string, unknown>;
 type Card = Item & { id: string; name: string; patron?: string; patron_pair?: string[]; cost: number; target: string; effects: Effect[]; tags: string[] };
 type Effect = { op: string; value?: number; token?: string; stacks?: number; when?: string };
@@ -156,6 +156,49 @@ function encounterThresholdFailure(enemy: Enemy, enemies: Enemy[]): boolean {
   });
 }
 
+/**
+ * 카드 한 장이 아니라 신 하나의 풀을 잰다. 4~8 밴드는 한 신이 그 값을 전부 완화에 써도 통과시키는데,
+ * 7~15턴 전투에서는 같은 기대값을 완화에 쓰는 쪽이 공격에 쓰는 쪽보다 승률로 더 잘 바뀐다.
+ * 아테나가 그 자리였다 — 완화 비율 0.57에 조합 평균 승률 0.70.
+ */
+export const poolRatioMax = 0.3;
+/**
+ * R1만 걸면 아테나는 완화를 공격으로 옮겨 통과하면서 **더 강해진다**(실측 0.478, 배포 조합 0.755).
+ * 이 상한이 그 출구를 막는다. 하한은 두지 않는다 — 포세이돈이 장당 기대값 최저(4.94)인데 승률 2위라
+ * 장당 기대값은 세기를 예측하지 못한다. 5.5는 아테나를 뺀 최고값(아르테미스 5.35) 바로 위다
+ */
+export const poolValueMax = 5.5;
+export type PoolStat = { cards: number; value: number; mitigation: number; ratio: number; average: number };
+
+export function poolStat(pool: Card[]): PoolStat {
+  const value = pool.reduce((sum, card) => sum + expectedValue(card), 0);
+  const mitigation = pool.reduce((sum, card) => sum + mitigationValue(card), 0);
+  return { cards: pool.length, value, mitigation, ratio: mitigation / value, average: value / pool.length };
+}
+
+const worstBy = (pool: Card[], score: (card: Card) => number) => pool.reduce((left, right) => (score(left) >= score(right) ? left : right));
+
+function poolRejects(cards: Card[]): Set<string> {
+  const rejects = new Set<string>();
+  for (const god of Object.keys(gods)) {
+    // 합성 카드는 밴드가 6~10이고 신이 아니라 조합에 속한다 — 신의 풀에서 뺀다
+    let pool = cards.filter((card) => card.patron === god);
+    // 신당 24~33장이다. 10장 미만은 풀이 아니라 후보 묶음이므로 재지 않는다
+    if (pool.length < 10) continue;
+    // ponytail: 위반을 만든 카드를 하나씩 걷어낸다. O(n²)지만 신당 30장이다
+    while (pool.length > 1) {
+      const { ratio, average } = poolStat(pool);
+      const worst = ratio > poolRatioMax ? worstBy(pool, mitigationValue)
+        : average > poolValueMax ? worstBy(pool, expectedValue)
+        : undefined;
+      if (!worst) break;
+      rejects.add(worst.id);
+      pool = pool.filter(({ id }) => id !== worst.id);
+    }
+  }
+  return rejects;
+}
+
 function failureFor(item: Item, cards: Card[], demands: Demand[], enemies: Enemy[]): FailureKey | undefined {
   const kind = kindOf(item);
   if (schemaFailure(item, kind)) return "schema";
@@ -173,7 +216,7 @@ function failureFor(item: Item, cards: Card[], demands: Demand[], enemies: Enemy
   return undefined;
 }
 
-export function validateItems(items: Item[]): { accepted: Item[]; rejected: { id: string; failure: FailureKey }[]; pass_rate: number; by_pairing: Record<string, number>; failure_breakdown: Partial<Record<FailureKey, number>> } {
+export function validateItems(items: Item[], basePool: Card[] = []): { accepted: Item[]; rejected: { id: string; failure: FailureKey }[]; pass_rate: number; by_pairing: Record<string, number>; failure_breakdown: Partial<Record<FailureKey, number>>; pools: Record<string, PoolStat> } {
   const accepted: Item[] = [];
   const rejected: { id: string; failure: FailureKey }[] = [];
   const failure_breakdown: Partial<Record<FailureKey, number>> = {};
@@ -191,13 +234,27 @@ export function validateItems(items: Item[]): { accepted: Item[]; rejected: { id
       if (kindOf(item) === "card") cards.push(item as Card);
     }
   }
+  // 풀 규칙은 신 단위라 항목 하나로는 판정이 안 된다 — 개별 통과분을 다 모은 뒤에 잰다
+  const overflow = poolRejects([...basePool, ...accepted.filter((item) => kindOf(item) === "card") as Card[]]);
+  for (const item of [...accepted]) {
+    if (!overflow.has(String(item.id))) continue;
+    accepted.splice(accepted.indexOf(item), 1);
+    rejected.push({ id: String(item.id), failure: "pool_ratio" });
+    failure_breakdown.pool_ratio = (failure_breakdown.pool_ratio ?? 0) + 1;
+  }
+  const survivors = [...basePool, ...accepted.filter((item) => kindOf(item) === "card") as Card[]];
+  const pools = Object.fromEntries(Object.keys(gods)
+    .map((god) => [god, survivors.filter((card) => card.patron === god)] as const)
+    .filter(([, pool]) => pool.length > 0)
+    .map(([god, pool]) => [god, poolStat(pool)]));
+
   const fusionItems = items.filter((item) => Array.isArray(item.patron_pair));
   const by_pairing = Object.fromEntries([...new Set(fusionItems.map((item) => (item.patron_pair as string[]).join("+")))].map((pairing) => {
     const total = fusionItems.filter((item) => (item.patron_pair as string[]).join("+") === pairing).length;
     const passed = accepted.filter((item) => Array.isArray(item.patron_pair) && (item.patron_pair as string[]).join("+") === pairing).length;
     return [pairing, passed / total];
   }));
-  return { accepted, rejected, pass_rate: items.length ? accepted.length / items.length : 0, by_pairing, failure_breakdown };
+  return { accepted, rejected, pass_rate: items.length ? accepted.length / items.length : 0, by_pairing, failure_breakdown, pools };
 }
 
 function runCli(args: string[]): void {
@@ -206,7 +263,12 @@ function runCli(args: string[]): void {
   const items = inputs.flatMap((input) => statSync(input).isDirectory()
     ? readdirSync(input).filter((file) => file.endsWith(".json")).sort().map((file) => JSON.parse(readFileSync(join(input, file), "utf8")) as Item)
     : [JSON.parse(readFileSync(input, "utf8")) as Item | Item[]].flat());
-  const report = validateItems(items);
+  // 후보는 지금 배포된 풀 위에 얹어서 잰다 — staging 4장만 놓고 신의 완화 비율을 잴 수는 없다
+  const shipped = (() => {
+    try { return JSON.parse(readFileSync("data/cards.json", "utf8")) as Card[]; }
+    catch { return []; }
+  })().filter((card) => !items.some((item) => item.id === card.id));
+  const report = validateItems(items, shipped);
   if (args.includes("--apply")) {
     mkdirSync("data", { recursive: true });
     for (const kind of ["card", "enemy", "demand", "god"]) {

@@ -2,61 +2,167 @@
   {
     "id": "zeus",
     "name": "제우스",
-    "tokens": ["shock"],
-    "ops": ["chain"],
-    "rivals": ["poseidon"],
+    "tokens": [
+      "shock",
+      "displace"
+    ],
+    "ops": [
+      "chain"
+    ],
+    "rivals": [
+      "poseidon"
+    ],
     "stage_effects": {
-      "devotion": { "on_encounter_start": { "op": "apply_token", "token": "shock", "stacks": 1, "target": "all_enemies" } },
-      "wrath": { "on_encounter_start": { "op": "apply_token", "token": "shock", "stacks": 2, "target": "self" } }
+      "devotion": {
+        "on_encounter_start": {
+          "op": "apply_token",
+          "token": "shock",
+          "stacks": 1,
+          "target": "all_enemies"
+        }
+      },
+      "wrath": {
+        "on_encounter_start": {
+          "op": "apply_token",
+          "token": "shock",
+          "stacks": 2,
+          "target": "self"
+        }
+      }
     },
-    "demands": ["demand_zeus_solo", "demand_zeus_multi"]
+    "demands": [
+      "demand_zeus_solo",
+      "demand_zeus_multi"
+    ]
   },
   {
     "id": "poseidon",
     "name": "포세이돈",
-    "tokens": ["displace", "soaked"],
+    "tokens": [
+      "displace",
+      "soaked"
+    ],
     "ops": [],
-    "rivals": ["zeus"],
+    "rivals": [
+      "zeus"
+    ],
     "stage_effects": {
-      "devotion": { "on_encounter_start": { "op": "apply_token", "token": "soaked", "stacks": 1, "target": "all_enemies" } },
-      "wrath": { "on_encounter_start": { "op": "apply_token", "token": "displace", "stacks": 1, "target": "self" } }
+      "devotion": {
+        "on_encounter_start": {
+          "op": "apply_token",
+          "token": "soaked",
+          "stacks": 1,
+          "target": "all_enemies"
+        }
+      },
+      "wrath": {
+        "on_encounter_start": {
+          "op": "apply_token",
+          "token": "displace",
+          "stacks": 1,
+          "target": "self"
+        }
+      }
     },
-    "demands": ["demand_poseidon_solo"]
+    "demands": [
+      "demand_poseidon_solo"
+    ]
   },
   {
     "id": "athena",
     "name": "아테나",
-    "tokens": ["bulwark", "deflect"],
+    "tokens": [
+      "bulwark",
+      "deflect"
+    ],
     "ops": [],
-    "rivals": ["ares"],
+    "rivals": [
+      "ares"
+    ],
     "stage_effects": {
-      "devotion": { "on_encounter_start": { "op": "apply_token", "token": "bulwark", "stacks": 4, "target": "self" } },
-      "wrath": { "on_encounter_start": { "op": "apply_token", "token": "bulwark", "stacks": 5, "target": "all_enemies" } }
+      "devotion": {
+        "on_encounter_start": {
+          "op": "apply_token",
+          "token": "bulwark",
+          "stacks": 4,
+          "target": "self"
+        }
+      },
+      "wrath": {
+        "on_encounter_start": {
+          "op": "apply_token",
+          "token": "bulwark",
+          "stacks": 5,
+          "target": "all_enemies"
+        }
+      }
     },
-    "demands": ["demand_athena_safe"]
+    "demands": [
+      "demand_athena_safe"
+    ]
   },
   {
     "id": "ares",
     "name": "아레스",
-    "tokens": ["bleed", "frenzy"],
+    "tokens": [
+      "bleed",
+      "frenzy"
+    ],
     "ops": [],
-    "rivals": ["athena"],
+    "rivals": [
+      "athena"
+    ],
     "stage_effects": {
-      "devotion": { "on_encounter_start": { "op": "apply_token", "token": "frenzy", "stacks": 1, "target": "self" } },
-      "wrath": { "on_encounter_start": { "op": "apply_token", "token": "bleed", "stacks": 2, "target": "self" } }
+      "devotion": {
+        "on_encounter_start": {
+          "op": "apply_token",
+          "token": "frenzy",
+          "stacks": 1,
+          "target": "self"
+        }
+      },
+      "wrath": {
+        "on_encounter_start": {
+          "op": "apply_token",
+          "token": "bleed",
+          "stacks": 2,
+          "target": "self"
+        }
+      }
     },
-    "demands": ["demand_ares_hurt"]
+    "demands": [
+      "demand_ares_hurt"
+    ]
   },
   {
     "id": "artemis",
     "name": "아르테미스",
-    "tokens": ["mark", "crit"],
+    "tokens": [
+      "mark",
+      "crit"
+    ],
     "ops": [],
     "rivals": [],
     "stage_effects": {
-      "devotion": { "on_encounter_start": { "op": "apply_token", "token": "mark", "stacks": 1, "target": "enemy" } },
-      "wrath": { "on_encounter_start": { "op": "apply_token", "token": "mark", "stacks": 1, "target": "self" } }
+      "devotion": {
+        "on_encounter_start": {
+          "op": "apply_token",
+          "token": "mark",
+          "stacks": 1,
+          "target": "enemy"
+        }
+      },
+      "wrath": {
+        "on_encounter_start": {
+          "op": "apply_token",
+          "token": "mark",
+          "stacks": 1,
+          "target": "self"
+        }
+      }
     },
-    "demands": ["demand_artemis_mark"]
+    "demands": [
+      "demand_artemis_mark"
+    ]
   }
 ]

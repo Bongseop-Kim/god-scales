@@ -1,4 +1,4 @@
-type Effect = { op: string; value?: number; stacks?: number; when?: string };
+type Effect = { op: string; value?: number; token?: string; stacks?: number; when?: string };
 type Card = { cost: number; target: string; effects: Effect[]; tags: string[]; patron_pair?: string[] };
 
 /** 게이트가 카드를 재는 무게다. 봇의 `cardValue`도 같은 표를 쓴다 — 두 번째 진실을 만들지 않는다 */
@@ -17,9 +17,14 @@ export const tokenWeights: Record<string, number> = {
   crit: 3,
 };
 
-export function expectedValue(card: Card, averageEnemies = 2, conditionRate = 0.5): number {
+/** 맞는 값을 줄이는 데 쓴 기대값. `block`과 이 네 토큰이 전부다 */
+export const mitigationTokens = new Set(["bulwark", "deflect", "displace", "soaked"]);
+const isMitigation = (effect: Effect) => effect.op === "block" || (effect.op === "apply_token" && mitigationTokens.has(effect.token ?? ""));
+
+export function expectedValue(card: Card, averageEnemies = 2, conditionRate = 0.5, keep: (effect: Effect) => boolean = () => true): number {
   let value = 0;
   for (const effect of card.effects) {
+    if (!keep(effect)) continue;
     const multiplier = effect.when ? conditionRate : 1;
     const targets = card.target === "all_enemies" && ["damage", "apply_token"].includes(effect.op) ? averageEnemies : 1;
     const amount = effect.value ?? 0;
@@ -32,11 +37,14 @@ export function expectedValue(card: Card, averageEnemies = 2, conditionRate = 0.
       heal: amount * 0.7,
       self_damage: amount * -1.2,
     };
-    value += (effect.op === "apply_token" ? tokenWeights[(effect as Effect & { token?: string }).token ?? ""] * (effect.stacks ?? 1) : weights[effect.op] ?? 0) * multiplier * targets;
+    value += (effect.op === "apply_token" ? tokenWeights[effect.token ?? ""] * (effect.stacks ?? 1) : weights[effect.op] ?? 0) * multiplier * targets;
   }
   if (card.tags.includes("exhaust")) value *= 0.6;
   return value / Math.max(card.cost, 0.5);
 }
+
+/** 같은 눈금이어야 비율이 뜻을 갖는다 — `expectedValue`의 분모·소진 보정을 그대로 탄다 */
+export const mitigationValue = (card: Card): number => expectedValue(card, 2, 0.5, isMitigation);
 
 export function isValueAllowed(card: Card): boolean {
   const value = expectedValue(card);

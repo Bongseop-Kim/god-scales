@@ -29,8 +29,8 @@
   {
     "id": "demand_athena_safe",
     "patron": "athena",
-    "condition": "damage_taken == 0",
-    "text": "상처 없이 이겨라. 맞고 이기는 것은 승리가 아니다.",
+    "condition": "damage_taken <= 6",
+    "text": "여섯 넘게 내주지 마라. 크게 맞고 이기는 것은 승리가 아니다.",
     "axis": "damage_taken",
     "polarity": "-",
     "min_enemies": 1
@@ -47,8 +47,8 @@
   {
     "id": "demand_artemis_mark",
     "patron": "artemis",
-    "condition": "tokens_applied >= 10",
-    "text": "먹잇감을 표식으로 덮어라. 사냥은 조준에서 시작된다.",
+    "condition": "tokens_applied_in_turn >= 6",
+    "text": "한 호흡에 여섯을 새겨라. 사냥은 조준에서 시작된다.",
     "axis": "token_load",
     "polarity": "+",
     "min_enemies": 1

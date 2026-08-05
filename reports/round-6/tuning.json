@@ -1,4 +1,23 @@
 {
+  "loop_iteration": 6,
+  "variance_before": 0.0829063173828125,
+  "variance_after": 0.03533884008789062,
+  "cv_before": 0.7628037323817517,
+  "cv_after": 0.6230836234414022,
+  "auto_adjusted": 0,
+  "enemy_adjusted": 0,
+  "pairing_flagged": [],
+  "simulation_runs": 64000,
+  "discarded": 0,
+  "condition_rate_estimate": {
+    "demand_zeus_solo": 0.7381667255386789,
+    "demand_poseidon_solo": 0.6248857704063947,
+    "demand_athena_safe": 0.26129104645074425,
+    "demand_ares_hurt": 0.6200347875474779,
+    "demand_artemis_mark": 0.3705508474576271,
+    "demand_zeus_multi": 0.6073121191604604
+  },
+  "average_enemy_count": 1.6979483557369845,
   "human_intervened": [
     "P-09: enemyDamageScale 1.0→0.65, 최초 완주율 0% 보정",
     "P-13: 합성 사용자 8런과 층화 시뮬을 근거로 enemyDamageScale 0.65→0.45",

@@ -157,8 +157,9 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
   const living = () => state.combat.enemies.filter(({ hp: enemyHp }) => enemyHp > 0);
   let hits: CombatObservation["hits"] = [];
   let hitSeq = 0;
-  const facts = { hit_targets_in_turn: 0, damage_taken: 0, tokens_applied: 0 };
+  const facts = { hit_targets_in_turn: 0, damage_taken: 0, tokens_applied: 0, tokens_applied_in_turn: 0 };
   let turnTargets = new Set<string>();
+  let turnTokens = 0;
   const healthBar = () => [["player", state.combat.player.hp] as const, ...state.combat.enemies.map(({ id, hp: enemyHp }) => [id, enemyHp] as const)];
   /** `byCard`일 때만 맞은 적을 센다 — 출혈 도트는 이번 턴에 "친" 것이 아니다 */
   const recordHits = (before: (readonly [string, number])[], byCard = false) => {
@@ -220,12 +221,17 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
       playCard(state, cardMap, cardId, target);
       recordHits(beforeCard, true);
       // 조건 없는 토큰만 센다 — `when`이 걸린 효과는 붙었는지 여기서 알 수 없으므로 세지 않는다
-      facts.tokens_applied += card.effects.reduce((sum, effect) => sum + (effect.op === "apply_token" && !effect.when ? effect.stacks ?? 1 : 0), 0);
+      const applied = card.effects.reduce((sum, effect) => sum + (effect.op === "apply_token" && !effect.when ? effect.stacks ?? 1 : 0), 0);
+      facts.tokens_applied += applied;
+      turnTokens += applied;
       if (card.patron) recordCardFavor(state.favor, card.patron, uses);
       log.push(`node=${state.map.node + 1} ${renderPlay(state.combat, card, target)}`);
     }
     facts.hit_targets_in_turn = Math.max(facts.hit_targets_in_turn, turnTargets.size);
     turnTargets = new Set();
+    // 누적 스택은 한 전투에서 열 개가 그냥 오간다 — 축을 "한 턴 안에 붙인 스택"으로 바꾼 자리다
+    facts.tokens_applied_in_turn = Math.max(facts.tokens_applied_in_turn, turnTokens);
+    turnTokens = 0;
     if (state.combat.outcome === "ongoing") {
       const block = state.combat.player.block;
       const beforeTurn = healthBar();
@@ -456,6 +462,9 @@ export function simulateStratified(runs: number): RunResult[] {
     const pairing = pairings[index % pairings.length];
     const seed = Math.floor(index / pairings.length) + 1;
     // `pairing`은 run()이 이미 넣는다 — 여기서 다시 씌우지 않는다
-    return { ...run(seed, undefined, [], pairing), conflictPenalty: demandPenalty(pairing[0], pairing[1]).key };
+    const result = { ...run(seed, undefined, [], pairing), conflictPenalty: demandPenalty(pairing[0], pairing[1]).key };
+    // 읽는 쪽은 `--log`뿐이고 그것도 첫 런만 본다. 64,000런어치를 들고 있으면 힙이 터진다
+    if (index > 0) result.log = [];
+    return result;
   });
 }

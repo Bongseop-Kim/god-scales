@@ -1,11 +1,17 @@
 {
   "rounds": [
-    5
+    5,
+    6
   ],
   "variances": [
-    0.0829063173828125
+    0.0829063173828125,
+    0.03533884008789062
   ],
-  "decreasing": null,
+  "coefficients_of_variation": [
+    0.7628037323817517,
+    0.6230836234414022
+  ],
+  "decreasing": true,
   "discarded": [
     1,
     2,
