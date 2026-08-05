@@ -119,9 +119,11 @@ function browserRun(): {
   floors: number;
   summary: Record<string, number>;
 } {
-  const { stdout, stderr, status } = spawnSync("aside", ["repl", browserScript], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+  // 브라우저가 멈춰도 CI가 영원히 기다리지 않게 한다 — 한 런은 보통 2~3분이다
+  const { stdout, stderr, status, error } = spawnSync("aside", ["repl", browserScript], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024, timeout: 15 * 60_000 });
+  if (error || status !== 0) throw new Error(`aside repl failed (status ${status}): ${error?.message ?? ""}\n${stdout ?? ""}\n${stderr ?? ""}`);
   const line = stdout.split("\n").find((text) => text.startsWith("__E2E__"));
-  if (!line) throw new Error(`aside repl failed (status ${status}):\n${stdout}\n${stderr}`);
+  if (!line) throw new Error(`aside repl printed no __E2E__ line:\n${stdout}\n${stderr}`);
   return JSON.parse(line.slice("__E2E__".length));
 }
 
@@ -131,9 +133,17 @@ function check(label: string, actual: unknown, expected: unknown): void {
   console.log(`  ok  ${label} = ${left}`);
 }
 
-const server = spawn("npx", ["vite", "--port", String(port), "--strictPort"], { stdio: "ignore" });
+const server = spawn("npx", ["vite", "--port", String(port), "--strictPort"], { stdio: ["ignore", "pipe", "pipe"] });
+// 죽은 서버를 30초 동안 기다리다 fetch 오류로 끝나면 원인이 안 보인다 — 출력을 잡아 두고 즉시 던진다
+let serverLog = "";
+let serverDied: string | undefined;
+server.stdout.on("data", (chunk) => { serverLog += chunk; });
+server.stderr.on("data", (chunk) => { serverLog += chunk; });
+server.on("error", (error) => { serverDied ??= `vite failed to spawn: ${error.message}`; });
+server.on("exit", (code, signal) => { serverDied ??= `vite exited early (code ${code}, signal ${signal})`; });
 try {
   for (let tries = 0; ; tries += 1) {
+    if (serverDied) throw new Error(`${serverDied}\n${serverLog}`);
     try {
       await fetch(`http://localhost:${port}/`);
       break;
@@ -148,6 +158,11 @@ try {
 
   console.log(`clicked ${browser.order.length} decisions in the browser`);
   check("phases", [...new Set(browser.order)].sort(), [...phases].sort());
+  // 종류 집합만 보면 순서가 뒤집히거나 라벨이 바뀌어도 통과한다 — 누른 순서 그대로 반출됐는지 본다.
+  // 215개를 다 찍으면 로그를 못 읽으므로 어긋난 첫 자리만 남긴다
+  const exported = browser.replay.actions.map(({ type }) => type);
+  const diverged = browser.order.findIndex((phase, index) => exported[index] !== phase);
+  check("반출 순서", { diverged, length: exported.length }, { diverged: -1, length: browser.order.length });
   check("filename", browser.filename, `god-scales-run-${seed}.json`);
   check("replay header", { seed: browser.replay.seed, mode: browser.replay.replay_mode }, { seed, mode: "action_log" });
   // 반출한 결정이 지금 규칙에서 전부 낼 수 있는 것이어야 한다 — 하나라도 아니면 봇이 대신 답한다
