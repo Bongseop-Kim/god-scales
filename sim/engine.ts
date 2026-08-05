@@ -9,7 +9,7 @@ import mapDataJson from "../data/map.json" with { type: "json" };
 import { applyFavorStageEffects, awardGrace, demandReward, favorInitial, favorStage, finishCombatFavor, recordCardFavor, type FavorGod, type FavorUses } from "../core/favor.ts";
 import { demandPenalty, demandSatisfied, resolveDemand, type Demand } from "../core/demands.ts";
 import { graceOffer, graceSlots, graceTier, takeGrace, type Grace, type GraceSlot } from "../core/grace.ts";
-import { advanceMap, bossLane, enemyDamageScale, enterNode, generateMap, laneCount, mapSlot, reachableLanes, takeRest, type MapGrid, type MapNodeType } from "../core/map.ts";
+import { advanceMap, bossLane, enemyDamageScale, enterNode, floorsPerRegion, generateMap, laneCount, mapDepth, mapSlot, reachableLanes, takeRest, type MapGrid, type MapNodeType } from "../core/map.ts";
 import { canFuse } from "../core/fusion.ts";
 import { cardEffects, type Card, type GodId } from "../core/rules.ts";
 import type { GameState, Passives, Tokens } from "../core/state.ts";
@@ -111,7 +111,9 @@ function enemyDefinition(enemy: EnemyData): EnemyDefinition {
 function encounter(seed: number, region: string, floor: number, type: MapNodeType): EnemyDefinition[] {
   if (type === "boss") {
     const bosses = enemyData.filter((enemy) => enemy.region === region && enemy.tier === "boss");
-    return [enemyDefinition(bosses[seed % bosses.length])];
+    const boss = bosses[seed % bosses.length];
+    if (!boss) throw new Error(`${region}: no boss`);
+    return [enemyDefinition(boss)];
   }
   const candidates = mapSlots.get(`${region}:${floor}`)?.groups[type === "elite" ? "elite" : "combat"] ?? [];
   if (!candidates.length) throw new Error(`${region} ${floor}: no ${type} group`);
@@ -256,7 +258,9 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
         : undefined;
       // 카드 것 + 그 슬롯 은혜 것을 같이 센다 — 화면에 붙은 토큰을 요구가 세지 않으면 두 번째 진실이다
       const played = cardEffects(state, card);
-      blockBuilt += played.reduce((sum, effect) => sum + (effect.op === "block" ? effect.value ?? 0 : 0), 0);
+      // 조건 없는 방어만 센다 — 아래 토큰과 같은 이유다. `when`이 걸린 방어는 붙었는지 여기서 알 수 없고,
+      // 세면 `block_efficiency`의 분모가 쌓지 않은 방어까지 든다
+      blockBuilt += played.reduce((sum, effect) => sum + (effect.op === "block" && !effect.when ? effect.value ?? 0 : 0), 0);
       targetSpread.push(card.target === "all_enemies" || played.some(({ op }) => op === "chain") ? "multi" : "single");
       const beforeCard = healthBar();
       playCard(state, cardMap, cardId, target);
@@ -353,10 +357,11 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
         ...view(),
         god,
         tier,
+        // `graceOffer`가 슬롯 승계까지 풀어서 준다 — 여기서 tier를 다시 세면 두 번째 진실이다
         offer: offer.map(({ id, slot, tier: level, text, effects }) => ({
           id,
           slot,
-          tier: Math.max(level, held[slot]?.tier ?? 0),
+          tier: level,
           text,
           effects,
           cards: slotCards[slot] ?? 0,
@@ -442,7 +447,7 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
    */
   let carried: DemandPromise | undefined;
 
-  while (state.map.depth < 12 && state.combat.player.hp > 0) {
+  while (state.map.depth < mapDepth && state.combat.player.hp > 0) {
     const { region, floor } = mapSlot(state.map.depth);
     const row = state.map.grid[state.map.depth];
     const options = reachableLanes(state.map.depth, state.map.lane).map((lane) => `${lane}:${row[lane]}`);
@@ -533,12 +538,12 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
         fused = true;
       }
       advanceMap(state);
-      if (floor === 6) regionsCleared.push(region);
+      if (floor === floorsPerRegion) regionsCleared.push(region);
     }
     favorCurve.push({ ...state.favor });
     hpCurve.push(state.combat.player.hp);
   }
-  const won = state.map.depth === 12 && state.combat.player.hp > 0;
+  const won = state.map.depth === mapDepth && state.combat.player.hp > 0;
   log.push(`outcome=${won ? "victory" : state.combat.outcome} encounters=${encounters} turns=${turns} hp=${state.combat.player.hp}`);
   // 런당 요구는 최대 아홉 번이다 — 최빈값을 세는 데 정렬 한 줄이면 된다
   const conflictChoice = [...demandSides].sort((left, right) =>

@@ -4,6 +4,8 @@ import type { GameState } from "./state.ts";
 
 export const regions = ["underworld", "surface"] as const;
 export const floorsPerRegion = 6;
+/** 런 하나의 칸 수. 12를 손으로 적는 자리가 곧 두 번째 진실이다 */
+export const mapDepth = regions.length * floorsPerRegion;
 /**
  * 한 층의 갈래 수. StS의 7칸을 우리 크기로 줄인 것이고 `lane ±1` 규칙이 여기에 걸린다.
  *
@@ -25,7 +27,7 @@ export type MapGrid = (MapNodeType | null)[][];
 const heavy = (type: MapNodeType | null) => type === "elite" || type === "rest";
 
 export function mapSlot(depth: number): { region: (typeof regions)[number]; floor: number } {
-  if (depth < 0 || depth >= regions.length * floorsPerRegion) throw new Error(`Invalid map depth: ${depth}`);
+  if (depth < 0 || depth >= mapDepth) throw new Error(`Invalid map depth: ${depth}`);
   return { region: regions[Math.floor(depth / floorsPerRegion)], floor: (depth % floorsPerRegion) + 1 };
 }
 
@@ -88,10 +90,13 @@ function shuffled<T>(items: T[], random: () => number): T[] {
  * 그래야 규칙이 문서가 아니라 게이트다 — 탐색이 바뀌어도 여기서 걸린다
  */
 export function mapLayoutFailure(grid: MapGrid): string | undefined {
+  // 꼴부터 잰다 — 빈 격자는 규칙 일곱을 한 번도 안 거치고 통과하고, 긴 격자는 `mapSlot`이 던진다
+  if (grid.length !== mapDepth) return `grid must be ${mapDepth} deep`;
   let reach = reachableLanes(0, bossLane);
   for (let depth = 0; depth < grid.length; depth += 1) {
     const { floor } = mapSlot(depth);
     const row = grid[depth];
+    if (row.length !== laneCount) return `depth ${depth}: lane count`;
     const boss = floor === floorsPerRegion;
     // 7 · 도달 가능성: 비보스 층은 세 갈래가 다 서고 보스 층은 bossLane 하나만 선다. 이 둘이면
     // `lane ±1`에서 막다른 길이 없다 — 어느 갈래에서도 다음 층의 세 갈래 중 둘 이상에 닿는다
@@ -119,7 +124,7 @@ export function mapLayoutFailure(grid: MapGrid): string | undefined {
 export function generateMap(seed: number, eliteSlots: ReadonlySet<string> = new Set()): MapGrid {
   const random = createRng(seed);
   const bossRow: (MapNodeType | null)[] = [null, "boss", null];
-  const candidates = Array.from({ length: regions.length * floorsPerRegion }, (_, depth) => {
+  const candidates = Array.from({ length: mapDepth }, (_, depth) => {
     const { region, floor } = mapSlot(depth);
     if (floor === floorsPerRegion) return [bossRow];
     return shuffled(assignments(allowedTypes(region, floor, eliteSlots), floor === floorsPerRegion - 1), random);

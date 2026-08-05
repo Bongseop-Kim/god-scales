@@ -23,9 +23,14 @@ while (!step.done) {
     continue;
   }
   const { options, observation } = step.value;
-  const choice = (await answer(`${observation.region} ${observation.floor}층 [${options.join(" / ")}]: `)).trim();
-  const picked = options.includes(choice) ? choice : options.find((option) => option.startsWith(`${choice}:`));
-  if (!picked) throw new Error(`enter one of ${options.join(", ")}`);
+  let picked: string | undefined;
+  while (!picked) {
+    const choice = (await answer(`${observation.region} ${observation.floor}층 [${options.join(" / ")}]: `)).trim();
+    picked = options.includes(choice) ? choice : options.find((option) => option.startsWith(`${choice}:`));
+    // 사람이 앉아 있으면 되묻는다 — 오타 하나로 여기까지 걸어온 갈래를 버릴 이유가 없다.
+    // 파이프 입력에는 다시 답할 상대가 없으므로 그대로 던진다
+    if (!picked && !terminal) throw new Error(`enter one of ${options.join(", ")}`);
+  }
   actions.push({ type: "path", choice: picked });
   step = steps.next(picked);
 }

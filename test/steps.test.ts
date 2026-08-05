@@ -122,8 +122,9 @@ describe("steppable engine", () => {
     const scripted = run(3, undefined, [...paths, { type: "card", choice: other }]);
     expect(scripted.cardsPlayed[0]).toBe(other);
     // 카드 액션이 path 슬롯을 먹지 않는다 — path만 있는 로그가 카드 액션 추가 후에도 그대로 재생되는 이유
+    const pathsOnly = run(3, undefined, paths);
     expect(scripted.pathChoices[0]).toBe(paths[0].choice);
-    expect(run(3, undefined, paths).pathChoices[0]).toBe(paths[0].choice);
-    expect([scripted.substituted, run(3, undefined, paths).substituted]).toEqual([0, 0]);
+    expect(pathsOnly.pathChoices[0]).toBe(paths[0].choice);
+    expect([scripted.substituted, pathsOnly.substituted]).toEqual([0, 0]);
   });
 });

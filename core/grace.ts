@@ -26,9 +26,15 @@ export function graceTier(earned: number): number {
   return [...graceMilestones].reverse().find((milestone) => earned >= milestone) ?? graceMilestones[0];
 }
 
+/** 그 은혜가 그 슬롯에 놓일 때 실제로 걸리는 tier. 슬롯의 tier는 내려가지 않는다(§`takeGrace`) */
+const slotTier = (held: GraceHeld, grace: Grace): number => Math.max(grace.tier, held[grace.slot]?.tier ?? 0);
+
 /**
  * 3택1. 후보는 그 신의 은혜 중 이 tier의 줄이고 **빈 슬롯이 먼저** 선다 — 하데스가 핵심 슬롯 보온을
  * 먼저 제안하는 자리다.
+ *
+ * 후보는 **그 슬롯에서 걸릴 tier의 줄**로 바꿔 든다 — 이미 tier가 높은 슬롯에 낮은 은혜를 놓으면
+ * 승계로 올라가므로(§`takeGrace`), 낮은 줄을 그대로 내보내면 화면과 봇이 실제보다 약한 것을 본다
  *
  * ponytail: 신당 설계가 셋이라 셋이 다 뜬다 — 시드를 당기지 않는다. 뽑기 스트림을 하나 더 만들면
  * 은혜를 켜는 것만으로 기존 재생이 통째로 어긋난다. 설계가 넷 이상 되면 그때 뽑는다
@@ -37,7 +43,8 @@ export function graceOffer(graces: Grace[], god: string, held: GraceHeld, tier: 
   return graces
     .filter((grace) => grace.patron === god && grace.tier === tier)
     .sort((left, right) => Number(Boolean(held[left.slot])) - Number(Boolean(held[right.slot])) || (left.id < right.id ? -1 : 1))
-    .slice(0, 3);
+    .slice(0, 3)
+    .map((grace) => graces.find(({ id, tier: row }) => id === grace.id && row === slotTier(held, grace)) ?? grace);
 }
 
 /**
@@ -46,7 +53,7 @@ export function graceOffer(graces: Grace[], god: string, held: GraceHeld, tier: 
  * 제우스의 첫 은혜(tier 2)를 놓으면 그 은혜가 tier 4 줄로 들어온다
  */
 export function takeGrace(graces: Grace[], held: GraceHeld, grace: Grace): void {
-  const tier = Math.max(grace.tier, held[grace.slot]?.tier ?? 0);
+  const tier = slotTier(held, grace);
   const row = graces.find((candidate) => candidate.id === grace.id && candidate.tier === tier);
   if (!row) throw new Error(`${grace.id}: no tier ${tier} row`);
   held[grace.slot] = { id: row.id, tier, effects: row.effects };

@@ -111,8 +111,8 @@ function auraMatrix(runs: number): string {
     const row = groups.map((group) => {
       const [withAura, without] = [pick(on, god, group), pick(off, god, group)];
       const [cost, base] = [mean(withAura.map(({ hpLost }) => hpLost)), mean(without.map(({ hpLost }) => hpLost))];
-      // 표본이 얇은 칸은 부호가 잡음이다 — 세지 않고 그렇게 적는다
-      if (cost === undefined || base === undefined || withAura.length < 30) return `— (${withAura.length})`;
+      // 표본이 얇은 칸은 부호가 잡음이다 — 세지 않고 그렇게 적는다. 차이는 두 열이 다 두꺼워야 뜻을 갖는다
+      if (cost === undefined || base === undefined || withAura.length < 30 || without.length < 30) return `— (${withAura.length}/${without.length})`;
       const saved = base - cost;
       cells.push({ god, group, saved, n: withAura.length });
       return `${saved >= 0 ? "+" : ""}${saved.toFixed(1)}hp (${withAura.length})`;

@@ -57,6 +57,8 @@ describe("grace", () => {
     takeGrace(graces, held, row("grace_zeus_attack_shock", 2));
     expect(held.attack).toMatchObject({ id: "grace_zeus_attack_shock", tier: 4 });
     expect(held.attack!.effects).toEqual(row("grace_zeus_attack_shock", 4).effects);
+    // 후보도 그 tier의 줄로 뜬다 — tier 2 줄을 내보내면 화면과 봇이 실제보다 약한 것을 보고 고른다
+    expect(graceOffer(graces, "zeus", held, 2).find(({ slot }) => slot === "attack")).toEqual(row("grace_zeus_attack_shock", 4));
   });
 
   it("adds a slot's grace to every card carrying that tag", () => {

@@ -96,22 +96,25 @@ function kindOf(item: Item): string {
 // ponytail: required keys plus the one cross-field rule the schema was buying us (patron XOR patron_pair).
 function schemaFailure(item: Item, kind: string): boolean {
   if (!required[kind] || required[kind].some((key) => item[key] === undefined)) return true;
+  // 키가 있어도 꼴이 틀릴 수 있다. 컨테이너를 먼저 재지 않으면 아래 규칙들이 반려가 아니라 **예외**를
+  // 낸다 — 생성기가 뱉은 `null` 하나로 게이트가 죽으면 그 배치는 판정을 못 받는다
+  if ((kind === "card" || kind === "grace") && !(Array.isArray(item.effects) && item.effects.length > 0)) return true;
+  if (kind === "map" && (typeof item.groups !== "object" || item.groups === null || Array.isArray(item.groups))) return true;
   if (kind === "grace") {
     const grace = item as Grace;
     return !gods[grace.patron]
       || !(graceSlots as readonly string[]).includes(grace.slot)
       || !(graceMilestones as readonly number[]).includes(grace.tier)
-      || grace.effects.length === 0
-      || grace.effects.some(({ op }) => typeof op !== "string");
+      || grace.effects.some((effect) => typeof effect?.op !== "string");
   }
   if (kind !== "card") return false;
   const card = item as Card;
   return Boolean(card.patron) === Boolean(card.patron_pair)
-    || (card.patron_pair !== undefined && card.patron_pair.length !== 2)
+    // 없는 신을 적은 합성 카드는 `vocabularyUsed`가 `gods[god].ops`로 던진다 — 어휘부터 있어야 한다
+    || (card.patron_pair !== undefined && (!Array.isArray(card.patron_pair) || card.patron_pair.length !== 2 || card.patron_pair.some((god) => !gods[god])))
     || ![0, 1, 2, 3].includes(card.cost)
     || !["self", "enemy", "all_enemies"].includes(card.target)
-    || card.effects.length === 0
-    || card.effects.some(({ op }) => typeof op !== "string");
+    || card.effects.some((effect) => typeof effect?.op !== "string");
 }
 
 function dslFailure(card: Card): boolean {
@@ -437,7 +440,6 @@ export function validateItems(items: Item[], basePool: Card[] = []): { accepted:
   const cards = [...baselineCards];
   const demands = [...baselineDemands, ...items.filter((item) => kindOf(item) === "demand") as Demand[]];
   const enemies = mergeById(shippedEnemies, items.filter((item) => kindOf(item) === "enemy") as Enemy[]);
-  const slots = mergeById(shippedSlots, items.filter((item) => kindOf(item) === "map") as MapSlot[]);
 
   for (const item of items) {
     const failure = failureFor(item, cards, demands, enemies);
@@ -450,14 +452,26 @@ export function validateItems(items: Item[], basePool: Card[] = []): { accepted:
     }
   }
   // 풀 규칙은 신 단위라 항목 하나로는 판정이 안 된다 — 개별 통과분을 다 모은 뒤에 잰다
-  const graces = mergeById(shippedGraces, accepted.filter((item) => kindOf(item) === "grace") as Grace[]);
-  const overflow = poolRejects([...basePool, ...accepted.filter((item) => kindOf(item) === "card") as Card[]], graces);
-  for (const item of [...accepted]) {
-    if (!overflow.has(String(item.id))) continue;
+  const reject = (item: Item, failure: FailureKey) => {
     accepted.splice(accepted.indexOf(item), 1);
-    rejected.push({ id: String(item.id), failure: "pool_ratio" });
-    failure_breakdown.pool_ratio = (failure_breakdown.pool_ratio ?? 0) + 1;
+    rejected.push({ id: String(item.id), failure });
+    failure_breakdown[failure] = (failure_breakdown[failure] ?? 0) + 1;
+  };
+  const overflow = poolRejects([...basePool, ...accepted.filter((item) => kindOf(item) === "card") as Card[]],
+    mergeById(shippedGraces, accepted.filter((item) => kindOf(item) === "grace") as Grace[]));
+  for (const item of [...accepted]) if (overflow.has(String(item.id))) reject(item, "pool_ratio");
+  /**
+   * 층 배치는 편성을 **이름으로** 참조한다. 반려된 적이 지도를 통과시키면 `--apply`가 배포되지 않을
+   * 편성을 가리키는 층을 쓰고, 그 자리는 런타임에서 `encounter()`가 던진다 — `pool_ratio`와 같은
+   * 자리다: 통과분이 다 모인 뒤에 **통과한 적만으로** 다시 잰다
+   */
+  const liveEnemies = mergeById(shippedEnemies, accepted.filter((item) => kindOf(item) === "enemy") as Enemy[]);
+  for (const item of [...accepted]) {
+    if (kindOf(item) !== "map") continue;
+    const failure = mapSlotFailure(item as MapSlot, liveEnemies);
+    if (failure) reject(item, failure);
   }
+  const graces = mergeById(shippedGraces, accepted.filter((item) => kindOf(item) === "grace") as Grace[]);
   const survivors = [...basePool, ...accepted.filter((item) => kindOf(item) === "card") as Card[]];
   const pools = Object.fromEntries(Object.keys(gods)
     .map((god) => [god, survivors.filter((card) => card.patron === god)] as const)
@@ -479,9 +493,11 @@ export function validateItems(items: Item[], basePool: Card[] = []): { accepted:
   const passive_coverage = items.some((item) => kindOf(item) === "enemy") ? passiveNames.filter((name) => !covered.has(name)) : [];
   /**
    * 어느 층에도 놓이지 않은 편성. `encounter()`가 `data/map.json`을 통해서만 편성을 고르므로
-   * 여기 남는 것은 아무도 부르지 않는 데이터다 — `passive_coverage`와 같은 자리라 반려가 아니라 목록이다
+   * 여기 남는 것은 아무도 부르지 않는 데이터다 — `passive_coverage`와 같은 자리라 반려가 아니라 목록이다.
+   * 반려된 층은 놓은 것이 아니다: 세면 배포되지 않을 자리가 커버리지 구멍을 가린다
    */
-  const placed = new Set(slots.flatMap(({ groups }) => Object.values(groups ?? {}).flat()));
+  const placed = new Set(mergeById(shippedSlots, accepted.filter((item) => kindOf(item) === "map") as MapSlot[])
+    .flatMap(({ groups }) => Object.values(groups ?? {}).flat()));
   const unplaced_groups = enemies.flatMap(({ groups }) => (groups ?? []).map(({ id }) => id)).filter((id) => !placed.has(id));
   /**
    * 3택1이 서지 않는 `신:tier`. 후보가 셋보다 적으면 화면이 두 칸짜리 「선택」을 띄운다 —

@@ -40,6 +40,9 @@ describe("map", () => {
     // 보스를 다른 갈래로 옮기면 수렴이 깨진다
     const scattered = grid.map((row, depth) => (depth === 5 ? ["boss", null, null] : row)) as MapGrid;
     expect(mapLayoutFailure(scattered)).toMatch(/boss must converge/);
+    // 꼴이 틀린 격자는 규칙을 한 번도 안 거친다 — 빈 격자가 통과하면 게이트가 아니다
+    expect(mapLayoutFailure([])).toMatch(/12 deep/);
+    expect(mapLayoutFailure(grid.map((row, depth) => (depth === 0 ? [...row, "combat"] : row)) as MapGrid)).toMatch(/lane count/);
   });
 
   it("gives the same seed the same grid and different seeds different ones", () => {

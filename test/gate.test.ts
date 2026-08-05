@@ -31,6 +31,9 @@ describe("validation gate", () => {
       "map_layout",
       // 자기를 때리는 개입은 `dealDamage(player, player)`가 되어 `deflect`를 태우고 피해는 그대로 먹는다
       "token_scope",
+      // 키는 다 있는데 컨테이너 꼴이 틀린 둘. 반려가 아니라 예외가 나면 그 배치는 판정을 못 받는다
+      "schema",
+      "schema",
     ]);
   });
 
@@ -40,6 +43,23 @@ describe("validation gate", () => {
     const report = validateItems(slots);
     expect(report.rejected).toEqual([]);
     expect(report.unplaced_groups).toEqual([]);
+  });
+
+  /**
+   * 층이 가리키는 편성은 **배포될 적**의 것이어야 한다. 반려된 적으로 통과한 층은 `--apply`가 쓰고
+   * 나면 `encounter()`가 던지는 자리가 된다 — 편성 세기만 보면 밴드 안이라 개별 판정은 통과한다
+   */
+  it("rejects a floor slot whose group comes from a rejected enemy", () => {
+    const enemy = JSON.parse(readFileSync("core/__fixtures__/broken/11-passive.json", "utf8"));
+    const slot = {
+      id: "map_underworld_borrowed",
+      region: "underworld",
+      floor: 3,
+      text: "반려된 적의 편성을 가리키는 층.",
+      groups: { combat: ["group_bad_passive_solo"] },
+    };
+    const report = validateItems([enemy, slot]);
+    expect(report.rejected).toContainEqual({ id: "map_underworld_borrowed", failure: "map_layout" });
   });
 
   // 커버리지가 비면 그 패시브의 훅은 아무도 부르지 않는 코드다 — 목록만 내면 다음 회차에 조용히 생긴다

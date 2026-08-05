@@ -46,7 +46,7 @@ describe("demands", () => {
     let omens = 0;
     for (const pair of pairs) {
       for (let seed = 1; seed <= 30; seed += 1) {
-        const steps = runSteps(seed, undefined, [...pair] as [never, never]);
+        const steps = runSteps(seed, undefined, pair);
         let step = steps.next();
         let afterOmen = false;
         while (!step.done) {
@@ -76,7 +76,9 @@ describe("demands", () => {
      */
     const played = run(94);
     const refusedRun = run(94, undefined, refuse);
-    const at = played.favorCurve.findIndex((point, index) => JSON.stringify(point) !== JSON.stringify(refusedRun.favorCurve[index]));
+    // 두 곡선이 다 든 자리에서만 찾는다 — 거절 런이 먼저 죽으면 없는 칸이 「갈라진 자리」로 읽힌다
+    const at = played.favorCurve.findIndex((point, index) => index < refusedRun.favorCurve.length
+      && JSON.stringify(point) !== JSON.stringify(refusedRun.favorCurve[index]));
     expect(at, "seed 94 never diverges on the first demand").toBeGreaterThan(0);
 
     // 시드 94의 첫 요구는 지켜진다 — 보상과 상대 신의 벌금이 그때 들어간다

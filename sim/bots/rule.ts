@@ -150,7 +150,9 @@ export function chooseReward(options: string[], cards: ReadonlyMap<string, Card>
 /**
  * 은혜는 지금 덱의 그 태그 카드 수만큼 곱해져 들어간다 — 게이트가 쓰는 환산(`graceValue`)을 그대로
  * 쓴다. 이미 찬 슬롯을 고르는 것은 **차액**만 얻는 것이라 그만큼 깎는다: 그래서 빈 슬롯이 먼저 차고,
- * tier가 올라 차액이 커지면 그때 같은 슬롯을 다시 부어 깊게 간다
+ * tier가 올라 차액이 커지면 그때 같은 슬롯을 다시 부어 깊게 간다.
+ *
+ * `offer`는 그 슬롯에서 걸릴 tier의 줄로 들어온다(`graceOffer`) — 차액을 여기서 다시 풀지 않는다
  */
 export function chooseGrace(offer: Grace[], held: GraceHeld, slotCards: Record<string, number>): string | undefined {
   const gain = (grace: Grace) => {
