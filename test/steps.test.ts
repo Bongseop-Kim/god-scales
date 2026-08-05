@@ -5,9 +5,8 @@ import type { ReplayAction } from "../sim/replay";
 
 describe("steppable engine", () => {
   it("stops at every decision phase", () => {
-    // 시드 4는 여덟 종류를 전부 지난다. 요구가 조건 판정을 받게 되면서 호의가 천천히 올라
-    // 시드 1은 은총 마일스톤에 닿기 전에 끝난다
-    const steps = runSteps(4);
+    // 시드 5가 여덟 종류를 전부 지난다. P-25에서 적 패시브가 붙으며 시드 6이 은총 전에 끝났다
+    const steps = runSteps(5);
     const seen = new Set<string>();
     let step = steps.next();
     while (!step.done) {
@@ -23,7 +22,7 @@ describe("steppable engine", () => {
     const patrons = new Set(["zeus", "athena"]);
     // 덱은 시작 10장에서 출발해 보상으로만 늘어난다 — 은총 후보가 그 안에 있는지 여기서 잰다
     const deck = new Set([...godDecks.zeus, ...godDecks.athena]);
-    const steps = runSteps(4);
+    const steps = runSteps(5);
     let step = steps.next();
     while (!step.done && step.value.phase !== "grace") {
       if (step.value.phase === "reward") deck.add(step.value.bot);

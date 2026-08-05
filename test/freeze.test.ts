@@ -9,9 +9,9 @@ describe("frozen parameter versions", () => {
     expect(report.global_param_version).toBe("v3");
     expect(report.winRate).toBeGreaterThanOrEqual(0.15);
     expect(report.winRate).toBeLessThanOrEqual(0.7);
-    // 재동결 측정 0.655. 토큰 4종이 실제로 동작하면서 봇이 방어 대신 완화 토큰을 쓰는 턴이 생겨
-    // 쌓은 방어의 흡수율이 올라갔다 (N-04 0.580 → 0.655)
-    expect(report.block_efficiency).toBeGreaterThanOrEqual(0.58);
-    expect(report.block_efficiency).toBeLessThanOrEqual(0.72);
+    // 재측정 0.812. P-22에서 아테나 완화를 걷어내자 쌓는 방어가 줄어 거의 전부 소모된다.
+    // 천장이 1.0이라 이 지표는 여기서부터 포화한다 — 더 올라가면 뜻을 잃는다
+    expect(report.block_efficiency).toBeGreaterThanOrEqual(0.74);
+    expect(report.block_efficiency).toBeLessThanOrEqual(0.88);
   });
 });

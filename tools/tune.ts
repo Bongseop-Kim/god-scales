@@ -1,48 +1,65 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { setEpsilon } from "../sim/bots/rule.ts";
 import { simulateStratified } from "../sim/engine.ts";
 import { summarize } from "../sim/report.ts";
 
-type Report = ReturnType<typeof summarize>;
-/** 회차마다 늘어나는 개입·실패 기록. 코드가 아니라 데이터다 — 소스에 두면 튜닝 함수가 산문으로 자란다 */
-type Notes = { human_intervened: string[]; ai_failures: string[] };
-const notes = JSON.parse(readFileSync(new URL("../reports/notes.json", import.meta.url), "utf8")) as Notes;
+/** 조합당 시드 수. `simulateStratified`가 `seed = floor(index/10)+1`이라 이 수가 곧 고정된 시드 목록(1~300)이다 */
+export const seedsPerPairing = 300;
+/** 테스트가 잠그는 하한. 잡는 것은 0에 붙은 셀뿐이다 — 6회차 실측 최저가 0.061이었다 */
+export const winFloor = 0.05;
+/** 릴리스 목표. 테스트에는 넣지 않는다 — 지금 네 셀이 미달이라 넣으면 결국 이 값을 깎게 된다. DEPLOY.md에서만 판정한다 */
+export const releaseFloor = 0.25;
+/** 300런에서 두 승률 차의 95% 노이즈가 ±0.07이다. 그 위 */
+export const noiseBand = 0.1;
+/**
+ * 강한 봇 승률이 절반이 되는 지점(30.7% → 15.4%, 3,000런). 한 번 정하고 만지지 않는다 —
+ * 목적이 회차 간 비교라 값 자체엔 의미가 없다. 콘텐츠가 크게 바뀌어 다시 재야 하면 `--epsilon 0.3`으로
+ * 몇 값을 찍어 절반이 되는 곳을 찾고 이 상수를 옮긴다. 0.15는 너무 약해 여섯 조합이 전부 ⚠로 떴다
+ */
+export const epsilon = 0.45;
 
-export function buildTuningRecord(before: Report | undefined, after: Report, iteration: number, simulationRuns = after.runs) {
-  const enemyRuns = Object.entries(after.enemy_count_dist).reduce((sum, [count, occurrences]) => sum + Number(count) * Number(occurrences), 0);
-  const encounters = Object.values(after.enemy_count_dist).reduce<number>((sum, value) => sum + Number(value), 0);
-  return {
-    loop_iteration: iteration,
-    // 폐기된 회차의 분산을 같은 표에 두면 안 된다 — 다른 게임을 잰 숫자다. 그럴 때는 null로 남긴다
-    variance_before: before ? before.pairing_win_stddev ** 2 : null,
-    variance_after: after.pairing_win_stddev ** 2,
-    auto_adjusted: 0,
-    enemy_adjusted: 0,
-    pairing_flagged: [],
-    simulation_runs: simulationRuns,
-    discarded: 0,
-    // 요구를 수락한 것 중 실제로 지킨 비율. 조건 판정이 붙기 전에는 잴 것이 없어 null이었다
-    condition_rate_estimate: Object.keys(after.demand_kept_rate).length ? after.demand_kept_rate : null,
-    average_enemy_count: encounters ? enemyRuns / encounters : 0,
-    ...notes,
-  };
+export function simulate(epsilonValue = 0) {
+  setEpsilon(epsilonValue);
+  try {
+    return summarize(simulateStratified(seedsPerPairing * 10));
+  } finally {
+    setEpsilon(0);
+  }
+}
+
+export function compare(base: Record<string, number>, noisy: Record<string, number>) {
+  return Object.keys(base).map((pairing) => {
+    const diff = noisy[pairing] - base[pairing];
+    return {
+      pairing,
+      base: base[pairing],
+      noisy: noisy[pairing],
+      diff,
+      below: base[pairing] < winFloor,
+      // 결정이 승률로 바뀌지 않는 조합 = 누가 눌러도 같은 결과. 승률이 2·noiseBand 미만인 셀은
+      // 절대차가 구조적으로 그보다 작아질 수 없어 판정에서 뺀다 — 그 셀은 하한이 본다
+      flat: base[pairing] >= noiseBand * 2 && Math.abs(diff) <= noiseBand,
+    };
+  });
 }
 
 if (process.argv[1]?.endsWith("tune.ts")) {
-  const iterationIndex = process.argv.indexOf("--iteration");
-  const iteration = iterationIndex < 0 ? 1 : Number(process.argv[iterationIndex + 1]);
-  if (!Number.isInteger(iteration) || iteration < 1) throw new Error("--iteration must be a positive integer");
-  // 직전 회차가 폐기됐으면 읽지 않는다. reports/rounds.json의 discarded가 그 목록이다
-  const discarded = (() => {
-    try { return (JSON.parse(readFileSync("reports/rounds.json", "utf8")) as { discarded?: number[] }).discarded ?? []; }
-    catch { return []; }
-  })();
-  const beforePath = iteration === 1 ? "reports/round-1.json" : `reports/round-${iteration - 1}/simulation.json`;
-  const before = discarded.includes(iteration - 1) ? undefined : JSON.parse(readFileSync(beforePath, "utf8")) as Report;
-  const simulationRuns = 2000 * 2 ** (iteration - 1);
-  const after = summarize(simulateStratified(simulationRuns));
-  const tuning = buildTuningRecord(before, after, iteration, simulationRuns);
-  mkdirSync(`reports/round-${iteration}`, { recursive: true });
-  writeFileSync(`reports/round-${iteration}/tuning.json`, `${JSON.stringify(tuning, null, 2)}\n`);
-  writeFileSync(`reports/round-${iteration}/simulation.json`, `${JSON.stringify(after, null, 2)}\n`);
-  console.log(JSON.stringify(tuning, null, 2));
+  const flagIndex = process.argv.indexOf("--epsilon");
+  const noiseLevel = flagIndex < 0 ? epsilon : Number(process.argv[flagIndex + 1]);
+  if (!(noiseLevel > 0 && noiseLevel <= 1)) throw new Error("--epsilon must be in (0, 1]");
+  const base = simulate();
+  const noisy = simulate(noiseLevel);
+  const rows = compare(base.win_rate_by_pairing, noisy.win_rate_by_pairing);
+  const percent = (value: number) => `${(value * 100).toFixed(1)}`;
+  console.log(`| 조합 | 승률(ε=0) | 승률(ε=${noiseLevel}) | 차이 |`);
+  console.log("|---|---:|---:|---:|");
+  for (const row of rows) {
+    const mark = row.below ? " ⛔" : row.flat ? " ⚠" : "";
+    console.log(`| ${row.pairing}${mark} | ${percent(row.base)}% | ${percent(row.noisy)}% | ${percent(row.diff)}%p |`);
+  }
+  const below = rows.filter(({ below: miss }) => miss);
+  const flat = rows.filter(({ flat: isFlat }) => isFlat);
+  console.log(`\n하한 ${winFloor}: ${below.length ? `⛔ 미달 — ${below.map(({ pairing }) => pairing).join(", ")}. 이 조합만 손댄다` : "통과 — 이번 회차 수치 조정 없음"}`);
+  console.log(`릴리스 목표 ${releaseFloor}: 미달 ${rows.filter(({ base: rate }) => rate < releaseFloor).length}/${rows.length} (테스트 게이트 아님)`);
+  console.log(`⚠ 평평한 조합(|차이| ≤ ${noiseBand}): ${flat.length ? `${flat.map(({ pairing }) => pairing).join(", ")} — 보고만` : "없음"}`);
+  console.log(`참고(게이트 아님): pairing_win_stddev=${base.pairing_win_stddev.toFixed(3)} pairing_win_cv=${base.pairing_win_cv.toFixed(3)} 승률=${percent(base.winRate)}%`);
 }

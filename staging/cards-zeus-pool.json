@@ -1,0 +1,454 @@
+[
+  {
+    "id": "card_zeus_01",
+    "name": "작은 번개",
+    "patron": "zeus",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 5
+      }
+    ],
+    "tags": [
+      "attack"
+    ]
+  },
+  {
+    "id": "card_zeus_03",
+    "name": "번뜩임",
+    "patron": "zeus",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 4
+      },
+      {
+        "op": "draw",
+        "value": 1
+      }
+    ],
+    "tags": [
+      "attack",
+      "utility"
+    ]
+  },
+  {
+    "id": "card_zeus_05",
+    "name": "회복 전류",
+    "patron": "zeus",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      {
+        "op": "block",
+        "value": 4
+      },
+      {
+        "op": "heal",
+        "value": 2
+      }
+    ],
+    "tags": [
+      "defend",
+      "utility"
+    ]
+  },
+  {
+    "id": "card_zeus_06",
+    "name": "감전 타격",
+    "patron": "zeus",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 4
+      },
+      {
+        "op": "apply_token",
+        "token": "shock",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "attack",
+      "token"
+    ]
+  },
+  {
+    "id": "card_zeus_07",
+    "name": "갈래 전광",
+    "patron": "zeus",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 3
+      },
+      {
+        "op": "chain",
+        "value": 3
+      }
+    ],
+    "tags": [
+      "attack",
+      "multi"
+    ]
+  },
+  {
+    "id": "card_zeus_08",
+    "name": "마비 벼락",
+    "patron": "zeus",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "displace",
+        "stacks": 1
+      },
+      {
+        "op": "damage",
+        "value": 2
+      }
+    ],
+    "tags": [
+      "attack",
+      "token"
+    ]
+  },
+  {
+    "id": "card_zeus_10",
+    "name": "벼락 갑주",
+    "patron": "zeus",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 4
+      },
+      {
+        "op": "block",
+        "value": 2
+      }
+    ],
+    "tags": [
+      "attack",
+      "defend"
+    ]
+  },
+  {
+    "id": "card_zeus_11",
+    "name": "역류",
+    "patron": "zeus",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 7
+      },
+      {
+        "op": "self_damage",
+        "value": 2
+      }
+    ],
+    "tags": [
+      "attack"
+    ]
+  },
+  {
+    "id": "card_zeus_12",
+    "name": "큰 낙뢰",
+    "patron": "zeus",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 11
+      }
+    ],
+    "tags": [
+      "attack"
+    ]
+  },
+  {
+    "id": "card_zeus_14",
+    "name": "계시",
+    "patron": "zeus",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      {
+        "op": "block",
+        "value": 9
+      },
+      {
+        "op": "draw",
+        "value": 2
+      }
+    ],
+    "tags": [
+      "defend",
+      "utility"
+    ]
+  },
+  {
+    "id": "card_zeus_15",
+    "name": "폭풍 충전",
+    "patron": "zeus",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 7
+      },
+      {
+        "op": "energy",
+        "value": 1
+      }
+    ],
+    "tags": [
+      "attack",
+      "utility"
+    ]
+  },
+  {
+    "id": "card_zeus_16",
+    "name": "생명 번개",
+    "patron": "zeus",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 9
+      },
+      {
+        "op": "heal",
+        "value": 3
+      }
+    ],
+    "tags": [
+      "attack",
+      "utility"
+    ]
+  },
+  {
+    "id": "card_zeus_17",
+    "name": "고압 감전",
+    "patron": "zeus",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 7
+      },
+      {
+        "op": "apply_token",
+        "token": "displace",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "attack",
+      "token"
+    ]
+  },
+  {
+    "id": "card_zeus_18",
+    "name": "폭풍 가지",
+    "patron": "zeus",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 7
+      },
+      {
+        "op": "chain",
+        "value": 5
+      }
+    ],
+    "tags": [
+      "attack",
+      "multi"
+    ]
+  },
+  {
+    "id": "card_zeus_19",
+    "name": "감전 연쇄",
+    "patron": "zeus",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 6
+      },
+      {
+        "op": "apply_token",
+        "token": "shock",
+        "stacks": 2
+      },
+      {
+        "op": "chain",
+        "value": 4
+      }
+    ],
+    "tags": [
+      "attack",
+      "multi",
+      "token"
+    ]
+  },
+  {
+    "id": "card_zeus_retry_01",
+    "name": "번개 통찰",
+    "patron": "zeus",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      {
+        "op": "block",
+        "value": 6
+      },
+      {
+        "op": "draw",
+        "value": 3
+      }
+    ],
+    "tags": [
+      "defend",
+      "utility"
+    ]
+  },
+  {
+    "id": "card_zeus_retry_02",
+    "name": "급속 방전",
+    "patron": "zeus",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 3
+      },
+      {
+        "op": "energy",
+        "value": 1
+      }
+    ],
+    "tags": [
+      "attack",
+      "utility"
+    ]
+  },
+  {
+    "id": "card_zeus_retry_03",
+    "name": "온기의 섬광",
+    "patron": "zeus",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      {
+        "op": "block",
+        "value": 4
+      },
+      {
+        "op": "heal",
+        "value": 3
+      }
+    ],
+    "tags": [
+      "defend",
+      "utility"
+    ]
+  },
+  {
+    "id": "card_zeus_retry_05",
+    "name": "삼중 전류",
+    "patron": "zeus",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 2
+      },
+      {
+        "op": "chain",
+        "value": 3
+      },
+      {
+        "op": "apply_token",
+        "token": "shock",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "attack",
+      "multi",
+      "token"
+    ]
+  },
+  {
+    "id": "card_zeus_retry_06",
+    "name": "신뢰의 벼락",
+    "patron": "zeus",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 6
+      },
+      {
+        "op": "favor_shift",
+        "value": 1,
+        "god": "zeus"
+      }
+    ],
+    "tags": [
+      "attack",
+      "favor"
+    ]
+  },
+  {
+    "id": "card_zeus_retry_07",
+    "name": "폭풍의 합주",
+    "patron": "zeus",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 6
+      },
+      {
+        "op": "chain",
+        "value": 6
+      },
+      {
+        "op": "apply_token",
+        "token": "shock",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "attack",
+      "multi",
+      "token"
+    ]
+  }
+]

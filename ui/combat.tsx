@@ -1,5 +1,6 @@
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import type { EnemyAction } from "../core/combat.ts";
+import type { PassiveName } from "../core/state.ts";
 import enemyDataJson from "../data/enemies.json" with { type: "json" };
 import { endTurnAction, type CombatDecision, type CombatObservation } from "../sim/engine.ts";
 import { cardCaption, GameCard } from "./card.tsx";
@@ -8,6 +9,11 @@ import { TokenRow } from "./tokens.tsx";
 
 type EnemyInfo = { id: string; name: string; intent_visible: boolean };
 const enemyInfo = new Map((enemyDataJson as EnemyInfo[]).map((enemy) => [enemy.id, enemy]));
+/** 배지에 그대로 나가는 이름. 표가 `PassiveName`을 다 덮으므로 패시브를 새로 만들면 여기서 컴파일이 막힌다 */
+const passiveLabels: Record<PassiveName, string> = {
+  guard: "보호", shell: "경화", ward: "결계", curl: "웅크림",
+  angry: "분노", rally: "규합", ramp: "고조", spite: "앙심",
+};
 const pop = { duration: 0.16, ease: [0.23, 1, 0.32, 1] } as const;
 const damagePop = { duration: 0.4, ease: [0.23, 1, 0.32, 1] } as const;
 
@@ -31,12 +37,19 @@ function DamagePop({ hits, id, seq, still }: { hits: CombatObservation["hits"]; 
     );
 }
 
+/**
+ * 복합 행동을 하나로 뭉개지 않는다 — 「공격 12 + 방어 8」을 `"대기"`로 적으면 대상 선택이 도박이 된다.
+ * 아군을 향하는 행동은 누구에게 가는지까지 적는다: 회복이 자기 것인지 옆 것인지가 처치 순서를 바꾼다
+ */
 function intentLabel(action?: EnemyAction): string {
-  if (!action) return "대기";
-  if (action.damage) return `공격 ${action.damage}`;
-  if (action.block) return `방어 ${action.block}`;
-  if (action.token) return `${action.token} ${action.stacks ?? 1}`;
-  return "대기";
+  const side = action?.target === "ally" ? "아군 " : "";
+  const parts = [
+    action?.damage && `공격 ${action.damage}`,
+    action?.block && `${side}방어 ${action.block}`,
+    action?.heal && `${side}회복 ${action.heal}`,
+    action?.token && `${side}${action.token} ${action.stacks ?? 1}`,
+  ].filter(Boolean);
+  return parts.length ? parts.join(" + ") : "대기";
 }
 
 export function CombatScreen({ seed, decision, onAnswer }: {
@@ -59,6 +72,7 @@ export function CombatScreen({ seed, decision, onAnswer }: {
           const info = enemyInfo.get(enemy.id);
           const name = info?.name ?? enemy.id;
           const intent = info?.intent_visible === false ? "의도 감춤" : intentLabel(enemy.intent);
+          const passives = Object.entries(enemy.passives) as [PassiveName, number][];
           return (
             <button
               key={enemy.id}
@@ -66,7 +80,7 @@ export function CombatScreen({ seed, decision, onAnswer }: {
               type="button"
               disabled={!targeting || !options.includes(enemy.id)}
               onClick={() => onAnswer(enemy.id)}
-              aria-label={`${name} 체력 ${enemy.hp} ${intent}`}
+              aria-label={`${name} 체력 ${enemy.hp} ${intent} ${passives.map(([id, stacks]) => `${passiveLabels[id]} ${stacks}`).join(" ")}`}
             >
               <b>{name}</b>
               <span className="intent">{intent}</span>
@@ -75,6 +89,7 @@ export function CombatScreen({ seed, decision, onAnswer }: {
                 <small>{enemy.hp} / {enemy.maxHp}</small>
               </span>
               <span className="badges">
+                {passives.map(([id, stacks]) => <em key={id} className="passive">{passiveLabels[id]} {stacks}</em>)}
                 {enemy.block > 0 && <em>방어 {enemy.block}</em>}
                 <TokenRow tokens={enemy.tokens} />
               </span>

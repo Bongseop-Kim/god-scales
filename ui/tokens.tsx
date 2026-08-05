@@ -7,6 +7,7 @@ const tokenStyle: Record<TokenName, { label: string; name: string; icon: string;
   soaked: { label: "침", name: "침수", icon: "◉", color: "var(--poseidon)" },
   bulwark: { label: "벽", name: "방벽", icon: "⬟", color: "var(--athena)" },
   deflect: { label: "반", name: "반사", icon: "◇", color: "var(--athena)" },
+  thorns: { label: "가", name: "가시", icon: "✧", color: "var(--athena)" },
   bleed: { label: "혈", name: "출혈", icon: "◆", color: "var(--ares)" },
   frenzy: { label: "광", name: "광란", icon: "✦", color: "var(--ares)" },
   mark: { label: "표", name: "표식", icon: "⌖", color: "var(--artemis)" },

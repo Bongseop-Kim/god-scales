@@ -4,12 +4,12 @@
     "llm_agent": 10
   },
   "fusion_rate": {
-    "rule_bot": 0.104,
+    "rule_bot": 0.068,
     "llm_agent": 0
   },
   "rival_gap": {
-    "rule_bot": 0,
-    "llm_agent": 0
+    "rule_bot": 0.03500000000000003,
+    "llm_agent": -0.25
   },
   "agent_fallbacks": 0,
   "division_of_labor": "에이전트는 전략 층만 근사한다. 전투 층의 체감은 합성 플레이테스트가 답한다.",

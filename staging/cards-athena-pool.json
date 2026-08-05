@@ -1,0 +1,240 @@
+[
+  {
+    "id": "card_athena_01",
+    "name": "방패 세우기",
+    "patron": "athena",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      { "op": "block", "value": 4 },
+      { "op": "heal", "value": 2 }
+    ],
+    "tags": ["defend"]
+  },
+  {
+    "id": "card_athena_02",
+    "name": "성벽 밀치기",
+    "patron": "athena",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 3 },
+      { "op": "apply_token", "token": "bulwark", "stacks": 1 }
+    ],
+    "tags": ["attack", "token"]
+  },
+  {
+    "id": "card_athena_03",
+    "name": "허 찌르기",
+    "patron": "athena",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 4 },
+      { "op": "energy", "value": 1 }
+    ],
+    "tags": ["attack"]
+  },
+  {
+    "id": "card_athena_04",
+    "name": "전술 판단",
+    "patron": "athena",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      { "op": "draw", "value": 2 }
+    ],
+    "tags": ["utility"]
+  },
+  {
+    "id": "card_athena_05",
+    "name": "지혜의 숨",
+    "patron": "athena",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      { "op": "energy", "value": 2 }
+    ],
+    "tags": ["utility"]
+  },
+  {
+    "id": "card_athena_06",
+    "name": "창끝 반격",
+    "patron": "athena",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 4 },
+      { "op": "block", "value": 2 }
+    ],
+    "tags": ["attack", "defend"]
+  },
+  {
+    "id": "card_athena_07",
+    "name": "방벽 강타",
+    "patron": "athena",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 7 },
+      { "op": "apply_token", "token": "bulwark", "stacks": 1 }
+    ],
+    "tags": ["attack", "token"]
+  },
+  {
+    "id": "card_athena_08",
+    "name": "올빼미의 눈",
+    "patron": "athena",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      { "op": "draw", "value": 3 },
+      { "op": "block", "value": 4 }
+    ],
+    "tags": ["utility", "defend"]
+  },
+  {
+    "id": "card_athena_09",
+    "name": "굳건한 진형",
+    "patron": "athena",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      { "op": "block", "value": 5 },
+      { "op": "energy", "value": 2 }
+    ],
+    "tags": ["defend", "utility"]
+  },
+  {
+    "id": "card_athena_10",
+    "name": "물러서 여미기",
+    "patron": "athena",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      { "op": "block", "value": 5 },
+      { "op": "heal", "value": 6 }
+    ],
+    "tags": ["defend"]
+  },
+  {
+    "id": "card_athena_11",
+    "name": "창 던지기",
+    "patron": "athena",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 7 },
+      { "op": "block", "value": 5, "when": "hp_pct(self) < 50" }
+    ],
+    "tags": ["attack", "defend"]
+  },
+  {
+    "id": "card_athena_12",
+    "name": "전열 밀어내기",
+    "patron": "athena",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 9 },
+      { "op": "block", "value": 3 }
+    ],
+    "tags": ["attack", "defend"]
+  },
+  {
+    "id": "card_athena_13",
+    "name": "결의",
+    "patron": "athena",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      { "op": "block", "value": 3 },
+      { "op": "draw", "value": 1 }
+    ],
+    "tags": ["defend", "utility"]
+  },
+  {
+    "id": "card_athena_14",
+    "name": "심판의 일격",
+    "patron": "athena",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 4 },
+      { "op": "draw", "value": 1 }
+    ],
+    "tags": ["attack", "utility"]
+  },
+  {
+    "id": "card_athena_15",
+    "name": "신중한 전진",
+    "patron": "athena",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      { "op": "heal", "value": 8 },
+      { "op": "block", "value": 5 }
+    ],
+    "tags": ["defend", "utility"]
+  },
+  {
+    "id": "card_athena_16",
+    "name": "아이기스",
+    "patron": "athena",
+    "cost": 3,
+    "target": "self",
+    "effects": [
+      { "op": "apply_token", "token": "deflect", "stacks": 1 },
+      { "op": "draw", "value": 1 }
+    ],
+    "tags": ["token", "defend", "utility"]
+  },
+  {
+    "id": "card_athena_retry_01",
+    "name": "밀집 방어",
+    "patron": "athena",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      { "op": "block", "value": 3 },
+      { "op": "damage", "value": 3 }
+    ],
+    "tags": ["defend", "attack"]
+  },
+  {
+    "id": "card_athena_retry_02",
+    "name": "꿰뚫는 창",
+    "patron": "athena",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 8 },
+      { "op": "draw", "value": 1 }
+    ],
+    "tags": ["attack", "utility"]
+  },
+  {
+    "id": "card_athena_retry_03",
+    "name": "전략적 후퇴",
+    "patron": "athena",
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      { "op": "block", "value": 6 },
+      { "op": "draw", "value": 2 }
+    ],
+    "tags": ["defend", "utility"]
+  },
+  {
+    "id": "card_athena_retry_04",
+    "name": "창벽 반격",
+    "patron": "athena",
+    "cost": 3,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 10 },
+      { "op": "apply_token", "token": "bulwark", "stacks": 1 }
+    ],
+    "tags": ["attack", "token"]
+  }
+]

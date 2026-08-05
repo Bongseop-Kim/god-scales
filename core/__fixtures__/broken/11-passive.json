@@ -1,0 +1,17 @@
+{
+  "id": "enemy_bad_passive",
+  "name": "없는 패시브를 든 적",
+  "region": "underworld",
+  "tier": "normal",
+  "role": "pressure",
+  "hp": 40,
+  "intent_visible": true,
+  "passives": { "hardened": 2 },
+  "pattern": [
+    { "op": "damage", "value": 10 }
+  ],
+  "pattern_mode": "cycle",
+  "groups": [
+    { "id": "group_bad_passive_solo", "with": [] }
+  ]
+}

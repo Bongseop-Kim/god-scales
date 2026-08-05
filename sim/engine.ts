@@ -10,7 +10,7 @@ import { advanceMap, enemyDamageScale, mapNode, takeRest } from "../core/map.ts"
 import { reduceCardCost, upgradeCard } from "../core/upgrade.ts";
 import { canFuse } from "../core/fusion.ts";
 import type { Card, GodId } from "../core/rules.ts";
-import type { GameState, Tokens } from "../core/state.ts";
+import type { GameState, Passives, Tokens } from "../core/state.ts";
 import { chooseCard, chooseDemandAnswer, chooseGraceCard, choosePath, chooseRest, chooseRestCard, chooseReward, chooseTarget } from "./bots/rule.ts";
 import { renderPlay } from "./log.ts";
 import type { RunResult } from "./report.ts";
@@ -62,7 +62,8 @@ type EnemyData = {
   tier: "normal" | "boss";
   role: string;
   hp: number;
-  pattern: { op: string; value?: number; token?: import("../core/state.ts").TokenName; stacks?: number; repeat?: number }[];
+  passives?: Passives;
+  pattern: { op: string; value?: number; token?: import("../core/state.ts").TokenName; stacks?: number; repeat?: number; target?: EnemyAction["target"] }[];
   groups?: { id: string; with: string[] }[];
 };
 const enemyData = enemyDataJson as EnemyData[];
@@ -71,12 +72,15 @@ function enemyDefinition(enemy: EnemyData): EnemyDefinition {
   return {
     id: enemy.id,
     hp: enemy.hp,
-    bulwark: enemy.role === "bulwark" ? enemy.pattern.find(({ token }) => token === "bulwark")?.stacks : undefined,
+    passives: enemy.passives,
+    // 난이도는 피해에만 걸린다 — 회복·토큰까지 긁으면 enemyDamageScale이 조우 밴드와 다른 눈금이 된다
     pattern: enemy.pattern.map((effect) => ({
       damage: effect.op === "damage" ? Math.ceil((effect.value ?? 0) * (effect.repeat ?? 1) * enemyDamageScale) : undefined,
       block: effect.op === "block" ? effect.value : undefined,
+      heal: effect.op === "heal" ? effect.value : undefined,
       token: effect.op === "apply_token" ? effect.token : undefined,
       stacks: effect.stacks,
+      target: effect.target,
     })),
   };
 }
@@ -89,7 +93,7 @@ function encounter(seed: number, region: string, boss = false): EnemyDefinition[
   return [root, ...group.with.map((id) => enemyData.find((enemy) => enemy.id === id)!)].map(enemyDefinition);
 }
 
-type EnemyView = { id: string; hp: number; maxHp: number; block: number; tokens: Tokens; intent?: EnemyAction };
+type EnemyView = { id: string; hp: number; maxHp: number; block: number; tokens: Tokens; passives: Passives; intent?: EnemyAction };
 /** 이름·비용·효과는 은총 강화로 런 중에 바뀐다. UI가 data/cards.json을 따로 읽으면 두 번째 진실이 된다 */
 export type CardView = { id: string; name: string; cost: number; target: Card["target"]; effects: Card["effects"] };
 const cardView = ({ id, name, cost, target, effects }: Card): CardView => ({ id, name, cost, target, effects });
@@ -142,7 +146,7 @@ type EncounterResult = {
   facts: Record<string, number>;
 };
 
-function* playEncounter(state: GameState, seed: number, deck: string[], cardMap: Map<string, Card>, enemies: EnemyDefinition[], log: string[], patrons: PatronPair): Generator<Decision, EncounterResult, string> {
+function* playEncounter(state: GameState, seed: number, deck: string[], cardMap: Map<string, Card>, enemies: EnemyDefinition[], log: string[], patrons: PatronPair, noise: () => number): Generator<Decision, EncounterResult, string> {
   const enemyMap = new Map(enemies.map((enemy) => [enemy.id, enemy]));
   const random = createRng(seed);
   const hp = state.combat.player.hp;
@@ -157,8 +161,9 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
   const living = () => state.combat.enemies.filter(({ hp: enemyHp }) => enemyHp > 0);
   let hits: CombatObservation["hits"] = [];
   let hitSeq = 0;
-  const facts = { hit_targets_in_turn: 0, damage_taken: 0, tokens_applied: 0 };
+  const facts = { hit_targets_in_turn: 0, damage_taken: 0, tokens_applied: 0, tokens_applied_in_turn: 0 };
   let turnTargets = new Set<string>();
+  let turnTokens = 0;
   const healthBar = () => [["player", state.combat.player.hp] as const, ...state.combat.enemies.map(({ id, hp: enemyHp }) => [id, enemyHp] as const)];
   /** `byCard`일 때만 맞은 적을 센다 — 출혈 도트는 이번 턴에 "친" 것이 아니다 */
   const recordHits = (before: (readonly [string, number])[], byCard = false) => {
@@ -185,20 +190,22 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
     hand: state.combat.hand.map((id) => cardView(cardMap.get(id)!)),
     enemies: living().map((enemy) => {
       const pattern = enemyMap.get(enemy.id)!.pattern;
-      return { id: enemy.id, hp: enemy.hp, maxHp: enemy.maxHp, block: enemy.block, tokens: { ...enemy.tokens }, intent: pattern[enemy.patternIndex % pattern.length] };
+      // 패시브는 정의가 아니라 **상태**에서 온다 — `ward`·`guard`는 소모되므로 정의를 읽으면 화면이 안 움직인다
+      const passives = Object.fromEntries(Object.entries(enemy.passives ?? {}).filter(([, stacks]) => stacks > 0));
+      return { id: enemy.id, hp: enemy.hp, maxHp: enemy.maxHp, block: enemy.block, tokens: { ...enemy.tokens }, passives, intent: pattern[enemy.patternIndex % pattern.length] };
     }),
     hits,
     hitSeq,
   });
 
   while (state.combat.outcome === "ongoing") {
-    startTurn(state.combat, random);
+    startTurn(state, random);
     while (state.combat.outcome === "ongoing") {
       const affordable = state.combat.hand.filter((id) => (cardMap.get(id)?.cost ?? Infinity) <= state.combat.energy);
       const cardId = yield {
         phase: "card",
         options: [...affordable, endTurnAction],
-        bot: chooseCard(state.combat, cardMap, enemyMap, state.favor) ?? endTurnAction,
+        bot: chooseCard(state.combat, cardMap, enemyMap, state.favor, noise) ?? endTurnAction,
         observation: observation(),
       };
       if (cardId === endTurnAction) break;
@@ -210,7 +217,7 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
         ? yield {
           phase: "target",
           options: targets,
-          bot: chooseTarget(card, state.combat, enemyMap)!,
+          bot: chooseTarget(card, state.combat, enemyMap, noise)!,
           observation: { card: cardId, ...observation() },
         }
         : undefined;
@@ -220,16 +227,21 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
       playCard(state, cardMap, cardId, target);
       recordHits(beforeCard, true);
       // 조건 없는 토큰만 센다 — `when`이 걸린 효과는 붙었는지 여기서 알 수 없으므로 세지 않는다
-      facts.tokens_applied += card.effects.reduce((sum, effect) => sum + (effect.op === "apply_token" && !effect.when ? effect.stacks ?? 1 : 0), 0);
+      const applied = card.effects.reduce((sum, effect) => sum + (effect.op === "apply_token" && !effect.when ? effect.stacks ?? 1 : 0), 0);
+      facts.tokens_applied += applied;
+      turnTokens += applied;
       if (card.patron) recordCardFavor(state.favor, card.patron, uses);
       log.push(`node=${state.map.node + 1} ${renderPlay(state.combat, card, target)}`);
     }
     facts.hit_targets_in_turn = Math.max(facts.hit_targets_in_turn, turnTargets.size);
     turnTargets = new Set();
+    // 누적 스택은 한 전투에서 열 개가 그냥 오간다 — 축을 "한 턴 안에 붙인 스택"으로 바꾼 자리다
+    facts.tokens_applied_in_turn = Math.max(facts.tokens_applied_in_turn, turnTokens);
+    turnTokens = 0;
     if (state.combat.outcome === "ongoing") {
       const block = state.combat.player.block;
       const beforeTurn = healthBar();
-      endTurn(state.combat, enemyMap);
+      endTurn(state, enemyMap);
       recordHits(beforeTurn);
       blockAbsorbed += Math.max(0, block - state.combat.player.block);
     }
@@ -256,6 +268,9 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
     map: { node: 0, completed: [] },
   };
   const log: string[] = [];
+  // ε 동전은 전투·셔플·보상과 겹치지 않는 스트림에서 뽑는다. 겹치면 ε을 켜는 것만으로 적 뽑기까지
+  // 흔들려 두 열이 다른 게임이 된다. ε=0이면 아무도 당기지 않으므로 기존 replay는 그대로 재생된다
+  const noise = createRng(seed ^ 0x5eed);
   const favorCurve = [{ ...state.favor }];
   const hpCurve = [state.combat.player.hp];
   const pathChoices: ("combat" | "rest")[] = [];
@@ -268,6 +283,8 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
   let blockBuilt = 0;
   let blockAbsorbed = 0;
   const enemyCounts: number[] = [];
+  const encounterOutcomes: RunResult["encounterOutcomes"] = [];
+  let defeatContext: RunResult["defeatContext"];
   const targetSpread: ("single" | "multi")[] = [];
   const cardsPlayed: string[] = [];
   let fused = scenario === "fused_deck";
@@ -328,7 +345,7 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
     const picked = yield {
       phase: "reward",
       options: [...offer, skipReward],
-      bot: chooseReward(offer, cardMap),
+      bot: chooseReward(offer, cardMap, noise),
       observation: { ...view(), deck: deck.length, cards: offer.map((id) => cardView(cardMap.get(id)!)) },
     };
     if (picked !== skipReward && !offer.includes(picked)) throw new Error(`Invalid reward action: ${picked}`);
@@ -381,7 +398,7 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
     } else {
       const enemies = encounter(seed + state.map.node, node.region, path === "boss");
       const promise = yield* askDemand(enemies);
-      const result = yield* playEncounter(state, seed * 100 + state.map.node, deck, cardMap, enemies, log, patrons);
+      const result = yield* playEncounter(state, seed * 100 + state.map.node, deck, cardMap, enemies, log, patrons, noise);
       turns += result.turns;
       blockBuilt += result.blockBuilt;
       blockAbsorbed += result.blockAbsorbed;
@@ -389,7 +406,14 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
       cardsPlayed.push(...result.cardsPlayed);
       enemyCounts.push(enemies.length);
       encounters += 1;
+      encounterOutcomes.push({ key: enemies.map(({ id }) => id).join("+"), cleared: state.combat.outcome === "victory" });
       if (state.combat.outcome !== "victory") {
+        defeatContext = {
+          region: node.region,
+          floor: node.floor,
+          enemies: enemies.map(({ id }) => id),
+          passives: [...new Set(enemies.flatMap(({ passives }) => Object.keys(passives ?? {})))].sort(),
+        };
         favorCurve.push({ ...state.favor });
         hpCurve.push(state.combat.player.hp);
         break;
@@ -421,7 +445,7 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
   // 런당 요구는 최대 아홉 번이다 — 최빈값을 세는 데 정렬 한 줄이면 된다
   const conflictChoice = [...demandSides].sort((left, right) =>
     demandSides.filter((god) => god === right).length - demandSides.filter((god) => god === left).length)[0];
-  return { won, turns, log, favorCurve, encounters, restCount, hpCurve, pathChoices, restChoices, regionsCleared, grace: state.grace, upgrades, scenario, enemyCounts, targetSpread, blockBuilt, blockAbsorbed, fused, actions, cardsPlayed, conflictChoice, demandOutcomes, pairing: patrons.join("+") };
+  return { won, turns, log, favorCurve, encounters, restCount, hpCurve, pathChoices, restChoices, regionsCleared, grace: state.grace, upgrades, scenario, enemyCounts, encounterOutcomes, defeatContext, targetSpread, blockBuilt, blockAbsorbed, fused, actions, cardsPlayed, conflictChoice, demandOutcomes, pairing: patrons.join("+") };
 }
 
 /**
@@ -456,6 +480,9 @@ export function simulateStratified(runs: number): RunResult[] {
     const pairing = pairings[index % pairings.length];
     const seed = Math.floor(index / pairings.length) + 1;
     // `pairing`은 run()이 이미 넣는다 — 여기서 다시 씌우지 않는다
-    return { ...run(seed, undefined, [], pairing), conflictPenalty: demandPenalty(pairing[0], pairing[1]).key };
+    const result = { ...run(seed, undefined, [], pairing), conflictPenalty: demandPenalty(pairing[0], pairing[1]).key };
+    // 읽는 쪽은 `--log`뿐이고 그것도 첫 런만 본다. 64,000런어치를 들고 있으면 힙이 터진다
+    if (index > 0) result.log = [];
+    return result;
   });
 }

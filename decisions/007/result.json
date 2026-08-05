@@ -3,7 +3,7 @@
   "actor": "llm_agent",
   "replay_mode": "action_log",
   "pairing": "poseidon+artemis",
-  "won": false,
+  "won": true,
   "fusion_rate": 0,
   "fallbacks": 0,
   "decisions": 5,

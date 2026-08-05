@@ -23,9 +23,9 @@ describe("map", () => {
   it("keeps low-rest clears below the re-measured ceiling", () => {
     const results = simulate(500);
     const report = summarize(results);
-    // N-04에서 0.05 → 0.358로 깨졌던 자리다. 토큰 구현으로 전투가 실제로 아파지면서 0.302로 돌아왔다 —
-    // 쉼터가 조금씩 의미를 되찾는 방향이지만 원래 밴드(0.05)와는 아직 멀다
-    expect(report.low_rest_clear_rate).toBeLessThan(0.38);
+    // N-04에서 0.05 → 0.358로 깨졌던 자리다. P-22 이후 0.167(64000런)까지 돌아왔다 —
+    // 쉼터가 의미를 되찾는 방향이다. 원래 밴드(0.05)와는 아직 멀다
+    expect(report.low_rest_clear_rate).toBeLessThan(0.24);
     expect(results.filter(({ won }) => won).every(({ encounters }) => encounters >= 8 && encounters <= 12)).toBe(true);
     expect(report).toMatchObject({ hp_curve: expect.any(Array), path_choices: expect.any(Object), rest_choices: expect.any(Object), region_clear_rate: expect.any(Object) });
   });

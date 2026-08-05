@@ -1,0 +1,10 @@
+{
+  "id": "card_broken_power",
+  "name": "없는 훅에 걸린 파워",
+  "patron": "ares",
+  "cost": 1,
+  "target": "self",
+  "trigger": "on_kill",
+  "effects": [{ "op": "apply_token", "token": "frenzy", "stacks": 1 }],
+  "tags": ["power", "token"]
+}
