@@ -1,0 +1,8 @@
+{
+  "id": "grace_zeus_attack_malformed",
+  "patron": "zeus",
+  "slot": "attack",
+  "tier": 2,
+  "text": "효과가 배열이 아닌 은혜. 게이트가 던지지 않고 반려해야 한다.",
+  "effects": null
+}

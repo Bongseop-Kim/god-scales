@@ -1,10 +1,12 @@
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { selfTokens } from "../core/rules.ts";
+import { graceMilestones, graceSlots } from "../core/grace.ts";
+import { floorsPerRegion } from "../core/map.ts";
+import { enemyOnlyTokens, harmfulTokens, selfTokens } from "../core/rules.ts";
 import { passiveNames, triggers, type Passives } from "../core/state.ts";
-import { expectedValue, isValueAllowed, mitigationTokens, mitigationValue, tokenWeights } from "./value.ts";
+import { expectedValue, graceBand, graceValue, isValueAllowed, mitigationTokens, mitigationValue, slotCards, tokenWeights } from "./value.ts";
 
-export type FailureKey = "schema" | "dsl_parse" | "token_scope" | "fusion_scope" | "demand_axis" | "duplicate" | "value_outlier" | "pool_ratio" | "passive_coverage";
+export type FailureKey = "schema" | "dsl_parse" | "token_scope" | "fusion_scope" | "demand_axis" | "duplicate" | "value_outlier" | "pool_ratio" | "passive_coverage" | "map_layout";
 type Item = Record<string, unknown>;
 type Card = Item & { id: string; name: string; patron?: string; patron_pair?: string[]; cost: number; target: string; effects: Effect[]; tags: string[]; trigger?: string };
 type Effect = { op: string; value?: number; token?: string; stacks?: number; when?: string };
@@ -18,13 +20,34 @@ type Enemy = Item & {
   passives?: Passives;
   groups?: { id: string; with: string[] }[];
 };
+type MapSlot = Item & { id: string; region: string; floor: number; text: string; groups: Partial<Record<"combat" | "elite", string[]>> };
+type Grace = Item & { id: string; patron: string; slot: string; tier: number; text: string; effects: Effect[] };
 
 const required: Record<string, string[]> = {
   card: ["id", "name", "cost", "target", "effects", "tags"],
   enemy: ["id", "name", "region", "tier", "role", "hp", "intent_visible", "pattern", "pattern_mode"],
   demand: ["id", "patron", "condition", "text", "axis", "polarity", "min_enemies"],
   god: ["id", "name", "tokens", "ops", "rivals", "demands"],
+  map: ["id", "region", "floor", "text", "groups"],
+  grace: ["id", "patron", "slot", "tier", "text", "effects"],
 };
+
+const readData = <T>(name: string): T[] => {
+  try { return JSON.parse(readFileSync(new URL(`../data/${name}`, import.meta.url), "utf8")) as T[]; }
+  catch { return []; }
+};
+/**
+ * 배포된 적과 층 배치. 편성의 세기는 적이 갖고 그 편성이 몇 층에 서는지는 지도가 갖는다 —
+ * 한쪽만 넣고 게이트를 돌려도 밴드가 잴 수 있어야 하므로 gods.json과 같은 자리에서 읽는다
+ */
+const shippedEnemies = readData<Enemy>("enemies.json");
+const shippedSlots = readData<MapSlot>("map.json");
+/** 배포된 은혜. 신의 완화 비율은 카드와 은혜를 같이 봐야 한다 — 한쪽만 넣고 게이트를 돌려도 잴 수 있어야 한다 */
+const shippedGraces = readData<Grace>("graces.json");
+/** 은혜만 id가 tier 셋에 걸쳐 반복된다 — 같은 설계의 세 줄이다. 나머지는 id 하나가 항목 하나다 */
+const itemKey = (item: Item): string => (kindOf(item) === "grace" ? `${item.id}:${item.tier}` : String(item.id));
+const mergeById = <T extends Item>(shipped: T[], candidates: T[]): T[] =>
+  [...new Map([...shipped, ...candidates].map((item) => [itemKey(item), item])).values()];
 
 /** 신의 어휘는 data/gods.json이 정한다 — 게이트가 사본을 들면 데이터가 바뀔 때 조용히 어긋난다 */
 type GodData = { id: string; tokens: string[]; ops: string[]; rivals: string[] };
@@ -64,6 +87,8 @@ function kindOf(item: Item): string {
   if (id.startsWith("card_")) return "card";
   if (id.startsWith("enemy_")) return "enemy";
   if (id.startsWith("demand_")) return "demand";
+  if (id.startsWith("map_")) return "map";
+  if (id.startsWith("grace_")) return "grace";
   if (gods[id]) return "god";
   return "unknown";
 }
@@ -71,14 +96,25 @@ function kindOf(item: Item): string {
 // ponytail: required keys plus the one cross-field rule the schema was buying us (patron XOR patron_pair).
 function schemaFailure(item: Item, kind: string): boolean {
   if (!required[kind] || required[kind].some((key) => item[key] === undefined)) return true;
+  // 키가 있어도 꼴이 틀릴 수 있다. 컨테이너를 먼저 재지 않으면 아래 규칙들이 반려가 아니라 **예외**를
+  // 낸다 — 생성기가 뱉은 `null` 하나로 게이트가 죽으면 그 배치는 판정을 못 받는다
+  if ((kind === "card" || kind === "grace") && !(Array.isArray(item.effects) && item.effects.length > 0)) return true;
+  if (kind === "map" && (typeof item.groups !== "object" || item.groups === null || Array.isArray(item.groups))) return true;
+  if (kind === "grace") {
+    const grace = item as Grace;
+    return !gods[grace.patron]
+      || !(graceSlots as readonly string[]).includes(grace.slot)
+      || !(graceMilestones as readonly number[]).includes(grace.tier)
+      || grace.effects.some((effect) => typeof effect?.op !== "string");
+  }
   if (kind !== "card") return false;
   const card = item as Card;
   return Boolean(card.patron) === Boolean(card.patron_pair)
-    || (card.patron_pair !== undefined && card.patron_pair.length !== 2)
+    // 없는 신을 적은 합성 카드는 `vocabularyUsed`가 `gods[god].ops`로 던진다 — 어휘부터 있어야 한다
+    || (card.patron_pair !== undefined && (!Array.isArray(card.patron_pair) || card.patron_pair.length !== 2 || card.patron_pair.some((god) => !gods[god])))
     || ![0, 1, 2, 3].includes(card.cost)
     || !["self", "enemy", "all_enemies"].includes(card.target)
-    || card.effects.length === 0
-    || card.effects.some(({ op }) => typeof op !== "string");
+    || card.effects.some((effect) => typeof effect?.op !== "string");
 }
 
 function dslFailure(card: Card): boolean {
@@ -106,6 +142,36 @@ function tokenScopeFailure(card: Card): boolean {
   );
 }
 
+/**
+ * 은혜는 카드의 `target`을 탄다 — 자기 `target`을 갖지 않는다. 그래서 **적을 향하는 효과는 `attack`
+ * 슬롯만** 쓸 수 있다: 방어·유틸·토큰 슬롯에는 `target: self` 카드가 각각 30·34·11장 있고, 거기
+ * 붙은 `damage`와 해로운 토큰은 `executeCard`가 **플레이어에게** 돌린다(픽스처 09와 같은 자리다).
+ *
+ * `chain`도 막는다 — `loadCards`가 대상 enemy를 요구하므로 광역 공격 카드에 붙으면 낼 때마다 던진다
+ */
+function graceScopeFailure(grace: Grace): boolean {
+  const vocabulary = gods[grace.patron];
+  return grace.effects.some(({ op, token }) =>
+    !commonOps.includes(op)
+    || (token !== undefined && !vocabulary.tokens.includes(token))
+    || (grace.slot !== "attack" && (op === "damage" || (token !== undefined && (harmfulTokens as ReadonlySet<string>).has(token)))));
+}
+
+/** 은혜를 신의 풀에 얹을 때 쓰는 카드 꼴. 효과값에 슬롯 장수를 곱해 두므로 `expectedValue`가 곧 환산값이다 */
+const graceAsCard = (grace: Grace): Card => {
+  const cards = slotCards[grace.slot] ?? 0;
+  const scale = (amount?: number) => (amount === undefined ? undefined : amount * cards);
+  return {
+    id: grace.id,
+    name: grace.id,
+    patron: grace.patron,
+    cost: 1,
+    target: "enemy",
+    tags: [],
+    effects: grace.effects.map((effect) => ({ ...effect, value: scale(effect.value), stacks: scale(effect.stacks) })),
+  };
+};
+
 function fusionFailure(card: Card): boolean {
   if (!card.patron_pair) return false;
   const sorted = [...card.patron_pair].sort();
@@ -132,13 +198,47 @@ function duplicateFailure(card: Card, existing: Card[]): boolean {
   return existing.some((other) => fingerprint(card) === fingerprint(other) || card.name === other.name);
 }
 
+type StageEffect = Effect & { target: string };
+const stageTargets = ["self", "enemy", "all_enemies"];
+const stageEffects = (god: Item, stage?: string): StageEffect[] =>
+  Object.entries((god.stage_effects ?? {}) as Record<string, { on_encounter_start?: StageEffect[] }>)
+    .flatMap(([name, hook]) => (stage === undefined || name === stage ? hook.on_encounter_start ?? [] : []));
+
 function stageEffectScopeFailure(god: Item): boolean {
   const definition = gods[String(god.id)];
-  const effects = Object.values((god.stage_effects ?? {}) as Record<string, { on_encounter_start?: Effect }>).flatMap((stage) => stage.on_encounter_start ?? []);
-  return effects.some(({ op, token }) =>
+  return stageEffects(god).some(({ op, token, target }) =>
     (!commonOps.includes(op) && !definition.ops.includes(op))
-    || (token !== undefined && !definition.tokens.includes(token)),
+    || (token !== undefined && !definition.tokens.includes(token))
+    // 오타 하나면 `targets()`가 조용히 전 적군으로 읽는다 — 죽은 데이터가 아니라 **다른** 데이터가 된다
+    || !stageTargets.includes(target)
+    // 소모 경로가 적 턴뿐인 토큰을 플레이어에게 붙이면 영원히 안 지워지고 아무 일도 안 한다 (§0의 부채)
+    || (target === "self" && token !== undefined && (enemyOnlyTokens as ReadonlySet<string>).has(token))
+    // 자기에게 향한 피해는 `dealDamage(player, player)`가 되고, 그러면 `deflect`를 태우고 피해는 그대로
+    // 먹는다 — 죽은 개입이 아니라 **뒤집힌** 개입이다. 진노가 때리려면 적 능력을 키우는 쪽을 쓴다
+    || (target === "self" && op === "damage"),
   );
+}
+
+/**
+ * 개입이 플레이어를 돕는 쪽에 떨어졌는가. `tokenWeights`는 「제자리에 붙은 토큰」의 무게라 부호가
+ * 없다 — 적에게 간 이로운 토큰과 나에게 붙은 해로운 토큰은 같은 무게로 **손해**다
+ */
+const helpsPlayer = ({ op, token }: Effect, target: string): boolean => {
+  const self = target === "self";
+  if (op === "apply_token") return self === (selfTokens as ReadonlySet<string>).has(token ?? "");
+  return op === "damage" ? !self : self;
+};
+
+/**
+ * 헌신 개입은 **그 자체로** 순이득이어야 한다. 나쁜 결과는 적 능력과 만났을 때만 나와야 하고,
+ * 효과에 페널티를 섞으면 「신의 변덕」이 아니라 그냥 비용이 된다 — 플레이어는 계산기를 두드리면 끝이다
+ */
+function stageValueFailure(god: Item): boolean {
+  const effects = stageEffects(god, "devotion");
+  if (!effects.length) return false;
+  const value = effects.reduce((sum, effect) => sum
+    + expectedValue({ cost: 1, target: effect.target, effects: [effect], tags: [] }) * (helpsPlayer(effect, effect.target) ? 1 : -1), 0);
+  return value <= 0;
 }
 
 /** 「한 대」의 크기. `guard`가 스택마다 아군 대신 한 대를 받는다 — 배포된 82개 damage 효과의 중앙값 */
@@ -146,41 +246,102 @@ const medianCardDamage = 6;
 /** 적 행동의 대상이 자기편인가. 없으면 피해·토큰은 플레이어를 향한다(`core/combat.ts`의 기본값과 같다) */
 const friendly = (effect: { target?: string }) => effect.target !== undefined && effect.target !== "player";
 
+/**
+ * 세기 환산은 `tools/value.ts`의 `tokenWeights`를 그대로 읽는다 — **두 번째 눈금을 만들지 않는다.**
+ * 다만 자기편에게 붙는 완화 토큰은 흡수량이 곧 체력이라 스택 수를 그대로 쓴다(가중치 2.5는 카드가
+ * 사는 지속 프리미엄이지 흡수량이 아니다). 방어·회복도 플레이어가 더 써야 하는 피해라 같은 쪽이다
+ */
+const effectiveHp = (member: Enemy) => member.hp
+  + member.pattern.reduce((total, effect) => total
+    + (effect.op === "block" || effect.op === "heal" ? effect.value ?? 0 : 0)
+    + (effect.op === "apply_token" && friendly(effect) && mitigationTokens.has(effect.token ?? "") ? effect.stacks ?? 1 : 0), 0)
+  // 반응형 패시브 셋만 실효 체력이다. `angry`·`rally`·`spite`는 플레이어가 무엇을 하느냐에 달려
+  // 보장된 값이 없으므로 세지 않는다 — 세면 조우 밴드가 일어나지 않은 일을 세게 된다
+  + (member.passives?.curl ?? 0)
+  + (member.passives?.shell ?? 0)
+  + (member.passives?.guard ?? 0) * medianCardDamage;
+const intent = (member: Enemy) => member.pattern.reduce((total, effect) => total
+  + (effect.op === "damage" ? (effect.value ?? 0) * (effect.repeat ?? 1) : 0)
+  + (effect.op === "apply_token" && !(friendly(effect) && mitigationTokens.has(effect.token ?? "")) ? (tokenWeights[effect.token ?? ""] ?? 0) * (effect.stacks ?? 1) : 0), 0) / member.pattern.length
+  // ramp는 매 턴 확정으로 쌓이므로 패턴이 아니라 여기에 더한다
+  + (member.passives?.ramp ?? 0) * tokenWeights.frenzy;
+
+type Strength = { hp: number; damage: number; count: number };
+function groupStrength(groupId: string, enemies: Enemy[]): Strength | undefined {
+  const root = enemies.find((enemy) => enemy.groups?.some((group) => group.id === groupId));
+  const group = root?.groups?.find(({ id }) => id === groupId);
+  if (!root || !group) return undefined;
+  const members = [root, ...group.with.map((id) => enemies.find((enemy) => enemy.id === id))];
+  if (members.some((member) => !member)) return undefined;
+  const complete = members as Enemy[];
+  return {
+    hp: complete.reduce((total, member) => total + effectiveHp(member), 0),
+    damage: complete.reduce((total, member) => total + intent(member), 0),
+    count: complete.length,
+  };
+}
+
+const regionBands: Record<string, Record<"hp" | "damage" | "count", [number, number]>> = {
+  underworld: { hp: [40, 90], damage: [8, 14], count: [1, 2] },
+  surface: { hp: [90, 170], damage: [14, 22], count: [2, 3] },
+};
+/** 전투가 서는 층 수. 6층은 보스라 진행 함수 밖이다 */
+const combatFloors = floorsPerRegion - 1;
+/**
+ * 층 진행 함수. 상한이 1층에서 지역 밴드의 절반, 5층에서 상한에 닿는다 — 지역 안에서 선형이다.
+ * 하한은 지역 밴드 그대로다: 배포된 저승 편성이 실효 체력 40~87에 몰려 있어 하한까지 같이 끌면
+ * 2층에 놓을 편성이 하나도 없다. **밴드를 옮기지 않고** 잡을 수 있는 것은 「그 층에 너무 센 편성」이다.
+ * `count`도 기울이지 않는다 — 지역마다 값이 둘뿐이라 다섯 층에 걸친 기울기가 정수로 안 떨어진다
+ */
+const floorCeiling = (band: [number, number], floor: number) =>
+  band[0] + (band[1] - band[0]) * (0.5 + (floor - 1) / (2 * (combatFloors - 1)));
+/** 정예 상한. 하한은 같은 층 `combat` 편성의 실측 최대다 — 「보상이 큰 이유」가 층마다 실제로 있어야 한다 */
+export const eliteScale = 1.3;
+
+/**
+ * 편성이 **지역** 밴드 안에 있는가. 층 진행 상한은 `mapSlotFailure`가 본다 — 두 층이다:
+ * 지역 밴드는 편성 자체의 계약이고 층 상한은 그 편성을 어디에 놓을지의 계약이다
+ */
 function encounterThresholdFailure(enemy: Enemy, enemies: Enemy[]): boolean {
   if (enemy.tier === "boss") return enemy.hp !== (enemy.region === "underworld" ? 130 : 190) || enemy.groups !== undefined;
   if (!enemy.groups?.length) return true;
-  const limits = enemy.region === "underworld"
-    ? { hp: [40, 90], damage: [8, 14], count: [1, 2] }
-    : { hp: [90, 170], damage: [14, 22], count: [2, 3] };
-  /**
-   * 세기 환산은 `tools/value.ts`의 `tokenWeights`를 그대로 읽는다 — **두 번째 눈금을 만들지 않는다.**
-   * 다만 자기편에게 붙는 완화 토큰은 흡수량이 곧 체력이라 스택 수를 그대로 쓴다(가중치 2.5는 카드가
-   * 사는 지속 프리미엄이지 흡수량이 아니다). 방어·회복도 플레이어가 더 써야 하는 피해라 같은 쪽이다
-   */
-  const effectiveHp = (member: Enemy) => member.hp
-    + member.pattern.reduce((total, effect) => total
-      + (effect.op === "block" || effect.op === "heal" ? effect.value ?? 0 : 0)
-      + (effect.op === "apply_token" && friendly(effect) && mitigationTokens.has(effect.token ?? "") ? effect.stacks ?? 1 : 0), 0)
-    // 반응형 패시브 셋만 실효 체력이다. `angry`·`rally`·`spite`는 플레이어가 무엇을 하느냐에 달려
-    // 보장된 값이 없으므로 세지 않는다 — 세면 조우 밴드가 일어나지 않은 일을 세게 된다
-    + (member.passives?.curl ?? 0)
-    + (member.passives?.shell ?? 0)
-    + (member.passives?.guard ?? 0) * medianCardDamage;
-  const intent = (member: Enemy) => member.pattern.reduce((total, effect) => total
-    + (effect.op === "damage" ? (effect.value ?? 0) * (effect.repeat ?? 1) : 0)
-    + (effect.op === "apply_token" && !(friendly(effect) && mitigationTokens.has(effect.token ?? "")) ? (tokenWeights[effect.token ?? ""] ?? 0) * (effect.stacks ?? 1) : 0), 0) / member.pattern.length
-    // ramp는 매 턴 확정으로 쌓이므로 패턴이 아니라 여기에 더한다
-    + (member.passives?.ramp ?? 0) * tokenWeights.frenzy;
-  return enemy.groups.some((group) => {
-    const members = [enemy, ...group.with.map((id) => enemies.find((candidate) => candidate.id === id))];
-    if (members.some((member) => !member)) return true;
-    const complete = members as Enemy[];
-    const hp = complete.reduce((total, member) => total + effectiveHp(member), 0);
-    const damage = complete.reduce((total, member) => total + intent(member), 0);
-    return complete.length < limits.count[0] || complete.length > limits.count[1]
-      || hp < limits.hp[0] || hp > limits.hp[1]
-      || damage < limits.damage[0] || damage > limits.damage[1];
+  const band = regionBands[enemy.region];
+  return enemy.groups.some(({ id }) => {
+    const strength = groupStrength(id, enemies);
+    if (!strength) return true;
+    return (["hp", "damage", "count"] as const).some((key) => strength[key] < band[key][0] || strength[key] > band[key][1]);
   });
+}
+
+function mapSlotFailure(slot: MapSlot, enemies: Enemy[]): FailureKey | undefined {
+  const band = regionBands[slot.region];
+  const { floor, groups } = slot;
+  if (!band || !Number.isInteger(floor) || floor < 1 || floor > floorsPerRegion) return "map_layout";
+  const boss = floor === floorsPerRegion;
+  // 보스 층은 편성을 적지 않는다 — 적의 `tier`가 정한다. 나머지 층은 `combat`이 반드시 있다
+  if (boss !== (Object.keys(groups).length === 0)) return "map_layout";
+  if (!boss && !groups.combat?.length) return "map_layout";
+  /**
+   * 정예는 3층부터(StS의 「6층 아래 금지」를 6층짜리로 축소), 그리고 **5층에는 놓일 수 없다** —
+   * 4층의 정예·휴식과 5층의 휴식 보장이 「이어진 칸 금지」에서 부딧혀 격자가 5층에 정예를 못 놓는다.
+   * 적어 두면 아무도 안 쓰는 데이터가 된다
+   */
+  if (groups.elite?.length && (floor < 3 || floor > floorsPerRegion - 2)) return "map_layout";
+  const strengths = (["combat", "elite"] as const).map((kind) => (groups[kind] ?? []).map((id) => groupStrength(id, enemies)));
+  if (strengths.flat().some((strength) => !strength)) return "map_layout";
+  const [combat, elite] = strengths as [Strength[], Strength[]];
+  const outside = ({ hp, damage, count }: Strength, scale: number) =>
+    hp < band.hp[0] || hp > floorCeiling(band.hp, floor) * scale
+    || damage < band.damage[0] || damage > floorCeiling(band.damage, floor) * scale
+    || count < band.count[0] || count > band.count[1];
+  if (combat.some((strength) => outside(strength, 1))) return "value_outlier";
+  // 정예는 같은 층 `combat` 최대보다 세다 — 둘 다 밀리지 않고 하나는 넘어야 한다
+  const most = (key: "hp" | "damage") => Math.max(...combat.map((strength) => strength[key]));
+  return elite.some((strength) => outside(strength, eliteScale)
+    || strength.hp < most("hp") || strength.damage < most("damage")
+    || (strength.hp === most("hp") && strength.damage === most("damage")))
+    ? "value_outlier"
+    : undefined;
 }
 
 /**
@@ -204,23 +365,36 @@ export function poolStat(pool: Card[]): PoolStat {
 }
 
 const worstBy = (pool: Card[], score: (card: Card) => number) => pool.reduce((left, right) => (score(left) >= score(right) ? left : right));
+/**
+ * 완화 비율에 합산할 은혜의 tier. 한 신이 한 번에 드는 것은 **한 tier 세 줄**이므로 셋을 다 세면
+ * 세 배로 센다 — 가운데를 쓴다
+ */
+const graceRatioTier = 4;
 
-function poolRejects(cards: Card[]): Set<string> {
+function poolRejects(cards: Card[], graces: Grace[]): Set<string> {
   const rejects = new Set<string>();
   for (const god of Object.keys(gods)) {
     // 합성 카드는 밴드가 6~10이고 신이 아니라 조합에 속한다 — 신의 풀에서 뺀다
     let pool = cards.filter((card) => card.patron === god);
+    /**
+     * 은혜도 완화 비율에 들어간다 — P-22의 상한(0.30)이 카드 풀에만 걸려 있으면 신이 완화를 은혜로
+     * 옮겨 통과하면서 더 강해진다(R-22의 아테나가 그 자리였다). 장당 기대값 평균에는 넣지 않는다:
+     * 은혜는 장수가 아니라 슬롯 하나라 평균의 분모가 아니다
+     */
+    let boons = graces.filter((grace) => grace.patron === god && grace.tier === graceRatioTier).map(graceAsCard);
     // 신당 24~33장이다. 10장 미만은 풀이 아니라 후보 묶음이므로 재지 않는다
     if (pool.length < 10) continue;
     // ponytail: 위반을 만든 카드를 하나씩 걷어낸다. O(n²)지만 신당 30장이다
     while (pool.length > 1) {
-      const { ratio, average } = poolStat(pool);
-      const worst = ratio > poolRatioMax ? worstBy(pool, mitigationValue)
+      const { ratio } = poolStat([...pool, ...boons]);
+      const { average } = poolStat(pool);
+      const worst = ratio > poolRatioMax ? worstBy([...pool, ...boons], mitigationValue)
         : average > poolValueMax ? worstBy(pool, expectedValue)
         : undefined;
       if (!worst) break;
       rejects.add(worst.id);
       pool = pool.filter(({ id }) => id !== worst.id);
+      boons = boons.filter(({ id }) => id !== worst.id);
     }
   }
   return rejects;
@@ -245,18 +419,27 @@ function failureFor(item: Item, cards: Card[], demands: Demand[], enemies: Enemy
   }
   if (kind === "demand" && demandFailure(item as Demand, demands)) return "demand_axis";
   if (kind === "god" && stageEffectScopeFailure(item)) return "token_scope";
+  if (kind === "god" && stageValueFailure(item)) return "value_outlier";
   if (kind === "enemy" && passiveFailure(item as Enemy)) return "passive_coverage";
   if (kind === "enemy" && encounterThresholdFailure(item as Enemy, enemies)) return "value_outlier";
+  if (kind === "map") return mapSlotFailure(item as MapSlot, enemies);
+  if (kind === "grace") {
+    const grace = item as Grace;
+    if (graceScopeFailure(grace)) return "token_scope";
+    const [low, high] = graceBand(grace.tier);
+    const value = graceValue(grace.effects, slotCards[grace.slot] ?? 0);
+    if (value < low || value > high) return "value_outlier";
+  }
   return undefined;
 }
 
-export function validateItems(items: Item[], basePool: Card[] = []): { accepted: Item[]; rejected: { id: string; failure: FailureKey }[]; pass_rate: number; by_pairing: Record<string, number>; failure_breakdown: Partial<Record<FailureKey, number>>; pools: Record<string, PoolStat>; passive_coverage: string[] } {
+export function validateItems(items: Item[], basePool: Card[] = []): { accepted: Item[]; rejected: { id: string; failure: FailureKey }[]; pass_rate: number; by_pairing: Record<string, number>; failure_breakdown: Partial<Record<FailureKey, number>>; pools: Record<string, PoolStat>; passive_coverage: string[]; unplaced_groups: string[]; grace_coverage: string[] } {
   const accepted: Item[] = [];
   const rejected: { id: string; failure: FailureKey }[] = [];
   const failure_breakdown: Partial<Record<FailureKey, number>> = {};
   const cards = [...baselineCards];
   const demands = [...baselineDemands, ...items.filter((item) => kindOf(item) === "demand") as Demand[]];
-  const enemies = items.filter((item) => kindOf(item) === "enemy") as Enemy[];
+  const enemies = mergeById(shippedEnemies, items.filter((item) => kindOf(item) === "enemy") as Enemy[]);
 
   for (const item of items) {
     const failure = failureFor(item, cards, demands, enemies);
@@ -269,13 +452,26 @@ export function validateItems(items: Item[], basePool: Card[] = []): { accepted:
     }
   }
   // 풀 규칙은 신 단위라 항목 하나로는 판정이 안 된다 — 개별 통과분을 다 모은 뒤에 잰다
-  const overflow = poolRejects([...basePool, ...accepted.filter((item) => kindOf(item) === "card") as Card[]]);
-  for (const item of [...accepted]) {
-    if (!overflow.has(String(item.id))) continue;
+  const reject = (item: Item, failure: FailureKey) => {
     accepted.splice(accepted.indexOf(item), 1);
-    rejected.push({ id: String(item.id), failure: "pool_ratio" });
-    failure_breakdown.pool_ratio = (failure_breakdown.pool_ratio ?? 0) + 1;
+    rejected.push({ id: String(item.id), failure });
+    failure_breakdown[failure] = (failure_breakdown[failure] ?? 0) + 1;
+  };
+  const overflow = poolRejects([...basePool, ...accepted.filter((item) => kindOf(item) === "card") as Card[]],
+    mergeById(shippedGraces, accepted.filter((item) => kindOf(item) === "grace") as Grace[]));
+  for (const item of [...accepted]) if (overflow.has(String(item.id))) reject(item, "pool_ratio");
+  /**
+   * 층 배치는 편성을 **이름으로** 참조한다. 반려된 적이 지도를 통과시키면 `--apply`가 배포되지 않을
+   * 편성을 가리키는 층을 쓰고, 그 자리는 런타임에서 `encounter()`가 던진다 — `pool_ratio`와 같은
+   * 자리다: 통과분이 다 모인 뒤에 **통과한 적만으로** 다시 잰다
+   */
+  const liveEnemies = mergeById(shippedEnemies, accepted.filter((item) => kindOf(item) === "enemy") as Enemy[]);
+  for (const item of [...accepted]) {
+    if (kindOf(item) !== "map") continue;
+    const failure = mapSlotFailure(item as MapSlot, liveEnemies);
+    if (failure) reject(item, failure);
   }
+  const graces = mergeById(shippedGraces, accepted.filter((item) => kindOf(item) === "grace") as Grace[]);
   const survivors = [...basePool, ...accepted.filter((item) => kindOf(item) === "card") as Card[]];
   const pools = Object.fromEntries(Object.keys(gods)
     .map((god) => [god, survivors.filter((card) => card.patron === god)] as const)
@@ -294,8 +490,25 @@ export function validateItems(items: Item[], basePool: Card[] = []): { accepted:
    * 그 패시브의 훅은 아무도 부르지 않는 코드다(N-06의 사문 셋과 같은 부채)
    */
   const covered = new Set(accepted.filter((item) => kindOf(item) === "enemy").flatMap((item) => Object.keys((item as Enemy).passives ?? {})));
-  const passive_coverage = enemies.length ? passiveNames.filter((name) => !covered.has(name)) : [];
-  return { accepted, rejected, pass_rate: items.length ? accepted.length / items.length : 0, by_pairing, failure_breakdown, pools, passive_coverage };
+  const passive_coverage = items.some((item) => kindOf(item) === "enemy") ? passiveNames.filter((name) => !covered.has(name)) : [];
+  /**
+   * 어느 층에도 놓이지 않은 편성. `encounter()`가 `data/map.json`을 통해서만 편성을 고르므로
+   * 여기 남는 것은 아무도 부르지 않는 데이터다 — `passive_coverage`와 같은 자리라 반려가 아니라 목록이다.
+   * 반려된 층은 놓은 것이 아니다: 세면 배포되지 않을 자리가 커버리지 구멍을 가린다
+   */
+  const placed = new Set(mergeById(shippedSlots, accepted.filter((item) => kindOf(item) === "map") as MapSlot[])
+    .flatMap(({ groups }) => Object.values(groups ?? {}).flat()));
+  const unplaced_groups = enemies.flatMap(({ groups }) => (groups ?? []).map(({ id }) => id)).filter((id) => !placed.has(id));
+  /**
+   * 3택1이 서지 않는 `신:tier`. 후보가 셋보다 적으면 화면이 두 칸짜리 「선택」을 띄운다 —
+   * `passive_coverage`와 같은 자리라 반려가 아니라 목록이다(탓할 항목이 없다). 슬롯 넷이 매 tier마다
+   * 다 찰 필요는 없다: 신당 슬롯 셋이면 그것으로 3택1이 선다
+   */
+  const grace_coverage = items.some((item) => kindOf(item) === "grace")
+    ? Object.keys(gods).flatMap((god) => graceMilestones.flatMap((tier) =>
+      graces.filter((grace) => grace.patron === god && grace.tier === tier).length < 3 ? [`${god}:${tier}`] : []))
+    : [];
+  return { accepted, rejected, pass_rate: items.length ? accepted.length / items.length : 0, by_pairing, failure_breakdown, pools, passive_coverage, unplaced_groups, grace_coverage };
 }
 
 function runCli(args: string[]): void {
@@ -312,15 +525,15 @@ function runCli(args: string[]): void {
   const report = validateItems(items, shipped);
   if (args.includes("--apply")) {
     mkdirSync("data", { recursive: true });
-    for (const kind of ["card", "enemy", "demand", "god"]) {
+    for (const kind of ["card", "enemy", "demand", "god", "map", "grace"]) {
       const accepted = report.accepted.filter((item) => kindOf(item) === kind);
       if (accepted.length === 0) continue;
-      const output = `data/${kind === "demand" ? "demands" : kind === "enemy" ? "enemies" : `${kind}s`}.json`;
+      const output = `data/${kind === "demand" ? "demands" : kind === "enemy" ? "enemies" : kind === "map" ? "map" : `${kind}s`}.json`;
       const existing = (() => {
         try { return JSON.parse(readFileSync(output, "utf8")) as Item[]; }
         catch { return []; }
       })();
-      const merged = new Map([...existing, ...accepted].map((item) => [String(item.id), item]));
+      const merged = new Map([...existing, ...accepted].map((item) => [itemKey(item), item]));
       writeFileSync(output, `${JSON.stringify([...merged.values()], null, 2)}\n`);
     }
   }

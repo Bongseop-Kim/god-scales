@@ -1,0 +1,7 @@
+{
+  "id": "map_underworld_malformed",
+  "region": "underworld",
+  "floor": 3,
+  "text": "편성이 객체가 아닌 층. 게이트가 던지지 않고 반려해야 한다.",
+  "groups": null
+}

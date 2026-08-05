@@ -11,7 +11,7 @@ export function RewardScreen({ seed, decision, onAnswer }: {
   const { options, observation: view } = decision;
 
   return (
-    // 패널이 하나뿐이라 `run-layout`(2열)을 쓰면 오른쪽 607px가 빈 채로 남는다 — 휴식·요구·은총과 같은 1열이다
+    // 패널이 하나뿐이라 `run-layout`(2열)을 쓰면 오른쪽 607px가 빈 채로 남는다 — 휴식·요구·은혜와 같은 1열이다
     <div className="shell">
       <RunHeader seed={seed} view={view} title="전투 보상" badge={`덱 ${view.deck}장`} />
 

@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createInterface } from "node:readline/promises";
 import { stdin, stdout } from "node:process";
-import { run } from "./engine.ts";
+import { run, runSteps } from "./engine.ts";
 import type { ReplayAction, ReplayFile } from "./replay.ts";
 
 const scripted = stdin.isTTY ? [] : readFileSync(0, "utf8").trim().split(/\s+/);
@@ -9,11 +9,30 @@ const terminal = stdin.isTTY ? createInterface({ input: stdin, output: stdout })
 const answer = (prompt: string) => terminal ? terminal.question(prompt) : Promise.resolve(scripted.shift() ?? "");
 const seed = Number(await answer("seed: "));
 if (!Number.isInteger(seed)) throw new Error("seed must be an integer");
+
+/**
+ * 갈래는 이제 격자가 정하므로 물음을 미리 적어 둘 수 없다 — 제너레이터를 돌리며 `path`에서만 묻고
+ * 나머지는 봇 답을 쓴다. 입력은 갈래 번호이고 화면에 그 층의 종류가 같이 뜬다
+ */
 const actions: ReplayAction[] = [];
-for (const label of ["지하 3층", "지하 5층", "지상 3층", "지상 5층"]) {
-  const choice = (await answer(`${label} [c]ombat/[r]est: `)).trim().toLowerCase();
-  if (choice !== "c" && choice !== "r") throw new Error("enter c or r");
-  actions.push({ type: "path", choice: choice === "c" ? "combat" : "rest" });
+const steps = runSteps(seed);
+let step = steps.next();
+while (!step.done) {
+  if (step.value.phase !== "path") {
+    step = steps.next(step.value.bot);
+    continue;
+  }
+  const { options, observation } = step.value;
+  let picked: string | undefined;
+  while (!picked) {
+    const choice = (await answer(`${observation.region} ${observation.floor}층 [${options.join(" / ")}]: `)).trim();
+    picked = options.includes(choice) ? choice : options.find((option) => option.startsWith(`${choice}:`));
+    // 사람이 앉아 있으면 되묻는다 — 오타 하나로 여기까지 걸어온 갈래를 버릴 이유가 없다.
+    // 파이프 입력에는 다시 답할 상대가 없으므로 그대로 던진다
+    if (!picked && !terminal) throw new Error(`enter one of ${options.join(", ")}`);
+  }
+  actions.push({ type: "path", choice: picked });
+  step = steps.next(picked);
 }
 terminal?.close();
 

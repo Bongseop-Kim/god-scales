@@ -1,9 +1,9 @@
 import { restHealing } from "../core/map.ts";
 import type { DemandDecision, GraceDecision, MapDecision, RunView } from "../sim/engine.ts";
-import { CardRow } from "./card.tsx";
+import { CardRow, effectText } from "./card.tsx";
 import { godName, RunHeader } from "./header.tsx";
 
-/** 휴식·은총·요구 셋 다 지도 위의 한 칸짜리 결정이다 — 지도 패널 없이 한 단짜리로 그린다 */
+/** 휴식·은혜·요구 셋 다 지도 위의 한 칸짜리 결정이다 — 지도 패널 없이 한 단짜리로 그린다 */
 function Screen({ seed, view, title, badge, children }: {
   seed: number;
   view: RunView;
@@ -53,6 +53,13 @@ export function RestScreen({ seed, decision, onAnswer }: {
   );
 }
 
+/** 슬롯 이름. 태그가 곧 슬롯이라 카드에 적힌 것과 같은 말이어야 한다 */
+const slotName: Record<string, string> = { attack: "공격", defend: "방어", utility: "유틸", token: "토큰" };
+
+/**
+ * 은혜 3택1. 은혜는 카드가 아니므로 `CardRow`가 아니라 `Choice` 셋이다 — 고르는 것은 「어느 카드에
+ * 붙일까」가 아니라 「어느 슬롯을 어느 신에게 줄까」다. 이미 찬 슬롯이면 **무엇을 밀어내는지** 적는다
+ */
 export function GraceScreen({ seed, decision, onAnswer }: {
   seed: number;
   decision: GraceDecision;
@@ -60,11 +67,19 @@ export function GraceScreen({ seed, decision, onAnswer }: {
 }) {
   const { options, observation: view } = decision;
   return (
-    <Screen seed={seed} view={view} title={`${godName(view.god)}의 은총`} badge={`은총 ${view.milestone}`}>
+    <Screen seed={seed} view={view} title={`${godName(view.god)}의 은혜`} badge={`tier ${view.tier}`}>
       <p className="hint" role="status">
-        {view.milestone === 2 ? "카드 한 장을 강화합니다." : "카드 한 장의 비용을 1 줄입니다."} 덱에 있는 {godName(view.god)}의 카드만 고를 수 있습니다.
+        은혜는 카드 한 장이 아니라 그 슬롯의 모든 카드에 붙습니다. 슬롯당 하나이고, 바꿔도 tier는 남습니다.
       </p>
-      <CardRow cards={view.cards} options={options} onSelect={onAnswer} />
+      {view.offer.map((grace) => (
+        <Choice
+          key={grace.id}
+          mark={slotName[grace.slot] ?? grace.slot}
+          label={`${slotName[grace.slot] ?? grace.slot} 슬롯 · tier ${grace.tier} · 덱 ${grace.cards}장`}
+          detail={`${effectText({ target: "enemy", effects: grace.effects })} — ${grace.text}${grace.replaces ? ` (지금의 「${grace.replaces}」를 밀어냅니다)` : ""}`}
+          onChoose={() => options.includes(grace.id) && onAnswer(grace.id)}
+        />
+      ))}
     </Screen>
   );
 }

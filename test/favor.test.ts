@@ -18,7 +18,8 @@ const state = (): GameState => ({
   seed: 1,
   favor: { zeus: 70, poseidon: 9 },
   grace: {},
-  map: { node: 0, completed: [] },
+  graceSlots: {},
+  map: { depth: 0, lane: 1, grid: [], completed: [] },
   combat: createCombat(1, [], [{ id: "enemy", hp: 10, pattern: [{ damage: 1 }] }]),
 });
 
@@ -40,17 +41,25 @@ describe("favor", () => {
     expect([favorStage(favorBoundaries.devotion), favorStage(favorBoundaries.calm), favorStage(favorBoundaries.anger), favorStage(favorBoundaries.wrath)]).toEqual(["devotion", "calm", "anger", "wrath"]);
   });
 
-  it("applies devotion to enemies and wrath to the player on encounter start", () => {
+  // 개입은 토큰 부여를 넘어 **행동**이다 — 제우스 헌신은 적 하나를 8로 때리고 포세이돈 진노는 내 타격을 적신다
+  it("acts on the board at encounter start, devotion outward and wrath inward", () => {
     const game = state();
     const gods = JSON.parse(readFileSync("data/gods.json", "utf8")) as FavorGod[];
     applyFavorStageEffects(game, gods.filter(({ id }) => id === "zeus" || id === "poseidon"));
-    expect(game.combat.enemies[0].tokens.shock).toBe(1);
-    expect(game.combat.player.tokens.displace).toBe(1);
+    expect(game.combat.enemies[0].hp).toBe(2);
+    expect(game.combat.player.tokens.soaked).toBe(2);
   });
 
   it("rejects foreign tokens in global effects", () => {
     const god = JSON.parse(readFileSync("data/gods.json", "utf8"))[0];
-    god.stage_effects.devotion.on_encounter_start.token = "bleed";
+    god.stage_effects.devotion.on_encounter_start = [{ op: "apply_token", token: "bleed", stacks: 1, target: "all_enemies" }];
     expect(validateItems([god]).rejected[0].failure).toBe("token_scope");
+  });
+
+  // 효과에 박아 넣은 페널티는 신의 변덕이 아니라 비용이다 — 나쁜 결과는 적 능력에서만 나와야 한다
+  it("rejects a devotion intervention that costs the player", () => {
+    const god = JSON.parse(readFileSync("data/gods.json", "utf8"))[0];
+    god.stage_effects.devotion.on_encounter_start = [{ op: "apply_token", token: "shock", stacks: 2, target: "self" }];
+    expect(validateItems([god]).rejected[0].failure).toBe("value_outlier");
   });
 });

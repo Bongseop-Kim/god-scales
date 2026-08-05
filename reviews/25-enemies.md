@@ -152,7 +152,7 @@ spite 0.003 · ramp 0.002 · angry 0.002 · curl 0.001
 | 지상 | 돌격병 · 수호병 · 사제 · 전령 · 방패병 · 광신도 | pressure · attrition · applier · support · guardian · zealot | — · `shell 8` · — · `rally 2` · `guard 2` · — |
 | 보스 | 저승문지기 · 집행자 | boss | `ward 2` |
 
-**강제 사건**은 저승의 `zealot`+`guardian` 조우로 만들었다(`group_under_forcing`). 방어 일변도(`spite`)와 단일 타겟(`guard`)을 동시에 막는다. 배치(4층 고정)는 [P-27](../plans/27-map.md)이 한다.
+**강제 사건**은 저승의 `zealot`+`guardian` 조우로 만들었다(`group_under_forcing`). 방어 일변도(`spite`)와 단일 타겟(`guard`)을 동시에 막는다. 배치(4층 고정)는 [R-27](27-map.md)이 한다.
 
 한 조우에 패시브가 셋 이상 겹치지 않는다. `enemyDefinition`의 죽은 `role === "bulwark"` 분기는 지웠다 — 지상 보스 패턴에 `bulwark` 토큰이 없어 언제나 `undefined`였다.
 

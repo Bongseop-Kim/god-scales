@@ -1,7 +1,7 @@
 import { AnimatePresence, LazyMotion, domAnimation, m, useReducedMotion } from "motion/react";
 import { useRef, useState } from "react";
 import type { CSSProperties, FormEvent, RefObject } from "react";
-import { mapNode } from "../core/map.ts";
+import { bossLane, floorsPerRegion, laneCount, mapSlot, type MapGrid, type MapNodeType } from "../core/map.ts";
 import { runSteps, type Decision, type MapDecision } from "../sim/engine.ts";
 import type { ReplayAction } from "../sim/replay.ts";
 import type { RunResult } from "../sim/report.ts";
@@ -16,14 +16,24 @@ import { TokenLegend } from "./tokens.tsx";
 import "./motion.css";
 import "./style.css";
 
-type PathChoice = "combat" | "rest";
 type Steps = Generator<Decision, RunResult, string>;
 
 /** 화면 전환 애니메이션의 key. 여기 없는 phase는 이름 그대로 자기 화면이다 */
 const screens: Partial<Record<Decision["phase"], string>> = { path: "map", rest_card: "rest", card: "combat", target: "combat" };
 
-/** 갈림길이 열리는 노드. MapPanel의 칸 표시와 "n / 4" 카운터가 같은 목록을 읽는다 */
-const choiceNodes = [2, 4, 8, 10];
+/**
+ * 칸 표시. `omen`만 종류를 감춘다(`?`) — 다키스트 던전 2의 물음표 자리다. 색·간격은 P-26이 가져간다
+ */
+const nodeMark: Record<MapNodeType, string> = { combat: "전", elite: "정", rest: "휴", omen: "?", boss: "보" };
+const laneName = ["왼쪽", "가운데", "오른쪽"];
+const nodeLabel: Record<MapNodeType, string> = { combat: "전투", elite: "정예", rest: "쉼터", omen: "예고", boss: "보스" };
+const nodeDetail: Record<MapNodeType, string> = {
+  combat: "보상을 노리고 위험을 감수합니다.",
+  elite: "더 강한 편성입니다. 보상은 전투와 같습니다.",
+  rest: "체력을 회복하거나 카드를 지웁니다.",
+  omen: "신이 한 번 더 조건을 겁니다. 무엇인지는 들어가야 압니다.",
+  boss: "지역의 끝입니다.",
+};
 const godColors = [
   ["제우스", "#f2c94c"],
   ["포세이돈", "#43b9d6"],
@@ -129,7 +139,7 @@ export function App() {
             />
           )}
           {pending?.phase === "path" && (
-            <MapScreen seed={seed} decision={pending} actions={actions} onChoosePath={answer} />
+            <MapScreen seed={seed} decision={pending} onChoosePath={answer} />
           )}
           {(pending?.phase === "card" || pending?.phase === "target") && (
             <CombatScreen seed={seed} decision={pending} onAnswer={answer} />
@@ -205,63 +215,92 @@ function SetupScreen({
           {soundEnabled ? "소리 켜짐" : "소리 꺼짐"}
         </button>
       </div>
-      <p className="hint">갈림길·카드·대상·보상·휴식·은총·요구를 전부 당신이 고릅니다. 룰 봇이 대신 정하는 것은 없습니다.</p>
+      <p className="hint">갈림길·카드·대상·보상·휴식·은혜·요구를 전부 당신이 고릅니다. 룰 봇이 대신 정하는 것은 없습니다.</p>
     </form>
   );
 }
 
-export function MapScreen({ seed, decision, actions, onChoosePath }: {
+export function MapScreen({ seed, decision, onChoosePath }: {
   seed: number;
   decision: MapDecision;
-  actions: ReplayAction[];
-  onChoosePath: (choice: PathChoice) => void;
+  onChoosePath: (choice: string) => void;
 }) {
   const view = decision.observation;
   return (
     <div className="shell run-layout">
-      <RunHeader seed={seed} view={view} title="경로 선택" badge={`${choiceNodes.indexOf(view.node) + 1} / ${choiceNodes.length}`} />
-      <MapPanel choices={pathChoices(actions)} current={view.node} />
+      <RunHeader seed={seed} view={view} title="경로 선택" badge={`${view.depth + 1} / 12층`} />
+      <MapPanel grid={view.grid} region={view.region} open={{ depth: view.depth, lanes: decision.options.map((option) => Number(option.split(":")[0])) }} />
       <div className="decision-panel">
         <h2>어디로 향할까요?</h2>
-        <PathButton choice="combat" onChoose={onChoosePath} />
-        <PathButton choice="rest" onChoose={onChoosePath} />
+        <p className="hint">{view.text}</p>
+        {decision.options.map((option) => {
+          const [lane, type] = option.split(":") as [string, MapNodeType];
+          return (
+            <button className={`choice ${type}`} type="button" key={option} onClick={() => onChoosePath(option)}>
+              <span>{nodeMark[type]}</span>
+              {/* 같은 종류가 두 갈래에 있으면 이름만으로는 못 가른다 — 갈래를 라벨에 적는다 */}
+              <b>{laneName[Number(lane)]} · {nodeLabel[type]}</b>
+              <small>{nodeDetail[type]}</small>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-function PathButton({ choice, onChoose }: { choice: PathChoice; onChoose: (choice: PathChoice) => void }) {
-  const combat = choice === "combat";
-  return (
-    <button className={`choice ${choice}`} type="button" onClick={() => onChoose(choice)}>
-      <span>{combat ? "전" : "휴"}</span>
-      <b>{combat ? "전투" : "휴식"}</b>
-      <small>{combat ? "보상을 노리고 위험을 감수합니다." : "체력을 회복해 다음 전투를 준비합니다."}</small>
-    </button>
-  );
-}
-
-const pathChoices = (actions: ReplayAction[]) => actions.filter(({ type }) => type === "path").map(({ choice }) => choice);
-
-function MapPanel({ choices, current }: { choices: string[]; current?: number }) {
+/**
+ * 지역 여섯 층 × 세 갈래를 한눈에 깐다 — 슬레이 더 스파이어 방식이다. 그래야 「3층에서 왼쪽으로
+ * 가면 정예를 밟지만 5층 쉼터에 닿는다」가 성립한다. 지나온 지역은 결과 화면에서 둘 다 보인다
+ */
+function MapPanel({ grid, region, open, taken = [] }: {
+  grid: MapGrid;
+  region: string;
+  /** 지금 고를 수 있는 갈래 — 경로 화면에서만 온다 */
+  open?: { depth: number; lanes: number[] };
+  /** `depth` → 지나온 갈래. 결과 화면이 걸어온 길을 여기로 표시한다 */
+  taken?: (number | undefined)[];
+}) {
+  const base = region === "surface" ? floorsPerRegion : 0;
   return (
     <div className="map-panel">
-      <h2>12층 지도</h2>
+      <h2>{regionName(region)} 6층 × 3갈래</h2>
       <ol>
-        {Array.from({ length: 12 }, (_, index) => {
-          const node = mapNode(index);
-          const optionalIndex = choiceNodes.indexOf(index);
-          const chosen = optionalIndex >= 0 ? choices[optionalIndex] : undefined;
-          const symbol = node.options[0] === "boss" ? "보" : chosen === "rest" ? "휴" : "전";
+        {/* 위에서 아래로 6층 → 1층. 오르는 방향과 화면 방향이 같다 */}
+        {Array.from({ length: floorsPerRegion }, (_, index) => {
+          const depth = base + floorsPerRegion - 1 - index;
+          const row = grid[depth] ?? [];
           return (
-            <li className={`map-node${chosen ? ` ${chosen}` : ""}${index === current ? " current" : ""}`} key={index}>
-              <span>{symbol}</span>{regionName(node.region)} {node.floor}층
+            <li key={depth}>
+              <small>{mapSlot(depth).floor}층</small>
+              {Array.from({ length: laneCount }, (_, lane) => {
+                const type = row[lane];
+                const walked = taken[depth] === lane;
+                const openHere = open?.depth === depth && open.lanes.includes(lane);
+                return (
+                  <i className={`map-node${type ? ` ${type}` : " empty"}${walked ? " current" : ""}${openHere ? " open" : ""}`} key={lane}>
+                    {type ? nodeMark[type] : ""}
+                  </i>
+                );
+              })}
             </li>
           );
         })}
       </ol>
     </div>
   );
+}
+
+/**
+ * `pathChoices`는 보스 층을 빼고 순서대로 쌓인다 — 보스는 물을 것이 없어 기록이 없다.
+ * 그래서 깊이를 훑으며 하나씩 꺼내고 보스 층은 `bossLane`으로 채운다
+ */
+function takenLanes(grid: MapGrid, pathChoices: string[], reached: number): (number | undefined)[] {
+  const remaining = [...pathChoices];
+  return Array.from({ length: grid.length }, (_, depth) => {
+    const lane = mapSlot(depth).floor === floorsPerRegion ? bossLane : Number(remaining.shift()?.split(":")[0]);
+    return depth < reached && Number.isInteger(lane) ? lane : undefined;
+  });
 }
 
 function ResultScreen({ seed, actions, result, onReset }: {
@@ -288,7 +327,11 @@ function ResultScreen({ seed, actions, result, onReset }: {
         ))}
       </div>
       <div className="result-columns">
-        <MapPanel choices={result.pathChoices} />
+        <div className="map-columns">
+          {["underworld", "surface"].map((region) => (
+            <MapPanel key={region} grid={result.grid} region={region} taken={takenLanes(result.grid, result.pathChoices, reached)} />
+          ))}
+        </div>
         <div className="combat-log">
           <h2>전투 기록</h2>
           <div className="used-cards">

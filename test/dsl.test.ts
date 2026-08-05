@@ -16,7 +16,8 @@ const state = (): GameState => ({
   seed: 1,
   favor: { zeus: 70, poseidon: 20 },
   grace: {},
-  map: { node: 0, completed: [] },
+  graceSlots: {},
+  map: { depth: 0, lane: 1, grid: [], completed: [] },
   combat: {
     turn: 3,
     energy: 0,

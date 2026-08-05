@@ -5,8 +5,8 @@ import { summarize } from "../sim/report";
 describe("frozen parameter versions", () => {
   it("freezes versions inside the target win and block bands", () => {
     const report = summarize(simulateStratified(2000));
-    expect(report.bot_policy_version).toBe("v4");
-    expect(report.global_param_version).toBe("v3");
+    expect(report.bot_policy_version).toBe("v6");
+    expect(report.global_param_version).toBe("v5");
     expect(report.winRate).toBeGreaterThanOrEqual(0.15);
     expect(report.winRate).toBeLessThanOrEqual(0.7);
     // 재측정 0.812. P-22에서 아테나 완화를 걷어내자 쌓는 방어가 줄어 거의 전부 소모된다.

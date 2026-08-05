@@ -1,0 +1,92 @@
+[
+  {
+    "id": "map_underworld_1",
+    "region": "underworld",
+    "floor": 1,
+    "text": "문이 등 뒤에서 닫혔다. 마른 바람이 아래에서 올라온다.",
+    "groups": { "combat": ["group_under_brute_solo"] }
+  },
+  {
+    "id": "map_underworld_2",
+    "region": "underworld",
+    "floor": 2,
+    "text": "복도가 좁아진다. 무언가 숨을 고르며 기다리는 소리.",
+    "groups": { "combat": ["group_under_pressure_solo", "group_under_brute_solo"] }
+  },
+  {
+    "id": "map_underworld_3",
+    "region": "underworld",
+    "floor": 3,
+    "text": "천장에서 흙이 떨어진다. 앞의 어둠이 셋으로 갈린다.",
+    "groups": { "combat": ["group_under_brute_swarm", "group_under_swarm_brute"] }
+  },
+  {
+    "id": "map_underworld_4",
+    "region": "underworld",
+    "floor": 4,
+    "text": "문이 스스로 닫혔다. 벽에 걸린 방패들이 전부 이쪽을 보고 있다.",
+    "groups": { "combat": ["group_under_forcing", "group_under_zealot_forcing"] }
+  },
+  {
+    "id": "map_underworld_5",
+    "region": "underworld",
+    "floor": 5,
+    "text": "바닥에 오래된 이름들이 새겨져 있다. 마지막 줄은 아직 비어 있다.",
+    "groups": { "combat": ["group_under_pair", "group_under_attrition_pair"] }
+  },
+  {
+    "id": "map_underworld_6",
+    "region": "underworld",
+    "floor": 6,
+    "text": "지하의 끝. 저울 한쪽이 이미 기울어 있다.",
+    "groups": {}
+  },
+  {
+    "id": "map_surface_1",
+    "region": "surface",
+    "floor": 1,
+    "text": "빛이 눈을 찌른다. 지상은 지하보다 조용하지 않다.",
+    "groups": { "combat": ["group_surface_pair", "group_surface_attrition_pair"] }
+  },
+  {
+    "id": "map_surface_2",
+    "region": "surface",
+    "floor": 2,
+    "text": "무너진 신전 사이로 길이 흩어진다. 누군가 이미 지나간 자리.",
+    "groups": { "combat": ["group_surface_trio", "group_surface_applier_trio"] }
+  },
+  {
+    "id": "map_surface_3",
+    "region": "surface",
+    "floor": 3,
+    "text": "돌기둥 그림자가 세 방향으로 눕는다. 어느 쪽도 짧지 않다.",
+    "groups": {
+      "combat": ["group_surface_support_trio"],
+      "elite": ["group_surface_guardian_forcing", "group_surface_applier_forcing"]
+    }
+  },
+  {
+    "id": "map_surface_4",
+    "region": "surface",
+    "floor": 4,
+    "text": "제단에 새 공물이 놓여 있다. 아직 식지 않았다.",
+    "groups": {
+      "combat": ["group_surface_trio", "group_surface_support_trio"],
+      "elite": ["group_surface_zealot_forcing"]
+    }
+  },
+  {
+    "id": "map_surface_5",
+    "region": "surface",
+    "floor": 5,
+    "text": "언덕 위에서 정상이 보인다. 그리고 정상에서도 이쪽이 보인다.",
+    "groups": { "combat": ["group_surface_applier_trio", "group_surface_support_trio"] }
+  },
+  {
+    "id": "map_surface_6",
+    "region": "surface",
+    "floor": 6,
+    "text": "저울이 눈앞에 있다. 두 접시 모두 무겁다.",
+    "groups": {}
+  }
+]

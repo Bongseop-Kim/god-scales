@@ -29,7 +29,7 @@ if (process.argv.includes("--compare")) {
     rival_gap: { rule_bot: gap(rule as { pairing: string; won: boolean }[]), llm_agent: gap(results) },
     agent_fallbacks: results.reduce((sum, result) => sum + result.fallbacks, 0) / (results.reduce((sum, result) => sum + result.decisions, 0) || 1),
     division_of_labor: "에이전트는 전략 층만 근사한다. 전투 층의 체감은 합성 플레이테스트가 답한다.",
-    unavailable_phases: ["요구 선택", "전투 보상", "은총 대상 선택"],
+    unavailable_phases: ["요구 선택", "전투 보상", "은혜 3택1"],
   };
   mkdirSync("reports", { recursive: true });
   writeFileSync("reports/actor-comparison.json", `${JSON.stringify(comparison, null, 2)}\n`);
