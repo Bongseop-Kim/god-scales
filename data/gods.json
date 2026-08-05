@@ -34,7 +34,6 @@
       }
     },
     "demands": [
-      "demand_zeus_solo",
       "demand_zeus_multi"
     ]
   },

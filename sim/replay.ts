@@ -8,7 +8,8 @@ export type ReplayAction =
   | { type: "rest"; choice: "heal" | "remove" }
   | { type: "rest_card"; choice: string }
   | { type: "grace"; choice: string }
-  | { type: "demand"; choice: "accept" | "reject" }
+  /** `"tier1"`(수락) · `"tier2"`(시련) · `"reject"`. `"accept"` 별칭은 남기지 않았다 — R-27이 옛 로그를 아카이브했다 */
+  | { type: "demand"; choice: "tier1" | "tier2" | "reject" }
   /** `choice: ""`는 건너뛰기다. 기록하지 않으면 재생 때 봇이 대신 한 장 집는다 */
   | { type: "reward"; choice: string };
 export type ReplayFile = { seed: number; actions: ReplayAction[]; replay_mode: "action_log" };

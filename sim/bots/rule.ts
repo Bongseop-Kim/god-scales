@@ -3,7 +3,7 @@ import type { Grace, GraceHeld } from "../../core/grace.ts";
 import { floorsPerRegion, type MapGrid } from "../../core/map.ts";
 import type { Card } from "../../core/rules.ts";
 import type { CombatState } from "../../core/state.ts";
-import { demandPenalty } from "../../core/demands.ts";
+import { demandPenalty, type DemandOffer } from "../../core/demands.ts";
 import { favorBoundaries, favorInitial } from "../../core/favor.ts";
 import { expectedValue, graceValue, powerTurns, tokenWeights } from "../../tools/value.ts";
 
@@ -12,8 +12,9 @@ import { expectedValue, graceValue, powerTurns, tokenWeights } from "../../tools
  * 같은 결정을 낼 수가 없다 — 이때만 판을 올린다. v4는 토큰 값을 게이트 표에서 읽고 요구 답이 조건
  * 판정을 전제로 바뀐 판이었고, P-31의 파워 배수는 옛 입력에서 한 자리도 다르지 않아 v4를 유지했다
  * v6: 은총이 「카드 한 장 고르기」에서 「은혜 슬롯 3택1」이 됐다(P-28) — 고르는 것 자체가 다르다
+ * v7: 요구 답이 둘에서 셋이 됐다(P-29) — `chooseDemandAnswer`의 입력과 반환이 통째로 다르다
  */
-export const botPolicyVersion = "v6";
+export const botPolicyVersion = "v7";
 
 /**
  * 확률 ε로 합법수를 무작위로 고른다. 실력을 낮춘 두 번째 열(`승률(ε)`)을 만들어 조합마다 결정이
@@ -162,9 +163,30 @@ export function chooseGrace(offer: Grace[], held: GraceHeld, slotCards: Record<s
   return [...offer].sort((left, right) => gain(right) - gain(left) || (left.id < right.id ? -1 : 1))[0]?.id;
 }
 
-/** 거절에 벌금은 없다. 그러니 상대를 진노로 떨어뜨릴 때만 거절하고, 그 밖에는 받는다 */
-export function chooseDemandAnswer(favor: Record<string, number>, patron: string, other: string): "accept" | "reject" {
-  return (favor[other] ?? favorInitial) + demandPenalty(patron, other).amount >= favorBoundaries.anger ? "accept" : "reject";
+/**
+ * 답이 셋이다. 선불 대가가 붙은 뒤로 문제가 「받을까 말까」가 아니라 **값을 치를까**로 바뀌었다.
+ *
+ * - **대가가 붙은 단(시련)은 체력만 본다.** 보상이 은혜고, P-28 실측으로 은혜는 호의 어떤 값보다 크다
+ *   (은혜 효과만 끄면 승률 0.563 → 0.294). 그래서 상대 신이 진노로 떨어지는 것을 **감수한다** —
+ *   R-30이 「봇이 분노 문턱에서 구조적으로 거절한다」고 적은 그 규칙은 보상이 +12뿐일 때 옳았다.
+ *   문턱은 `choosePath`·`chooseRest`와 같은 「반피」다: 다치면 살아남는 것에 취향이 없다
+ * - **대가가 없는 단(수락)에는 옛 규칙이 그대로 남는다.** 거기 보상은 여전히 호의뿐이라 벌금 −18을
+ *   무릅쓸 이유가 없다
+ *
+ * 통과한 가장 비싼 단을 고르고, 없으면 거절이다 — 거절에는 여전히 벌금이 없다
+ */
+export function chooseDemandAnswer(
+  offers: DemandOffer[],
+  favor: Record<string, number>,
+  patron: string,
+  other: string,
+  hp: number,
+  maxHp: number,
+): string {
+  const affordable = ({ cost }: DemandOffer) => cost
+    ? hp - (cost.maxHp ?? 0) >= maxHp * 0.5
+    : (favor[other] ?? favorInitial) + demandPenalty(patron, other).amount >= favorBoundaries.anger;
+  return [...offers].reverse().find(affordable)?.action ?? "reject";
 }
 
 export function chooseCard(

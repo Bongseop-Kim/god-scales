@@ -1,7 +1,7 @@
 [
   {
     "id": "enemy_under_pressure",
-    "name": "저승의 추격자",
+    "name": "복수의 에리니스",
     "region": "underworld",
     "tier": "normal",
     "role": "pressure",
@@ -21,7 +21,7 @@
   },
   {
     "id": "enemy_under_attrition",
-    "name": "망각의 파수꾼",
+    "name": "레테의 익사자",
     "region": "underworld",
     "tier": "normal",
     "role": "attrition",
@@ -39,7 +39,7 @@
   },
   {
     "id": "enemy_under_brute",
-    "name": "저승의 광포자",
+    "name": "시체먹는 에우리노모스",
     "region": "underworld",
     "tier": "normal",
     "role": "brute",
@@ -58,7 +58,7 @@
   },
   {
     "id": "enemy_under_swarm",
-    "name": "재의 무리",
+    "name": "스키아이 떼",
     "region": "underworld",
     "tier": "normal",
     "role": "swarm",
@@ -75,7 +75,7 @@
   },
   {
     "id": "enemy_under_guardian",
-    "name": "저승의 방패병",
+    "name": "스파르토이 방패병",
     "region": "underworld",
     "tier": "normal",
     "role": "guardian",
@@ -93,7 +93,7 @@
   },
   {
     "id": "enemy_under_zealot",
-    "name": "저승의 광신도",
+    "name": "마르시아스의 고행자",
     "region": "underworld",
     "tier": "normal",
     "role": "zealot",
@@ -110,7 +110,7 @@
   },
   {
     "id": "enemy_under_boss",
-    "name": "저승문지기",
+    "name": "케르베로스",
     "region": "underworld",
     "tier": "boss",
     "role": "boss",
@@ -125,7 +125,7 @@
   },
   {
     "id": "enemy_surface_pressure",
-    "name": "지상의 돌격병",
+    "name": "켄타우로스 습격자",
     "region": "surface",
     "tier": "normal",
     "role": "pressure",
@@ -144,7 +144,7 @@
   },
   {
     "id": "enemy_surface_attrition",
-    "name": "지상의 수호병",
+    "name": "사자 가죽의 파수병",
     "region": "surface",
     "tier": "normal",
     "role": "attrition",
@@ -162,7 +162,7 @@
   },
   {
     "id": "enemy_surface_applier",
-    "name": "지상의 사제",
+    "name": "델포이의 무녀",
     "region": "surface",
     "tier": "normal",
     "role": "applier",
@@ -181,7 +181,7 @@
   },
   {
     "id": "enemy_surface_support",
-    "name": "올림포스의 전령",
+    "name": "타락한 니케",
     "region": "surface",
     "tier": "normal",
     "role": "support",
@@ -199,7 +199,7 @@
   },
   {
     "id": "enemy_surface_guardian",
-    "name": "지상의 방패병",
+    "name": "청동 탈로스 파편",
     "region": "surface",
     "tier": "normal",
     "role": "guardian",
@@ -217,7 +217,7 @@
   },
   {
     "id": "enemy_surface_zealot",
-    "name": "올림포스의 광신도",
+    "name": "마이나스",
     "region": "surface",
     "tier": "normal",
     "role": "zealot",
@@ -233,7 +233,7 @@
   },
   {
     "id": "enemy_surface_boss",
-    "name": "올림포스의 집행자",
+    "name": "잠들지 않는 아르고스",
     "region": "surface",
     "tier": "boss",
     "role": "boss",

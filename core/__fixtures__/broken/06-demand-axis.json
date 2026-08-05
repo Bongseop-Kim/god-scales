@@ -1,9 +1,20 @@
 {
   "id": "demand_broken_ares_axis",
   "patron": "ares",
-  "condition": "turns >= 4",
-  "text": "네 턴 안에 끝내라.",
   "axis": "turn_economy",
   "polarity": "+",
-  "min_enemies": 1
+  "min_enemies": 1,
+  "tiers": [
+    {
+      "text": "네 턴은 끌어라.",
+      "condition": "turns >= 4",
+      "reward": { "favor": 12 }
+    },
+    {
+      "text": "여덟 턴이다.",
+      "condition": "turns >= 8",
+      "cost": { "favor": 18, "maxHp": 8, "encounters": 2 },
+      "reward": { "grace": 1 }
+    }
+  ]
 }

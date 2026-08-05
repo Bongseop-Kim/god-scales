@@ -63,6 +63,59 @@ describe("browser replay export", () => {
     expect(seen).toEqual(new Set(Object.keys(screens)));
   });
 
+  /**
+   * HUD가 그리는 넷을 한 번에 잡는다 — 진영색(채움/외곽), 지속, 파워 스택, 우호도 단계.
+   * 관측을 손으로 짜는 이유는 토큰 셋·파워 둘·진노가 같이 선 턴이 실제 런에서는 드물어서다
+   */
+  it("draws token faction, duration, powers, and favor stages on the combat screen", () => {
+    const decision = {
+      phase: "card",
+      options: ["card_zeus_bolt"],
+      bot: "card_zeus_bolt",
+      observation: {
+        depth: 3, lane: 1, region: "underworld", floor: 4, hp: 44, maxHp: 92,
+        patrons: ["zeus", "athena"], grid: [],
+        // 제우스는 진노(0), 아테나는 헌신(70) — 경계는 core/favor.ts의 favorBoundaries가 정한다
+        favor: { zeus: 4, athena: 72 }, grace: { athena: 3 },
+        turn: 5, block: 6, energy: 3, draw: 4,
+        tokens: { crit: 1, bleed: 2, thorns: 3 },
+        hand: [],
+        powers: [
+          { trigger: "turn_start", card: { id: "p", name: "광란의 문", cost: 1, target: "self", effects: [{ op: "apply_token", token: "frenzy", stacks: 1 }] } },
+          { trigger: "turn_start", card: { id: "p", name: "광란의 문", cost: 1, target: "self", effects: [{ op: "apply_token", token: "frenzy", stacks: 1 }] } },
+        ],
+        enemies: [{
+          id: "enemy_under_guardian", hp: 20, maxHp: 30, block: 4,
+          tokens: { shock: 2 }, passives: { guard: 2 },
+          intent: { damage: 9, token: "soaked", stacks: 1 },
+        }],
+        hits: [], hitSeq: 0,
+      },
+    } as never;
+    const markup = renderToStaticMarkup(createElement(CombatScreen, { seed: 1, decision, onAnswer: () => {} }));
+
+    // 진영은 색과 채움 둘로 간다 — 이로운 치명은 외곽, 해로운 출혈은 채움이다
+    expect(markup).toContain("token-badge boon consume");
+    expect(markup).toContain("token-badge harmful consume");
+    // 지속 셋: 가시는 전투 내내, 감전은 이번 턴
+    expect(markup).toContain("token-badge boon combat");
+    expect(markup).toContain("token-badge harmful turn");
+    // 툴팁은 한글 이름 + 효과 한 줄이다 — 영문 id가 화면에 남아 있으면 안 된다
+    expect(markup).toContain("가시 — 맞을 때마다 스택만큼 반격 · 전투 내내");
+    expect(markup).not.toContain("soaked");
+    // 복합 의도가 「대기」로 뭉개지지 않고 토큰도 한글이다
+    expect(markup).toContain("공격 9 + 침수 1");
+    // 파워는 스택을 센다 — 두 장 낸 것이 화면에 서야 한다
+    expect(markup).toContain("광란의 문");
+    expect(markup).toContain("×2");
+    // 우호도 둘 상시 + 진노 경고 + 그 단계의 개입, 경계는 favorBoundaries에서
+    expect(markup).toContain("favor wrath");
+    expect(markup).toContain("favor devotion");
+    expect(markup).toContain("진노 · 조우 시작에 나에게 감전 2");
+    expect(markup).toContain("헌신 70 / 평온 30 / 분노 10");
+    expect(markup).toContain("은총 3");
+  });
+
   it("renders the setup screen through React", () => {
     const markup = renderToStaticMarkup(createElement(App));
 
@@ -96,7 +149,7 @@ describe("browser replay export", () => {
       const { phase, options, bot } = decision;
       if (phase === "path") return pickPath(decision, "rest");
       if (phase === "rest") return "remove";
-      if (phase === "demand") return "accept";
+      if (phase === "demand") return "tier1";
       if (phase !== "card" || diverged) return bot;
       const other = options.find((option) => option !== bot && option !== endTurnAction);
       diverged = Boolean(other);

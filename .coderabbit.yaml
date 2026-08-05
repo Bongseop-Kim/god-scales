@@ -11,3 +11,4 @@ reviews:
     - "!prompts/**"
     - "!logs/**"
     - "!package-lock.json"
+    - "!art/**"

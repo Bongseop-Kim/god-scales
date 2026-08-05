@@ -4,7 +4,7 @@ import type { ActorState, GameState } from "./state.ts";
 export const favorInitial = 50;
 export const favorDecayPerEncounter = -3;
 export const favorNeglectPenalty = -2;
-export const demandReward = 12;
+/** 요구 보상은 이제 단마다 다르다 — `data/demands.json`의 `tiers[].reward`가 든다 (P-29) */
 export const rivalDemandPenalty = -18;
 export const nonRivalDemandPenalty = -9;
 export const favorBoundaries = { devotion: 70, calm: 30, anger: 10, wrath: 0 } as const;
@@ -13,8 +13,10 @@ export const favorBoundaries = { devotion: 70, calm: 30, anger: 10, wrath: 0 } a
  * v4: 헌신 개입 다섯(토큰 부여 → 행동), 포세이돈 진노 displace → soaked, 요구를 모든 조우 앞에
  * v5: 은혜가 슬롯에 붙는다(P-28) — 마일스톤 강화·비용 감소와 `grace >= 4` 오라 +1을 지웠고,
  *     합성 게이트가 호의 문턱에서 은혜 보유로 바뀌었다
+ * v6: 요구가 2단이다(P-29) — `demandReward` 정액이 단별 보상으로 갔고, 시련 단은 선불 대가
+ *     (상대 신 호의 −18 즉시 · 최대 체력 −8을 조우 2회)를 받고 은혜 하나를 준다
  */
-export const globalParamVersion = "v5";
+export const globalParamVersion = "v6";
 
 export type FavorStage = keyof typeof favorBoundaries;
 export type FavorUses = Record<string, number>;

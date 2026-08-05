@@ -1,0 +1,163 @@
+{
+  "ok": true,
+  "engine": "component-row",
+  "kind": "sprite-gen-inspect-report",
+  "run_dir": "/Users/gimbongseob/git/god-scales/art/_src/sprite-runs/enemy_god_artemis",
+  "states": [
+    "idle",
+    "attack",
+    "hit",
+    "death"
+  ],
+  "thresholds": {
+    "histogram_min": 0.0,
+    "dhash_min": 0.55,
+    "motion_min": 0.01
+  },
+  "rows": [
+    {
+      "state": "idle",
+      "source": "frames",
+      "expected_frames": 4,
+      "found_frames": 4,
+      "natural_pose_count": 4,
+      "frame_files": [
+        "frames/idle/frame-0.png",
+        "frames/idle/frame-1.png",
+        "frames/idle/frame-2.png",
+        "frames/idle/frame-3.png"
+      ],
+      "metrics": {
+        "histogram_intersection": {
+          "min": 0.8878545139640616,
+          "mean": 0.9257386916734374
+        },
+        "dhash_similarity": {
+          "min": 0.96875,
+          "mean": 0.9765625
+        },
+        "motion_presence": 0.021135716656454247,
+        "centroid_sigma": {
+          "x": 0.7242398755132762,
+          "y": 2.473672446459189
+        }
+      },
+      "ok": true,
+      "errors": [],
+      "warnings": [
+        "idle: pitch disagreement — detect 1.00x1.00 (uniformity 194.5) vs runlen 2.84x2.48 (37.5); detect kept. large gap usually means the raw was drawn finer than the cell contract — reroll with a block-count hint",
+        "idle: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:432x688, 1:394x682, 2:416x680, 3:409x674"
+      ]
+    },
+    {
+      "state": "attack",
+      "source": "frames",
+      "expected_frames": 2,
+      "found_frames": 2,
+      "natural_pose_count": 2,
+      "frame_files": [
+        "frames/attack/frame-0.png",
+        "frames/attack/frame-1.png"
+      ],
+      "metrics": {
+        "histogram_intersection": {
+          "min": 0.9005031650706055,
+          "mean": 0.9005031650706055
+        },
+        "dhash_similarity": {
+          "min": 0.875,
+          "mean": 0.875
+        },
+        "motion_presence": 0.054266955805759805,
+        "centroid_sigma": {
+          "x": 0.6910133636314484,
+          "y": 2.2669480062760385
+        }
+      },
+      "ok": true,
+      "errors": [],
+      "warnings": [
+        "attack: pitch disagreement — detect 1.00x1.00 (uniformity 190.2) vs runlen 3.90x3.87 (42.3); detect kept. large gap usually means the raw was drawn finer than the cell contract — reroll with a block-count hint",
+        "attack: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:632x797, 1:594x806"
+      ]
+    },
+    {
+      "state": "hit",
+      "source": "frames",
+      "expected_frames": 1,
+      "found_frames": 1,
+      "natural_pose_count": 1,
+      "frame_files": [
+        "frames/hit/frame-0.png"
+      ],
+      "metrics": {
+        "histogram_intersection": {
+          "min": 1.0,
+          "mean": 1.0
+        },
+        "dhash_similarity": {
+          "min": 1.0,
+          "mean": 1.0
+        },
+        "motion_presence": 0.0,
+        "centroid_sigma": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "ok": true,
+      "errors": [],
+      "warnings": [
+        "hit: pitch disagreement — detect 1.00x1.00 (uniformity 193.9) vs runlen 3.85x3.81 (40.3); detect kept. large gap usually means the raw was drawn finer than the cell contract — reroll with a block-count hint",
+        "hit: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:637x722",
+        "hit: motion presence is too low (0.0000 < 0.0100)"
+      ]
+    },
+    {
+      "state": "death",
+      "source": "frames",
+      "expected_frames": 2,
+      "found_frames": 2,
+      "natural_pose_count": 2,
+      "frame_files": [
+        "frames/death/frame-0.png",
+        "frames/death/frame-1.png"
+      ],
+      "metrics": {
+        "histogram_intersection": {
+          "min": 0.9082697711762344,
+          "mean": 0.9082697711762344
+        },
+        "dhash_similarity": {
+          "min": 0.765625,
+          "mean": 0.765625
+        },
+        "motion_presence": 0.10023935355392156,
+        "centroid_sigma": {
+          "x": 15.446273250367987,
+          "y": 13.354342298942854
+        }
+      },
+      "ok": true,
+      "errors": [],
+      "warnings": [
+        "death: pitch disagreement — detect 1.00x1.00 (uniformity 189.8) vs runlen 3.94x3.93 (40.2); detect kept. large gap usually means the raw was drawn finer than the cell contract — reroll with a block-count hint",
+        "death: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:759x492, 1:845x274",
+        "death: frame 01 has 32 non-transparent edge pixels"
+      ]
+    }
+  ],
+  "errors": [],
+  "warnings": [
+    "idle: pitch disagreement — detect 1.00x1.00 (uniformity 194.5) vs runlen 2.84x2.48 (37.5); detect kept. large gap usually means the raw was drawn finer than the cell contract — reroll with a block-count hint",
+    "idle: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:432x688, 1:394x682, 2:416x680, 3:409x674",
+    "attack: pitch disagreement — detect 1.00x1.00 (uniformity 190.2) vs runlen 3.90x3.87 (42.3); detect kept. large gap usually means the raw was drawn finer than the cell contract — reroll with a block-count hint",
+    "attack: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:632x797, 1:594x806",
+    "hit: pitch disagreement — detect 1.00x1.00 (uniformity 193.9) vs runlen 3.85x3.81 (40.3); detect kept. large gap usually means the raw was drawn finer than the cell contract — reroll with a block-count hint",
+    "hit: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:637x722",
+    "hit: motion presence is too low (0.0000 < 0.0100)",
+    "death: pitch disagreement — detect 1.00x1.00 (uniformity 189.8) vs runlen 3.94x3.93 (40.2); detect kept. large gap usually means the raw was drawn finer than the cell contract — reroll with a block-count hint",
+    "death: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:759x492, 1:845x274",
+    "death: frame 01 has 32 non-transparent edge pixels"
+  ]
+}

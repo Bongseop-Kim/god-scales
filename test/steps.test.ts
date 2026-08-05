@@ -28,7 +28,8 @@ describe("steppable engine", () => {
      * 사본이 된다. 지도 관측이 이미 덱을 그대로 실어 오므로 마지막 것을 든다
      */
     let deck: string[] = [];
-    const steps = runSteps(5);
+    // 시드 5 → 1: P-29의 시련 대가가 호의를 깎아 5가 은혜 앞에서 끝났다. 시련이 은혜를 주는 자리도 여기다
+    const steps = runSteps(1);
     let step = steps.next();
     while (!step.done && step.value.phase !== "grace") {
       // 보상은 지도 관측 **뒤에** 덱을 늘린다 — 그 사이에 집은 카드를 얹어야 은혜 화면과 같은 덱이다
