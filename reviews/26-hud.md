@@ -1,6 +1,6 @@
 # R-26 · 토큰·우호도 HUD
 
-[색인](00-index.md) · 계획 `plans/26-hud.md`(삭제됨) · [◀ R-29](29-quest.md) · 다음 계획 [P-32](../plans/32-art.md) · [P-33](../plans/33-icons.md)
+[색인](00-index.md) · 계획 `plans/26-hud.md`(삭제됨) · [◀ R-29](29-quest.md) · 다음 계획 [P-32](../plans/32-art.md) · [R-33](33-icons.md)
 
 ## 결론
 

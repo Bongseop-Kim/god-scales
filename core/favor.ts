@@ -1,3 +1,4 @@
+import { queueEnemy } from "./combat.ts";
 import { addToken, dealDamage, type Effect } from "./rules.ts";
 import type { ActorState, GameState } from "./state.ts";
 
@@ -15,8 +16,10 @@ export const favorBoundaries = { devotion: 70, calm: 30, anger: 10, wrath: 0 } a
  *     합성 게이트가 호의 문턱에서 은혜 보유로 바뀌었다
  * v6: 요구가 2단이다(P-29) — `demandReward` 정액이 단별 보상으로 갔고, 시련 단은 선불 대가
  *     (상대 신 호의 −18 즉시 · 최대 체력 −8을 조우 2회)를 받고 은혜 하나를 준다
+ * v7: 판에 칸이 넷 생겼다(P-35) — 카드 25장에 사거리가 붙고 `guard` 재지정이 사거리를 못 넘으며,
+ *     진노가 신을 적으로 큐에 넣어 빈 칸에 세운다
  */
-export const globalParamVersion = "v6";
+export const globalParamVersion = "v7";
 
 export type FavorStage = keyof typeof favorBoundaries;
 export type FavorUses = Record<string, number>;
@@ -48,6 +51,11 @@ export type StageHook = "on_encounter_start" | "on_turn_start";
 export const interventionEveryTurns = 3;
 export const intervenesOnTurn = (turn: number): boolean => turn % interventionEveryTurns === 2;
 export type FavorGod = { id: string; stage_effects: Partial<Record<FavorStage, Partial<Record<StageHook, StageEffect[]>>>> };
+/**
+ * 진노가 부르는 신 적의 id. 스프라이트도 같은 이름을 쓴다(`art/sprites/enemy_god_zeus.webp`) —
+ * 게이트가 `join`마다 이 id의 `tier: "god"` 적이 배포됐는지 본다
+ */
+export const godEnemyId = (god: string): string => `enemy_god_${god}`;
 
 export function favorStage(value: number): FavorStage {
   if (value >= favorBoundaries.devotion) return "devotion";
@@ -105,6 +113,15 @@ export function applyFavorStageEffects(state: GameState, definitions: FavorGod[]
   for (const god of definitions) {
     const stage = favorStage(state.favor[god.id] ?? favorInitial);
     for (const effect of god.stage_effects[stage]?.[hook] ?? []) {
+      /**
+       * 합류는 **큐에만** 넣는다 — 즉시 세우면 4칸이 꽉 찬 조우에서 갈 곳이 없고, 카드 실행 중
+       * 배열이 바뀌는 자리를 하나 더 만든다. 입장은 `admitPending` 하나가 한다
+       */
+      if (effect.op === "join") {
+        if (!effect.god) throw new Error(`${god.id} ${stage} ${hook}: join requires god`);
+        queueEnemy(state.combat, godEnemyId(effect.god));
+        continue;
+      }
       for (const actor of targets(state, effect.target)) {
         if (effect.op === "damage") dealDamage(state.combat.player, actor, effect.value ?? 0);
         else if (effect.op === "block") actor.block += effect.value ?? 0;

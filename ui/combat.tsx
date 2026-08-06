@@ -1,12 +1,28 @@
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
-import type { EnemyAction } from "../core/combat.ts";
-import { favorBoundaries, favorInitial, favorStage, interventionEveryTurns, type FavorStage } from "../core/favor.ts";
+import { useEffect, useRef } from "react";
+import { MAX_SLOTS, type EnemyAction } from "../core/combat.ts";
+import { favorBoundaries, favorInitial, favorStage, intervenesOnTurn, interventionEveryTurns, type FavorStage } from "../core/favor.ts";
+import { floorsPerRegion } from "../core/map.ts";
 import type { PassiveName, Trigger } from "../core/state.ts";
 import enemyDataJson from "../data/enemies.json" with { type: "json" };
 import { endTurnAction, type CombatDecision, type CombatObservation } from "../sim/engine.ts";
-import { cardCaption, effectText, GameCard } from "./card.tsx";
+import { tagParticle } from "./art-keys.ts";
+import { Backdrop, backdropArt } from "./backdrop.tsx";
+import { cardCaption, cardTagOf, effectText, GameCard } from "./card.tsx";
+import { playSprite } from "./fx.ts";
 import { godName, godStageText, RunHeader } from "./header.tsx";
+import { Icon, type IconName } from "./icon.tsx";
 import { tokenName, tokenSummary, TokenRow } from "./tokens.tsx";
+
+const spriteArt = import.meta.glob<string>("../art/sprites/*.webp", { eager: true, query: "?url", import: "default" });
+const fxArt = import.meta.glob<string>("../art/fx/*.webp", { eager: true, query: "?url", import: "default" });
+const godArt = import.meta.glob<string>("../art/gods/*.webp", { eager: true, query: "?url", import: "default" });
+const particleArt = import.meta.glob<string>("../art/particle/*.webp", { eager: true, query: "?url", import: "default" });
+/**
+ * 개입 컷인. **오버레이 셋이 단계 넷을 덮는다** — `open`은 헌신(길이 열린다), `block`은 진노(길이 막힌다),
+ * `burst`는 그 사이 둘이다(`art/fx/*.md`). 진노는 조우 시작에만 신 일러가 대신 선다
+ */
+const stageCut: Record<FavorStage, string> = { devotion: "open", calm: "burst", anger: "burst", wrath: "block" };
 
 type EnemyInfo = { id: string; name: string; intent_visible: boolean };
 const enemyInfo = new Map((enemyDataJson as EnemyInfo[]).map((enemy) => [enemy.id, enemy]));
@@ -54,6 +70,22 @@ function intentLabel(action?: EnemyAction): string {
   return parts.length ? parts.join(" + ") : "대기";
 }
 
+/**
+ * 의도 아이콘은 **맨 앞 하나**다. 복합 행동은 `intentLabel`이 이미 「공격 9 + 침수 1」로 다 적으므로
+ * 조각마다 아이콘을 붙이면 16px 넷이 한 줄에서 문장을 밀어낸다 — 순서는 `intentLabel`의 조각 순서와 같다.
+ * 의도를 감추는 적은 `omen`을 쓴다: 지도의 「무엇인지는 들어가야 압니다」와 같은 뜻이다
+ */
+const intentIcon = (action?: EnemyAction): IconName =>
+  action?.damage ? "damage" : action?.block ? "block" : action?.heal ? "heal" : action?.token ? "token" : "idle";
+
+/** 칸 넷. **0이 앞**(병사와 가까운 쪽)이고 3이 뒤다 */
+const slots = Array.from({ length: MAX_SLOTS }, (_, slot) => slot);
+/**
+ * 칸 이름. 그림에서는 위아래 순서가 앞뒤를 말하지만 **스크린 리더에는 순서가 없다** — 그래서
+ * 배지가 아니라 `aria-label`이 칸 번호를 들고, 양 끝만 앞·뒤를 덧붙인다
+ */
+const slotLabel = (slot: number) => `칸 ${slot}${slot === 0 ? " 앞" : slot === MAX_SLOTS - 1 ? " 뒤" : ""}`;
+
 export function CombatScreen({ seed, decision, onAnswer }: {
   seed: number;
   decision: CombatDecision;
@@ -63,36 +95,74 @@ export function CombatScreen({ seed, decision, onAnswer }: {
   const { phase, options, observation: view } = decision;
   const targeting = phase === "target";
   const transition = reducedMotion ? { duration: 0 } : pop;
+  const enemySide = useRef<HTMLDivElement>(null);
+  const playerSide = useRef<HTMLDivElement>(null);
+
+  /**
+   * 조우 시작(1턴)과 개입 턴(2·5·8턴, `intervenesOnTurn`)에 컷인이 뜬다. 그 두 자리가 신이 실제로
+   * 판을 흔드는 자리다(`core/favor.ts`의 `on_encounter_start`·`on_turn_start`) — 화면에 아무 표시가
+   * 없으면 체력이 왜 깎였는지 플레이어가 모른다
+   */
+  useEffect(() => {
+    const start = view.turn === 1;
+    if (reducedMotion || (!start && !intervenesOnTurn(view.turn))) return;
+    for (const god of view.patrons) {
+      const stage = favorStage(view.favor[god] ?? favorInitial);
+      // 조우 시작에는 극단 둘만 선다 — 평온·분노까지 띄우면 전투마다 컷인이 셋이다
+      if (start && stage !== "devotion" && stage !== "wrath") continue;
+      const source = start && stage === "wrath" ? godArt[`../art/gods/${god}.webp`] : fxArt[`../art/fx/${stageCut[stage]}.webp`];
+      if (source) void playSprite(document.body, source, "cut");
+    }
+  }, [view.turn]);
+
+  /** 카드가 손을 떠날 때 태그 파티클 한 장. 자기 대상이면 내 쪽, 아니면 적 쪽에서 튄다 */
+  const answer = (choice: string) => {
+    const card = view.hand.find(({ id }) => id === choice);
+    const source = particleArt[`../art/particle/${tagParticle[cardTagOf(choice) ?? ""]}.webp`];
+    const host = (card?.target === "self" ? playerSide : enemySide).current;
+    if (card && source && host && !reducedMotion) void playSprite(host, source, "spark");
+    onAnswer(choice);
+  };
 
   return (
-    <div className="shell run-layout combat-layout">
+    <>
+      <Backdrop src={backdropArt(view.region, view.floor === floorsPerRegion ? "boss" : "combat")} region={view.region} seed={seed + view.depth} />
+      <div className="shell run-layout combat-layout">
       <RunHeader seed={seed} view={view} title="전투" badge={`${view.turn}턴`} />
 
-      <div className="enemy-panel">
+      <div className="enemy-panel" ref={enemySide}>
         <h2>적</h2>
-        {view.enemies.map((enemy) => {
+        {/* 칸 넷을 언제나 그린다 — **빈 칸도 자리를 지킨다.** 남은 적이 앞뒤 어디였는지가 사거리의 근거다 */}
+        {slots.map((slot) => {
+          const enemy = view.enemies.find((candidate) => candidate.slot === slot);
+          // 빈 칸은 스크린 리더에서 감춘다 — 산 적의 라벨이 칸 번호를 들고 있어 앞뒤는 그것으로 읽힌다
+          if (!enemy) return <p key={slot} className="enemy empty" aria-hidden="true">{slotLabel(slot)}</p>;
+          const sprite = spriteArt[`../art/sprites/${enemy.id}.webp`];
           const info = enemyInfo.get(enemy.id);
           const name = info?.name ?? enemy.id;
-          const intent = info?.intent_visible === false ? "의도 감춤" : intentLabel(enemy.intent);
+          const hidden = info?.intent_visible === false;
+          const intent = hidden ? "의도 감춤" : intentLabel(enemy.intent);
           const passives = Object.entries(enemy.passives) as [PassiveName, number][];
           return (
             <button
-              key={enemy.id}
+              key={slot}
               className="enemy"
               type="button"
               disabled={!targeting || !options.includes(enemy.id)}
               onClick={() => onAnswer(enemy.id)}
               // 배지마다 읽히면 적 하나가 문장 여섯이 된다 — 버튼 하나에 요약 한 문장이다
-              aria-label={`${name} 체력 ${enemy.hp} ${intent} ${passives.map(([id, stacks]) => `${passiveLabels[id]} ${stacks}`).join(" ")} ${tokenSummary(enemy.tokens)}`}
+              aria-label={`${slotLabel(slot)} ${name} 체력 ${enemy.hp} ${intent} ${passives.map(([id, stacks]) => `${passiveLabels[id]} ${stacks}`).join(" ")} ${tokenSummary(enemy.tokens)}`}
             >
+              {/* 스프라이트는 이름 **위** 한 줄이다 — 옆에 세우면 405px 칸에서 의도 한 줄(nowrap)이 넘친다 */}
+              {sprite && <span className="sprite"><img src={sprite} alt="" /></span>}
               {/* 토큰은 배우 **위** 한 줄이다 — 텍스트 줄에 섞이면 이름·의도와 같은 무게로 읽힌다 */}
               <TokenRow tokens={enemy.tokens} />
               <span className="name">
                 <b>{name}</b>
                 {/* 패시브는 이름 옆이다 — guard·shell을 모르면 대상 선택이 도박이다 */}
-                {passives.map(([id, stacks]) => <em key={id} className="passive">{passiveLabels[id]} {stacks}</em>)}
+                {passives.map(([id, stacks]) => <em key={id} className="passive"><Icon name={id} />{passiveLabels[id]} {stacks}</em>)}
               </span>
-              <span className="intent">{intent}</span>
+              <span className="intent"><Icon name={hidden ? "omen" : intentIcon(enemy.intent)} />{intent}</span>
               <span className="hp">
                 <i style={{ width: `${Math.round((100 * enemy.hp) / enemy.maxHp)}%` }} />
                 <small>{enemy.hp} / {enemy.maxHp}</small>
@@ -104,7 +174,7 @@ export function CombatScreen({ seed, decision, onAnswer }: {
         })}
       </div>
 
-      <div className="decision-panel">
+      <div className="decision-panel" ref={playerSide}>
         <PlayerActor view={view} reducedMotion={!!reducedMotion} />
         <p className="hint" role="status">{targeting ? `${view.card} · 대상을 고르세요` : "낼 카드를 고르세요"}</p>
         <div className="hand">
@@ -122,7 +192,7 @@ export function CombatScreen({ seed, decision, onAnswer }: {
                   name={card.name}
                   caption={cardCaption(card)}
                   disabled={targeting || !options.includes(card.id)}
-                  onSelect={() => onAnswer(card.id)}
+                  onSelect={() => answer(card.id)}
                 />
               </m.div>
             ))}
@@ -130,7 +200,8 @@ export function CombatScreen({ seed, decision, onAnswer }: {
         </div>
         <button className="primary" type="button" disabled={targeting} onClick={() => onAnswer(endTurnAction)}>턴 종료</button>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -147,6 +218,8 @@ const triggerLabels: Record<Trigger, string> = {
 function PlayerActor({ view, reducedMotion }: { view: CombatObservation; reducedMotion: boolean }) {
   return (
     <div className="player-actor">
+      {/* 병사는 오른쪽을 보고 적은 왼쪽을 본다(P-32 §1) — 좌우 반전을 넣지 않는다 */}
+      <span className="sprite"><img src={spriteArt["../art/sprites/player.webp"]} alt="" /></span>
       {/**
        * **후원 둘만** 그린다. 나머지 셋은 칸이 없다 — `state.favor`가 조합 둘만 들고, 조합 밖의 신에게는
        * 호의를 움직일 것이 없다(사유는 reviews/26-hud.md). 후원 둘은 평온에서도 매 턴 개입한다

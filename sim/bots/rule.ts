@@ -3,6 +3,7 @@ import type { Grace, GraceHeld } from "../../core/grace.ts";
 import { floorsPerRegion, type MapGrid } from "../../core/map.ts";
 import type { Card } from "../../core/rules.ts";
 import type { CombatState } from "../../core/state.ts";
+import { canReachTarget, livingInReach } from "../../core/targeting.ts";
 import { demandPenalty, type DemandOffer } from "../../core/demands.ts";
 import { favorBoundaries, favorInitial } from "../../core/favor.ts";
 import { expectedValue, graceValue, powerTurns, tokenWeights } from "../../tools/value.ts";
@@ -13,8 +14,10 @@ import { expectedValue, graceValue, powerTurns, tokenWeights } from "../../tools
  * 판정을 전제로 바뀐 판이었고, P-31의 파워 배수는 옛 입력에서 한 자리도 다르지 않아 v4를 유지했다
  * v6: 은총이 「카드 한 장 고르기」에서 「은혜 슬롯 3택1」이 됐다(P-28) — 고르는 것 자체가 다르다
  * v7: 요구 답이 둘에서 셋이 됐다(P-29) — `chooseDemandAnswer`의 입력과 반환이 통째로 다르다
+ * v8: 판에 칸이 넷 생겼다(P-35) — `chooseTarget`이 사거리 안에서만 고르고 `cardValue`의 광역 배수가
+ *     사거리 안의 산 적 수다. 같은 손패에서 다른 카드가 나온다
  */
-export const botPolicyVersion = "v7";
+export const botPolicyVersion = "v8";
 
 /**
  * 확률 ε로 합법수를 무작위로 고른다. 실력을 낮춘 두 번째 열(`승률(ε)`)을 만들어 조합마다 결정이
@@ -62,7 +65,8 @@ function intent(combat: CombatState, definitions: ReadonlyMap<string, EnemyDefin
 }
 
 export function cardValue(card: Card, combat: CombatState, incoming: number, favor: Record<string, number>): number {
-  const living = combat.enemies.filter(({ hp }) => hp > 0).length;
+  // 광역·연쇄 배수는 **사거리 안의** 산 적 수다 — 닿지 않는 적을 세면 좁은 사거리가 공짜가 된다
+  const living = livingInReach(combat, card.reach).length;
   const weight = policy ? policyWeights[policy] : neutral;
   let value = 0;
   for (const effect of card.effects) {
@@ -197,7 +201,11 @@ export function chooseCard(
   rng?: () => number,
 ): string | undefined {
   const incoming = intent(combat, definitions);
-  const affordable = combat.hand.filter((id) => (cards.get(id)?.cost ?? Infinity) <= combat.energy);
+  // 엔진의 `affordable`과 같은 목록이어야 한다 — 사거리 밖만 남은 카드를 고르면 낼 수 없는 답이 된다
+  const affordable = combat.hand.filter((id) => {
+    const card = cards.get(id);
+    return card !== undefined && card.cost <= combat.energy && canReachTarget(combat, card);
+  });
   // ponytail: 합법수는 손패로만 잡는다 — 무작위 턴 종료까지 넣으면 ε 열이 "아무것도 안 하는 봇"이 된다
   const noisy = noisyPick(affordable, rng);
   if (noisy) return noisy;
@@ -223,11 +231,12 @@ export function chooseTarget(
   rng?: () => number,
 ): string | undefined {
   if (card.target !== "enemy") return undefined;
-  const noisy = noisyPick(combat.enemies.filter(({ hp }) => hp > 0).map(({ id }) => id), rng);
+  // 사거리 안에서만 고른다. 정렬 규칙은 그대로 — 「체력 낮은 놈」 위에 「닿는 놈」이 얹힌다
+  const reachable = livingInReach(combat, card.reach);
+  const noisy = noisyPick(reachable.map(({ id }) => id), rng);
   if (noisy) return noisy;
   const damage = card.effects.reduce((sum, effect) => sum + (effect.op === "damage" ? effect.value ?? 0 : 0), 0);
-  return [...combat.enemies]
-    .filter(({ hp }) => hp > 0)
+  return [...reachable]
     .sort((a, b) => {
       const aKill = a.hp <= damage ? 1 : 0;
       const bKill = b.hp <= damage ? 1 : 0;

@@ -10,14 +10,10 @@
     "passives": { "ramp": 1 },
     "pattern": [
       { "op": "damage", "value": 6 },
-      { "op": "damage", "value": 6 },
-      { "op": "damage", "value": 12 }
+      { "op": "damage", "value": 7 },
+      { "op": "damage", "value": 13 }
     ],
-    "pattern_mode": "cycle",
-    "groups": [
-      { "id": "group_under_pressure_solo", "with": [] },
-      { "id": "group_under_pair", "with": ["enemy_under_attrition"] }
-    ]
+    "pattern_mode": "cycle"
   },
   {
     "id": "enemy_under_attrition",
@@ -34,7 +30,7 @@
     ],
     "pattern_mode": "cycle",
     "groups": [
-      { "id": "group_under_attrition_pair", "with": ["enemy_under_pressure"] }
+      { "id": "group_under_attrition_pressure", "with": [null, "enemy_under_pressure"] }
     ]
   },
   {
@@ -62,7 +58,7 @@
     "region": "underworld",
     "tier": "normal",
     "role": "swarm",
-    "hp": 25,
+    "hp": 30,
     "intent_visible": true,
     "passives": { "curl": 6 },
     "pattern": [
@@ -70,7 +66,8 @@
     ],
     "pattern_mode": "cycle",
     "groups": [
-      { "id": "group_under_swarm_brute", "with": ["enemy_under_brute"] }
+      { "id": "group_under_swarm_brute", "with": ["enemy_under_brute"] },
+      { "id": "group_under_swarm_zealot", "with": [null, null, "enemy_under_zealot"] }
     ]
   },
   {
@@ -88,7 +85,7 @@
     ],
     "pattern_mode": "cycle",
     "groups": [
-      { "id": "group_under_forcing", "with": ["enemy_under_zealot"] }
+      { "id": "group_under_guardian_zealot", "with": [null, "enemy_under_zealot"] }
     ]
   },
   {
@@ -103,10 +100,7 @@
     "pattern": [
       { "op": "damage", "value": 8 }
     ],
-    "pattern_mode": "cycle",
-    "groups": [
-      { "id": "group_under_zealot_forcing", "with": ["enemy_under_guardian"] }
-    ]
+    "pattern_mode": "cycle"
   },
   {
     "id": "enemy_under_boss",
@@ -133,14 +127,10 @@
     "intent_visible": true,
     "pattern": [
       { "op": "damage", "value": 8 },
-      { "op": "damage", "value": 8 },
-      { "op": "damage", "value": 16 }
+      { "op": "damage", "value": 10 },
+      { "op": "damage", "value": 18 }
     ],
-    "pattern_mode": "cycle",
-    "groups": [
-      { "id": "group_surface_pair", "with": ["enemy_surface_attrition"] },
-      { "id": "group_surface_trio", "with": ["enemy_surface_applier", "enemy_surface_support"] }
-    ]
+    "pattern_mode": "cycle"
   },
   {
     "id": "enemy_surface_attrition",
@@ -148,7 +138,7 @@
     "region": "surface",
     "tier": "normal",
     "role": "attrition",
-    "hp": 40,
+    "hp": 46,
     "intent_visible": true,
     "passives": { "shell": 8 },
     "pattern": [
@@ -157,7 +147,9 @@
     ],
     "pattern_mode": "cycle",
     "groups": [
-      { "id": "group_surface_attrition_pair", "with": ["enemy_surface_pressure"] }
+      { "id": "group_surface_attrition_pressure", "with": [null, "enemy_surface_pressure"] },
+      { "id": "group_surface_trio", "with": [null, "enemy_surface_applier", "enemy_surface_pressure"] },
+      { "id": "group_surface_hunt", "with": ["enemy_surface_guardian", "enemy_surface_support", "enemy_surface_zealot"] }
     ]
   },
   {
@@ -169,15 +161,11 @@
     "hp": 40,
     "intent_visible": true,
     "pattern": [
-      { "op": "apply_token", "token": "soaked", "stacks": 1 },
-      { "op": "apply_token", "token": "shock", "stacks": 2 },
-      { "op": "damage", "value": 6 }
+      { "op": "apply_token", "token": "soaked", "stacks": 2 },
+      { "op": "apply_token", "token": "shock", "stacks": 3 },
+      { "op": "damage", "value": 7 }
     ],
-    "pattern_mode": "cycle",
-    "groups": [
-      { "id": "group_surface_applier_trio", "with": ["enemy_surface_pressure", "enemy_surface_support"] },
-      { "id": "group_surface_applier_forcing", "with": ["enemy_surface_zealot", "enemy_surface_guardian"] }
-    ]
+    "pattern_mode": "cycle"
   },
   {
     "id": "enemy_surface_support",
@@ -189,13 +177,10 @@
     "intent_visible": true,
     "passives": { "rally": 2 },
     "pattern": [
-      { "op": "apply_token", "token": "frenzy", "stacks": 1, "target": "ally" },
-      { "op": "heal", "value": 4, "target": "ally" }
+      { "op": "apply_token", "token": "frenzy", "stacks": 2, "target": "ally" },
+      { "op": "heal", "value": 6, "target": "ally" }
     ],
-    "pattern_mode": "cycle",
-    "groups": [
-      { "id": "group_surface_support_trio", "with": ["enemy_surface_pressure", "enemy_surface_applier"] }
-    ]
+    "pattern_mode": "cycle"
   },
   {
     "id": "enemy_surface_guardian",
@@ -203,16 +188,18 @@
     "region": "surface",
     "tier": "normal",
     "role": "guardian",
-    "hp": 35,
+    "hp": 40,
     "intent_visible": true,
     "passives": { "guard": 2 },
     "pattern": [
-      { "op": "apply_token", "token": "bulwark", "stacks": 2, "target": "self" },
+      { "op": "apply_token", "token": "bulwark", "stacks": 3, "target": "self" },
       { "op": "damage", "value": 6 }
     ],
     "pattern_mode": "cycle",
     "groups": [
-      { "id": "group_surface_guardian_forcing", "with": ["enemy_surface_zealot", "enemy_surface_applier"] }
+      { "id": "group_surface_guardian_zealot", "with": [null, null, "enemy_surface_zealot"] },
+      { "id": "group_surface_support_trio", "with": [null, "enemy_surface_support", "enemy_surface_pressure"] },
+      { "id": "group_surface_line", "with": ["enemy_surface_attrition", "enemy_surface_support", "enemy_surface_pressure"] }
     ]
   },
   {
@@ -224,12 +211,9 @@
     "hp": 35,
     "intent_visible": true,
     "pattern": [
-      { "op": "damage", "value": 10 }
+      { "op": "damage", "value": 12 }
     ],
-    "pattern_mode": "cycle",
-    "groups": [
-      { "id": "group_surface_zealot_forcing", "with": ["enemy_surface_guardian", "enemy_surface_applier"] }
-    ]
+    "pattern_mode": "cycle"
   },
   {
     "id": "enemy_surface_boss",
@@ -243,6 +227,81 @@
     "pattern": [
       { "op": "damage", "value": 24 },
       { "op": "block", "value": 12 }
+    ],
+    "pattern_mode": "cycle"
+  },
+  {
+    "id": "enemy_god_zeus",
+    "name": "진노한 제우스",
+    "tier": "god",
+    "role": "god",
+    "hp": 60,
+    "intent_visible": true,
+    "passives": { "ramp": 1 },
+    "pattern": [
+      { "op": "damage", "value": 7 },
+      { "op": "apply_token", "token": "shock", "stacks": 1 },
+      { "op": "damage", "value": 10 }
+    ],
+    "pattern_mode": "cycle"
+  },
+  {
+    "id": "enemy_god_poseidon",
+    "name": "진노한 포세이돈",
+    "tier": "god",
+    "role": "god",
+    "hp": 60,
+    "intent_visible": true,
+    "passives": { "ward": 2 },
+    "pattern": [
+      { "op": "apply_token", "token": "soaked", "stacks": 1 },
+      { "op": "damage", "value": 8 },
+      { "op": "damage", "value": 8 }
+    ],
+    "pattern_mode": "cycle"
+  },
+  {
+    "id": "enemy_god_athena",
+    "name": "진노한 아테나",
+    "tier": "god",
+    "role": "god",
+    "hp": 60,
+    "intent_visible": true,
+    "passives": { "guard": 2 },
+    "pattern": [
+      { "op": "apply_token", "token": "bulwark", "stacks": 3, "target": "self" },
+      { "op": "damage", "value": 8 },
+      { "op": "block", "value": 7 }
+    ],
+    "pattern_mode": "cycle"
+  },
+  {
+    "id": "enemy_god_ares",
+    "name": "진노한 아레스",
+    "tier": "god",
+    "role": "god",
+    "hp": 60,
+    "intent_visible": true,
+    "passives": { "spite": 1 },
+    "pattern": [
+      { "op": "damage", "value": 11 },
+      { "op": "apply_token", "token": "bleed", "stacks": 1 },
+      { "op": "damage", "value": 8 }
+    ],
+    "pattern_mode": "cycle"
+  },
+  {
+    "id": "enemy_god_artemis",
+    "name": "진노한 아르테미스",
+    "tier": "god",
+    "role": "god",
+    "hp": 60,
+    "intent_visible": true,
+    "passives": { "shell": 8 },
+    "pattern": [
+      { "op": "apply_token", "token": "mark", "stacks": 1 },
+      { "op": "damage", "value": 10 },
+      { "op": "damage", "value": 7 }
     ],
     "pattern_mode": "cycle"
   }

@@ -37,7 +37,22 @@ magick art/_src/{경로}/{name}.png  ...  art/{경로}/{name}.png
 
 **4 · `art/_src/`는 작업 중간물 자리다.**
 
-생성 직후 원본, 스트립 조립용 포즈별 파일, 크로마키가 아직 붙어 있는 것. 게임에 안 들어간다 — Vite가 `art/cards/*.webp`만 glob한다(`ui/card.tsx:5`).
+생성 직후 원본, 스트립 조립용 포즈별 파일, 크로마키가 아직 붙어 있는 것. 게임에 안 들어간다.
+
+**5 · `art/<종류>/`에는 배포본 webp만 둔다** ([R-37](../reviews/37-wire.md)).
+
+스프라이트 스트립(8064×1024)과 배경(1536×1024)이 생성 해상도 그대로 `art/`에 앉아 있어서 `npm run size`가 4MiB 상한을 재도 뜻이 없었다. 규칙 1을 지키며 **자리만 옮겼다** — 원본은 한 픽셀도 안 잃었다:
+
+| 배포본 | 원본이 간 자리 |
+|---|---|
+| `art/sprites/{id}.webp` 768×192 (idle 4셀) | `art/_src/sprites/{id}-strip.png` · 포즈 `{id}_idle_1.png` 등 |
+| `art/props/{id}.webp` 768×192 | `art/_src/props/{id}-strip.png` · 포즈 |
+| `art/bg/{name}.webp` 1440px 폭 | `art/_src/bg/{name}-16x10.png` (`under-*` 둘은 `{name}.png`) |
+| `art/ui/card-frame.webp` 256px 폭 | `art/_src/ui/card-frame-trim.png` |
+
+**배포 스트립은 idle 넉 장이다.** attack·hit·death 다섯 장은 재생하는 코드가 없어 안 넣는다 — 상태 기계가 생기면 `art/_src/sprites/`의 포즈에서 `magick ... +append` 한 줄로 아홉 장이 된다.
+
+무엇이 번들에 들어가는지의 정본은 `tools/size.ts`의 목록이고, 그 목록과 화면의 `import.meta.glob`이 짝이다.
 
 ## 화면 크기는 왜 그렇게 작은가
 

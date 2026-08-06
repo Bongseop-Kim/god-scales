@@ -57,7 +57,13 @@ export type CombatState = {
   drawPile: CardId[];
   hand: CardId[];
   discardPile: CardId[];
+  /** 길이가 곧 칸 수(`MAX_SLOTS`)다 — 인덱스가 칸이고 빈 칸은 시체와 같은 꼴로 서 있다 */
   enemies: EnemyState[];
+  /**
+   * 입장을 기다리는 적 정의 id. 진노가 넣고 `admitPending`이 빈 칸에 세운다 — 조우 안에서만 산다.
+   * 4칸이 꽉 차면 큐는 그대로 기다린다(신이 문 앞에서 기다리는 자리다)
+   */
+  pending: string[];
   /** 낸 순서대로. 같은 파워를 두 번 내면 두 개 등록된다(StS와 같다) — 덱에 두 장 넣는 것 자체가 비용이다 */
   powers: Power[];
 };

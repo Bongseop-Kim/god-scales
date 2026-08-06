@@ -15,7 +15,8 @@ describe("epsilon comparison", () => {
 
   it("picks a random legal card under epsilon and ignores the rng at zero", () => {
     const cardMap = new Map([strike, graze].map((card) => [card.id, card]));
-    const combat = createCombat(1, [], []);
+    // 적이 하나는 서 있어야 한다 — 사거리 안에 산 적이 없으면 공격 카드는 합법수가 아니다(P-35)
+    const combat = createCombat(1, [], [{ id: "dummy", hp: 20, pattern: [{ damage: 1 }] }]);
     combat.hand = ["strike", "graze"];
     combat.energy = 3;
     expect(chooseCard(combat, cardMap, new Map())).toBe("strike");

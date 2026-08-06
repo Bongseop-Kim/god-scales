@@ -109,8 +109,9 @@ describe("demands", () => {
     expect(kept.zeus - refused.zeus).toBe(acceptReward);
     expect(refused.athena - kept.athena).toBe(-demandPenalty("zeus", "athena").amount);
 
-    // 시드 3: 첫 요구를 수락해도 조건이 안 맞는다. 실패 벌금은 없으므로 거절과 결과가 같다 (R-5)
-    expect(run(3, undefined, firstAnswer("tier1")).favorCurve).toEqual(run(3, undefined, firstAnswer("reject")).favorCurve);
+    // 시드 3 → **4**: 첫 요구를 수락해도 조건이 안 맞는다. 실패 벌금은 없으므로 거절과 결과가 같다 (R-5).
+    // P-35가 편성을 네 칸으로 다시 눕히자 시드 3의 첫 요구가 지켜진다 — 400시드 중 가장 앞을 다시 골랐다
+    expect(run(4, undefined, firstAnswer("tier1")).favorCurve).toEqual(run(4, undefined, firstAnswer("reject")).favorCurve);
 
     // 편든 신은 "지킨 신"이다 — 전부 거절하면 상대 쪽으로 넘어간다
     const rejected = run(22, undefined, everyAnswer("reject"));

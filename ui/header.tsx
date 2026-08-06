@@ -7,6 +7,8 @@ const gods = godDataJson as (FavorGod & { name: string })[];
 const godNames = new Map(gods.map(({ id, name }) => [id, name]));
 
 export const godName = (god: string) => godNames.get(god) ?? god;
+/** 다섯 신의 순서. 시작 화면 범례가 이름도 색도 여기서 읽는다 — hex는 `ui/style.css`의 `--{id}`가 정본이다 */
+export const godIds = gods.map(({ id }) => id);
 
 /** 개입의 대상. 신은 대상을 효과마다 갖는다 — 카드와 달라서 `effectText`의 「전체 ·」를 쓸 수 없다 */
 const stageTargets = { self: "나에게", enemy: "적 하나에게", all_enemies: "적 전체에게" } as const;
@@ -19,7 +21,10 @@ const stageTargets = { self: "나에게", enemy: "적 하나에게", all_enemies
 export function godStageText(god: string, stage: FavorStage): { start: string; turn: string } {
   const hooks = gods.find(({ id }) => id === god)?.stage_effects[stage];
   const line = (effects: StageEffect[] = []) =>
-    effects.map(({ target, ...effect }) => `${stageTargets[target]} ${effectText({ target: "enemy", effects: [effect] })}`).join(" · ");
+    effects.map(({ target, ...effect }) => (effect.op === "join"
+      // 합류에는 대상이 없다 — `target: "self"`는 「한 번만 터진다」는 표시고, 그것을 문장으로 읽으면 거짓말이다
+      ? `${godName(effect.god ?? god)}가 적으로 합류`
+      : `${stageTargets[target]} ${effectText({ target: "enemy", effects: [effect] })}`)).join(" · ");
   return { start: line(hooks?.on_encounter_start), turn: line(hooks?.on_turn_start) };
 }
 export const regionName = (region: string) => (region === "underworld" ? "지하" : "지상");

@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { harmfulTokens } from "../core/rules.ts";
 import type { TokenName, Tokens } from "../core/state.ts";
+import { Icon } from "./icon.tsx";
 
 /**
  * 지속은 셋뿐이고 근거는 코드다 — `shock`은 `core/combat.ts`의 `endTurn` 맨 끝에서 지워지고,
@@ -15,17 +16,17 @@ const durationText: Record<Duration, string> = { turn: "이번 턴", consume: "1
  * 이로운지 해로운지다. 진영은 `harmfulTokens`에서 읽으므로 목록이 늘지 않고, 신 색은 아이콘에 남는다.
  * `text`는 툴팁 한 줄이고 값은 `core/rules.ts`의 계산과 같은 눈금이어야 한다
  */
-const tokenStyle: Record<TokenName, { label: string; name: string; icon: string; color: string; duration: Duration; text: string }> = {
-  shock: { label: "감", name: "감전", icon: "ϟ", color: "var(--zeus)", duration: "turn", text: "이 대상이 받는 피해 +스택" },
-  displace: { label: "지", name: "밀려남", icon: "◴", color: "var(--poseidon)", duration: "consume", text: "다음 행동을 건너뛴다" },
-  soaked: { label: "침", name: "침수", icon: "◉", color: "var(--poseidon)", duration: "consume", text: "다음 공격 피해 −1, 광란과 상쇄" },
-  bulwark: { label: "벽", name: "방벽", icon: "⬟", color: "var(--athena)", duration: "consume", text: "방어 뒤 스택만큼 피해를 흡수" },
-  deflect: { label: "반", name: "반사", icon: "◇", color: "var(--athena)", duration: "consume", text: "다음 공격을 통째로 되돌린다" },
-  thorns: { label: "가", name: "가시", icon: "✧", color: "var(--athena)", duration: "combat", text: "맞을 때마다 스택만큼 반격" },
-  bleed: { label: "혈", name: "출혈", icon: "◆", color: "var(--ares)", duration: "consume", text: "턴 끝에 스택만큼 피해" },
-  frenzy: { label: "광", name: "광란", icon: "✦", color: "var(--ares)", duration: "consume", text: "다음 공격 피해 +2" },
-  mark: { label: "표", name: "표식", icon: "⌖", color: "var(--artemis)", duration: "combat", text: "받는 피해 1.5배" },
-  crit: { label: "치", name: "치명", icon: "◎", color: "var(--artemis)", duration: "consume", text: "다음 공격 피해 2배" },
+const tokenStyle: Record<TokenName, { name: string; color: string; duration: Duration; text: string }> = {
+  shock: { name: "감전", color: "var(--zeus)", duration: "turn", text: "이 대상이 받는 피해 +스택" },
+  displace: { name: "밀려남", color: "var(--poseidon)", duration: "consume", text: "다음 행동을 건너뛴다" },
+  soaked: { name: "침수", color: "var(--poseidon)", duration: "consume", text: "다음 공격 피해 −1, 광란과 상쇄" },
+  bulwark: { name: "방벽", color: "var(--athena)", duration: "consume", text: "방어 뒤 스택만큼 피해를 흡수" },
+  deflect: { name: "반사", color: "var(--athena)", duration: "consume", text: "다음 공격을 통째로 되돌린다" },
+  thorns: { name: "가시", color: "var(--athena)", duration: "combat", text: "맞을 때마다 스택만큼 반격" },
+  bleed: { name: "출혈", color: "var(--ares)", duration: "consume", text: "턴 끝에 스택만큼 피해" },
+  frenzy: { name: "광란", color: "var(--ares)", duration: "consume", text: "다음 공격 피해 +2" },
+  mark: { name: "표식", color: "var(--artemis)", duration: "combat", text: "받는 피해 1.5배" },
+  crit: { name: "치명", color: "var(--artemis)", duration: "consume", text: "다음 공격 피해 2배" },
 };
 
 export const tokenName = (token: TokenName) => tokenStyle[token].name;
@@ -49,8 +50,13 @@ function TokenBadge({ token, stacks = 1 }: { token: TokenName; stacks?: number }
       style={{ "--token-color": style.color } as CSSProperties}
       title={`${style.name} — ${style.text} · ${durationText[style.duration]}`}
     >
-      <i>{style.icon}</i>
-      <b>{style.label}</b>
+      {/**
+        * **한 글자 한글이 여기 있었다.** 계획은 그것을 아이콘 폴백으로 남기라고 했지만, 시트가 `?raw`로
+        * JS 번들에 실리므로 「아이콘이 안 뜰 때」가 곧 「앱이 안 뜰 때」다 — 폴백이 지킬 실패가 없다.
+        * 흰 글자를 위에 겹치면 20px 아이콘의 가운데를 덮어 형태가 안 읽힌다(R-33). 이름은 `title`과
+        * `tokenSummary`의 `aria-label`이 든다
+        */}
+      <Icon name={token} />
       <small>{stacks}</small>
     </span>
   );

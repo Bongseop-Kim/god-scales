@@ -1,35 +1,42 @@
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { MAX_SLOTS } from "../core/combat.ts";
 import { tierEnemies } from "../core/demands.ts";
+import { godEnemyId } from "../core/favor.ts";
 import { graceMilestones, graceSlots } from "../core/grace.ts";
 import { floorsPerRegion } from "../core/map.ts";
 import { enemyOnlyTokens, harmfulTokens, selfTokens } from "../core/rules.ts";
 import { passiveNames, triggers, type Passives } from "../core/state.ts";
+import { reachOk, reachSlots } from "../core/targeting.ts";
 import { expectedValue, graceBand, graceValue, isValueAllowed, mitigationTokens, mitigationValue, slotCards, tokenWeights } from "./value.ts";
 
-export type FailureKey = "schema" | "dsl_parse" | "token_scope" | "fusion_scope" | "demand_axis" | "duplicate" | "value_outlier" | "pool_ratio" | "passive_coverage" | "map_layout";
+export type FailureKey = "schema" | "dsl_parse" | "token_scope" | "fusion_scope" | "demand_axis" | "duplicate" | "value_outlier" | "pool_ratio" | "passive_coverage" | "map_layout" | "slot_scope";
 type Item = Record<string, unknown>;
-type Card = Item & { id: string; name: string; patron?: string; patron_pair?: string[]; cost: number; target: string; effects: Effect[]; tags: string[]; trigger?: string };
-type Effect = { op: string; value?: number; token?: string; stacks?: number; when?: string };
+type Card = Item & { id: string; name: string; patron?: string; patron_pair?: string[]; cost: number; target: string; effects: Effect[]; tags: string[]; trigger?: string; reach?: string };
+type Effect = { op: string; value?: number; token?: string; stacks?: number; when?: string; god?: string };
 type DemandTier = { text: string; condition: string; cost?: Record<string, number>; reward: { favor?: number; grace?: number } };
 type Demand = Item & { id: string; patron: string; axis: string; polarity: string; min_enemies: number; tiers: DemandTier[] };
 /** 라이벌 반대편을 찾는 데 필요한 것만. 후보 하나로도 판정이 서야 하므로 베이스라인은 단을 들지 않는다 */
 type DemandAxisOnly = { id: string; patron: string; axis: string; polarity: string };
 type Enemy = Item & {
   id: string;
-  region: "underworld" | "surface";
-  tier: "normal" | "boss";
+  /** 신 적에게는 없다 — 조우가 아니라 진노가 부른다 */
+  region?: "underworld" | "surface";
+  tier: "normal" | "boss" | "god";
+  role: string;
   hp: number;
   pattern: (Effect & { repeat?: number; target?: string })[];
   passives?: Passives;
-  groups?: { id: string; with: string[] }[];
+  /** `with`의 순서가 칸 1·2·3이고 `null`이 빈 칸이다 */
+  groups?: { id: string; with: (string | null)[] }[];
 };
 type MapSlot = Item & { id: string; region: string; floor: number; text: string; groups: Partial<Record<"combat" | "elite", string[]>> };
 type Grace = Item & { id: string; patron: string; slot: string; tier: number; text: string; effects: Effect[] };
 
 const required: Record<string, string[]> = {
   card: ["id", "name", "cost", "target", "effects", "tags"],
-  enemy: ["id", "name", "region", "tier", "role", "hp", "intent_visible", "pattern", "pattern_mode"],
+  // `region`은 여기 없다 — 신 적은 지역을 갖지 않으므로 아래 `schemaFailure`가 tier와 함께 본다
+  enemy: ["id", "name", "tier", "role", "hp", "intent_visible", "pattern", "pattern_mode"],
   demand: ["id", "patron", "tiers", "axis", "polarity", "min_enemies"],
   god: ["id", "name", "tokens", "ops", "rivals", "demands"],
   map: ["id", "region", "floor", "text", "groups"],
@@ -111,6 +118,19 @@ function schemaFailure(item: Item, kind: string): boolean {
       || !(graceMilestones as readonly number[]).includes(grace.tier)
       || grace.effects.some((effect) => typeof effect?.op !== "string");
   }
+  /**
+   * 신 적은 **지역이 없고 편성도 없다** — 조우가 아니라 진노가 부르고, 판에는 빈 칸으로 들어온다.
+   * 지역을 적으면 지역 밴드가 그것을 편성으로 재려 하고, 편성을 적으면 아무도 안 쓰는 데이터가 된다
+   */
+  if (kind === "enemy") {
+    const enemy = item as Enemy;
+    if (!["normal", "boss", "god"].includes(enemy.tier)) return true;
+    if ((enemy.tier === "god") === (enemy.region !== undefined)) return true;
+    if (enemy.tier === "god" && enemy.groups !== undefined) return true;
+    // 편성도 컨테이너다 — `null` 항목 하나면 `slotFailure`의 구조분해가 반려가 아니라 예외를 낸다
+    if (enemy.groups !== undefined && (!Array.isArray(enemy.groups)
+      || enemy.groups.some((group) => typeof group?.id !== "string" || !Array.isArray(group?.with)))) return true;
+  }
   // 단은 **둘**이다 — 수락과 시련. 가운데를 끼우는 것은 두 단이 실제로 갈린 뒤의 일이다 (P-29)
   if (kind === "demand") {
     const demand = item as Demand;
@@ -132,6 +152,14 @@ function dslFailure(card: Card): boolean {
   // 없는 훅을 적은 파워는 아무 트리거도 부르지 않고, 훅만 적힌 비파워 카드는 즉시 실행된다 — 둘 다 죽은 데이터다
   if (card.tags.includes("power") !== (card.trigger !== undefined)) return true;
   if (card.trigger !== undefined && !(triggers as readonly string[]).includes(card.trigger)) return true;
+  if (card.reach !== undefined) {
+    // 오름차순 0~3만. 규칙은 정규식 하나고 모양 표는 화면에만 있다
+    if (!reachOk(card.reach)) return true;
+    // `target: self` 카드에 적은 사거리는 아무도 읽지 않는다 — 죽은 데이터다
+    if (card.target === "self") return true;
+  }
+  // 한 칸짜리 사거리에서는 연쇄가 닿을 곳이 없다 — `loadCards`가 낼 때 던지는 자리를 여기서 잡는다
+  if (card.effects.some(({ op }) => op === "chain") && reachSlots(card.reach).length < 2) return true;
   return card.effects.some((effect) =>
     ![...commonOps, "chain"].includes(effect.op)
     || (effect.token !== undefined && !allTokens.includes(effect.token))
@@ -249,6 +277,11 @@ const stageEffects = (god: Item, stage?: string): StageEffect[] =>
   stageHooks(god).flatMap(([name, hook]) => (stage === undefined || name === stage ? [...hook.on_encounter_start ?? [], ...hook.on_turn_start ?? []] : []));
 /** 매 턴 훅에서 그 턴 안에 사라지는 토큰. 감전은 적 턴 끝에 지워진다(`core/combat.ts:152`) */
 const turnSafeTokens = new Set(["shock"]);
+/**
+ * 개입만 쓰는 op. `commonOps`에 넣으면 카드도 쓸 수 있게 되는데 `executeCard`에는 분기가 없어
+ * 조용히 아무 일도 안 하는 효과가 된다 — 그것이 §0의 부채였다
+ */
+const stageOnlyOps = ["join"];
 
 function stageEffectScopeFailure(god: Item): boolean {
   const definition = gods[String(god.id)];
@@ -256,8 +289,10 @@ function stageEffectScopeFailure(god: Item): boolean {
   // 리셋이 없어(`core/combat.ts:73`은 플레이어만 지운다) 벽이 된다. 밸런스가 아니라 고장이다
   const turnAccumulates = stageHooks(god).flatMap(([, hook]) => hook.on_turn_start ?? [])
     .some(({ op, token, target }) => (token !== undefined && !turnSafeTokens.has(token)) || (op === "block" && target !== "self"));
-  return turnAccumulates || stageEffects(god).some(({ op, token, target }) =>
-    (!commonOps.includes(op) && !definition.ops.includes(op))
+  return turnAccumulates || stageEffects(god).some(({ op, token, target, god: joined }) =>
+    (!commonOps.includes(op) && !stageOnlyOps.includes(op) && !definition.ops.includes(op))
+    // 합류는 배포된 `tier: "god"` 적을 가리켜야 한다 — 없으면 `admitPending`이 조우 중에 던진다
+    || (op === "join" && !shippedEnemies.some(({ id, tier }) => tier === "god" && id === godEnemyId(joined ?? "")))
     || (token !== undefined && !definition.tokens.includes(token))
     // 오타 하나면 `targets()`가 조용히 전 적군으로 읽는다 — 죽은 데이터가 아니라 **다른** 데이터가 된다
     || !stageTargets.includes(target)
@@ -316,12 +351,38 @@ const intent = (member: Enemy) => member.pattern.reduce((total, effect) => total
   // ramp는 매 턴 확정으로 쌓이므로 패턴이 아니라 여기에 더한다
   + (member.passives?.ramp ?? 0) * tokenWeights.frenzy;
 
+/**
+ * 자리가 역할을 정한다. **런타임 보정이 아니라 배치 규칙이다** — 칸 0·1에 방어 +N을 얹으면 배포된
+ * 편성 전부가 재측정 대상이 되고, 어느 값이 적의 것이고 어느 값이 자리의 것인지 화면에서 못 읽는다.
+ * 역할이 이미 그 성격을 들고 있으므로 게이트가 어긋난 편성을 반려한다.
+ *
+ * 뿌리가 칸 0이라 **뒷줄 역할은 편성을 소유할 수 없다** — 혼자 서는 뒷줄 적은 앞칸에 서는 셈이다
+ */
+const roleSlots: Record<string, number[]> = {
+  guardian: [0, 1], attrition: [0, 1], brute: [0, 1], swarm: [0, 1],
+  pressure: [2, 3], applier: [2, 3], support: [2, 3], zealot: [2, 3],
+  boss: [0, 1, 2, 3], god: [0, 1, 2, 3],
+};
+
+function slotFailure(enemy: Enemy, enemies: Enemy[]): boolean {
+  return (enemy.groups ?? []).some(({ with: rest }) => {
+    if (!Array.isArray(rest) || rest.length > MAX_SLOTS - 1) return true;
+    return [enemy.id, ...rest].some((id, slot) => {
+      if (id === null) return false;
+      const member = enemies.find((candidate) => candidate.id === id);
+      // 없는 id는 `groupStrength`가 `value_outlier`로 잡는다 — 여기서는 자리만 본다
+      return member !== undefined && !(roleSlots[member.role] ?? []).includes(slot);
+    });
+  });
+}
+
 type Strength = { hp: number; damage: number; count: number };
 function groupStrength(groupId: string, enemies: Enemy[]): Strength | undefined {
   const root = enemies.find((enemy) => enemy.groups?.some((group) => group.id === groupId));
   const group = root?.groups?.find(({ id }) => id === groupId);
   if (!root || !group) return undefined;
-  const members = [root, ...group.with.map((id) => enemies.find((enemy) => enemy.id === id))];
+  // 빈 칸은 세지 않는다 — 세기는 사람 수고 자리는 `slotFailure`가 본다
+  const members = [root, ...group.with.filter((id) => id !== null).map((id) => enemies.find((enemy) => enemy.id === id))];
   if (members.some((member) => !member)) return undefined;
   const complete = members as Enemy[];
   return {
@@ -331,9 +392,14 @@ function groupStrength(groupId: string, enemies: Enemy[]): Strength | undefined 
   };
 }
 
+/**
+ * 지상 `count` 상한이 3 → **4**다(P-35 §6) — 4인 편성은 그 전까지 사람 수에서 반려됐다.
+ * `hp` 상한도 170 → **200**을 한 번 올렸다: 앞칸 둘(실효 체력 115)만으로 이미 170에 붙어
+ * 4인 편성이 어떤 값으로도 못 서고, 밴드를 새로 만들지 않는 유일한 길이 상한을 옮기는 것이었다
+ */
 const regionBands: Record<string, Record<"hp" | "damage" | "count", [number, number]>> = {
   underworld: { hp: [40, 90], damage: [8, 14], count: [1, 2] },
-  surface: { hp: [90, 170], damage: [14, 22], count: [2, 3] },
+  surface: { hp: [90, 200], damage: [14, 22], count: [2, 4] },
 };
 /** 전투가 서는 층 수. 6층은 보스라 진행 함수 밖이다 */
 const combatFloors = floorsPerRegion - 1;
@@ -353,9 +419,17 @@ export const eliteScale = 1.3;
  * 지역 밴드는 편성 자체의 계약이고 층 상한은 그 편성을 어디에 놓을지의 계약이다
  */
 function encounterThresholdFailure(enemy: Enemy, enemies: Enemy[]): boolean {
+  // 신 적은 편성이 아니다 — 진노가 아무 조우에나 얹으므로 잴 지역 밴드가 없다(R-30의 남긴 자리)
+  if (enemy.tier === "god") return false;
   if (enemy.tier === "boss") return enemy.hp !== (enemy.region === "underworld" ? 130 : 190) || enemy.groups !== undefined;
-  if (!enemy.groups?.length) return true;
-  const band = regionBands[enemy.region];
+  /**
+   * 편성을 하나도 소유하지 않는 적. **뒷줄 역할은 소유할 수 없다** — 뿌리가 칸 0이라 `pressure`·
+   * `zealot`·`applier`·`support`는 남의 편성에만 이름이 오른다. 거기에도 없으면 아무도 안 쓰는 데이터다
+   */
+  if (!enemy.groups?.length) {
+    return !enemies.some(({ groups }) => (groups ?? []).some(({ with: rest }) => rest.includes(enemy.id)));
+  }
+  const band = regionBands[enemy.region!];
   return enemy.groups.some(({ id }) => {
     const strength = groupStrength(id, enemies);
     if (!strength) return true;
@@ -471,6 +545,7 @@ function failureFor(item: Item, cards: Card[], demands: DemandAxisOnly[], enemie
   if (kind === "god" && stageEffectScopeFailure(item)) return "token_scope";
   if (kind === "god" && stageValueFailure(item)) return "value_outlier";
   if (kind === "enemy" && passiveFailure(item as Enemy)) return "passive_coverage";
+  if (kind === "enemy" && slotFailure(item as Enemy, enemies)) return "slot_scope";
   if (kind === "enemy" && encounterThresholdFailure(item as Enemy, enemies)) return "value_outlier";
   if (kind === "map") return mapSlotFailure(item as MapSlot, enemies);
   if (kind === "grace") {

@@ -56,6 +56,11 @@
             "token": "shock",
             "stacks": 2,
             "target": "self"
+          },
+          {
+            "op": "join",
+            "god": "zeus",
+            "target": "self"
           }
         ],
         "on_turn_start": [
@@ -125,6 +130,11 @@
             "op": "apply_token",
             "token": "soaked",
             "stacks": 2,
+            "target": "self"
+          },
+          {
+            "op": "join",
+            "god": "poseidon",
             "target": "self"
           }
         ],
@@ -196,6 +206,11 @@
             "token": "bulwark",
             "stacks": 5,
             "target": "all_enemies"
+          },
+          {
+            "op": "join",
+            "god": "athena",
+            "target": "self"
           }
         ],
         "on_turn_start": [
@@ -265,6 +280,11 @@
             "token": "bleed",
             "stacks": 2,
             "target": "self"
+          },
+          {
+            "op": "join",
+            "god": "ares",
+            "target": "self"
           }
         ],
         "on_turn_start": [
@@ -331,6 +351,11 @@
             "op": "apply_token",
             "token": "mark",
             "stacks": 1,
+            "target": "self"
+          },
+          {
+            "op": "join",
+            "god": "artemis",
             "target": "self"
           }
         ],

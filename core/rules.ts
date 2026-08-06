@@ -1,6 +1,6 @@
 import type { GraceSlot } from "./grace.ts";
 import { tokenNames, type ActorState, type CombatState, type GameState, type TokenName, type Trigger } from "./state.ts";
-import { resolveChainTargets, resolveTargets, type Target } from "./targeting.ts";
+import { livingInReach, reachSlots, resolveChainTargets, resolveTargets, type Target } from "./targeting.ts";
 
 export type GodId = "zeus" | "poseidon" | "athena" | "ares" | "artemis";
 export type Tag = "attack" | "defend" | "utility" | "multi" | "token" | "favor" | "exhaust" | "fused" | "power";
@@ -13,7 +13,9 @@ export type Op =
   | "self_damage"
   | "apply_token"
   | "favor_shift"
-  | "chain";
+  | "chain"
+  /** 개입만 쓴다 — 카드가 적으면 `executeCard`가 조용히 삼키므로 게이트가 카드 어휘에서 뺀다 */
+  | "join";
 
 export type Effect = {
   op: Op;
@@ -35,12 +37,16 @@ export type Card = {
   tags: Tag[];
   /** `power` 태그가 붙은 카드만 갖는다 — 즉시 실행하지 않고 이 훅에 등록한다 */
   trigger?: Trigger;
+  /** 닿는 칸을 오름차순으로 적은 숫자열(`"012"`). 없으면 네 칸 전부다 */
+  reach?: string;
 };
 
 export function loadCards(cards: Card[]): Card[] {
   for (const card of cards) {
-    if (card.target !== "enemy" && card.effects.some(({ op }) => op === "chain")) {
-      throw new Error(`${card.id}: chain requires target enemy`);
+    if (card.effects.some(({ op }) => op === "chain")) {
+      if (card.target !== "enemy") throw new Error(`${card.id}: chain requires target enemy`);
+      // 한 칸짜리 사거리에서는 연쇄가 닿을 곳이 없다 — 죽은 효과다
+      if (reachSlots(card.reach).length < 2) throw new Error(`${card.id}: chain requires two reachable slots`);
     }
   }
   return cards;
@@ -195,10 +201,14 @@ export const enemyOnlyTokens = new Set<TokenName>(["displace"]);
 /**
  * `guard`가 스택마다 한 번, 아군에게 갈 피해를 대신 받는다 — 「센 카드로 한 놈만」의 직접 대응이다.
  * **재지정은 1회**다: A가 B를 지키고 B가 A를 지키면 순환한다. 광역·연쇄는 어차피 지킴이도 같이
- * 맞으므로 재지정하지 않는다 — 그러면 한 카드가 지킴이를 두 번 때린다
+ * 맞으므로 재지정하지 않는다 — 그러면 한 카드가 지킴이를 두 번 때린다.
+ *
+ * **재지정은 같은 사거리 안에서만 일어난다.** `012` 카드로 뒷칸을 노리면 앞칸 지킴이가 대신 받고,
+ * `3`·`23` 카드는 지킴이를 지나간다 — 좁은 사거리가 값을 갖는 유일한 이유고, 이것이 없으면
+ * 아홉 모양은 하향 아홉 종류일 뿐이다
  */
-function guardFor(combat: CombatState, target: ActorState): ActorState {
-  const guard = combat.enemies.find((enemy) => enemy.hp > 0 && enemy.id !== target.id && (enemy.passives?.guard ?? 0) > 0);
+function guardFor(combat: CombatState, target: ActorState, reach?: string): ActorState {
+  const guard = livingInReach(combat, reach).find((enemy) => enemy.id !== target.id && (enemy.passives?.guard ?? 0) > 0);
   if (!guard?.passives?.guard) return target;
   guard.passives.guard -= 1;
   return guard;
@@ -214,10 +224,10 @@ export function firePowers(state: GameState, trigger: Trigger, enemyId?: string)
     if (power.trigger !== trigger) continue;
     /**
      * 대상은 **파워마다 다시** 고른다 — 앞 파워가 그 적을 죽였을 수 있고, 지정된 적이 이미 시체일
-     * 수도 있다. 살아 있는 적이 없으면 적을 요구하는 파워는 쉰다. 파워는 던지지 않는다
+     * 수도 있다. 사거리 안에 살아 있는 적이 없으면 적을 요구하는 파워는 쉰다. 파워는 던지지 않는다
      */
-    const target = state.combat.enemies.find(({ id, hp }) => id === enemyId && hp > 0)
-      ?? state.combat.enemies.find(({ hp }) => hp > 0);
+    const reachable = livingInReach(state.combat, power.card.reach);
+    const target = reachable.find(({ id }) => id === enemyId) ?? reachable[0];
     if (power.card.target === "enemy" && !target) continue;
     executeCard(state, power.card, target?.id);
   }
@@ -237,8 +247,13 @@ export function cardEffects(state: GameState, card: Card): Effect[] {
 
 export function executeCard(state: GameState, card: Card, enemyId?: string, deckCards?: Card[]): void {
   loadCards([card]);
-  const targets = resolveTargets(state.combat, card.target, enemyId);
-  const chainTargets = card.target === "enemy" ? resolveChainTargets(state.combat, targets[0].id) : [];
+  const targets = resolveTargets(state.combat, card.target, enemyId, card.reach);
+  const chainTargets = card.target === "enemy" ? resolveChainTargets(state.combat, targets[0].id, card.reach) : [];
+  /**
+   * 조건의 대상. 사거리 밖만 남은 `all_enemies` 카드는 대상이 없어도 낼 수 있으므로(§2) 여기가 빈다 —
+   * 그때 조건 붙은 효과는 붙지 않는다. 방어·회복처럼 대상을 안 보는 효과는 그대로 돈다
+   */
+  const conditionTarget = targets[0];
   /**
    * 「무방비 피해」는 여기가 자리다 — P-25가 `guard`를 `dealDamage` **호출부**에 둔 것과 같은 줄이고,
    * `dealDamage`는 `GameState`를 모른다. 파워가 낸 피해로는 다시 터지지 않는다(그래야 순환이 없다)
@@ -250,9 +265,9 @@ export function executeCard(state: GameState, card: Card, enemyId?: string, deck
   };
 
   for (const effect of cardEffects(state, card)) {
-    if (effect.when && !evaluateCondition(effect.when, { state, card, target: targets[0], deckCards })) continue;
+    if (effect.when && !(conditionTarget && evaluateCondition(effect.when, { state, card, target: conditionTarget, deckCards }))) continue;
     const value = effect.value ?? 0;
-    if (effect.op === "damage") for (const target of targets) strike(card.target === "enemy" ? guardFor(state.combat, target) : target, value);
+    if (effect.op === "damage") for (const target of targets) strike(card.target === "enemy" ? guardFor(state.combat, target, card.reach) : target, value);
     else if (effect.op === "block") state.combat.player.block += value;
     else if (effect.op === "draw") for (let count = 0; count < value && state.combat.drawPile.length > 0; count += 1) state.combat.hand.push(state.combat.drawPile.shift()!);
     else if (effect.op === "energy") state.combat.energy += value;

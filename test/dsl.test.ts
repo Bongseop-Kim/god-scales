@@ -28,6 +28,7 @@ const state = (): GameState => ({
     hand: [],
     discardPile: [],
     powers: [],
+    pending: [],
     enemies: [
       { ...actor("a", 20), patternIndex: 0 },
       { ...actor("b", 20), patternIndex: 0 },
