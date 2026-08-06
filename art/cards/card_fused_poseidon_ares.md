@@ -1,21 +1,23 @@
 # `card_fused_poseidon_ares.webp` — 핏빛 해류 (포세이돈 + 아레스)
 
-[P-32](../../plans/32-art.md) §3 · [원본 규칙](../README.md) · **상태 미생성**
+[P-32](../../plans/32-art.md) §3 · [원본 규칙](../README.md) · **상태 완료 · 512×384**
 
-**파일** WebP **가로 4:3**, **생성 원본 해상도 유지 — 축소하지 않는다.** 화면은 약 89×67이지만 그건 참고값이다.
+**파일** WebP **가로 4:3**, **`512×384`.** 화면이 약 89×67이라 DPR 2의 2.9배다 — **카드만 축소를 허용한다**(§3).
 
 **융합 10장은 폴백 대상이 아니다** — `patron_pair`라 `{patron}_{tag}` 폴백이 걸리지 않으므로 카드별 아트가 필수다.
 
-**생성** GPT-image 2.0, `1536×1024 — 실제 출력이 1448×1086이면 crop도 생략한다. **어느 쪽이든 축소하지 않는다**`
+**생성** GPT-image 2.0, `1536×1024` — 4:3으로 crop한 뒤 512×384로 줄인다(§3). **카드만 이 축소를 허용한다**
 
 **변환** — 입력은 `art/_src/` 원본이고 출력은 `art/`다. **두 경로를 같게 쓰면 원본이 그 자리에서 깎인다.**
 
 ```
 magick art/_src/cards/card_fused_poseidon_ares.png -gravity center -crop 1365x1024+0+0 +repage \
-  -quality 88 art/cards/card_fused_poseidon_ares.webp
+  -filter Lanczos -resize 512x384! -quality 88 art/cards/card_fused_poseidon_ares.webp
 ```
 
-용량은 22~31KB에 떨어진다(R-21 기준).
+용량은 22~31KB에 떨어진다(R-21 기준) — 실측 30장 평균 17KB, 최대 29KB로 맞았다.
+
+**`art/_src/cards/` 원본은 없다.** 팔레트나 구도를 바꾸려면 재생성밖에 없고, 그 대가를 감수하기로 했다(§3).
 
 ## 프롬프트
 

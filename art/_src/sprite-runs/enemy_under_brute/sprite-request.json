@@ -4,17 +4,15 @@
   "engine": "component-row",
   "character": {
     "id": "enemy_under_brute",
-    "description": "시체먹는 에우리노모스, facing left",
+    "description": "",
     "base_image": "base-source.png"
   },
   "cell": {
-    "shape": "square",
-    "width": 256,
-    "height": 256,
-    "safe_margin_x": 20,
-    "safe_margin_y": 20,
-    "size": 256,
-    "safe_margin": 20
+    "shape": "rect",
+    "width": 896,
+    "height": 1024,
+    "safe_margin_x": 48,
+    "safe_margin_y": 96
   },
   "chroma_key": {
     "name": "magenta",
@@ -25,40 +23,49 @@
       255
     ],
     "selection": "auto",
-    "score": 210.02,
-    "min_subject_distance": 206.23,
+    "score": 208.24,
+    "min_subject_distance": 206.66,
     "background": {
-      "mode": "transparent",
-      "opaque_border_fraction": 0.025,
-      "subject_pixels": 19869
+      "mode": "flat",
+      "hex": "#FBFBFB",
+      "rgb": [
+        251,
+        251,
+        251
+      ],
+      "opaque_border_fraction": 1.0,
+      "border_coverage": 1.0,
+      "enclosed_background_pixels": 3,
+      "enclosed_material_pixels": 3,
+      "subject_pixels": 8475
     },
     "candidates": [
       {
         "name": "magenta",
         "hex": "#FF00FF",
-        "score": 210.02,
-        "min_subject_distance": 206.23,
+        "score": 208.24,
+        "min_subject_distance": 206.66,
         "clears_erase_radius": true
       },
       {
         "name": "green",
         "hex": "#00FF00",
-        "score": 202.91,
-        "min_subject_distance": 197.65,
+        "score": 206.6,
+        "min_subject_distance": 205.18,
         "clears_erase_radius": true
       },
       {
         "name": "cyan",
         "hex": "#00FFFF",
-        "score": 203.86,
-        "min_subject_distance": 186.31,
+        "score": 207.6,
+        "min_subject_distance": 204.65,
         "clears_erase_radius": true
       },
       {
         "name": "blue",
         "hex": "#004DFF",
-        "score": 175.11,
-        "min_subject_distance": 165.78,
+        "score": 182.44,
+        "min_subject_distance": 179.97,
         "clears_erase_radius": true
       }
     ],
@@ -69,41 +76,41 @@
       "frames": 4,
       "fps": 4,
       "loop": true,
-      "action": "four-frame subtle guarded idle breathing loop, facing left; preserve the exact stance and identity"
+      "action": "four-frame compact left-facing crouched breathing loop: the large primary jaw opens and settles slightly, the smaller belly maw stays closed, long arms sway close to the body, and both complete hands and feet remain visible; each pose uses at most 70 percent of its slot width with broad gutters; no finger, jaw, spine, limb, fragment, or pixel crosses a slot boundary"
     },
     "attack": {
       "frames": 2,
       "fps": 8,
       "loop": false,
-      "action": "two-frame short attack toward the left: anticipation then committed strike; keep all anatomy, weapons, and asymmetric damage consistent"
+      "action": "two-frame compact close attack facing left: the gray brute crouches, then makes a short primary-maw bite and near-hand claw swipe without a horizontal leap; the belly maw stays closed and all limbs remain attached; broad gutters; no saliva, blood, detached finger, extra limb, effect, or cross-slot pixel"
     },
     "hit": {
       "frames": 1,
       "fps": 6,
       "loop": false,
-      "action": "one-frame hit reaction recoiling away from an impact from the left; no new wounds or detached parts"
+      "action": "single compact recoil from an impact at the left: primary jaw pulls back, long arms bend inward, belly maw remains closed, and both hands and feet stay fully visible; center the entire brute within the middle 70 percent width and 74 percent height with broad padding; no wound, saliva, debris, detached finger, or crop"
     },
     "death": {
       "frames": 2,
       "fps": 4,
       "loop": false,
-      "action": "two-frame death: body gives way, then collapsed still on the ground; preserve existing asymmetry, anatomy, and equipment"
+      "action": "two-frame non-graphic defeat facing left: knees buckle, then the complete gray brute curls into a low grounded collapse with head, closed belly maw, both hands, both feet, and back spines attached and visible; compact poses with broad gutters; no blood, gore, saliva, detached limb, debris, or cross-slot pixel"
     }
   },
-  "style": "match the attached canonical pixel-art sprite exactly: large uniform square pixel blocks, hard dark outline, no anti-aliasing, limited desaturated grim-dark palette, flat shading",
+  "style": "high-detail polished grim dark-fantasy pixel art matching production Ares and Artemis density, crisp near-black outline, restrained corpse-gray bone charcoal and muted dark-red mouth palette",
   "motion_phase_guides": false,
   "layout": "taxonomy/v1",
   "fit": {
     "resample": "kcentroid",
-    "align_x": "alpha-centroid",
+    "align_x": "bbox-center",
     "align_y": "bottom",
     "pixel_unfake": true,
-    "logical_height": 32,
-    "palette_size": 16,
+    "logical_height": 1024,
+    "palette_size": 96,
     "outline": true
   },
   "chroma": {
-    "mode": "rgb",
+    "mode": "ycbcr",
     "unmix_reach": 4,
     "spill_max_fraction": 0.005
   }

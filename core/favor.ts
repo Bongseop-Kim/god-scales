@@ -25,7 +25,29 @@ export type FavorUses = Record<string, number>;
  * 신은 언제·어디에 개입할지 스스로 정하므로 대상이 효과의 일부다
  */
 export type StageEffect = Effect & { target: "self" | "enemy" | "all_enemies" };
-export type FavorGod = { id: string; stage_effects: { devotion?: { on_encounter_start: StageEffect[] }; wrath?: { on_encounter_start: StageEffect[] } } };
+/**
+ * 개입이 터지는 자리 둘. `on_turn_start`는 **그 턴 안에 사라지는 것만** 든다 — 지속 토큰과 적 방어는
+ * 조우 내내 쌓여서(적 방어는 리셋이 없다, `core/combat.ts:73`은 플레이어만 지운다) 밸런스가 아니라
+ * 고장이 된다. 게이트가 `tools/validate.ts`에서 그것을 잠근다
+ */
+export type StageHook = "on_encounter_start" | "on_turn_start";
+/**
+ * 매 턴 훅이 터지는 주기. **1이 아니다** — 조우가 5.8턴이라 매 턴 개입은 한 조우에 여섯 번이고,
+ * 4000런 대신 1200런 층화로 재보면 그 값이 밴드를 깬다:
+ *
+ * | 주기 | 승률(층화) | 저휴식 클리어(기본 조합 500런) |
+ * |---|---:|---:|
+ * | 개입 없음(P-30) | 0.502 | 0.146 |
+ * | 매 턴 | 0.582 | **0.356** (상한 0.24) |
+ * | 두 턴 | 0.572 | **0.272** |
+ * | **세 턴** | **0.531** | **0.188** |
+ *
+ * 정수 아래로는 못 내려간다 — 「1 피해」가 이미 조우당 6이다. 그래서 크기가 아니라 **주기**를 다이얼로
+ * 썼다. 나머지 2는 조우 시작 개입과 겹치지 않게 한 칸 민 것이다(2·5·8턴)
+ */
+export const interventionEveryTurns = 3;
+export const intervenesOnTurn = (turn: number): boolean => turn % interventionEveryTurns === 2;
+export type FavorGod = { id: string; stage_effects: Partial<Record<FavorStage, Partial<Record<StageHook, StageEffect[]>>>> };
 
 export function favorStage(value: number): FavorStage {
   if (value >= favorBoundaries.devotion) return "devotion";
@@ -75,19 +97,21 @@ function targets(state: GameState, target: StageEffect["target"]): ActorState[] 
  *
  * ponytail: `executeCard`를 타지 않는다 — 그쪽은 이로운 토큰을 카드 target과 무관하게 플레이어로
  * 돌리므로(`selfTokens`) 아테나 진노의 「적이 보루 5를 얻는다」가 뒤집힌다. 어휘는 같고 대상만 신이 갖는다
+ *
+ * 단계를 코드가 다시 세지 않는다 — **데이터가 있는 단계가 곧 개입하는 단계**다. 평온이 조우의 6할인데
+ * 거기 데이터가 없어 신이 침묵하던 것이 P-34가 고친 자리다
  */
-export function applyFavorStageEffects(state: GameState, definitions: FavorGod[]): void {
+export function applyFavorStageEffects(state: GameState, definitions: FavorGod[], hook: StageHook = "on_encounter_start"): void {
   for (const god of definitions) {
     const stage = favorStage(state.favor[god.id] ?? favorInitial);
-    if (stage !== "devotion" && stage !== "wrath") continue;
-    for (const effect of god.stage_effects[stage]?.on_encounter_start ?? []) {
+    for (const effect of god.stage_effects[stage]?.[hook] ?? []) {
       for (const actor of targets(state, effect.target)) {
         if (effect.op === "damage") dealDamage(state.combat.player, actor, effect.value ?? 0);
         else if (effect.op === "block") actor.block += effect.value ?? 0;
         else if (effect.op === "heal") actor.hp = Math.min(actor.maxHp, actor.hp + (effect.value ?? 0));
         else if (effect.op === "apply_token" && effect.token) addToken(actor, effect.token, effect.stacks ?? 1);
         // 조용히 아무 일도 안 하는 개입이 §0의 부채였다 — 게이트가 먼저 잡지만 여기서도 안 삼킨다
-        else throw new Error(`${god.id} ${stage}: unsupported stage effect ${effect.op}`);
+        else throw new Error(`${god.id} ${stage} ${hook}: unsupported stage effect ${effect.op}`);
       }
     }
   }

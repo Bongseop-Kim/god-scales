@@ -1,6 +1,6 @@
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import type { EnemyAction } from "../core/combat.ts";
-import { favorBoundaries, favorInitial, favorStage, type FavorStage } from "../core/favor.ts";
+import { favorBoundaries, favorInitial, favorStage, interventionEveryTurns, type FavorStage } from "../core/favor.ts";
 import type { PassiveName, Trigger } from "../core/state.ts";
 import enemyDataJson from "../data/enemies.json" with { type: "json" };
 import { endTurnAction, type CombatDecision, type CombatObservation } from "../sim/engine.ts";
@@ -148,8 +148,8 @@ function PlayerActor({ view, reducedMotion }: { view: CombatObservation; reduced
   return (
     <div className="player-actor">
       {/**
-       * **후원 둘만** 그린다. 나머지 셋은 칸이 없다 — `state.favor`가 조합 둘만 들고, 조합 밖의 신은
-       * 아무것도 호의를 움직이지 않아 영원히 평온이고 개입도 없다(사유는 reviews/26-hud.md)
+       * **후원 둘만** 그린다. 나머지 셋은 칸이 없다 — `state.favor`가 조합 둘만 들고, 조합 밖의 신에게는
+       * 호의를 움직일 것이 없다(사유는 reviews/26-hud.md). 후원 둘은 평온에서도 매 턴 개입한다
        */}
       <div className="favor-row">
         {view.patrons.map((god) => (
@@ -171,12 +171,12 @@ function PlayerActor({ view, reducedMotion }: { view: CombatObservation; reduced
 
 /**
  * 단계 경계는 `favorBoundaries`에서 읽는다 — 눈금을 UI에 다시 박으면 규칙이 바뀔 때 화면만 옛 자리에
- * 남는다. 진노는 경고색이다: 그 단계의 개입이 조우 **시작**에 터지므로 플레이어가 그 전에 알아야 한다
+ * 남는다. 진노는 경고색이다: 그 단계의 개입이 조우 시작과 **전투 중**에 터지므로 플레이어가 그 전에 알아야 한다
  */
 function FavorMeter({ god, value, grace }: { god: string; value: number; grace: number }) {
   const stage = favorStage(value);
-  const intervention = godStageText(god, stage);
-  const stageText = `${stageName[stage]}${intervention ? ` · 조우 시작에 ${intervention}` : ""}`;
+  const { start, turn } = godStageText(god, stage);
+  const stageText = [stageName[stage], start && `조우 시작에 ${start}`, turn && `${interventionEveryTurns}턴마다 ${turn}`].filter(Boolean).join(" · ");
   return (
     <div
       className={`favor ${stage}`}

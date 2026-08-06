@@ -4,17 +4,15 @@
   "engine": "component-row",
   "character": {
     "id": "enemy_surface_attrition",
-    "description": "사자 가죽의 파수병, facing left",
+    "description": "",
     "base_image": "base-source.png"
   },
   "cell": {
-    "shape": "square",
-    "width": 256,
-    "height": 256,
-    "safe_margin_x": 20,
-    "safe_margin_y": 20,
-    "size": 256,
-    "safe_margin": 20
+    "shape": "rect",
+    "width": 896,
+    "height": 1024,
+    "safe_margin_x": 48,
+    "safe_margin_y": 96
   },
   "chroma_key": {
     "name": "cyan",
@@ -25,40 +23,49 @@
       255
     ],
     "selection": "auto",
-    "score": 249.92,
-    "min_subject_distance": 224.42,
+    "score": 254.17,
+    "min_subject_distance": 234.44,
     "background": {
-      "mode": "transparent",
-      "opaque_border_fraction": 0.062,
-      "subject_pixels": 14727
+      "mode": "flat",
+      "hex": "#F8F8F8",
+      "rgb": [
+        248,
+        248,
+        248
+      ],
+      "opaque_border_fraction": 1.0,
+      "border_coverage": 1.0,
+      "enclosed_background_pixels": 599,
+      "enclosed_material_pixels": 1,
+      "subject_pixels": 7179
     },
     "candidates": [
       {
         "name": "magenta",
         "hex": "#FF00FF",
-        "score": 218.9,
-        "min_subject_distance": 208.83,
+        "score": 217.98,
+        "min_subject_distance": 213.4,
         "clears_erase_radius": true
       },
       {
         "name": "green",
         "hex": "#00FF00",
-        "score": 211.88,
-        "min_subject_distance": 186.57,
+        "score": 211.63,
+        "min_subject_distance": 208.41,
         "clears_erase_radius": true
       },
       {
         "name": "cyan",
         "hex": "#00FFFF",
-        "score": 249.92,
-        "min_subject_distance": 224.42,
+        "score": 254.17,
+        "min_subject_distance": 234.44,
         "clears_erase_radius": true
       },
       {
         "name": "blue",
         "hex": "#004DFF",
-        "score": 212.47,
-        "min_subject_distance": 199.82,
+        "score": 208.43,
+        "min_subject_distance": 200.42,
         "clears_erase_radius": true
       }
     ],
@@ -69,41 +76,41 @@
       "frames": 4,
       "fps": 4,
       "loop": true,
-      "action": "four-frame subtle guarded idle breathing loop, facing left; preserve the exact stance and identity"
+      "action": "four-frame compact left-facing exhausted guard loop: bear-hooded infantryman breathes heavily and shifts weight while the complete spear stays nearly vertical close to the body and the attached bear cloak sways subtly; each pose uses at most 68 percent of its slot width with broad gutters; no fur tip, hand, foot, spear part, fragment, or pixel crosses a slot boundary"
     },
     "attack": {
       "frames": 2,
       "fps": 8,
       "loop": false,
-      "action": "two-frame short attack toward the left: anticipation then committed strike; keep all anatomy, weapons, and asymmetric damage consistent"
+      "action": "two-frame compact attack facing left: a short bear-cloak shoulder brace, then a diagonal downward spear thrust close across the body; never extend the spear horizontally; complete bear pelt and spear remain attached or held; broad gutters; no detached fur, blood, debris, extra animal, or cross-slot pixel"
     },
     "hit": {
       "frames": 1,
       "fps": 6,
       "loop": false,
-      "action": "one-frame hit reaction recoiling away from an impact from the left; no new wounds or detached parts"
+      "action": "single compact recoil from an impact at the left: armored body crouches beneath the attached bear hood, both boots remain visible, and the complete spear stays nearly vertical; center within the middle 68 percent width and 76 percent height with broad padding; no new wound, detached fur, debris, or crop"
     },
     "death": {
       "frames": 2,
       "fps": 4,
       "loop": false,
-      "action": "two-frame death: body gives way, then collapsed still on the ground; preserve existing asymmetry, anatomy, and equipment"
+      "action": "two-frame non-graphic defeat facing left: armored knees give way, then the infantryman settles into a low seated collapse while complete bear pelt and spear stay attached, held, or directly touching the hand; compact poses with broad gutters; no blood, gore, detached fur, debris, or cross-slot pixel"
     }
   },
-  "style": "match the attached canonical pixel-art sprite exactly: large uniform square pixel blocks, hard dark outline, no anti-aliasing, limited desaturated grim-dark palette, flat shading",
+  "style": "high-detail polished grim Greek dark-fantasy pixel art matching production Ares and Artemis density, crisp near-black outline, restrained bear brown iron bronze ivory and muted crimson palette",
   "motion_phase_guides": false,
   "layout": "taxonomy/v1",
   "fit": {
     "resample": "kcentroid",
-    "align_x": "alpha-centroid",
+    "align_x": "bbox-center",
     "align_y": "bottom",
     "pixel_unfake": true,
-    "logical_height": 32,
-    "palette_size": 16,
+    "logical_height": 1024,
+    "palette_size": 96,
     "outline": true
   },
   "chroma": {
-    "mode": "rgb",
+    "mode": "ycbcr",
     "unmix_reach": 4,
     "spill_max_fraction": 0.005
   }

@@ -4,17 +4,15 @@
   "engine": "component-row",
   "character": {
     "id": "enemy_god_poseidon",
-    "description": "포세이돈 (진노), facing left",
+    "description": "",
     "base_image": "base-source.png"
   },
   "cell": {
-    "shape": "square",
-    "width": 256,
-    "height": 256,
-    "safe_margin_x": 20,
-    "safe_margin_y": 20,
-    "size": 256,
-    "safe_margin": 20
+    "shape": "rect",
+    "width": 896,
+    "height": 1024,
+    "safe_margin_x": 48,
+    "safe_margin_y": 96
   },
   "chroma_key": {
     "name": "magenta",
@@ -25,40 +23,49 @@
       255
     ],
     "selection": "auto",
-    "score": 210.77,
-    "min_subject_distance": 206.42,
+    "score": 211.25,
+    "min_subject_distance": 208.81,
     "background": {
-      "mode": "transparent",
-      "opaque_border_fraction": 0.142,
-      "subject_pixels": 20106
+      "mode": "flat",
+      "hex": "#03F9FC",
+      "rgb": [
+        3,
+        249,
+        252
+      ],
+      "opaque_border_fraction": 1.0,
+      "border_coverage": 1.0,
+      "enclosed_background_pixels": 942,
+      "enclosed_material_pixels": 0,
+      "subject_pixels": 15656
     },
     "candidates": [
       {
         "name": "magenta",
         "hex": "#FF00FF",
-        "score": 210.77,
-        "min_subject_distance": 206.42,
+        "score": 211.25,
+        "min_subject_distance": 208.81,
         "clears_erase_radius": true
       },
       {
         "name": "green",
         "hex": "#00FF00",
-        "score": 190.35,
-        "min_subject_distance": 185.88,
+        "score": 190.51,
+        "min_subject_distance": 188.36,
         "clears_erase_radius": true
       },
       {
         "name": "cyan",
         "hex": "#00FFFF",
-        "score": 203.62,
-        "min_subject_distance": 190.82,
+        "score": 194.13,
+        "min_subject_distance": 172.65,
         "clears_erase_radius": true
       },
       {
         "name": "blue",
         "hex": "#004DFF",
-        "score": 161.93,
-        "min_subject_distance": 157.09,
+        "score": 151.39,
+        "min_subject_distance": 145.42,
         "clears_erase_radius": true
       }
     ],
@@ -69,41 +76,41 @@
       "frames": 4,
       "fps": 4,
       "loop": true,
-      "action": "four-frame subtle guarded idle breathing loop, facing left; preserve the exact stance and identity"
+      "action": "four-frame imposing idle breathing loop facing left; vertical trident remains planted in both hands and solid flat-topped water wall remains connected beside him; only small beard, robe, and water-surface movement; no detached droplets"
     },
     "attack": {
       "frames": 2,
       "fps": 8,
       "loop": false,
-      "action": "two-frame short attack toward the left: anticipation then committed strike; keep all anatomy, weapons, and asymmetric damage consistent"
+      "action": "two-frame compact attack toward the left: Poseidon braces, then takes one forceful step and shoulder-shoves the solid water wall forward; in both poses the same complete symmetrical three-tined trident stays perfectly upright and vertical, gripped in both hands, with an unbroken straight shaft from fork to butt; do not rotate, swing, thrust, bend, or redesign the trident; each figure and connected water wall uses at most 68 percent of its slot width with a broad uninterrupted magenta gutter; no projectile, splash, detached weapon piece, debris, fragment, or cross-slot pixel"
     },
     "hit": {
       "frames": 1,
       "fps": 6,
       "loop": false,
-      "action": "one-frame hit reaction recoiling away from an impact from the left; no new wounds or detached parts"
+      "action": "single compact crouching impact recoil from the left while gripping the complete upright trident and sheltering behind the solid water wall; center the full figure, all three tines, shaft, feet, and wall within the middle 68 percent of the canvas width and 72 percent of its height, leaving broad uninterrupted magenta padding on all four sides; flawless and unwounded, no loose water, cropped parts, fragments, or detached effects"
     },
     "death": {
       "frames": 2,
       "fps": 4,
       "loop": false,
-      "action": "two-frame death: body gives way, then collapsed still on the ground; preserve existing asymmetry, anatomy, and equipment"
+      "action": "two-frame non-graphic defeat facing left: Poseidon sinks to one knee, then collapses low while still gripping one complete unbroken trident; all three tines and the entire continuous shaft stay attached to his hand in both poses; the water wall lowers as one connected mass behind him; each pose stays centered inside at most 72 percent of its slot with a broad uninterrupted magenta gutter; no broken weapon, floating pieces, droplets, debris, fragments, blood, wounds, or gore"
     }
   },
-  "style": "match the attached canonical pixel-art sprite exactly: large uniform square pixel blocks, hard dark outline, no anti-aliasing, limited desaturated grim-dark palette, flat shading",
+  "style": "high-detail polished grim dark-fantasy pixel art matching production Ares and Artemis density, crisp near-black outline, restrained marble bronze and deep teal palette",
   "motion_phase_guides": false,
   "layout": "taxonomy/v1",
   "fit": {
     "resample": "kcentroid",
-    "align_x": "alpha-centroid",
+    "align_x": "bbox-center",
     "align_y": "bottom",
     "pixel_unfake": true,
-    "logical_height": 32,
-    "palette_size": 16,
+    "logical_height": 1024,
+    "palette_size": 96,
     "outline": true
   },
   "chroma": {
-    "mode": "rgb",
+    "mode": "ycbcr",
     "unmix_reach": 4,
     "spill_max_fraction": 0.005
   }

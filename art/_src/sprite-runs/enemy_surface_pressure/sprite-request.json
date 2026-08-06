@@ -4,17 +4,15 @@
   "engine": "component-row",
   "character": {
     "id": "enemy_surface_pressure",
-    "description": "켄타우로스 습격자, facing left",
+    "description": "",
     "base_image": "base-source.png"
   },
   "cell": {
-    "shape": "square",
-    "width": 256,
-    "height": 256,
-    "safe_margin_x": 20,
-    "safe_margin_y": 20,
-    "size": 256,
-    "safe_margin": 20
+    "shape": "rect",
+    "width": 896,
+    "height": 1024,
+    "safe_margin_x": 48,
+    "safe_margin_y": 96
   },
   "chroma_key": {
     "name": "cyan",
@@ -25,40 +23,49 @@
       255
     ],
     "selection": "auto",
-    "score": 225.75,
-    "min_subject_distance": 219.49,
+    "score": 227.26,
+    "min_subject_distance": 225.14,
     "background": {
-      "mode": "transparent",
-      "opaque_border_fraction": 0.019,
-      "subject_pixels": 17113
+      "mode": "flat",
+      "hex": "#F9F9F9",
+      "rgb": [
+        249,
+        249,
+        249
+      ],
+      "opaque_border_fraction": 1.0,
+      "border_coverage": 1.0,
+      "enclosed_background_pixels": 1066,
+      "enclosed_material_pixels": 1,
+      "subject_pixels": 10597
     },
     "candidates": [
       {
         "name": "magenta",
         "hex": "#FF00FF",
-        "score": 208.44,
-        "min_subject_distance": 204.09,
+        "score": 207.99,
+        "min_subject_distance": 205.32,
         "clears_erase_radius": true
       },
       {
         "name": "green",
         "hex": "#00FF00",
-        "score": 210.05,
-        "min_subject_distance": 159.12,
+        "score": 211.08,
+        "min_subject_distance": 206.81,
         "clears_erase_radius": true
       },
       {
         "name": "cyan",
         "hex": "#00FFFF",
-        "score": 225.75,
-        "min_subject_distance": 219.49,
+        "score": 227.26,
+        "min_subject_distance": 225.14,
         "clears_erase_radius": true
       },
       {
         "name": "blue",
         "hex": "#004DFF",
-        "score": 205.71,
-        "min_subject_distance": 192.1,
+        "score": 207.54,
+        "min_subject_distance": 193.61,
         "clears_erase_radius": true
       }
     ],
@@ -69,41 +76,41 @@
       "frames": 4,
       "fps": 4,
       "loop": true,
-      "action": "four-frame subtle guarded idle breathing loop, facing left; preserve the exact stance and identity"
+      "action": "four-frame compact left-facing centaur guard loop: human torso breathes, one front hoof stamps subtly, all four legs remain attached and visible, and the complete hide standard stays diagonally upward close to the torso; each pose uses at most 70 percent of its slot width with broad gutters; no hoof, tail, pole, pennant, cord, fragment, or pixel crosses a slot boundary"
     },
     "attack": {
       "frames": 2,
       "fps": 8,
       "loop": false,
-      "action": "two-frame short attack toward the left: anticipation then committed strike; keep all anatomy, weapons, and asymmetric damage consistent"
+      "action": "two-frame compact attack facing left: a short forehoof stomp, then a diagonal downward standard strike close to the body; never extend the pole horizontally; four legs, tail, pole, and complete hide pennant remain attached; broad gutters; no detached cloth, dust, debris, extra leg, or cross-slot pixel"
     },
     "hit": {
       "frames": 1,
       "fps": 6,
       "loop": false,
-      "action": "one-frame hit reaction recoiling away from an impact from the left; no new wounds or detached parts"
+      "action": "single compact recoil from an impact at the left: human torso pulls back, horse body lowers, all four hooves stay visible, and the complete hide standard stays upright or close diagonal; center within the middle 70 percent width and 74 percent height with broad padding; no wound, detached pennant, debris, extra leg, or crop"
     },
     "death": {
       "frames": 2,
       "fps": 4,
       "loop": false,
-      "action": "two-frame death: body gives way, then collapsed still on the ground; preserve existing asymmetry, anatomy, and equipment"
+      "action": "two-frame non-graphic defeat facing left: front legs fold, then the complete centaur settles into a low side collapse with all four legs, tail, pole, and hide pennant attached and the standard held or directly touching a hand; compact poses with broad gutters; no blood, gore, detached cloth, debris, extra limb, or cross-slot pixel"
     }
   },
-  "style": "match the attached canonical pixel-art sprite exactly: large uniform square pixel blocks, hard dark outline, no anti-aliasing, limited desaturated grim-dark palette, flat shading",
+  "style": "high-detail polished grim Greek dark-fantasy pixel art matching production Ares and Artemis density, crisp near-black outline, restrained hide brown bone bronze charcoal and muted crimson palette",
   "motion_phase_guides": false,
   "layout": "taxonomy/v1",
   "fit": {
     "resample": "kcentroid",
-    "align_x": "alpha-centroid",
+    "align_x": "bbox-center",
     "align_y": "bottom",
     "pixel_unfake": true,
-    "logical_height": 32,
-    "palette_size": 16,
+    "logical_height": 1024,
+    "palette_size": 96,
     "outline": true
   },
   "chroma": {
-    "mode": "rgb",
+    "mode": "ycbcr",
     "unmix_reach": 4,
     "spill_max_fraction": 0.005
   }

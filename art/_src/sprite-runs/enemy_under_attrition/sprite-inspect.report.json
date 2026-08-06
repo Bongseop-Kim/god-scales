@@ -2,7 +2,7 @@
   "ok": true,
   "engine": "component-row",
   "kind": "sprite-gen-inspect-report",
-  "run_dir": "/Users/gimbongseob/git/god-scales/art/_src/sprite-runs/enemy_under_attrition",
+  "run_dir": "/Users/duegosystem/git/god-scales/art/_src/sprite-runs/enemy_under_attrition",
   "states": [
     "idle",
     "attack",
@@ -29,27 +29,23 @@
       ],
       "metrics": {
         "histogram_intersection": {
-          "min": 0.9398774480355642,
-          "mean": 0.9576572950458568
+          "min": 0.9854275713794594,
+          "mean": 0.9917197813889822
         },
         "dhash_similarity": {
-          "min": 0.9375,
-          "mean": 0.96875
+          "min": 0.953125,
+          "mean": 0.9713541666666666
         },
-        "motion_presence": 0.013214470358455882,
+        "motion_presence": 0.012711189619076798,
         "centroid_sigma": {
-          "x": 3.340513102222589,
-          "y": 0.8167415503844397
+          "x": 3.289499912151034,
+          "y": 7.340615637726573
         }
       },
       "ok": true,
       "errors": [],
       "warnings": [
-        "idle: pitch crosscheck: axis ratio y/x disagrees — run-length 1.174 vs grid 1.000 (17.4%); one axis may have collapsed to the other",
-        "idle: frame 0 pitch detection inconclusive — consensus fallback 5.00x5.00",
-        "idle: frame 1 pitch detection inconclusive — consensus fallback 5.00x5.00",
-        "idle: frame 3 pitch detection inconclusive — consensus fallback 5.00x5.00",
-        "idle: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:50x142, 1:50x141, 2:50x142, 3:50x142"
+        "idle: pitch disagreement — detect 1.00x1.00 (uniformity 105.9) vs runlen 2.42x2.42 (30.0); detect kept. large gap usually means the raw was drawn finer than the cell contract — reroll with a block-count hint"
       ]
     },
     {
@@ -64,25 +60,23 @@
       ],
       "metrics": {
         "histogram_intersection": {
-          "min": 0.9725975317307131,
-          "mean": 0.9725975317307131
+          "min": 0.9669032683758529,
+          "mean": 0.9669032683758529
         },
         "dhash_similarity": {
-          "min": 0.75,
-          "mean": 0.75
+          "min": 0.78125,
+          "mean": 0.78125
         },
-        "motion_presence": 0.06530594171262255,
+        "motion_presence": 0.055727969898897056,
         "centroid_sigma": {
-          "x": 2.399602269403985,
-          "y": 5.811779844417146
+          "x": 28.667533541748924,
+          "y": 4.9980885288658214
         }
       },
       "ok": true,
       "errors": [],
       "warnings": [
-        "attack: frame 0 pitch detection inconclusive — consensus fallback 7.40x7.20",
-        "attack: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:84x85, 1:107x83",
-        "attack: frame 01 has 96 non-transparent edge pixels"
+        "attack: pitch disagreement — detect 1.00x1.00 (uniformity 101.8) vs runlen 2.45x2.41 (28.0); detect kept. large gap usually means the raw was drawn finer than the cell contract — reroll with a block-count hint"
       ]
     },
     {
@@ -112,7 +106,7 @@
       "ok": true,
       "errors": [],
       "warnings": [
-        "hit: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:76x119",
+        "hit: pitch disagreement — detect 1.00x1.00 (uniformity 111.2) vs runlen 2.46x2.43 (30.7); detect kept. large gap usually means the raw was drawn finer than the cell contract — reroll with a block-count hint",
         "hit: motion presence is too low (0.0000 < 0.0100)"
       ]
     },
@@ -128,40 +122,32 @@
       ],
       "metrics": {
         "histogram_intersection": {
-          "min": 0.9344490781387181,
-          "mean": 0.9344490781387181
+          "min": 0.9853170014462542,
+          "mean": 0.9853170014462542
         },
         "dhash_similarity": {
-          "min": 0.734375,
-          "mean": 0.734375
+          "min": 0.8125,
+          "mean": 0.8125
         },
-        "motion_presence": 0.12624894684436275,
+        "motion_presence": 0.042505840226715684,
         "centroid_sigma": {
-          "x": 4.740605794556629,
-          "y": 28.677655838454783
+          "x": 26.28714531246149,
+          "y": 30.817383579778436
         }
       },
       "ok": true,
       "errors": [],
       "warnings": [
-        "death: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:68x81, 1:97x35",
-        "death: frame 01 has 96 non-transparent edge pixels"
+        "death: pitch disagreement — detect 1.00x1.00 (uniformity 109.5) vs runlen 2.49x2.46 (32.9); detect kept. large gap usually means the raw was drawn finer than the cell contract — reroll with a block-count hint"
       ]
     }
   ],
   "errors": [],
   "warnings": [
-    "idle: pitch crosscheck: axis ratio y/x disagrees — run-length 1.174 vs grid 1.000 (17.4%); one axis may have collapsed to the other",
-    "idle: frame 0 pitch detection inconclusive — consensus fallback 5.00x5.00",
-    "idle: frame 1 pitch detection inconclusive — consensus fallback 5.00x5.00",
-    "idle: frame 3 pitch detection inconclusive — consensus fallback 5.00x5.00",
-    "idle: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:50x142, 1:50x141, 2:50x142, 3:50x142",
-    "attack: frame 0 pitch detection inconclusive — consensus fallback 7.40x7.20",
-    "attack: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:84x85, 1:107x83",
-    "attack: frame 01 has 96 non-transparent edge pixels",
-    "hit: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:76x119",
+    "idle: pitch disagreement — detect 1.00x1.00 (uniformity 105.9) vs runlen 2.42x2.42 (30.0); detect kept. large gap usually means the raw was drawn finer than the cell contract — reroll with a block-count hint",
+    "attack: pitch disagreement — detect 1.00x1.00 (uniformity 101.8) vs runlen 2.45x2.41 (28.0); detect kept. large gap usually means the raw was drawn finer than the cell contract — reroll with a block-count hint",
+    "hit: pitch disagreement — detect 1.00x1.00 (uniformity 111.2) vs runlen 2.46x2.43 (30.7); detect kept. large gap usually means the raw was drawn finer than the cell contract — reroll with a block-count hint",
     "hit: motion presence is too low (0.0000 < 0.0100)",
-    "death: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:68x81, 1:97x35",
-    "death: frame 01 has 96 non-transparent edge pixels"
+    "death: pitch disagreement — detect 1.00x1.00 (uniformity 109.5) vs runlen 2.49x2.46 (32.9); detect kept. large gap usually means the raw was drawn finer than the cell contract — reroll with a block-count hint"
   ]
 }

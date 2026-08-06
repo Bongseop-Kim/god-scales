@@ -93,17 +93,17 @@ describe("demands", () => {
      * 요구는 전투 **앞에서** 묻고 그 전투로 판정한다. 그래서 「첫 요구」를 곡선이 **처음 갈라지는
      * 자리**로 찾는다 — 그 자리까지 두 런은 같은 칸을 같은 시드로 걸었으므로 차이는 요구 하나다.
      *
-     * 시드 25 → 57 → 70 → 4 → 6 → 94 → **4**: P-29가 답을 셋으로 늘리면서 봇의 첫 답이 시련으로
-     * 넘어갔다(보상이 호의가 아니라 은혜다). 수락을 명시로 고정하고 400시드 중 가장 앞을 다시 골랐다
+     * 시드 25 → 57 → 70 → 4 → 6 → 94 → 4 → **22**: P-34가 전투 중 개입을 넣자 시드 4의 첫 요구가
+     * 더 이상 안 지켜진다(조우가 다르게 끝난다). 400시드 중 아래 넷을 다 만족하는 가장 앞을 다시 골랐다
      */
-    const played = run(4, undefined, firstAnswer("tier1"));
-    const refusedRun = run(4, undefined, firstAnswer("reject"));
+    const played = run(22, undefined, firstAnswer("tier1"));
+    const refusedRun = run(22, undefined, firstAnswer("reject"));
     // 두 곡선이 다 든 자리에서만 찾는다 — 거절 런이 먼저 죽으면 없는 칸이 「갈라진 자리」로 읽힌다
     const at = played.favorCurve.findIndex((point, index) => index < refusedRun.favorCurve.length
       && JSON.stringify(point) !== JSON.stringify(refusedRun.favorCurve[index]));
-    expect(at, "seed 4 never diverges on the first demand").toBeGreaterThan(0);
+    expect(at, "seed 22 never diverges on the first demand").toBeGreaterThan(0);
 
-    // 시드 4의 첫 요구는 지켜진다 — 보상과 상대 신의 벌금이 그때 들어간다
+    // 시드 22의 첫 요구는 지켜진다 — 보상과 상대 신의 벌금이 그때 들어간다
     const kept = played.favorCurve[at];
     const refused = refusedRun.favorCurve[at];
     expect(kept.zeus - refused.zeus).toBe(acceptReward);
@@ -113,13 +113,13 @@ describe("demands", () => {
     expect(run(3, undefined, firstAnswer("tier1")).favorCurve).toEqual(run(3, undefined, firstAnswer("reject")).favorCurve);
 
     // 편든 신은 "지킨 신"이다 — 전부 거절하면 상대 쪽으로 넘어간다
-    const rejected = run(4, undefined, everyAnswer("reject"));
+    const rejected = run(22, undefined, everyAnswer("reject"));
     expect(rejected.actions.filter(({ type }) => type === "demand").map(({ choice }) => choice)).toContain("reject");
     expect(rejected.conflictChoice).toBe("athena");
 
     // 수락 대비 지킴 비율이 실제로 1이 아니다 — 조건 판정이 걸린다는 증거다. 키에 단이 들어 있다
     const outcome = played.demandOutcomes["demand_zeus_multi:tier1"];
-    expect(outcome, "demand_zeus_multi tier1 not asked in seed 4").toBeDefined();
+    expect(outcome, "demand_zeus_multi tier1 not asked in seed 22").toBeDefined();
     const [asked, keptCount] = outcome;
     expect(keptCount).toBeGreaterThan(0);
     expect(keptCount).toBeLessThan(asked);

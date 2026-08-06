@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "kind": "sprite-gen-request",
+  "engine": "component-row",
+  "character": {
+    "id": "surface_incense",
+    "description": "",
+    "base_image": "base-source.png"
+  },
+  "cell": {
+    "shape": "rect",
+    "width": 896,
+    "height": 1024,
+    "safe_margin_x": 64,
+    "safe_margin_y": 96
+  },
+  "chroma_key": {
+    "name": "cyan",
+    "hex": "#00FFFF",
+    "rgb": [
+      0,
+      255,
+      255
+    ],
+    "selection": "auto",
+    "score": 225.63,
+    "min_subject_distance": 220.55,
+    "background": {
+      "mode": "transparent",
+      "opaque_border_fraction": 0.0,
+      "subject_pixels": 6215
+    },
+    "candidates": [
+      {
+        "name": "magenta",
+        "hex": "#FF00FF",
+        "score": 202.09,
+        "min_subject_distance": 199.92,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "green",
+        "hex": "#00FF00",
+        "score": 213.28,
+        "min_subject_distance": 212.05,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "cyan",
+        "hex": "#00FFFF",
+        "score": 225.63,
+        "min_subject_distance": 220.55,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "blue",
+        "hex": "#004DFF",
+        "score": 199.02,
+        "min_subject_distance": 194.01,
+        "clears_erase_radius": true
+      }
+    ],
+    "selection_reason": "highest 1st-percentile subject distance among the 4 candidate(s) clearing the 96 erase radius"
+  },
+  "states": {
+    "idle": {
+      "frames": 4,
+      "fps": 4,
+      "loop": true,
+      "action": "four-frame seamless smoke idle loop: one continuous vertical smoke ribbon subtly changes its S-curves and tip curls while the narrow bottom root stays in the same centered position; the entire smoke column is one connected subject in every frame; no censer, altar, flame, extra smoke cloud, detached curl, particles, or translation"
+    }
+  },
+  "style": "polished grim Greek dark-fantasy true pixel art copied from the accepted base, crisp near-black hard outline, clearly visible uniform square-pixel grid, flat shading, restrained material-specific palette, no anti-aliasing and no painterly rendering",
+  "motion_phase_guides": false,
+  "layout": "taxonomy/v1",
+  "fit": {
+    "resample": "kcentroid",
+    "align_x": "bbox-center",
+    "align_y": "bbox-center",
+    "pixel_unfake": true,
+    "logical_height": 256,
+    "palette_size": 32,
+    "outline": true
+  },
+  "chroma": {
+    "mode": "ycbcr",
+    "unmix_reach": 4,
+    "spill_max_fraction": 0.005
+  }
+}

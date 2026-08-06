@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 
-const ROOT = "/Users/gimbongseob/git/god-scales/art";
+// 하드코딩된 홈 경로는 다른 기계에서 돈다는 보장이 없다 — 스크립트 위치에서 잡는다
+const ROOT = new URL("../", import.meta.url).pathname.replace(/\/$/, "");
 
 // 전투는 좌우 대치다 — 적은 오른쪽에 서서 **왼쪽**을 본다. 방향이 어긋나면 둘이 등을 보고 싸운다 (§1 「방향」)
 const FACE_LEFT =
@@ -32,9 +33,12 @@ Illustration only, no card frame, no text, no numbers, no characters, no people,
 const ONE_HUE = (c) => `exactly one hue of light in the image, ${c}, covering about one quarter of the frame`;
 
 // 변환은 알파·크로마키 정리와 구도 crop까지만 한다 — `-resize`·`-colors`를 원본에 걸지 않는다 (art/README.md).
-// 입력은 항상 `art/_src/` 원본, 출력은 `art/`다. `in.png` 익명 입력이 원본 소실의 원인이었다
+// 입력은 항상 `art/_src/` 원본, 출력은 `art/`다. `in.png` 익명 입력이 원본 소실의 원인이었다.
+//
+// **카드만 예외로 축소한다.** 슬롯이 89×67이라 DPR 2에서 178×134이면 되고 512×384가 그것의 2.9배다.
+// 화면을 꽉 채우는 배경·컷인·일러와 달리 89px 썸네일은 화소가 값이 아니다 — 그래서 여기만 `-resize`가 있다
 const CARD_CONVERT = (name) => `magick art/_src/cards/${name}.png -gravity center -crop 1365x1024+0+0 +repage \\
-  -quality 88 art/cards/${name}.webp`;
+  -filter Lanczos -resize 512x384! -quality 88 art/cards/${name}.webp`;
 
 const SPRITE_CONVERT = (name) =>
   `magick art/_src/${name}.png -alpha on -fuzz 35% -transparent '#00ff00' \\
@@ -43,8 +47,15 @@ const SPRITE_CONVERT = (name) =>
 const BG_CONVERT = (name) => `magick art/_src/bg/${name}.png -gravity center -crop 1536x960+0+0 +repage \\
   art/bg/${name}.png`;
 
-const OVERLAY_CONVERT = (name) => `magick art/_src/fx/${name}.png -gravity center -crop 1536x960+0+0 +repage \\
+// 생성기는 「Transparent background」를 써도 **불투명 PNG를 낸다** — 실제로 open·block 원본이 alpha=Undefined로 나왔다.
+// 그래서 알파는 크로마키로 만든다. 마젠타를 쓰는 이유는 `-fx` 조건이 「r·b 높고 g 낮음」이라
+// `block`의 탁한 붉은 테두리(#9b2226 계열, b가 낮다)를 안 먹기 때문이다. 초록 키는 창백한 빛을 갉아먹는다
+const OVERLAY_CONVERT = (name) => `magick art/_src/fx/${name}.png -alpha set -channel A \\
+  -fx '((r>0.12)&&(b>0.12)&&(r>g*1.25)&&(b>g*1.25))?0:a' +channel \\
+  -gravity center -crop 1536x960+0+0 +repage \\
   -define webp:lossless=true art/fx/${name}.webp`;
+
+const OVERLAY_KEY = `The background behind the effect is a FLAT SOLID MAGENTA #ff00ff fill, completely uniform, covering every part of the frame the effect does not occupy — including the entire centre and bottom. Magenta appears nowhere else in the image and no part of the effect itself is magenta, pink, purple or violet. The magenta is keyed out to transparency afterwards, so the effect must sit on it with clean edges and no magenta glow bleeding into the effect.`;
 
 const HERO_CONVERT = (name) => `magick art/_src/hero/${name}.png -gravity center -crop 1536x960+0+0 +repage \\
   -quality 90 art/hero/${name}.webp`;
@@ -59,6 +70,11 @@ const safeSpec = (spec) =>
   );
 
 const LIGHT_FIX = "the line of light must fade out before reaching the left and right edges, it must not touch them; no horizontal border line, no frame";
+
+// 배경 4장이 세로·정사각으로 나왔다 — 「가로로 뽑는다」가 **생성 지시에만** 있고 프롬프트 본문엔 없었다.
+// `open.webp`는 프롬프트 안에 이 문장이 있어서 가로를 지켰다. 그 문장을 배경·일러에도 박는다
+const LANDSCAPE =
+  "Orientation: WIDE LANDSCAPE, aspect ratio 16:10, much wider than it is tall, a horizontal banner shape that fills a widescreen display. NOT vertical, NOT portrait, NOT square, NOT a tall panel. The scene is laid out across the WIDTH of the frame; even when the subject itself rises, the frame does not — it stays wide and the climb is read inside a wide frame.";
 
 const docs = [];
 const add = (d) => docs.push(d);
@@ -328,10 +344,29 @@ const bg = (file, title, where, subject, pal, notes) =>
     gen: "1536×1024 — **가로로 뽑는다**",
     convert: BG_CONVERT(file),
     convertNote:
-      "**구도 crop까지만 한다.** `-resize`·`-colors`를 걸지 않는다 — 색 감축은 픽셀 배율을 실제로 붙일 때 빌드가 맡는다.\n\n**세로로 생성된 것은 방향이 틀렸다.** 배경은 화면을 꽉 채우는 16:10이라 가로로 다시 뽑는다.",
-    prompt: `${subject}\n\n${BG_STYLE(24, pal)}`,
+      "**구도 crop까지만 한다.** `-resize`·`-colors`를 걸지 않는다 — 색 감축은 픽셀 배율을 실제로 붙일 때 빌드가 맡는다.\n\n**세로가 나오면 crop으로 고치지 말고 다시 뽑는다.** 1024×1536을 16:10으로 자르면 그림의 절반이 버려진다 — 그게 `map-under`·`map-surface`·`surface-boss`·`surface-combat`에서 실제로 생긴 일이다.\n\n**받은 크기를 먼저 확인한다:** `magick identify -format '%wx%h' art/_src/bg/{name}.png` — 폭이 높이보다 크지 않으면 변환하지 말고 재생성한다.",
+    prompt: `${subject}\n\n${LANDSCAPE}\n\n${BG_STYLE(24, pal)}`,
     notes,
   });
+
+// 디스크에 사이드카가 있는데 생성기에는 없었다 — 정본이 안 덮으니 다음 재생성이 이 한 장만 건너뛴다.
+// 그림 자체는 1536×1024 가로로 이미 맞다(§2 1차 세트) — 나머지 다섯 장의 기준이 되는 장이다
+bg(
+  "under-combat",
+  "오르는 길 (저승 1~5층 전투 배경)",
+  "저승 1~5층 전투 · **1차 세트로 픽셀 배율·팔레트·고어 수준이 여기서 굳었다**",
+  `Pixel art environment plate for a grim Greek-mythology roguelike. Wide side-view of the lowest depths of the Underworld: a broken, collapsed stone stairway and cliff face climbing upward out of frame, ledges of cracked black rock. Lower right, the black river Styx pooling between the rocks. Along the left and right edges, the corpses of those who failed the climb, half-fused into the stone, losing their shape, arms submerged in the river, a body hanging from a hook.
+
+Light: the upper edge of the image holds ONE single thin faint pale line of light, the only light source, very dim and narrow; everything below fades into near-black darkness. ${LIGHT_FIX}
+
+Composition: the entire central area must stay dark, empty and quiet with no detail and no bright contrast, all detail and all gore is pushed to the left and right thirds and the top and bottom edges. Keep an empty margin of about 12 grid-pixels, roughly 2.5% of the image width, on all four edges. No characters, no monsters, no player figure.`,
+  UNDER_PAL,
+  [
+    "**이 한 장이 나머지 다섯 장의 기준이다.** 1차 세트로 픽셀 배율 3배·팔레트·고어 수준이 여기서 굳었으니 다시 뽑을 때 이 장에 맞춘다",
+    "**위쪽 빛 한 줄이 §0.4의 상승 전체를 짊어진다.** 1층이 밑바닥이고 12층이 끝이라 여기가 가장 어둡고 빛이 가장 가늘다 — 밝게 그리면 여섯 장의 기울기가 무너진다",
+    "1~5층 다섯 층이 이 한 장을 쓴다. 화면에 가장 오래 뜨는 배경이라 중앙이 조용해야 패널 글자가 산다",
+  ],
+);
 
 bg(
   "under-boss",
@@ -388,9 +423,9 @@ bg(
   "map-under",
   "저승 경로 선택 배경",
   "`MapScreen` 저승 구간 (1~6층)",
-  `Pixel art vertical cross-section of a cliff face inside the Underworld, seen as a map backdrop. The bottom of the frame is pure darkness; the rock walls narrow as they rise, and three separate broken paths are visible threading upward through the stone, distinguishable as three routes. Remains of those who took the wrong path are lodged in the rock here and there.
+  `Pixel art environment plate: a WIDE cutaway of a cliff wall deep inside the Underworld, seen as a map backdrop. The rock face spans the entire width of the frame, its lower band sunk in pure darkness, and THREE separate broken paths thread up through the stone side by side, clearly three distinct routes with gaps of bare rock between them. Remains of those who took the wrong path are lodged in the rock here and there. The climb is read as three routes across a wide wall, not as one tall shaft.
 
-Light: the frame gets steadily brighter toward the TOP, ending in a narrow seam of light where the walls almost meet, the gate crack far above. ${LIGHT_FIX}
+Light: the frame gets steadily brighter toward the TOP, ending in a narrow seam of light along the upper edge where the rock almost closes, the gate crack far above. ${LIGHT_FIX}
 
 Composition: a large panel is laid over the middle of this image, so the central area must stay dark, quiet and free of fine detail; all detail goes to the left and right thirds. Keep an empty margin of about 12 grid-pixels, roughly 2.5% of the image width, on all four edges. No characters, no monsters, no player figure, no icons, no map markers, no connecting lines, no text.`,
   UNDER_PAL,
@@ -406,9 +441,9 @@ bg(
   "map-surface",
   "지상 경로 선택 배경",
   "`MapScreen` 지상 구간 (7~12층)",
-  `Pixel art vertical cross-section of a mountain road above ground, seen as a map backdrop. Ruined temple steps and switchback paths climb from the bottom of the frame toward the top, three separate routes distinguishable through the broken masonry. Fallen columns and abandoned offerings mark the levels already passed.
+  `Pixel art environment plate: a WIDE view of a ruined mountain road above ground, seen as a map backdrop. Broken temple steps and switchback paths cut back and forth ACROSS the full width of the frame as they climb, three separate routes distinguishable through the fallen masonry. Toppled columns and abandoned offerings mark the levels already passed. The switchbacks run left and right across a wide frame — that is what keeps the climb inside a landscape shape.
 
-Light: the frame gets steadily brighter toward the TOP, and at the very top stands the silhouette of the gate to the surface, small and backlit. ${LIGHT_FIX}
+Light: the frame gets steadily brighter toward the TOP, and near the top edge, small and backlit, stands the silhouette of the gate to the surface. ${LIGHT_FIX}
 
 Composition: a large panel is laid over the middle of this image, so the central area must stay dark, quiet and free of fine detail; all detail goes to the left and right thirds. Keep an empty margin of about 12 grid-pixels, roughly 2.5% of the image width, on all four edges. No characters, no monsters, no player figure, no icons, no map markers, no connecting lines, no text.`,
   SURFACE_PAL,
@@ -586,16 +621,24 @@ add({
   path: "ui/marker.md",
   title: "`marker.png` — 지도 현재 위치 마커",
   ref: "§2.5",
-  spec: "PNG 알파. **직접 찍는 16×16이다** — 생성물을 축소한 게 아니라 이 크기가 원본이다. `.map-node.current`에 얹힌다 — 지금은 테두리 색만 바뀌는데 **병사가 어디까지 올라왔는지가 지도의 핵심**이다.",
-  gen: null,
-  convert: null,
-  convertNote: null,
+  spec: "PNG 알파. **여기만 16×16이 곧 파일 크기다** — 격자 숫자가 화면 참고값인 다른 에셋과 반대다. `.map-node.current`에 얹힌다 — 지금은 테두리 색만 바뀌는데 **병사가 어디까지 올라왔는지가 지도의 핵심**이다.",
+  gen: "1024×1024 — 정사각으로 뽑는다",
+  convert:
+    "# 16×16은 사람이 찍는 게 제일 깔끔하다. 생성으로 갈 때는 **box 필터로만** 줄인다 —\n# 기본 보간은 16px에서 실루엣을 회색 죽으로 만든다\nmagick art/_src/ui/marker.png -alpha on -fuzz 35% -transparent '#00ff00' \\\n  -trim +repage -filter box -resize 16x16 -colors 6 art/ui/marker.png",
+  convertNote:
+    "**이 한 장만 `-resize`가 허용된다.** 16×16이 최종 크기이자 원본 규격이라 축소가 손실이 아니다 — 대신 생성물은 `art/_src/ui/marker.png`에 그대로 남긴다.\n\n**줄인 뒤 눈으로 본다.** 16px에서 실루엣이 안 읽히면 그 자리에서 직접 찍는 게 빠르다 — 아래가 그 지침이다.",
   handNote:
-    "**생성하지 않는다. 직접 찍는다.**\n\n§5의 32×40 스프라이트를 **축소하지 말고 실루엣만 새로 찍는다** — 32×40을 16으로 줄이면 뭉갠다.\n\n16×16 안에 병사의 상반신 실루엣만. 위를 보는 자세는 유지한다. 색은 뼈색 실루엣 + 어두운 1픽셀 외곽선, 배경 투명.",
-  prompt: null,
+    "**직접 찍는 쪽이 여전히 1순위다.** 생성 프롬프트는 실루엣 참고용이고, 16×16은 손으로 찍는 게 결과가 낫다.\n\n§5의 32×40 스프라이트를 **축소하지 말고 실루엣만 새로 찍는다** — 32×40을 16으로 줄이면 뭉갠다.\n\n16×16 안에 병사의 상반신 실루엣만. 위를 보는 자세는 유지한다. 색은 뼈색 실루엣 + 어두운 1픽셀 외곽선, 배경 투명. 쓰는 색은 **4~6개**로 끝낸다.",
+  prompt: `A single tiny pixel-art map marker: the head and shoulders of one ancient Greek soldier in a battered helmet, seen from the front and TILTED UPWARD as if looking up at something far above him. Bust only, cut off at the chest, no arms, no weapon, no legs.
+
+Read as an extremely coarse icon: built from very large flat square pixels, roughly 16 by 16 blocks across the whole image and no finer detail than that anywhere, a hard 1-pixel dark outline all the way around the silhouette, at most 5 flat colours total in bone white, cold gray-blue and near-black. The silhouette alone must identify it at 16 pixels wide.
+
+Centred on a fully transparent background with even margins. No scenery, no ground, no shadow, no glow, no anti-aliasing, no gradients, no soft edges, no map, no pin shape, no arrow, no banner, no flag, no text, no watermark, no multiple poses.`,
   notes: [
     "격자 칸 `.map-node`가 97×30px이라 마커는 약 16px로 뜬다 — 그 이상 크면 칸을 넘는다",
     "**노드 아이콘 다섯(전·정·휴·?·보)은 P-33이 game-icons 벡터로 맡는다.** 여기서 그리지 않는다",
+    "**핀·화살표·깃발을 그리지 않는다.** 지도 마커의 관습 도형을 넣으면 16px에서 그 도형만 남고 병사가 사라진다 — 병사의 상반신이 마커라는 게 이 한 장의 내용이다",
+    "**위를 보는 자세가 §0.4의 상승이다.** 지도가 위에서 아래로 6층 → 1층을 깔고 병사는 위로 간다 — 마커가 아래를 보면 방향이 거꾸로 읽힌다",
   ],
 });
 
@@ -689,13 +732,13 @@ for (const [god, g] of Object.entries(GODS)) {
       path: `cards/${god}_${tag}.md`,
       title: `\`${god}_${tag}.webp\` — ${g.ko} · ${t.ko} 태그`,
       ref: "§3",
-      spec: `WebP **가로 4:3**, **생성 원본 해상도 유지 — 축소하지 않는다.** \`.card-art\`가 \`aspect-ratio: 4/3\` + \`object-fit: cover\`라 비율만 맞으면 된다 — 세로 2:3으로 그리면 높이의 절반이 잘린다.\n\n**화면** 약 89×67. 그게 썸네일 가독성 기준이고 **파일 크기 지시가 아니다.**\n\n템플릿은 [\`zeus_attack.md\`](zeus_attack.md)에서 확정됐다. 격자는 둘로만 갈린다 — **태그 = 형태(${t.dir}), 신 = 색.**`,
-      gen: "1536×1024 — 실제 출력이 1448×1086이면 이미 4:3이라 crop도 생략한다. **어느 쪽이든 축소하지 않는다**",
+      spec: `WebP **가로 4:3**, **\`512×384\`.** \`.card-art\`가 \`aspect-ratio: 4/3\` + \`object-fit: cover\`라 비율만 맞으면 된다 — 세로 2:3으로 그리면 높이의 절반이 잘린다.\n\n**화면** 약 89×67, DPR 2에서 178×134. 512×384가 그것의 2.9배다 — **카드는 이 계획에서 축소를 허용하는 유일한 자리다**(§3). 배경·컷인·일러는 그대로 원본을 지킨다.\n\n템플릿은 [\`zeus_attack.md\`](zeus_attack.md)에서 확정됐다. 격자는 둘로만 갈린다 — **태그 = 형태(${t.dir}), 신 = 색.**`,
+      gen: "1536×1024 — 4:3으로 crop한 뒤 512×384로 줄인다(§3). **카드만 이 축소를 허용한다**",
       convert: CARD_CONVERT(`${god}_${tag}`),
-      convertNote: "용량은 22~31KB에 떨어진다(R-21 기준).",
-      status: blocked
-        ? "**생성 보류** — §3의 신 색 정본이 코드에서 확정(`ui/app.tsx`의 `godColors` 삭제)되기 전에는 그리지 않는다. CSS 변수와 `godColors`가 이 신만 **색상 자체**가 다르다"
-        : "미생성",
+      convertNote: "용량은 22~31KB에 떨어진다(R-21 기준) — 실측 30장 평균 17KB, 최대 29KB로 맞았다.\n\n**`art/_src/cards/` 원본은 없다.** 팔레트나 구도를 바꾸려면 재생성밖에 없고, 그 대가를 감수하기로 했다(§3).",
+      status: "완료 · 512×384" + (blocked
+        ? " — 이 신은 `godColors`와 **색상 자체**가 달랐다. §3 표의 hex가 정본이고 그것으로 그렸다"
+        : ""),
       prompt: `${t.line(obj, stone)}\n\n${CARD_TAIL(ONE_HUE(g.hue))}`,
       notes: [
         t.note,
@@ -745,13 +788,13 @@ for (const [id, ko, a, b, subject] of FUSED) {
     path: `cards/${id}.md`,
     title: `\`${id}.webp\` — ${ko} (${KO[a]} + ${KO[b]})`,
     ref: "§3",
-    spec: `WebP **가로 4:3**, **생성 원본 해상도 유지 — 축소하지 않는다.** 화면은 약 89×67이지만 그건 참고값이다.\n\n**융합 10장은 폴백 대상이 아니다** — \`patron_pair\`라 \`{patron}_{tag}\` 폴백이 걸리지 않으므로 카드별 아트가 필수다.`,
-    gen: "1536×1024 — 실제 출력이 1448×1086이면 crop도 생략한다. **어느 쪽이든 축소하지 않는다**",
+    spec: `WebP **가로 4:3**, **\`512×384\`.** 화면이 약 89×67이라 DPR 2의 2.9배다 — **카드만 축소를 허용한다**(§3).\n\n**융합 10장은 폴백 대상이 아니다** — \`patron_pair\`라 \`{patron}_{tag}\` 폴백이 걸리지 않으므로 카드별 아트가 필수다.`,
+    gen: "1536×1024 — 4:3으로 crop한 뒤 512×384로 줄인다(§3). **카드만 이 축소를 허용한다**",
     convert: CARD_CONVERT(id),
-    convertNote: "용량은 22~31KB에 떨어진다(R-21 기준).",
-    status: blocked
-      ? "**생성 보류** — 아테나·아르테미스 색 정본이 코드에서 확정(`godColors` 삭제)된 뒤다"
-      : "미생성",
+    convertNote: "용량은 22~31KB에 떨어진다(R-21 기준) — 실측 30장 평균 17KB, 최대 29KB로 맞았다.\n\n**`art/_src/cards/` 원본은 없다.** 팔레트나 구도를 바꾸려면 재생성밖에 없고, 그 대가를 감수하기로 했다(§3).",
+    status: "완료 · 512×384" + (blocked
+      ? " — 아테나·아르테미스는 `godColors`와 색상 자체가 달랐다. §3 표의 hex가 정본이고 그것으로 그렸다"
+      : ""),
     prompt: `A single fused emblem filling the frame: ${subject}. Treat it like a game ability emblem: one instantly readable shape built from a few decisive angular strokes with hard corners, thick and heavy, no thin lines, no scenery, no architecture, no clouds.\n\n${CARD_TAIL(
       `exactly TWO hues of light in the image and no others, ${HUE[a]} and ${HUE[b]}, each holding its own part of the shape and never blending into a third colour, together covering about one third of the frame`,
     )}`,
@@ -770,23 +813,41 @@ const overlay = (file, stage, subject, notes) =>
     title: `\`${file}.webp\` — ${stage}`,
     ref: "§4",
     spec: "WebP **무손실 알파**, **생성 원본 해상도 유지 — 축소하지 않는다.** 가로 16:10.\n\n**화면** 1440×900 CSS. **여기가 축소가 가장 아픈 자리다** — 화면을 꽉 채우는 그림이라 화소가 그대로 값이고, DPR 2에서는 2880×1800이 필요하다. 생성 상한이 1536이라 그것도 못 채우니 **더 깎지 않는 게 유일한 대책이다.**\n\n`ui/fx.ts`의 `playSprite`가 화면 전체에 얹는다 — **지금 호출부가 없어 선행 코드 작업이 필요하다.**\n\n`favorStage`는 4단계지만 `stage_effects`가 실제로 발동하는 건 `devotion`·`wrath` 둘뿐이다(`core/favor.ts:53`). 컷인도 그 둘만 — calm·anger는 없다.",
-    gen: "1536×1024 (**가로**), 투명 배경 옵션 ON",
+    gen: "1536×1024 — **가로로 뽑는다**, 투명 배경 옵션 ON",
     convert: OVERLAY_CONVERT(file),
     convertNote:
-      "**알파가 필요하니 무손실로 저장한다.** 손실 WebP는 알파 경계를 망친다.",
-    status: "미생성",
+      "**알파가 필요하니 무손실로 저장한다.** 손실 WebP는 알파 경계를 망친다.\n\n**생성물을 먼저 `art/_src/fx/{name}.png`에 그대로 저장하고 나서 변환한다.** 지금 디스크의 세 장이 1440×900인데 `art/_src/fx/`가 비어 있는 게 이 순서를 건너뛴 결과다 — 원본이 없으니 되돌릴 방법이 재생성밖에 없다.\n\n**변환 후 크기를 확인한다:** `magick identify -format '%wx%h' art/fx/{name}.webp` — 1440×900이 나오면 어딘가에서 또 깎인 것이다. 1536×960이어야 한다.",
+    status: "1440×900으로 깎인 상태 · 원본 없음 → 재생성 대상",
     prompt: subject,
     notes,
   });
+
+// `block`·`burst`만 생성기에 있었고 `open`은 사이드카만 디스크에 남아 있었다 —
+// 정본이 안 덮는 세 장 중 하나가 재생성 대상 셋 중 하나였다
+overlay(
+  "open",
+  "헌신 컷인 오버레이 (길이 열린다)",
+  `A full-screen transparent overlay effect: only several shafts of pale divine light splitting apart and pouring DOWNWARD from the very top edge of the frame, widening slightly as they descend, as if a sealed way has just opened from above. The light originates entirely at the top edge and fades out completely before reaching the middle. Soft muted golden-white beams with hard-edged gaps between them, with sparse restrained motes inside the beams.
+
+The center and bottom of the image must be entirely empty of any effect so the game screen stays visible beneath it. ${OVERLAY_KEY} ${LANDSCAPE}
+
+Flat magenta background, abstract light only. No hand, chains, wall, stone, door, window, sun, clouds, architecture, background, scenery, characters, figures, text, watermark, frame, vignette, bloom, or lens flare.`,
+  [
+    "**위에서 내려오는 방향이 핵심이다.** 짝인 `block.webp`(진노)는 **아래로 누르는** 사슬·벽·거대한 손이다 — 병사는 위로 가려 하고 진노가 그걸 누른다. 컷인 한 장이 그 싸움을 말한다",
+    "빛의 시작점이 화면 상단인 건 §0.4의 「위쪽 빛」과 같은 자리다 — 배경 여섯 장의 빛과 같은 곳에서 온다",
+    "**중앙·하단은 완전 투명이어야 한다.** 뒤의 픽셀 전투 화면이 보여야 「신이 끼어든다」가 성립한다",
+    "**신 색을 넣지 않는다.** 다섯 신이 이 한 장을 공유하므로 색은 코드가 칠한다 — 금색으로 그리면 제우스 전용이 된다",
+  ],
+);
 
 overlay(
   "block",
   "진노 컷인 오버레이 (길이 막힌다)",
   `A full-screen transparent overlay effect: heavy chains, a slab of wall and one enormous open hand pressing DOWNWARD from the top of the frame, crossing the image horizontally and bearing down on whatever is beneath. The pressure reads as coming from above and pushing down. Hard-edged dark silhouettes with a thin rim of dull red light along their lower edges, no interior detail.
 
-The lower third and the far left and right edges must be fully transparent and empty so the game screen stays visible beneath it. Wide landscape 16:10 orientation, much wider than tall.
+The lower third and the far left and right edges must be entirely empty of any effect so the game screen stays visible beneath it. ${OVERLAY_KEY} ${LANDSCAPE}
 
-Transparent background, alpha channel, effect only, no background, no scenery, no characters, no figures, no faces, no text, no watermark, no frame, no vignette.`,
+Flat magenta background, effect only, no scenery, no scenery, no characters, no figures, no faces, no text, no watermark, no frame, no vignette.`,
   [
     "**`open.webp`와 방향으로 갈린다.** 헌신은 위에서 갈라지며 내려오는 빛이고 진노는 **아래로 누른다** — 병사는 위로 가려 하고 진노가 그걸 누른다. 컷인 한 장이 그 싸움을 말한다",
     "**진노용 신 일러를 따로 그리지 않는다** — 붉은 그레이딩 + 글리치 오버레이를 코드가 얹는다",
@@ -799,13 +860,111 @@ overlay(
   "공용 파티클 오버레이",
   `A full-screen transparent overlay effect: a scatter of small hard-edged particles and embers thrown outward from the centre of the frame, densest in the middle band and thinning to nothing at the edges. Pale neutral white-grey particles with no colour of their own, varying sizes, no motion blur, no streaks.
 
-The particles must be sparse enough that the game screen stays readable through them, and the very centre must stay clear. Wide landscape 16:10 orientation, much wider than tall.
+The particles must be sparse enough that the game screen stays readable through them, and the very centre must stay clear. ${OVERLAY_KEY} ${LANDSCAPE}
 
-Transparent background, alpha channel, effect only, no background, no scenery, no characters, no figures, no text, no watermark, no frame, no vignette.`,
+Flat magenta background, effect only, no scenery, no scenery, no characters, no figures, no text, no watermark, no frame, no vignette.`,
   [
     "**색을 넣지 않는다.** `open`과 `block` 둘 다에 얹혀 세기를 올리는 공용 레이어라 신 색은 코드가 칠한다",
     "「화려하게」는 에셋이 아니라 연출이다 — 상징 스윕 → 신 일러 슬라이드인 → 화면 플래시 → 오버레이 → 컬러 그레이드, 5단 전부 WAAPI다",
     "입자를 촘촘히 그리면 그 아래 전투 화면이 안 읽힌다. 중앙은 비운다",
+  ],
+);
+
+// ─────────────────────────────────────────── 신 일러 5장
+// 계획이 「완료」로 적어 뒀지만 `art/`·`dist/`·`public/` 어디에도 파일이 없고 사이드카조차 없었다.
+// 없으면 헌신·진노 컷인이 오버레이만 뜨고 정작 신이 안 나온다
+const GOD_ART_CONVERT = (name) => `magick art/_src/gods/${name}.png -gravity center -crop 2:3 +repage \\
+  -quality 90 art/gods/${name}.webp`;
+
+const GOD_ART_STYLE = (hex, hue) => `Composition: VERTICAL PORTRAIT, aspect ratio 2:3, taller than wide — the opposite of every background and overlay in this set. The figure stands full height, centred, filling most of the frame height, with its feet near the bottom edge and headroom above. The left and right thirds stay dark and quiet: two of these images slide in from opposite sides and sit side by side during a fusion cut-in, so nothing important may touch the left or right edge.
+
+Style: hand-painted 2D illustration, painterly but heavily simplified, coarse visible brush texture, a thick black ink outline along the edge of the figure. Not a flat vector icon, not a 3D render, not photorealistic, not a glossy mobile-game gacha portrait.
+
+Lighting and colour: ${ONE_HUE(hue)}. That single hue is the ONLY colour in the image and it BURNS out of near-total darkness — the whole rest of the frame is charcoal and deep navy near-black #11131a with coarse brush texture. ${hex} exactly, never neon, never white-hot, never a white core, no rainbow, no secondary colour, no complementary accent.
+
+The body is UNDAMAGED and flawless: no wounds, no rot, no blood, no gore, nothing torn. No soldier, no second figure, no mortal, no scales, no card frame, no border, no vignette, no text, no numbers, no logo, no watermark, no UI, no bloom, no lens flare.`;
+
+const godArt = (file, ko, hex, hue, subject, notes) =>
+  add({
+    path: `gods/${file}.md`,
+    title: `\`${file}.webp\` — ${ko} 컷인 일러`,
+    ref: "§4",
+    status: "미생성 · 사이드카도 없었다",
+    spec: "WebP **세로 2:3**, **생성 원본 해상도 유지 — 축소하지 않는다.**\n\n**화면** 중앙 세로 컷인 약 600×900 CSS. `ui/fx.ts`의 `playSprite`가 얹을 자리다.\n\n**헌신·진노 두 단계가 이 한 장을 같이 쓴다** — `stage_effects`가 실제로 발동하는 건 `devotion`·`wrath` 둘뿐이고(`core/favor.ts:53`), **진노용 일러를 따로 그리지 않는다.** 붉은 그레이딩 + 글리치는 코드가 얹는다.\n\n**융합 10쌍도 신규 에셋 0이다** — 이 다섯 장 중 두 장을 좌우에서 슬라이드인시킨다.",
+    gen: "1024×1536 — **세로로 뽑는다**",
+    convert: GOD_ART_CONVERT(file),
+    convertNote:
+      "**여기만 세로다.** 배경·오버레이·주인공 일러가 전부 가로 16:10인 것과 반대라 크기 확인 기준도 반대다 — `magick identify`의 폭이 높이보다 **작아야** 맞다.\n\n생성물은 `art/_src/gods/{name}.png`에 그대로 남긴다. `art/fx/`·`art/hero/`가 원본 없이 깎인 게 이 순서를 건너뛴 결과다.",
+    prompt: `${subject}\n\n${GOD_ART_STYLE(hex, hue)}`,
+    notes: [
+      ...notes,
+      `**신 색은 §3 정본 하나뿐이다** — ${ko}는 \`${hex}\`. \`ui/style.css:2\` CSS 변수 쪽이 정본이고 \`ui/app.tsx:37\` \`godColors\`는 범례에서만 쓰인다`,
+      "**병사를 넣지 않는다.** 신 일러가 화면을 차지하는 순간이라 둘이 겹치면 신이 작아진다 — 병사는 컷인 **뒤**에 픽셀 스프라이트로 그대로 서 있고 오버레이가 그 위를 덮는다",
+      "**여기는 하데스 2 톤이다**(§0.5). 픽셀이 저채도 DD2를 지키니 컷인은 반대로 간다 — 어둠 위에서 신 색 하나가 발광한다. 저채도로 그리면 순간적으로 뜨는 컷인이 사건으로 안 읽힌다",
+      "**32×32 진노 스프라이트(`enemy_god_*.png`)와 같은 신이지만 규칙이 반대다** — 스프라이트는 신 색 2~3픽셀이 상한이고 여기는 화면의 1/4이다. 매체가 다르면 톤도 다르다",
+    ],
+  });
+
+godArt(
+  "zeus",
+  "제우스",
+  "#d4a017",
+  "an antique gold #d4a017",
+  `A cut-in illustration of Zeus appearing to intervene in a mortal's climb out of the Underworld. A towering bearded figure seen from slightly below, one arm raised straight ABOVE the head gripping a lightning javelin whose length runs the full height of the frame. Heavy draped himation over one shoulder, bare chest, no helmet, no shield. His face is in shadow; only the raised arm and the javelin catch the light. The pose is a blow held back, not yet thrown.`,
+  [
+    "**위로 뻗은 팔이 이 장의 전부다.** 다섯 중 유일하게 세로로 뻗는 실루엣이고 세로 2:3과 맞는다 — 팔을 내리면 프레임의 위 절반이 빈다",
+    "번개창이 프레임 높이를 다 쓰게 한다 — 가로 배경에서는 못 하는 구도라 컷인이 세로인 이유가 여기다",
+  ],
+);
+
+godArt(
+  "poseidon",
+  "포세이돈",
+  "#2e7d8f",
+  "a dark sea teal #2e7d8f",
+  `A cut-in illustration of Poseidon appearing to intervene. A broad bearded figure standing planted, gripping a trident driven VERTICALLY into the ground before him, and behind that trident a standing wall of dark water rises the full height of the frame, its crest curling but not breaking. The water is the largest shape in the image; the figure reads through it as a dark silhouette. Heavy soaked drapery, no helmet.`,
+  [
+    "**물의 벽이 실루엣의 절반이다.** 신 색이 놓이는 자리는 그 벽의 윗선이다 — 물 전체를 칠하면 프레임의 1/4을 넘어 어둠이 사라진다",
+    "삼지창이 세로로 박힌 자세라 제우스의 든 팔과 방향이 갈린다 — 둘이 융합 컷인에서 나란히 뜰 수 있다(`card_fused_zeus_poseidon`)",
+  ],
+);
+
+godArt(
+  "athena",
+  "아테나",
+  "#7a8b5c",
+  "a dull olive bronze #7a8b5c",
+  `A cut-in illustration of Athena appearing to intervene. A tall figure in a crested Corinthian helmet with the visor down, holding a large ROUND aegis shield out toward the viewer so it covers the centre of the frame, spear held low and angled down at her side. The shield's rim catches the only light in the image. Composed, still, blocking rather than striking.`,
+  [
+    "**방패가 원형이라는 게 유일한 구별점이다** — 스파르토이 방패병과 청동 탈로스 파편은 사각 방패다(§1.5). 원형이 아테나의 자리",
+    "**투구를 벗기지 않는다.** 얼굴을 그리면 이 세트에서 유일하게 인상이 남는 신이 되고 다섯의 무게가 어긋난다",
+    "창을 낮춘 자세다 — 든 창은 아레스의 것이라 겹치면 `#9b2226`과 `#7a8b5c`만으로 갈려야 한다",
+  ],
+);
+
+godArt(
+  "ares",
+  "아레스",
+  "#9b2226",
+  "a deep blood red #9b2226",
+  `A cut-in illustration of Ares appearing to intervene. A lean armoured figure leaning FORWARD and downward out of the frame toward the viewer, weight far over the front foot, a single long spear thrust ahead of him. NO shield anywhere in the image. A closed helmet with only the eye slits visible, nothing of the face. The forward tilt is extreme enough that the silhouette alone reads as attacking.`,
+  [
+    "**`#9b2226`은 이미 모든 픽셀 스프라이트의 핏빛 강조색이다** — 그래서 아레스만 색으로 안 갈린다. **앞으로 기운 각도와 방패 없음**이 그 몫을 진다",
+    "이걸 피하려고 아레스 색을 밝히면 §3 정본이 흔들리고 카드 20장이 같이 어긋난다 — 색은 건드리지 않는다",
+    "**고어를 넣지 않는다.** 전쟁의 신이지만 신은 훼손되지 않는다(§1.5) — 피는 창끝의 색으로만 있다",
+  ],
+);
+
+godArt(
+  "artemis",
+  "아르테미스",
+  "#8e7ca6",
+  "a pale washed amethyst #8e7ca6",
+  `A cut-in illustration of Artemis appearing to intervene. A slender figure standing BACK and turned partly away, bow drawn to full tension with the arrow already aimed, the drawn bowstring and arrowhead the only lit things in the frame. She keeps her distance — the whole pose reads as withdrawal, not advance. Short hunting chiton, quiver, no helmet, hair bound back.`,
+  [
+    "**다섯 중 유일하게 거리를 두는 자세다.** 원거리 실루엣이 세트에 없어서 이 한 장이 그 자리를 맡는다 — 앞으로 나오면 아레스와 겹친다",
+    "당긴 화살촉에 신 색이 놓인다 — 활 전체를 칠하면 실루엣이 뭉개진다",
+    "`#8e7ca6`이 정본이다 — `godColors`의 초록(`#75c66a`)은 **다른 색이고 쓰지 않는다.** 초록으로 그리면 다시 그리는 일이 된다",
   ],
 );
 
@@ -816,11 +975,12 @@ const hero = (file, where, subject, notes) =>
     title: `\`${file}.webp\` — ${where}`,
     ref: "§5",
     spec: "WebP, **생성 원본 해상도 유지 — 축소하지 않는다.** 가로 16:10.\n\n**화면** 1440×900 CSS. 컷인 오버레이와 같은 이유로 **축소가 가장 아픈 자리다** — DPR 2에서 2880×1800이 필요한데 생성 상한이 1536이다.\n\n**주인공이 일러로 나오는 자리는 셋뿐이다** — 전투 화면에는 없다(픽셀이 맡는다).",
-    gen: "1536×1024",
+    gen: "1536×1024 — **가로로 뽑는다**",
     convert: HERO_CONVERT(file),
-    convertNote: "알파 없음 — 화면을 채운다. 손실 WebP로 충분하다.",
-    status: "미생성",
-    prompt: subject,
+    convertNote:
+      "알파 없음 — 화면을 채운다. 손실 WebP로 충분하다.\n\n**생성물을 먼저 `art/_src/hero/{name}.png`에 그대로 저장하고 나서 변환한다.** 지금 디스크의 세 장이 1440×900인데 `art/_src/hero/`가 비어 있는 게 이 순서를 건너뛴 결과다.\n\n**변환 후 크기를 확인한다:** `magick identify -format '%wx%h' art/hero/{name}.webp` — 1536×960이어야 한다. 1440×900이면 또 깎인 것이다.",
+    status: "1440×900으로 깎인 상태 · 원본 없음 → 재생성 대상",
+    prompt: `${subject}\n\n${LANDSCAPE}`,
     notes,
   });
 
@@ -873,9 +1033,10 @@ Style: hand-painted 2D illustration, painterly but restrained, coarse visible br
 
 // 디스크 실측 상태 — 원본이 남아 있는지가 판정의 핵심이다 (art/README.md 「지금 소실된 것」)
 const DISK_STATUS = {
-  bg: "원본 해상도 복구됨 · 가로/세로 방향 확인 필요",
+  bg: "원본 해상도 그대로 · **네 장이 세로/정사각이라 가로로 재생성 대상** (`map-under`·`map-surface`·`surface-boss`·`surface-combat`)",
   props: "원본 해상도 그대로 · 안 늦었다",
-  sprites: "일부만 생성됨 · 원본 해상도 그대로",
+  sprites: "적 14 · 진노 신 5 · 주인공 생성 완료 · 원본 해상도 그대로",
+  cards: "30장 완료 · **512×384로 확정**(§3) · `art/_src/cards/` 원본 없음 — 감수한 값이다",
 };
 
 // ─────────────────────────────────────────── 출력
@@ -887,7 +1048,12 @@ const render = (d) => {
     `[P-32](${up}plans/32-art.md) ${d.ref} · [원본 규칙](${up.slice(3)}README.md) · **상태 ${d.status ?? DISK_STATUS[d.path.split("/")[0]] ?? "미생성"}**\n`,
   );
   L.push(`**파일** ${d.spec}\n`);
-  if (d.gen) L.push(`**생성** GPT-image 2.0, \`${d.gen}\`${d.prompt && d.path.startsWith("sprites/") || d.path.startsWith("props/") ? ", **투명 배경 옵션 ON**, PNG" : ""}\n`);
+  if (d.gen) {
+    // `1536×1024 — **가로로 뽑는다**`처럼 코드 스팬 안에 강조가 들어가면 그대로 글자로 뜬다 — 크기와 지시를 갈라 놓는다
+    const [size, ...rest] = d.gen.split(" — ");
+    const alpha = (d.prompt && d.path.startsWith("sprites/")) || d.path.startsWith("props/") || d.path.startsWith("ui/");
+    L.push(`**생성** GPT-image 2.0, \`${size}\`${rest.length ? ` — ${rest.join(" — ")}` : ""}${alpha ? ", **투명 배경 옵션 ON**, PNG" : ""}\n`);
+  }
   if (d.convert) {
     L.push(`**변환** — 입력은 \`art/_src/\` 원본이고 출력은 \`art/\`다. **두 경로를 같게 쓰면 원본이 그 자리에서 깎인다.**\n`);
     L.push("```\n" + d.convert + "\n```\n");

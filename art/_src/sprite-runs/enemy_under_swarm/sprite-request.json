@@ -4,17 +4,15 @@
   "engine": "component-row",
   "character": {
     "id": "enemy_under_swarm",
-    "description": "스키아이 떼 (잡몹), facing left",
+    "description": "",
     "base_image": "base-source.png"
   },
   "cell": {
-    "shape": "square",
-    "width": 256,
-    "height": 256,
-    "safe_margin_x": 20,
-    "safe_margin_y": 20,
-    "size": 256,
-    "safe_margin": 20
+    "shape": "rect",
+    "width": 896,
+    "height": 1024,
+    "safe_margin_x": 48,
+    "safe_margin_y": 96
   },
   "chroma_key": {
     "name": "cyan",
@@ -25,40 +23,49 @@
       255
     ],
     "selection": "auto",
-    "score": 249.93,
-    "min_subject_distance": 242.5,
+    "score": 243.69,
+    "min_subject_distance": 238.73,
     "background": {
-      "mode": "transparent",
-      "opaque_border_fraction": 0.089,
-      "subject_pixels": 19042
+      "mode": "flat",
+      "hex": "#F9F9F9",
+      "rgb": [
+        249,
+        249,
+        249
+      ],
+      "opaque_border_fraction": 1.0,
+      "border_coverage": 1.0,
+      "enclosed_background_pixels": 2,
+      "enclosed_material_pixels": 3,
+      "subject_pixels": 10947
     },
     "candidates": [
       {
         "name": "magenta",
         "hex": "#FF00FF",
-        "score": 207.82,
-        "min_subject_distance": 197.27,
+        "score": 208.86,
+        "min_subject_distance": 205.41,
         "clears_erase_radius": true
       },
       {
         "name": "green",
         "hex": "#00FF00",
-        "score": 216.35,
-        "min_subject_distance": 192.02,
+        "score": 214.46,
+        "min_subject_distance": 210.52,
         "clears_erase_radius": true
       },
       {
         "name": "cyan",
         "hex": "#00FFFF",
-        "score": 249.93,
-        "min_subject_distance": 242.5,
+        "score": 243.69,
+        "min_subject_distance": 238.73,
         "clears_erase_radius": true
       },
       {
         "name": "blue",
         "hex": "#004DFF",
-        "score": 206.19,
-        "min_subject_distance": 196.08,
+        "score": 206.31,
+        "min_subject_distance": 202.63,
         "clears_erase_radius": true
       }
     ],
@@ -69,41 +76,41 @@
       "frames": 4,
       "fps": 4,
       "loop": true,
-      "action": "four-frame subtle guarded idle breathing loop, facing left; preserve the exact stance and identity"
+      "action": "four-frame compact left-facing low writhing loop: the single connected mound stays grounded while exactly eight attached arms make small alternating reaches and the small front crimson core-mouth remains in place; preserve the same arm roots and overall silhouette; each pose uses at most 72 percent of its slot width with broad gutters; no detached hand, loose finger, extra arm, fragment, or pixel crosses a slot boundary"
     },
     "attack": {
       "frames": 2,
       "fps": 8,
       "loop": false,
-      "action": "two-frame short attack toward the left: anticipation then committed strike; keep all anatomy, weapons, and asymmetric damage consistent"
+      "action": "two-frame compact close attack facing left: the connected mound compresses, then three front attached arms make a short coordinated grab while the other five remain visibly rooted in the body; the crimson core-mouth stays small; broad gutters; no long horizontal reach, detached hand, extra arm, blood, effect, or cross-slot pixel"
     },
     "hit": {
       "frames": 1,
       "fps": 6,
       "loop": false,
-      "action": "one-frame hit reaction recoiling away from an impact from the left; no new wounds or detached parts"
+      "action": "single compact recoil from an impact at the left: all eight attached arms curl inward around the one connected low mound and the small crimson core-mouth remains visible; center the entire creature within the middle 72 percent width and 62 percent height with broad padding; no detached hand, extra arm, loose finger, fragment, or crop"
     },
     "death": {
       "frames": 2,
       "fps": 4,
       "loop": false,
-      "action": "two-frame death: body gives way, then collapsed still on the ground; preserve existing asymmetry, anatomy, and equipment"
+      "action": "two-frame non-graphic defeat facing left: the eight rooted arms sag, then the connected mound settles flatter with every hand still attached and visible; compact low silhouettes with broad gutters; no severed limb, detached hand, blood, gore, debris, loose finger, or cross-slot pixel"
     }
   },
-  "style": "match the attached canonical pixel-art sprite exactly: large uniform square pixel blocks, hard dark outline, no anti-aliasing, limited desaturated grim-dark palette, flat shading",
+  "style": "high-detail polished grim dark-fantasy pixel art matching production Ares and Artemis density, crisp near-black outline, restrained umber charcoal flesh and muted crimson palette",
   "motion_phase_guides": false,
   "layout": "taxonomy/v1",
   "fit": {
     "resample": "kcentroid",
-    "align_x": "alpha-centroid",
+    "align_x": "bbox-center",
     "align_y": "bottom",
     "pixel_unfake": true,
-    "logical_height": 24,
-    "palette_size": 16,
+    "logical_height": 1024,
+    "palette_size": 96,
     "outline": true
   },
   "chroma": {
-    "mode": "rgb",
+    "mode": "ycbcr",
     "unmix_reach": 4,
     "spill_max_fraction": 0.005
   }

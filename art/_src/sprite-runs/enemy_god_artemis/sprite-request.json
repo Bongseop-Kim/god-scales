@@ -4,102 +4,66 @@
   "engine": "component-row",
   "character": {
     "id": "enemy_god_artemis",
-    "description": "아르테미스 (진노), facing left",
-    "base_image": "base-source.png"
+    "description": "",
+    "base_image": null
   },
   "cell": {
-    "shape": "square",
-    "width": 256,
-    "height": 256,
-    "safe_margin_x": 20,
-    "safe_margin_y": 20,
-    "size": 256,
-    "safe_margin": 20
+    "shape": "rect",
+    "width": 896,
+    "height": 1024,
+    "safe_margin_x": 48,
+    "safe_margin_y": 96
   },
   "chroma_key": {
-    "name": "cyan",
-    "hex": "#00FFFF",
+    "name": "magenta",
+    "hex": "#FF00FF",
     "rgb": [
-      0,
       255,
+      0,
       255
     ],
-    "selection": "auto",
-    "score": 212.36,
-    "min_subject_distance": 209.47,
+    "selection": "fallback",
     "background": {
-      "mode": "transparent",
-      "opaque_border_fraction": 0.029,
-      "subject_pixels": 8050
+      "mode": "absent"
     },
-    "candidates": [
-      {
-        "name": "magenta",
-        "hex": "#FF00FF",
-        "score": 207.08,
-        "min_subject_distance": 199.28,
-        "clears_erase_radius": true
-      },
-      {
-        "name": "green",
-        "hex": "#00FF00",
-        "score": 206.11,
-        "min_subject_distance": 201.13,
-        "clears_erase_radius": true
-      },
-      {
-        "name": "cyan",
-        "hex": "#00FFFF",
-        "score": 212.36,
-        "min_subject_distance": 209.47,
-        "clears_erase_radius": true
-      },
-      {
-        "name": "blue",
-        "hex": "#004DFF",
-        "score": 174.19,
-        "min_subject_distance": 163.77,
-        "clears_erase_radius": true
-      }
-    ],
-    "selection_reason": "highest 1st-percentile subject distance among the 4 candidate(s) clearing the 96 erase radius"
+    "selection_reason": "no base reference to sample"
   },
   "states": {
     "idle": {
       "frames": 4,
       "fps": 4,
       "loop": true,
-      "action": "four-frame subtle guarded idle breathing loop, facing left; preserve the exact stance and identity"
+      "action": "subtle ready-idle breathing cycle while facing left; hold the complete bow nearly vertical and close beside the body in a compact narrow silhouette, with one arrow nocked but not drawn and no horizontal arrow shaft extending beyond the bow; small torso, ponytail, chiton, and bow-hand movement only; every frame must keep its entire bow, arrow, quiver, hands, and feet connected and well inside its own slot, with no part crossing toward another pose"
     },
     "attack": {
       "frames": 2,
       "fps": 8,
       "loop": false,
-      "action": "two-frame short attack toward the left: anticipation then committed strike; keep all anatomy, weapons, and asymmetric damage consistent"
+      "action": "left-facing archery attack: first frame at maximum bow draw, second frame release follow-through; no flying or detached projectile, no detached effects; keep the complete bow, string, quiver, hands, and feet visible and anatomically connected"
     },
     "hit": {
       "frames": 1,
       "fps": 6,
       "loop": false,
-      "action": "one-frame hit reaction recoiling away from an impact from the left; no new wounds or detached parts"
+      "action": "single readable recoil pose from an impact arriving from the left; remain flawless and unwounded with no blood; bow and quiver stay attached and the complete figure remains visible"
     },
     "death": {
       "frames": 2,
       "fps": 4,
       "loop": false,
-      "action": "two-frame death: body gives way, then collapsed still on the ground; preserve existing asymmetry, anatomy, and equipment"
+      "action": "non-graphic defeat sequence: knees give way, then the complete body collapses low on the ground facing left; no wounds, blood, gore, detached limbs, or detached equipment; bow remains held or directly touching the connected hand; every arrow stays fully inside the attached back quiver in both frames, with no nocked, dropped, loose, flying, or detached arrow anywhere"
     }
   },
-  "style": "match the attached canonical pixel-art sprite exactly: large uniform square pixel blocks, hard dark outline, no anti-aliasing, limited desaturated grim-dark palette, flat shading",
+  "style": "high-detail polished dark-fantasy pixel art matching the production Ares sprite density, crisp near-black one-pixel outline, restrained earthy bronze and ivory palette, transparent final sprite",
   "motion_phase_guides": false,
   "layout": "taxonomy/v1",
   "fit": {
     "resample": "kcentroid",
-    "align_x": "alpha-centroid",
+    "align_x": "bbox-center",
     "align_y": "bottom",
     "pixel_unfake": true,
-    "logical_height": 32,
-    "palette_size": 16,
+    "logical_height": 1024,
+    "palette_size": 96,
     "outline": true
   },
   "chroma": {

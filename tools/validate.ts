@@ -242,14 +242,21 @@ function duplicateFailure(card: Card, existing: Card[]): boolean {
 }
 
 type StageEffect = Effect & { target: string };
+type StageHooks = { on_encounter_start?: StageEffect[]; on_turn_start?: StageEffect[] };
 const stageTargets = ["self", "enemy", "all_enemies"];
+const stageHooks = (god: Item) => Object.entries((god.stage_effects ?? {}) as Record<string, StageHooks>);
 const stageEffects = (god: Item, stage?: string): StageEffect[] =>
-  Object.entries((god.stage_effects ?? {}) as Record<string, { on_encounter_start?: StageEffect[] }>)
-    .flatMap(([name, hook]) => (stage === undefined || name === stage ? hook.on_encounter_start ?? [] : []));
+  stageHooks(god).flatMap(([name, hook]) => (stage === undefined || name === stage ? [...hook.on_encounter_start ?? [], ...hook.on_turn_start ?? []] : []));
+/** 매 턴 훅에서 그 턴 안에 사라지는 토큰. 감전은 적 턴 끝에 지워진다(`core/combat.ts:152`) */
+const turnSafeTokens = new Set(["shock"]);
 
 function stageEffectScopeFailure(god: Item): boolean {
   const definition = gods[String(god.id)];
-  return stageEffects(god).some(({ op, token, target }) =>
+  // 매 턴 훅은 조우 내내 쌓이는 것을 못 든다 — 5.8턴 × 12조우면 지속 토큰이 60스택이고, 적 방어는
+  // 리셋이 없어(`core/combat.ts:73`은 플레이어만 지운다) 벽이 된다. 밸런스가 아니라 고장이다
+  const turnAccumulates = stageHooks(god).flatMap(([, hook]) => hook.on_turn_start ?? [])
+    .some(({ op, token, target }) => (token !== undefined && !turnSafeTokens.has(token)) || (op === "block" && target !== "self"));
+  return turnAccumulates || stageEffects(god).some(({ op, token, target }) =>
     (!commonOps.includes(op) && !definition.ops.includes(op))
     || (token !== undefined && !definition.tokens.includes(token))
     // 오타 하나면 `targets()`가 조용히 전 적군으로 읽는다 — 죽은 데이터가 아니라 **다른** 데이터가 된다

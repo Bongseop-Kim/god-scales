@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "kind": "sprite-gen-request",
+  "engine": "component-row",
+  "character": {
+    "id": "surface_storm_cloud",
+    "description": "",
+    "base_image": "base-source.png"
+  },
+  "cell": {
+    "shape": "rect",
+    "width": 896,
+    "height": 1024,
+    "safe_margin_x": 64,
+    "safe_margin_y": 96
+  },
+  "chroma_key": {
+    "name": "cyan",
+    "hex": "#00FFFF",
+    "rgb": [
+      0,
+      255,
+      255
+    ],
+    "selection": "auto",
+    "score": 241.02,
+    "min_subject_distance": 221.4,
+    "background": {
+      "mode": "transparent",
+      "opaque_border_fraction": 0.0,
+      "subject_pixels": 16725
+    },
+    "candidates": [
+      {
+        "name": "magenta",
+        "hex": "#FF00FF",
+        "score": 212.92,
+        "min_subject_distance": 207.98,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "green",
+        "hex": "#00FF00",
+        "score": 210.14,
+        "min_subject_distance": 206.13,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "cyan",
+        "hex": "#00FFFF",
+        "score": 241.02,
+        "min_subject_distance": 221.4,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "blue",
+        "hex": "#004DFF",
+        "score": 204.44,
+        "min_subject_distance": 199.62,
+        "clears_erase_radius": true
+      }
+    ],
+    "selection_reason": "highest 1st-percentile subject distance among the 4 candidate(s) clearing the 96 erase radius"
+  },
+  "states": {
+    "idle": {
+      "frames": 4,
+      "fps": 4,
+      "loop": true,
+      "action": "four-frame seamless cloud idle loop: one complete cloud mass subtly billows inward and outward along its upper lobes while the flat dark underside stays anchored and the overall silhouette remains compact; no rain, lightning, sun ray, second cloud, detached vapor, shadow, or translation"
+    }
+  },
+  "style": "polished grim Greek dark-fantasy true pixel art copied from the accepted base, crisp near-black hard outline, clearly visible uniform square-pixel grid, flat shading, restrained material-specific palette, no anti-aliasing and no painterly rendering",
+  "motion_phase_guides": false,
+  "layout": "taxonomy/v1",
+  "fit": {
+    "resample": "kcentroid",
+    "align_x": "bbox-center",
+    "align_y": "bbox-center",
+    "pixel_unfake": true,
+    "logical_height": 1024,
+    "palette_size": 32,
+    "outline": true
+  },
+  "chroma": {
+    "mode": "ycbcr",
+    "unmix_reach": 4,
+    "spill_max_fraction": 0.005
+  }
+}

@@ -4,17 +4,15 @@
   "engine": "component-row",
   "character": {
     "id": "enemy_god_athena",
-    "description": "아테나 (진노), facing left",
+    "description": "",
     "base_image": "base-source.png"
   },
   "cell": {
-    "shape": "square",
-    "width": 256,
-    "height": 256,
-    "safe_margin_x": 20,
-    "safe_margin_y": 20,
-    "size": 256,
-    "safe_margin": 20
+    "shape": "rect",
+    "width": 896,
+    "height": 1024,
+    "safe_margin_x": 48,
+    "safe_margin_y": 96
   },
   "chroma_key": {
     "name": "cyan",
@@ -25,40 +23,49 @@
       255
     ],
     "selection": "auto",
-    "score": 228.13,
-    "min_subject_distance": 223.13,
+    "score": 234.35,
+    "min_subject_distance": 225.15,
     "background": {
-      "mode": "transparent",
-      "opaque_border_fraction": 0.055,
-      "subject_pixels": 17673
+      "mode": "flat",
+      "hex": "#03F8FD",
+      "rgb": [
+        3,
+        248,
+        253
+      ],
+      "opaque_border_fraction": 1.0,
+      "border_coverage": 1.0,
+      "enclosed_background_pixels": 7,
+      "enclosed_material_pixels": 2,
+      "subject_pixels": 12494
     },
     "candidates": [
       {
         "name": "magenta",
         "hex": "#FF00FF",
-        "score": 218.57,
-        "min_subject_distance": 213.97,
+        "score": 220.0,
+        "min_subject_distance": 213.87,
         "clears_erase_radius": true
       },
       {
         "name": "green",
         "hex": "#00FF00",
-        "score": 200.13,
-        "min_subject_distance": 162.86,
+        "score": 201.56,
+        "min_subject_distance": 166.21,
         "clears_erase_radius": true
       },
       {
         "name": "cyan",
         "hex": "#00FFFF",
-        "score": 228.13,
-        "min_subject_distance": 223.13,
+        "score": 234.35,
+        "min_subject_distance": 225.15,
         "clears_erase_radius": true
       },
       {
         "name": "blue",
         "hex": "#004DFF",
-        "score": 186.46,
-        "min_subject_distance": 178.84,
+        "score": 189.5,
+        "min_subject_distance": 179.54,
         "clears_erase_radius": true
       }
     ],
@@ -69,41 +76,41 @@
       "frames": 4,
       "fps": 4,
       "loop": true,
-      "action": "four-frame subtle guarded idle breathing loop, facing left; preserve the exact stance and identity"
+      "action": "four-frame compact braced guard breathing loop facing left; round aegis stays presented forward; spear is held compactly close to the body and nearly vertical, never horizontal; each entire pose including shield, cape, crest, spear, hands, and feet uses at most 72 percent of its slot width and is centered; leave a broad uninterrupted cyan background gutter between every pair of poses; no silhouette, cape tip, weapon part, fragment, or pixel may cross a slot boundary or appear detached"
     },
     "attack": {
       "frames": 2,
       "fps": 8,
       "loop": false,
-      "action": "two-frame short attack toward the left: anticipation then committed strike; keep all anatomy, weapons, and asymmetric damage consistent"
+      "action": "two-frame compact left attack: first a short aegis shield shove, then a compact diagonal downward spear strike held close across the body; never point or extend the spear horizontally; the complete spear and shield stay physically attached to her hands; each entire pose uses at most 68 percent of its slot width with a broad uninterrupted cyan gutter; no detached spearhead, shaft piece, projectile, debris, fragment, or cross-slot pixel"
     },
     "hit": {
       "frames": 1,
       "fps": 6,
       "loop": false,
-      "action": "one-frame hit reaction recoiling away from an impact from the left; no new wounds or detached parts"
+      "action": "single compact impact recoil from the left while braced behind the intact round aegis; hold the complete spear nearly vertical close behind the shield, never horizontal; center the entire pose and all equipment within the middle 68 percent of the canvas width and 72 percent of its height, leaving broad uninterrupted cyan padding on all four sides; flawless and unwounded, no blood, debris, chips, fragments, particles, sparks, cropped parts, or detached effects"
     },
     "death": {
       "frames": 2,
       "fps": 4,
       "loop": false,
-      "action": "two-frame death: body gives way, then collapsed still on the ground; preserve existing asymmetry, anatomy, and equipment"
+      "action": "two-frame non-graphic defeat: armored knees give way, then Athena collapses low facing left with round shield and spear still held or directly touching her hands; no blood, wounds, detached equipment, or gore"
     }
   },
-  "style": "match the attached canonical pixel-art sprite exactly: large uniform square pixel blocks, hard dark outline, no anti-aliasing, limited desaturated grim-dark palette, flat shading",
+  "style": "high-detail polished grim dark-fantasy pixel art matching production Ares and Artemis density, crisp near-black outline, restrained aged bronze and ivory palette",
   "motion_phase_guides": false,
   "layout": "taxonomy/v1",
   "fit": {
     "resample": "kcentroid",
-    "align_x": "alpha-centroid",
+    "align_x": "bbox-center",
     "align_y": "bottom",
     "pixel_unfake": true,
-    "logical_height": 32,
-    "palette_size": 16,
+    "logical_height": 1024,
+    "palette_size": 96,
     "outline": true
   },
   "chroma": {
-    "mode": "rgb",
+    "mode": "ycbcr",
     "unmix_reach": 4,
     "spill_max_fraction": 0.005
   }

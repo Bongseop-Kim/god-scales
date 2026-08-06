@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "kind": "sprite-gen-request",
+  "engine": "component-row",
+  "character": {
+    "id": "under_ash",
+    "description": "",
+    "base_image": "base-source.png"
+  },
+  "cell": {
+    "shape": "rect",
+    "width": 896,
+    "height": 1024,
+    "safe_margin_x": 64,
+    "safe_margin_y": 96
+  },
+  "chroma_key": {
+    "name": "cyan",
+    "hex": "#00FFFF",
+    "rgb": [
+      0,
+      255,
+      255
+    ],
+    "selection": "auto",
+    "score": 220.94,
+    "min_subject_distance": 220.55,
+    "background": {
+      "mode": "transparent",
+      "opaque_border_fraction": 0.0,
+      "subject_pixels": 173
+    },
+    "candidates": [
+      {
+        "name": "magenta",
+        "hex": "#FF00FF",
+        "score": 203.75,
+        "min_subject_distance": 202.41,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "green",
+        "hex": "#00FF00",
+        "score": 216.78,
+        "min_subject_distance": 216.31,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "cyan",
+        "hex": "#00FFFF",
+        "score": 220.94,
+        "min_subject_distance": 220.55,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "blue",
+        "hex": "#004DFF",
+        "score": 193.46,
+        "min_subject_distance": 193.19,
+        "clears_erase_radius": true
+      }
+    ],
+    "selection_reason": "highest 1st-percentile subject distance among the 4 candidate(s) clearing the 96 erase radius"
+  },
+  "states": {
+    "idle": {
+      "frames": 4,
+      "fps": 4,
+      "loop": true,
+      "action": "four-frame seamless ash idle loop: the cluster itself is the single subject; keep exactly twelve to sixteen small irregular pale-gray flecks inside a compact centered area while they shift downward by tiny unequal amounts and return through a seamless cyclic arrangement; broad empty gaps remain between flecks; no smoke cloud, flame, dust mass, extra debris outside the cluster, or slot crossing"
+    }
+  },
+  "style": "polished grim Greek dark-fantasy true pixel art copied from the accepted base, crisp near-black hard outline, clearly visible uniform square-pixel grid, flat shading, restrained material-specific palette, no anti-aliasing and no painterly rendering",
+  "motion_phase_guides": false,
+  "layout": "taxonomy/v1",
+  "fit": {
+    "resample": "kcentroid",
+    "align_x": "bbox-center",
+    "align_y": "bbox-center",
+    "pixel_unfake": true,
+    "logical_height": 128,
+    "palette_size": 32,
+    "outline": true
+  },
+  "chroma": {
+    "mode": "ycbcr",
+    "unmix_reach": 4,
+    "spill_max_fraction": 0.005
+  }
+}

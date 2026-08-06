@@ -2,15 +2,15 @@
 
 [P-32](../../plans/32-art.md) §2 프롭 · [원본 규칙](../README.md) · **상태 완료**
 
-**파일** PNG 알파, **생성 원본 해상도 유지 — 축소하지 않는다**. 배경과 `.shell` 사이 레이어(`z-index: -1`).
+**파일** PNG 알파. `under_chain_idle_1.png`~`under_chain_idle_4.png`는 각각 `896×1024`, `under_chain.png`는 4프레임 가로 스트립 `3584×1024`다. 배경과 `.shell` 사이 레이어(`z-index: -1`).
 
 **화면** 72px. CSS가 24×24 격자를 3배 확대한 크기다 — **구도용 참고값이고 파일 크기 지시가 아니다.**
 
-**정지 이미지 1장이다. 애니메이션 프레임을 그리지 않는다** — 흔들림은 CSS `transform` 루프가 한다.
+**idle 4프레임 루프다.** 재생 속도는 4fps이며 사슬 흔들림이 프레임에 포함된다.
 
-**생성** 내장 ImageGen, 원본 크기 명시 없음. 단색 크로마키 제거 후 PNG로 저장한다.
+**생성** `sprite-gen` component-row 파이프라인, YCbCr 크로마 제거, 고정 팔레트, 투명 RGBA PNG
 
-**변환** — 입력은 `art/_src/` 원본이고 출력은 `art/`다. **두 경로를 같게 쓰면 원본이 그 자리에서 깎인다.**
+**기존 원본 변환 기록(참고 전용)** — 현재 원본은 `art/_src/props/under_chain-base.png`, 재현 가능한 run은 `art/_src/sprite-runs/under_chain/`에 있다.
 
 ```
 magick art/_src/props/under_chain.png -alpha on -fuzz 35% -transparent '#00ff00' art/props/under_chain.png

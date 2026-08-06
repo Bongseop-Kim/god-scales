@@ -1,0 +1,15 @@
+{
+  "id": "poseidon",
+  "name": "포세이돈",
+  "tokens": ["displace", "soaked"],
+  "ops": [],
+  "rivals": ["zeus"],
+  "stage_effects": {
+    "devotion": {
+      "on_turn_start": [
+        { "op": "apply_token", "token": "soaked", "stacks": 1, "target": "all_enemies" }
+      ]
+    }
+  },
+  "demands": ["demand_poseidon_solo"]
+}

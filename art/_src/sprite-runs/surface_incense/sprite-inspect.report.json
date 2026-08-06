@@ -1,0 +1,59 @@
+{
+  "ok": true,
+  "engine": "component-row",
+  "kind": "sprite-gen-inspect-report",
+  "run_dir": "/Users/duegosystem/git/god-scales/art/_src/sprite-runs/surface_incense",
+  "states": [
+    "idle"
+  ],
+  "thresholds": {
+    "histogram_min": 0.0,
+    "dhash_min": 0.55,
+    "motion_min": 0.01
+  },
+  "rows": [
+    {
+      "state": "idle",
+      "source": "frames",
+      "expected_frames": 4,
+      "found_frames": 4,
+      "natural_pose_count": 4,
+      "frame_files": [
+        "frames/idle/frame-0.png",
+        "frames/idle/frame-1.png",
+        "frames/idle/frame-2.png",
+        "frames/idle/frame-3.png"
+      ],
+      "metrics": {
+        "histogram_intersection": {
+          "min": 0.9459014035522073,
+          "mean": 0.9665992177790619
+        },
+        "dhash_similarity": {
+          "min": 1.0,
+          "mean": 1.0
+        },
+        "motion_presence": 0.018266585605596405,
+        "centroid_sigma": {
+          "x": 2.343044263798131,
+          "y": 7.064730367667991
+        }
+      },
+      "ok": true,
+      "errors": [],
+      "warnings": [
+        "idle: pitch disagreement — detect 6.00x5.52 (uniformity 30.1) vs runlen 4.93x5.11 (29.2); detect kept. large gap usually means the raw was drawn finer than the cell contract — reroll with a block-count hint",
+        "idle: frame 0 pitch detection inconclusive — consensus fallback 6.00x5.52",
+        "idle: frame 1 pitch detection inconclusive — consensus fallback 6.00x5.52",
+        "idle: frame 3 pitch detection inconclusive — consensus fallback 6.00x5.52"
+      ]
+    }
+  ],
+  "errors": [],
+  "warnings": [
+    "idle: pitch disagreement — detect 6.00x5.52 (uniformity 30.1) vs runlen 4.93x5.11 (29.2); detect kept. large gap usually means the raw was drawn finer than the cell contract — reroll with a block-count hint",
+    "idle: frame 0 pitch detection inconclusive — consensus fallback 6.00x5.52",
+    "idle: frame 1 pitch detection inconclusive — consensus fallback 6.00x5.52",
+    "idle: frame 3 pitch detection inconclusive — consensus fallback 6.00x5.52"
+  ]
+}

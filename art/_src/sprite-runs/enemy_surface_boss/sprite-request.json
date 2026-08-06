@@ -4,17 +4,15 @@
   "engine": "component-row",
   "character": {
     "id": "enemy_surface_boss",
-    "description": "잠들지 않는 아르고스 (12층 보스), facing left",
+    "description": "",
     "base_image": "base-source.png"
   },
   "cell": {
-    "shape": "square",
-    "width": 256,
-    "height": 256,
-    "safe_margin_x": 20,
-    "safe_margin_y": 20,
-    "size": 256,
-    "safe_margin": 20
+    "shape": "rect",
+    "width": 896,
+    "height": 1024,
+    "safe_margin_x": 48,
+    "safe_margin_y": 96
   },
   "chroma_key": {
     "name": "cyan",
@@ -25,40 +23,49 @@
       255
     ],
     "selection": "auto",
-    "score": 240.39,
-    "min_subject_distance": 231.15,
+    "score": 237.05,
+    "min_subject_distance": 232.09,
     "background": {
-      "mode": "transparent",
-      "opaque_border_fraction": 0.046,
-      "subject_pixels": 8928
+      "mode": "flat",
+      "hex": "#FAFAFA",
+      "rgb": [
+        250,
+        250,
+        250
+      ],
+      "opaque_border_fraction": 1.0,
+      "border_coverage": 1.0,
+      "enclosed_background_pixels": 302,
+      "enclosed_material_pixels": 6,
+      "subject_pixels": 5112
     },
     "candidates": [
       {
         "name": "magenta",
         "hex": "#FF00FF",
-        "score": 218.49,
-        "min_subject_distance": 214.44,
+        "score": 215.19,
+        "min_subject_distance": 211.51,
         "clears_erase_radius": true
       },
       {
         "name": "green",
         "hex": "#00FF00",
-        "score": 207.56,
-        "min_subject_distance": 202.42,
+        "score": 209.24,
+        "min_subject_distance": 205.09,
         "clears_erase_radius": true
       },
       {
         "name": "cyan",
         "hex": "#00FFFF",
-        "score": 240.39,
-        "min_subject_distance": 231.15,
+        "score": 237.05,
+        "min_subject_distance": 232.09,
         "clears_erase_radius": true
       },
       {
         "name": "blue",
         "hex": "#004DFF",
-        "score": 223.94,
-        "min_subject_distance": 200.65,
+        "score": 212.96,
+        "min_subject_distance": 207.18,
         "clears_erase_radius": true
       }
     ],
@@ -69,41 +76,41 @@
       "frames": 4,
       "fps": 4,
       "loop": true,
-      "action": "four-frame subtle guarded idle breathing loop, facing left; preserve the exact stance and identity"
+      "action": "four-frame compact left-facing sentinel loop: Argus shifts weight subtly while a few embedded body eyes blink in alternating groups and the complete eye-topped staff stays nearly vertical close to the body; each pose uses at most 68 percent of its slot width with broad uninterrupted gutters; no eye, hand, cloth tip, staff part, ornament, or pixel crosses a slot boundary"
     },
     "attack": {
       "frames": 2,
       "fps": 8,
       "loop": false,
-      "action": "two-frame short attack toward the left: anticipation then committed strike; keep all anatomy, weapons, and asymmetric damage consistent"
+      "action": "two-frame compact attack facing left: the eye staff tilts inward, then makes a short diagonal downward strike close across the body; never extend the staff horizontally; all embedded eyes and the complete staff remain attached; broad gutters; no loose eye, beam, glow, detached ornament, debris, or cross-slot pixel"
     },
     "hit": {
       "frames": 1,
       "fps": 6,
       "loop": false,
-      "action": "one-frame hit reaction recoiling away from an impact from the left; no new wounds or detached parts"
+      "action": "single compact recoil from an impact at the left: Argus leans back, body eyes narrow, both feet remain visible, and the complete eye staff stays nearly vertical in the hand; center within the middle 68 percent width and 76 percent height with broad padding; no loose eye, wound, beam, debris, or crop"
     },
     "death": {
       "frames": 2,
       "fps": 4,
       "loop": false,
-      "action": "two-frame death: body gives way, then collapsed still on the ground; preserve existing asymmetry, anatomy, and equipment"
+      "action": "two-frame non-graphic defeat facing left: knees buckle, then Argus settles into a low seated collapse while the complete eye staff stays held or directly touching the hand and every body eye remains embedded; compact poses with broad gutters; no loose eye, blood, gore, detached staff part, debris, or cross-slot pixel"
     }
   },
-  "style": "match the attached canonical pixel-art sprite exactly: large uniform square pixel blocks, hard dark outline, no anti-aliasing, limited desaturated grim-dark palette, flat shading",
+  "style": "high-detail polished grim Greek dark-fantasy pixel art matching production Ares and Artemis density, crisp near-black outline, restrained antique bronze ivory charcoal and tiny muted-red palette",
   "motion_phase_guides": false,
   "layout": "taxonomy/v1",
   "fit": {
     "resample": "kcentroid",
-    "align_x": "alpha-centroid",
+    "align_x": "bbox-center",
     "align_y": "bottom",
     "pixel_unfake": true,
-    "logical_height": 48,
-    "palette_size": 16,
+    "logical_height": 1024,
+    "palette_size": 96,
     "outline": true
   },
   "chroma": {
-    "mode": "rgb",
+    "mode": "ycbcr",
     "unmix_reach": 4,
     "spill_max_fraction": 0.005
   }

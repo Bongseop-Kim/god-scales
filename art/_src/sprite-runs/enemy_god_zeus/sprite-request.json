@@ -4,106 +4,70 @@
   "engine": "component-row",
   "character": {
     "id": "enemy_god_zeus",
-    "description": "제우스 (진노), facing left",
-    "base_image": "base-source.png"
+    "description": "",
+    "base_image": null
   },
   "cell": {
-    "shape": "square",
-    "width": 256,
-    "height": 256,
-    "safe_margin_x": 20,
-    "safe_margin_y": 20,
-    "size": 256,
-    "safe_margin": 20
+    "shape": "rect",
+    "width": 896,
+    "height": 1024,
+    "safe_margin_x": 48,
+    "safe_margin_y": 96
   },
   "chroma_key": {
-    "name": "cyan",
-    "hex": "#00FFFF",
+    "name": "magenta",
+    "hex": "#FF00FF",
     "rgb": [
-      0,
       255,
+      0,
       255
     ],
-    "selection": "auto",
-    "score": 208.45,
-    "min_subject_distance": 196.35,
+    "selection": "fallback",
     "background": {
-      "mode": "transparent",
-      "opaque_border_fraction": 0.056,
-      "subject_pixels": 9046
+      "mode": "absent"
     },
-    "candidates": [
-      {
-        "name": "magenta",
-        "hex": "#FF00FF",
-        "score": 206.78,
-        "min_subject_distance": 204.3,
-        "clears_erase_radius": true
-      },
-      {
-        "name": "green",
-        "hex": "#00FF00",
-        "score": 196.31,
-        "min_subject_distance": 189.44,
-        "clears_erase_radius": true
-      },
-      {
-        "name": "cyan",
-        "hex": "#00FFFF",
-        "score": 208.45,
-        "min_subject_distance": 196.35,
-        "clears_erase_radius": true
-      },
-      {
-        "name": "blue",
-        "hex": "#004DFF",
-        "score": 166.42,
-        "min_subject_distance": 159.84,
-        "clears_erase_radius": true
-      }
-    ],
-    "selection_reason": "highest 1st-percentile subject distance among the 4 candidate(s) clearing the 96 erase radius"
+    "selection_reason": "no base reference to sample"
   },
   "states": {
     "idle": {
       "frames": 4,
       "fps": 4,
       "loop": true,
-      "action": "four-frame subtle guarded idle breathing loop, facing left; preserve the exact stance and identity"
+      "action": "four-frame commanding idle breathing loop facing down-left with one arm raised overhead; complete lightning javelin stays held and inside every slot; small beard, hair, robe, and shoulder movement only; no detached lightning"
     },
     "attack": {
       "frames": 2,
       "fps": 8,
       "loop": false,
-      "action": "two-frame short attack toward the left: anticipation then committed strike; keep all anatomy, weapons, and asymmetric damage consistent"
+      "action": "two-frame left attack: gather power with the held javelin raised, then bring the same held lightning javelin down and forward in a committed strike; no thrown projectile, detached bolt, glow, or loose effect"
     },
     "hit": {
       "frames": 1,
       "fps": 6,
       "loop": false,
-      "action": "one-frame hit reaction recoiling away from an impact from the left; no new wounds or detached parts"
+      "action": "single impact recoil from the left while retaining the complete lightning javelin in his raised hand; flawless and unwounded, no blood or detached lightning"
     },
     "death": {
       "frames": 2,
       "fps": 4,
       "loop": false,
-      "action": "two-frame death: body gives way, then collapsed still on the ground; preserve existing asymmetry, anatomy, and equipment"
+      "action": "two-frame non-graphic defeat: Zeus drops from the towering stance then collapses low facing left; complete lightning javelin stays held or directly touching his hand; no blood, wounds, gore, or detached lightning"
     }
   },
-  "style": "match the attached canonical pixel-art sprite exactly: large uniform square pixel blocks, hard dark outline, no anti-aliasing, limited desaturated grim-dark palette, flat shading",
+  "style": "high-detail polished grim dark-fantasy pixel art matching production Ares and Artemis density, crisp near-black outline, restrained marble ivory and antique gold palette",
   "motion_phase_guides": false,
   "layout": "taxonomy/v1",
   "fit": {
     "resample": "kcentroid",
-    "align_x": "alpha-centroid",
+    "align_x": "bbox-center",
     "align_y": "bottom",
     "pixel_unfake": true,
-    "logical_height": 32,
-    "palette_size": 16,
+    "logical_height": 1024,
+    "palette_size": 96,
     "outline": true
   },
   "chroma": {
-    "mode": "rgb",
+    "mode": "ycbcr",
     "unmix_reach": 4,
     "spill_max_fraction": 0.005
   }

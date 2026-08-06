@@ -1,0 +1,11 @@
+{
+  "states": {
+    "idle": {"frames": 4, "fps": 4, "loop": true, "action": "four-frame compact guarded breathing loop facing left; giant round lambda shield stays forward and one complete spear stays nearly vertical or low diagonal close to the body; each complete skeleton pose uses at most 70 percent of its slot width with a broad uninterrupted background gutter; no bone, cloak tip, shield edge, spear part, fragment, or pixel crosses a slot boundary"},
+    "attack": {"frames": 2, "fps": 8, "loop": false, "action": "two-frame compact attack facing left: short lambda-shield bash, then a diagonal downward spear strike close across the body; never extend the spear horizontally; complete shield and spear remain held; each pose uses at most 68 percent of its slot width with broad gutters; no detached weapon piece, bone, debris, or cross-slot pixel"},
+    "hit": {"frames": 1, "fps": 6, "loop": false, "action": "single compact recoil from an impact at the left while crouching behind the intact lambda shield and holding the complete spear nearly vertical; center all bones and equipment within the middle 68 percent width and 72 percent height with broad padding on all sides; no new damage, debris, fragments, detached bones, or crop"},
+    "death": {"frames": 2, "fps": 4, "loop": false, "action": "two-frame non-graphic defeat facing left: skeletal knees give way, then the Spartoi collapses low while shield and complete spear stay gripped or directly touching the hands; each pose is compact with broad background gutters; no shattered bones, detached equipment, debris, blood, gore, or cross-slot pixels"}
+  },
+  "cell": {"shape": "rect", "width": 896, "height": 1024, "safe_margin_x": 48, "safe_margin_y": 96},
+  "style": "high-detail polished grim dark-fantasy pixel art matching production Ares and Artemis density, crisp near-black outline, restrained aged bronze charcoal and ivory-bone palette",
+  "fit": {"resample": "kcentroid", "align_x": "bbox-center", "align_y": "bottom", "pixel_unfake": true, "logical_height": 1024, "palette_size": 96, "outline": true}
+}
