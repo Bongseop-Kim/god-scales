@@ -1,8 +1,23 @@
 import { useState } from "react";
+import cardDataJson from "../data/cards.json" with { type: "json" };
 import type { CardView } from "../sim/engine.ts";
+import { cardArtCandidates, cardGod, cardTag, type CardArtSource } from "./art-keys.ts";
 import { tokenName } from "./tokens.tsx";
 
 const cardArt = import.meta.glob<string>("../art/cards/*.webp", { eager: true, query: "?url", import: "default" });
+/**
+ * 그림·프레임색·파티클은 **값이 아니라 이름**이라 `data/cards.json`에서 직접 읽는다 — 엔진의
+ * `CardView`는 값만 싣는다(`sim/engine.ts:130`). 적 이름을 `data/enemies.json`에서 읽는 자리와 같다.
+ * 129개 id가 그림 30장으로 떨어지는 규칙은 `ui/art-keys.ts`에 있고 `tools/art.ts`가 같은 것을 쓴다
+ */
+const cardFace = new Map((cardDataJson as CardArtSource[]).map((card) => [card.id, {
+  art: cardArtCandidates(card).map((key) => cardArt[`../art/cards/${key}.webp`]).find(Boolean),
+  god: cardGod(card),
+  tag: cardTag(card),
+}]));
+
+/** 카드를 낼 때 튀는 파티클의 태그. 전투 화면이 이걸로 `art/particle/`을 고른다 */
+export const cardTagOf = (cardId: string): string | undefined => cardFace.get(cardId)?.tag;
 const opLabels: Record<string, string> = {
   damage: "피해",
   block: "방어",
@@ -54,9 +69,10 @@ export function GameCard({ cardId, name, caption, disabled, onSelect }: {
   disabled?: boolean;
   onSelect?: () => void;
 }) {
-  const source = cardArt[`../art/cards/${cardId}.webp`];
+  const face = cardFace.get(cardId);
+  const source = face?.art;
   const [missing, setMissing] = useState(!source);
-  const face = (
+  const art = (
     <>
       <div className={`card-art${missing ? " missing" : ""}`}>
         {source && <img src={source} alt="" loading="lazy" onError={() => setMissing(true)} />}
@@ -68,6 +84,6 @@ export function GameCard({ cardId, name, caption, disabled, onSelect }: {
   );
 
   return onSelect
-    ? <button className="game-card" type="button" data-card={cardId} disabled={disabled} onClick={onSelect}>{face}</button>
-    : <article className="game-card" data-card={cardId}>{face}</article>;
+    ? <button className="game-card" type="button" data-card={cardId} data-god={face?.god} disabled={disabled} onClick={onSelect}>{art}</button>
+    : <article className="game-card" data-card={cardId} data-god={face?.god}>{art}</article>;
 }

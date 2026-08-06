@@ -1,6 +1,7 @@
 import type { DemandCost, DemandReward } from "../core/demands.ts";
 import { restHealing } from "../core/map.ts";
 import type { DemandDecision, GraceDecision, MapDecision, RunView } from "../sim/engine.ts";
+import { Backdrop, backdropArt } from "./backdrop.tsx";
 import { CardRow, effectText } from "./card.tsx";
 import { godName, RunHeader } from "./header.tsx";
 
@@ -13,10 +14,14 @@ function Screen({ seed, view, title, badge, children }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="shell">
-      <RunHeader seed={seed} view={view} title={title} badge={badge} />
-      <div className="decision-panel">{children}</div>
-    </div>
+    <>
+      {/* 쉼터·예고·은혜에는 전용 배경이 없다 — 그 지역의 전투 배경을 어둡게 깐다. 새로 그리지 않는다 */}
+      <Backdrop src={backdropArt(view.region, "combat")} tone="dim" />
+      <div className="shell">
+        <RunHeader seed={seed} view={view} title={title} badge={badge} />
+        <div className="decision-panel">{children}</div>
+      </div>
+    </>
   );
 }
 

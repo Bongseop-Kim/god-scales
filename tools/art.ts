@@ -1,14 +1,53 @@
+/**
+ * 에셋 게이트 — **데이터 id ↔ 파일명을 여섯 종류로 대조한다.**
+ *
+ * 파일명이 이미 데이터 id와 1:1이라(`enemy_under_pressure` ↔ `art/sprites/enemy_under_pressure.webp`)
+ * 어긋남은 눈이 아니라 문자열 비교가 잡는다. R-32의 「게이트가 두 번 새어 나갔다 — 목록을 눈으로
+ * 훑었기 때문이다」가 근거다. 이름 짓는 규칙은 화면과 공유한다(`ui/art-keys.ts`) — 규칙이 두 벌이면
+ * 「게이트는 통과했는데 화면은 빈다」가 생긴다
+ */
 import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { regions } from "../core/map.ts";
 import { godDecks } from "../sim/engine.ts";
+import { artRegion, backdropName, cardArtCandidates, tagParticle, type CardArtSource } from "../ui/art-keys.ts";
 
-type CardData = { id: string; name: string; patron?: string; patron_pair?: string[]; effects: { op: string; value?: number; token?: string; stacks?: number }[] };
-const cards = JSON.parse(readFileSync(new URL("../data/cards.json", import.meta.url), "utf8")) as CardData[];
-// 시작 덱 15장이 필수다 — 모든 런의 첫 손패에 뜬다. 나머지는 보상으로 뽑혀야 화면에 나온다
-const starterIds = new Set(Object.values(godDecks).flat());
-const starters = cards.filter(({ id }) => starterIds.has(id));
-const generated = cards.filter(({ id }) => !starterIds.has(id));
-const existing = new Set(existsSync("art/cards") ? readdirSync("art/cards").filter((name) => name.endsWith(".webp")).map((name) => name.replace(/\.webp$/, "")) : []);
-const missing = cards.filter(({ id }) => !existing.has(id));
+type CardData = CardArtSource & { name: string; effects: { op: string; value?: number; token?: string; stacks?: number }[] };
+const readData = <T>(name: string): T => JSON.parse(readFileSync(new URL(`../data/${name}.json`, import.meta.url), "utf8")) as T;
+const cards = readData<CardData[]>("cards");
+const enemies = readData<{ id: string }[]>("enemies");
+const gods = readData<{ id: string }[]>("gods");
+
+const names = (directory: string, extension = ".webp"): Set<string> =>
+  new Set(existsSync(`art/${directory}`) ? readdirSync(`art/${directory}`).filter((name) => name.endsWith(extension)).map((name) => name.slice(0, -extension.length)) : []);
+const [sprites, cardArt, godArt, bg, props, fx, hero, frame, marker, particle, cursor] =
+  [["sprites"], ["cards"], ["gods"], ["bg"], ["props"], ["fx"], ["hero"], ["ui"], ["ui", ".png"], ["particle"], ["cursor-pixel", ".png"]]
+    .map(([directory, extension]) => names(directory, extension));
+const missingFrom = (have: Set<string>, need: string[]) => need.filter((name) => !have.has(name));
+/** 카드만 대조가 1:1이 아니다 — 129개 id가 30장으로 떨어지는 폴백을 인정해야 한다(R-32) */
+const unresolved = cards.filter((card) => !cardArtCandidates(card).some((key) => cardArt.has(key)));
+
+const checks = [
+  { kind: "sprites", made: 20, found: sprites.size, missing: missingFrom(sprites, [...enemies.map(({ id }) => id), "player"]) },
+  { kind: "cards", made: 30, found: cardArt.size, missing: unresolved.map(({ id }) => id) },
+  { kind: "gods", made: 5, found: godArt.size, missing: missingFrom(godArt, gods.map(({ id }) => id)) },
+  { kind: "bg", made: 6, found: bg.size, missing: missingFrom(bg, regions.flatMap((region) => (["map", "combat", "boss"] as const).map((spot) => backdropName(region, spot)))) },
+  // 프롭은 이름을 데이터가 안 부른다 — 배경 위에 지역별로 **둘**을 얹으므로 그 하한이 곧 대조다
+  { kind: "props", made: 14, found: props.size, missing: regions.filter((region) => [...props].filter((name) => name.startsWith(`${artRegion(region)}_`)).length < 2) },
+  {
+    kind: "fixed",
+    made: 8,
+    found: 8,
+    missing: [
+      ...missingFrom(fx, ["block", "burst", "open"]),
+      ...missingFrom(hero, ["hero-title", "hero-win", "hero-loss"]),
+      ...missingFrom(frame, ["card-frame"]),
+      ...missingFrom(marker, ["marker"]),
+      // 커서·파티클은 제작 83개가 아니다(Kenney CC0). 번들에 넣은 여덟 장만 이름을 잠근다
+      ...missingFrom(particle, Object.values(tagParticle)),
+      ...missingFrom(cursor, ["tile_0026", "tile_0134", "tile_0044", "tile_0015"]),
+    ],
+  },
+];
 
 if (process.argv.includes("--list")) {
   console.log("id,name,patron,effects");
@@ -18,10 +57,15 @@ if (process.argv.includes("--list")) {
     console.log([card.id, card.name, patron, effects].map((value) => `"${String(value).replaceAll('"', '""')}"`).join(","));
   }
 } else if (process.argv.includes("--check")) {
-  const requiredMissing = starters.filter(({ id }) => !existing.has(id));
-  const deferredMissing = generated.filter(({ id }) => !existing.has(id));
-  console.log(`cards=${cards.length} present=${cards.length - missing.length} required_missing=${requiredMissing.length} deferred_missing=${deferredMissing.length}`);
-  for (const card of requiredMissing) console.log(`[required] ${card.id}`);
-  for (const card of deferredMissing) console.log(`[deferred:not-in-current-run] ${card.id}`);
-  if (requiredMissing.length) process.exitCode = 1;
+  // 시작 덱 15장은 모든 런의 첫 손패에 뜬다 — 나머지는 보상으로 뽑혀야 화면에 나온다
+  const starters = new Set(Object.values(godDecks).flat());
+  const requiredMissing = unresolved.filter(({ id }) => starters.has(id));
+  console.log(`cards=${cards.length} present=${cards.length - unresolved.length} required_missing=${requiredMissing.length} deferred_missing=${unresolved.length - requiredMissing.length}`);
+  const made = checks.reduce((sum, { made: count }) => sum + count, 0);
+  const built = checks.reduce((sum, { found }) => sum + found, 0);
+  console.log(`made=${built}/${made} ${checks.map(({ kind, found, made: count }) => `${kind} ${found}/${count}`).join(" · ")}`);
+  for (const { kind, missing } of checks) for (const name of missing) console.log(`[${kind}] ${name} — 데이터에 있는데 파일이 없다`);
+  const violations = checks.filter(({ missing }) => missing.length).length + (built === made ? 0 : 1);
+  console.log(`대조 위반 ${violations}`);
+  if (violations) process.exitCode = 1;
 } else throw new Error("use --list or --check");

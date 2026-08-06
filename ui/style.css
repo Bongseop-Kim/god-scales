@@ -8,15 +8,46 @@
   --boon: #e8c377;
   --bane: #6ea8d8;
   color: #f4efe5;
-  background: #11131a;
+  /**
+   * **바탕은 `:root` 한 곳에서만 칠한다.** `body`에도 칠하면 `.backdrop`(z-index -1)이 그 아래로
+   * 깔려 화면마다 배경이 있다 없다 한다 — 실제로 시작 화면만 배경이 안 떴다. 루트 배경은 캔버스로
+   * 승격돼 언제나 맨 아래에 깔리므로 음수 z-index가 그 위에 선다
+   */
+  background: radial-gradient(circle at 50% -20%, #28304a, #11131a 50%) #11131a;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   font-synthesis: none;
 }
 
 * { box-sizing: border-box; }
-body { margin: 0; min-width: 320px; min-height: 100vh; background: radial-gradient(circle at 50% -20%, #28304a, #11131a 50%); }
+body { margin: 0; min-width: 320px; min-height: 100vh; }
 button, input { font: inherit; }
 button { color: inherit; cursor: pointer; }
+
+/**
+ * 커서 넷. **핫스팟이 상태마다 다르다** — 화살표는 촉이 좌상단이라 `0 0`, 손은 검지 끝이라 `5 0`,
+ * 조준·금지는 원 중심이라 `8 8`이다. `0 0`으로 통일하면 눌리는 자리와 보이는 자리가 어긋난다.
+ * 폴백 키워드를 반드시 뒤에 붙인다 — PNG를 못 읽는 환경에서 커서가 아예 사라진다
+ */
+body { cursor: url(../art/cursor-pixel/tile_0026.png) 0 0, auto; }
+button:not(:disabled) { cursor: url(../art/cursor-pixel/tile_0134.png) 5 0, pointer; }
+button:disabled { cursor: url(../art/cursor-pixel/tile_0015.png) 8 8, not-allowed; }
+/* 적 버튼은 `targeting`일 때만 눌린다 — 조준 커서가 「지금 대상을 고르는 중」을 문구 없이 말한다 */
+.enemy:not(:disabled) { cursor: url(../art/cursor-pixel/tile_0044.png) 8 8, crosshair; }
+
+/**
+ * 배경은 화면 뒤 한 장이다. **`.shell` 바깥에 서고 `fixed`다** — 안에 넣으면 `tools/e2e.ts`의
+ * 열 측정이 배경을 칸으로 세고, `fixed`가 아니면 1440px 그림이 가로 넘침으로 잡힌다
+ */
+.backdrop { position: fixed; inset: 0; z-index: -1; overflow: hidden; }
+.backdrop .bg { width: 100%; height: 100%; object-fit: cover; opacity: .38; }
+/* 쉼터·예고·은혜·보상은 전용 배경이 없어 전투 배경을 빌린다 — 그 자리는 더 어둡게 깐다 */
+.backdrop.dim .bg { opacity: .16; }
+/* 시작·결과는 주인공 일러가 화면의 주인공이다. 어두운 그림이라 .38에서는 배경색에 묻힌다 */
+.backdrop.hero .bg { opacity: .72; }
+/* 프롭은 층마다 둘이다. 셋 이상은 96px 스프라이트를 가린다 */
+.backdrop .prop { position: absolute; opacity: .5; }
+.backdrop .p0 { bottom: 11%; left: 5%; }
+.backdrop .p1 { top: 15%; right: 7%; }
 
 .shell { width: min(1040px, calc(100% - 32px)); margin: 0 auto; padding: 64px 0; }
 .setup { max-width: 720px; min-height: 100vh; display: grid; align-content: center; justify-items: start; }
@@ -73,12 +104,15 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
  */
 .combat-layout { grid-template-columns: minmax(320px, 1.2fr) minmax(260px, .8fr); }
 .combat-layout .enemy-panel { order: 1; }
-.map-panel, .decision-panel, .combat-log, .enemy-panel, .summary-grid article { padding: 24px; border: 1px solid #303648; border-radius: 14px; background: rgba(21, 25, 35, .86); }
+/* `position`은 파티클이 쓴다 — `.fx.spark`가 이 칸 가운데에 서려면 여기가 기준이어야 한다 */
+.map-panel, .decision-panel, .combat-log, .enemy-panel, .summary-grid article { position: relative; padding: 24px; border: 1px solid #303648; border-radius: 14px; background: rgba(21, 25, 35, .86); }
 .map-panel ol { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .map-panel li { display: grid; grid-template-columns: 40px repeat(3, 1fr); align-items: center; gap: 8px; }
 .map-panel li small { color: #757b8b; font-size: .78rem; }
 .map-columns { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-.map-node { display: grid; height: 30px; place-items: center; border: 1px solid #303648; border-radius: 8px; color: #969cad; font-size: .84rem; font-style: normal; }
+.map-node { position: relative; display: grid; height: 30px; place-items: center; border: 1px solid #303648; border-radius: 8px; color: #969cad; font-size: .84rem; font-style: normal; }
+/* 병사가 지금 서 있는 칸. 16×16 마커는 그 크기가 곧 파일 크기라 확대하지 않는다(`art/ui/marker.md`) */
+.map-node.here::after { content: ""; position: absolute; top: -7px; right: -7px; width: 16px; height: 16px; background: url(../art/ui/marker.png) 0 0 / 16px 16px no-repeat; }
 .map-node.empty { border-color: transparent; }
 .map-node.rest { border-color: #5c9985; color: #9de0c7; }
 .map-node.combat { border-color: #a4615a; color: #efa198; }
@@ -92,13 +126,15 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .choice b { align-self: end; }
 .choice small { color: #949aad; }
 
-.map-node.current { border-color: #c6a969; background: rgba(198, 169, 105, .16); color: #f0d79a; }
+.map-node.current, .map-node.here { border-color: #c6a969; background: rgba(198, 169, 105, .16); color: #f0d79a; }
 
 .enemy-panel { display: grid; align-content: start; gap: 12px; }
 .enemy { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; padding: 14px; text-align: left; }
 .enemy:disabled { cursor: default; opacity: .82; }
 .enemy .actor-tokens { grid-column: 1 / -1; }
 .enemy .actor-tokens:empty { display: none; }
+/* 스프라이트는 이름 위 한 줄이다 — 옆에 세우면 405px 칸에서 `nowrap`인 의도 한 줄이 넘친다 */
+.enemy .sprite { grid-column: 1 / -1; justify-self: start; }
 .enemy .name { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
 .enemy b { align-self: center; }
 /**
@@ -119,6 +155,7 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .damage-pop { position: absolute; inset: auto 14px 8px auto; color: #ffb4a6; font-family: Georgia, serif; font-size: 1.5rem; text-shadow: 0 2px 10px #11131a; pointer-events: none; }
 /* 배우 하나 = 우호도 · 토큰 · 파워 · 스탯. 위에서 아래로 「신 → 나에게 붙은 것 → 매 턴 일하는 것 → 값」 */
 .player-actor { display: grid; gap: 8px; padding-bottom: 8px; border-bottom: 1px solid #303648; }
+.player-actor .sprite { justify-self: start; }
 .favor-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 .favor { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 4px 8px; padding: 8px 10px; border: 1px solid #303648; border-radius: 10px; font-size: .74rem; }
 .favor small { color: #9298aa; }
@@ -152,7 +189,17 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .result-columns { display: grid; grid-template-columns: .8fr 1.2fr; gap: 16px; margin-top: 16px; }
 .combat-log ol { max-height: 300px; margin: 0; padding-left: 22px; overflow: auto; color: #a9afbe; font: .72rem/1.6 ui-monospace, monospace; }
 .used-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 18px; }
-.game-card { min-width: 0; padding: 8px; border: 1px solid var(--zeus); border-radius: 9px; background: #171b25; }
+/**
+ * 청동 프레임은 **무채색 한 장**이다(`art/ui/card-frame.md`). 신별로 다섯 장을 안 그린 이유가 여기다 —
+ * 마스크로 실루엣만 쓰고 색은 진영색 변수가 든다. 카드가 화면에서 약 105px이라 파일도 256px이다
+ */
+.game-card { position: relative; min-width: 0; padding: 8px; border: 1px solid color-mix(in srgb, var(--frame) 45%, transparent); border-radius: 9px; background: #171b25; --frame: #c6a969; }
+.game-card::before { content: ""; position: absolute; inset: -1px; background: var(--frame); mask: url(../art/ui/card-frame.webp) center / 100% 100% no-repeat; pointer-events: none; }
+.game-card[data-god="zeus"] { --frame: var(--zeus); }
+.game-card[data-god="poseidon"] { --frame: var(--poseidon); }
+.game-card[data-god="athena"] { --frame: var(--athena); }
+.game-card[data-god="ares"] { --frame: var(--ares); }
+.game-card[data-god="artemis"] { --frame: var(--artemis); }
 .game-card strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* 효과문은 줄여 쓰면 3택1이 무의미해진다 — 이름만 한 줄로 자르고 효과는 접는다 */
 .game-card small { display: block; margin-top: 3px; color: #858c9e; font-size: .6rem; line-height: 1.35; text-wrap: pretty; }

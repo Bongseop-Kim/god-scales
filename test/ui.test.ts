@@ -1,11 +1,13 @@
 import { createElement, type ReactElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import cardDataJson from "../data/cards.json" with { type: "json" };
 import { endTurnAction, runSteps, type Decision } from "../sim/engine.ts";
 import { run } from "../sim/engine.ts";
 import type { RunResult } from "../sim/report.ts";
 import type { ReplayAction } from "../sim/replay.ts";
 import { App, MapScreen } from "../ui/app.tsx";
+import { cardArtCandidates, type CardArtSource } from "../ui/art-keys.ts";
 import { DemandScreen, GraceScreen, RestScreen } from "../ui/choices.tsx";
 import { CombatScreen } from "../ui/combat.tsx";
 import { replayPayload } from "../ui/export.ts";
@@ -169,5 +171,17 @@ describe("browser replay export", () => {
       cards: browser.cardsPlayed,
     });
     expect(cli.cardsPlayed).not.toEqual(run(11).cardsPlayed);
+  });
+});
+
+/**
+ * 129개 id를 그림 30장이 덮는 규칙(`ui/art-keys.ts`)만 본다 — 파일이 실제로 있는지는
+ * `npm run art -- --check`가 전수로 대조한다. **함정 둘이 이 한 줄에 다 걸린다**: 후보에서 `id`를
+ * 빼면 융합 10장이, `tags[0]`에서 멈추면 첫 태그가 `power`인 다섯 장이 여기서 안 떨어진다
+ */
+describe("카드 그림 폴백", () => {
+  it("129개 id가 전부 그림 한 장으로 떨어진다", () => {
+    const have = new Set(Object.keys(import.meta.glob("../art/cards/*.webp")).map((path) => path.replace(/^.*\/|\.webp$/g, "")));
+    expect((cardDataJson as CardArtSource[]).filter((card) => !cardArtCandidates(card).some((key) => have.has(key)))).toEqual([]);
   });
 });

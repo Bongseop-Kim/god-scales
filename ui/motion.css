@@ -7,11 +7,18 @@ button { transition: transform 120ms var(--ease-out), border-color 160ms ease, b
 button:active { transform: scale(.97); }
 .token-badge { transition: transform 160ms var(--ease-out), opacity 160ms ease; }
 .game-card { transition: transform 160ms var(--ease-out), border-color 160ms ease; }
-.fx { position: absolute; inset: 50% auto auto 50%; overflow: hidden; width: 256px; height: 256px; transform: translate(-50%, -50%); pointer-events: none; }
-.fx > img { max-width: none; animation: sprite 480ms steps(12) forwards; }
+/* 컷인은 화면 전체(개입 오버레이·신 일러), 파티클은 host 가운데 한 장이다 */
+.fx { position: fixed; inset: 0; display: grid; place-items: center; z-index: 3; pointer-events: none; }
+/* 컷인은 480ms 스치는 층이다 — 불투명하면 그 사이 판이 안 보인다 */
+.fx > img { max-width: 100%; max-height: 100%; }
+.fx.cut > img { opacity: .7; }
+.fx.spark { position: absolute; inset: 50% auto auto 50%; width: 192px; height: 192px; transform: translate(-50%, -50%); }
+/* 스프라이트 스트립은 idle 넉 장이다 — 셀 192px(화면 96px × DPR2)이라 한 칸이 -96px씩 민다 */
+.sprite { display: block; width: 96px; height: 96px; overflow: hidden; }
+.sprite img { width: 384px; height: 96px; max-width: none; animation: sprite 1.2s steps(4) infinite; }
 
 @keyframes sprite {
-  to { transform: translateX(-3072px); }
+  to { transform: translateX(-384px); }
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -19,7 +26,7 @@ button:active { transform: scale(.97); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .fx > img { animation: none; }
+  .sprite img { animation: none; }
   button, .token-badge, .game-card { transition-property: opacity, border-color, background-color; }
   .enemy .hp i, .favor .meter i { transition: none; }
   button:active, .choice:hover, .game-card:hover { transform: none; }

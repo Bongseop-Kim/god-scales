@@ -5,10 +5,11 @@ import { bossLane, floorsPerRegion, laneCount, mapSlot, type MapGrid, type MapNo
 import { runSteps, type Decision, type MapDecision } from "../sim/engine.ts";
 import type { ReplayAction } from "../sim/replay.ts";
 import type { RunResult } from "../sim/report.ts";
+import { Backdrop, backdropArt } from "./backdrop.tsx";
 import { GameCard } from "./card.tsx";
 import { DemandScreen, GraceScreen, RestScreen } from "./choices.tsx";
 import { CombatScreen } from "./combat.tsx";
-import { godName, regionName, RunHeader } from "./header.tsx";
+import { godIds, godName, regionName, RunHeader } from "./header.tsx";
 import { RewardScreen } from "./reward.tsx";
 import { downloadReplay } from "./export.ts";
 import { playSound, sound } from "./sfx.ts";
@@ -34,13 +35,8 @@ const nodeDetail: Record<MapNodeType, string> = {
   omen: "신이 한 번 더 조건을 겁니다. 무엇인지는 들어가야 압니다.",
   boss: "지역의 끝입니다.",
 };
-const godColors = [
-  ["제우스", "#f2c94c"],
-  ["포세이돈", "#43b9d6"],
-  ["아테나", "#a8b0c3"],
-  ["아레스", "#e45b4f"],
-  ["아르테미스", "#75c66a"],
-] as const;
+const heroArt = import.meta.glob<string>("../art/hero/*.webp", { eager: true, query: "?url", import: "default" });
+const hero = (name: "title" | "win" | "loss") => heroArt[`../art/hero/hero-${name}.webp`];
 
 const screenTransition = { duration: 0.18, ease: [0.23, 1, 0.32, 1] } as const;
 
@@ -183,15 +179,18 @@ function SetupScreen({
   onToggleSound,
 }: SetupScreenProps) {
   return (
-    <form className="shell setup" onSubmit={onStart}>
+    <>
+      <Backdrop src={hero("title")} tone="hero" />
+      <form className="shell setup" onSubmit={onStart}>
       <p className="eyebrow">결정론적 덱빌딩 프로토타입</p>
       <h1>신들의 저울</h1>
       <p className="lead">두 신의 호의를 관리하며 지하에서 지상까지 12층을 돌파하세요.</p>
+      {/* 이름은 `data/gods.json`, 색은 `--{id}` CSS 변수다 — 둘 다 화면에 다시 적지 않는다 */}
       <div className="god-legend">
-        {godColors.map(([name, color]) => (
-          <span key={name}>
-            <i style={{ "--god-color": color } as CSSProperties} />
-            {name}
+        {godIds.map((god) => (
+          <span key={god}>
+            <i style={{ "--god-color": `var(--${god})` } as CSSProperties} />
+            {godName(god)}
           </span>
         ))}
       </div>
@@ -216,7 +215,8 @@ function SetupScreen({
         </button>
       </div>
       <p className="hint">갈림길·카드·대상·보상·휴식·은혜·요구를 전부 당신이 고릅니다. 룰 봇이 대신 정하는 것은 없습니다.</p>
-    </form>
+      </form>
+    </>
   );
 }
 
@@ -227,9 +227,17 @@ export function MapScreen({ seed, decision, onChoosePath }: {
 }) {
   const view = decision.observation;
   return (
-    <div className="shell run-layout">
+    <>
+      <Backdrop src={backdropArt(view.region, "map")} />
+      <div className="shell run-layout">
       <RunHeader seed={seed} view={view} title="경로 선택" badge={`${view.depth + 1} / 12층`} />
-      <MapPanel grid={view.grid} region={view.region} open={{ depth: view.depth, lanes: decision.options.map((option) => Number(option.split(":")[0])) }} />
+      {/* 지금 서 있는 칸은 **직전 층의** 걸어온 갈래다 — `view.depth`는 지금 고르는 층이다 */}
+      <MapPanel
+        grid={view.grid}
+        region={view.region}
+        here={{ depth: view.depth - 1, lane: view.lane }}
+        open={{ depth: view.depth, lanes: decision.options.map((option) => Number(option.split(":")[0])) }}
+      />
       <div className="decision-panel">
         <h2>어디로 향할까요?</h2>
         <p className="hint">{view.text}</p>
@@ -245,7 +253,8 @@ export function MapScreen({ seed, decision, onChoosePath }: {
           );
         })}
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -253,11 +262,13 @@ export function MapScreen({ seed, decision, onChoosePath }: {
  * 지역 여섯 층 × 세 갈래를 한눈에 깐다 — 슬레이 더 스파이어 방식이다. 그래야 「3층에서 왼쪽으로
  * 가면 정예를 밟지만 5층 쉼터에 닿는다」가 성립한다. 지나온 지역은 결과 화면에서 둘 다 보인다
  */
-function MapPanel({ grid, region, open, taken = [] }: {
+function MapPanel({ grid, region, open, here, taken = [] }: {
   grid: MapGrid;
   region: string;
   /** 지금 고를 수 있는 갈래 — 경로 화면에서만 온다 */
   open?: { depth: number; lanes: number[] };
+  /** 병사가 **지금 서 있는** 칸 하나. 마커가 여기에만 선다 — 걸어온 길 전부는 `taken`이 든다 */
+  here?: { depth: number; lane: number };
   /** `depth` → 지나온 갈래. 결과 화면이 걸어온 길을 여기로 표시한다 */
   taken?: (number | undefined)[];
 }) {
@@ -277,8 +288,9 @@ function MapPanel({ grid, region, open, taken = [] }: {
                 const type = row[lane];
                 const walked = taken[depth] === lane;
                 const openHere = open?.depth === depth && open.lanes.includes(lane);
+                const standing = here?.depth === depth && here.lane === lane;
                 return (
-                  <i className={`map-node${type ? ` ${type}` : " empty"}${walked ? " current" : ""}${openHere ? " open" : ""}`} key={lane}>
+                  <i className={`map-node${type ? ` ${type}` : " empty"}${walked ? " current" : ""}${standing ? " here" : ""}${openHere ? " open" : ""}`} key={lane}>
                     {type ? nodeMark[type] : ""}
                   </i>
                 );
@@ -313,7 +325,9 @@ function ResultScreen({ seed, actions, result, onReset }: {
   const reached = Math.min(12, result.hpCurve.length - 1);
   const recentCards = [...new Set(result.cardsPlayed)].slice(0, 3);
   return (
-    <div className="shell result-layout">
+    <>
+      <Backdrop src={hero(result.won ? "win" : "loss")} tone="hero" />
+      <div className="shell result-layout">
       <header>
         <div><p className="eyebrow">시드 {seed} · {reached}/12층</p><h1>{result.won ? "승리" : "패배"}</h1></div>
         <span className={`outcome ${result.won ? "win" : "loss"}`}>{result.won ? "균형 유지" : "저울 붕괴"}</span>
@@ -344,7 +358,8 @@ function ResultScreen({ seed, actions, result, onReset }: {
         <button className="primary" type="button" onClick={() => downloadReplay(seed, actions)}>런 JSON 반출</button>
         <button type="button" onClick={onReset}>다시 시작</button>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 
