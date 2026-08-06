@@ -1,6 +1,6 @@
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { useEffect, useRef } from "react";
-import type { EnemyAction } from "../core/combat.ts";
+import { MAX_SLOTS, type EnemyAction } from "../core/combat.ts";
 import { favorBoundaries, favorInitial, favorStage, intervenesOnTurn, interventionEveryTurns, type FavorStage } from "../core/favor.ts";
 import { floorsPerRegion } from "../core/map.ts";
 import type { PassiveName, Trigger } from "../core/state.ts";
@@ -11,6 +11,7 @@ import { Backdrop, backdropArt } from "./backdrop.tsx";
 import { cardCaption, cardTagOf, effectText, GameCard } from "./card.tsx";
 import { playSprite } from "./fx.ts";
 import { godName, godStageText, RunHeader } from "./header.tsx";
+import { Icon, type IconName } from "./icon.tsx";
 import { tokenName, tokenSummary, TokenRow } from "./tokens.tsx";
 
 const spriteArt = import.meta.glob<string>("../art/sprites/*.webp", { eager: true, query: "?url", import: "default" });
@@ -69,6 +70,22 @@ function intentLabel(action?: EnemyAction): string {
   return parts.length ? parts.join(" + ") : "대기";
 }
 
+/**
+ * 의도 아이콘은 **맨 앞 하나**다. 복합 행동은 `intentLabel`이 이미 「공격 9 + 침수 1」로 다 적으므로
+ * 조각마다 아이콘을 붙이면 16px 넷이 한 줄에서 문장을 밀어낸다 — 순서는 `intentLabel`의 조각 순서와 같다.
+ * 의도를 감추는 적은 `omen`을 쓴다: 지도의 「무엇인지는 들어가야 압니다」와 같은 뜻이다
+ */
+const intentIcon = (action?: EnemyAction): IconName =>
+  action?.damage ? "damage" : action?.block ? "block" : action?.heal ? "heal" : action?.token ? "token" : "idle";
+
+/** 칸 넷. **0이 앞**(병사와 가까운 쪽)이고 3이 뒤다 */
+const slots = Array.from({ length: MAX_SLOTS }, (_, slot) => slot);
+/**
+ * 칸 이름. 그림에서는 위아래 순서가 앞뒤를 말하지만 **스크린 리더에는 순서가 없다** — 그래서
+ * 배지가 아니라 `aria-label`이 칸 번호를 들고, 양 끝만 앞·뒤를 덧붙인다
+ */
+const slotLabel = (slot: number) => `칸 ${slot}${slot === 0 ? " 앞" : slot === MAX_SLOTS - 1 ? " 뒤" : ""}`;
+
 export function CombatScreen({ seed, decision, onAnswer }: {
   seed: number;
   decision: CombatDecision;
@@ -115,21 +132,26 @@ export function CombatScreen({ seed, decision, onAnswer }: {
 
       <div className="enemy-panel" ref={enemySide}>
         <h2>적</h2>
-        {view.enemies.map((enemy) => {
+        {/* 칸 넷을 언제나 그린다 — **빈 칸도 자리를 지킨다.** 남은 적이 앞뒤 어디였는지가 사거리의 근거다 */}
+        {slots.map((slot) => {
+          const enemy = view.enemies.find((candidate) => candidate.slot === slot);
+          // 빈 칸은 스크린 리더에서 감춘다 — 산 적의 라벨이 칸 번호를 들고 있어 앞뒤는 그것으로 읽힌다
+          if (!enemy) return <p key={slot} className="enemy empty" aria-hidden="true">{slotLabel(slot)}</p>;
           const sprite = spriteArt[`../art/sprites/${enemy.id}.webp`];
           const info = enemyInfo.get(enemy.id);
           const name = info?.name ?? enemy.id;
-          const intent = info?.intent_visible === false ? "의도 감춤" : intentLabel(enemy.intent);
+          const hidden = info?.intent_visible === false;
+          const intent = hidden ? "의도 감춤" : intentLabel(enemy.intent);
           const passives = Object.entries(enemy.passives) as [PassiveName, number][];
           return (
             <button
-              key={enemy.id}
+              key={slot}
               className="enemy"
               type="button"
               disabled={!targeting || !options.includes(enemy.id)}
               onClick={() => onAnswer(enemy.id)}
               // 배지마다 읽히면 적 하나가 문장 여섯이 된다 — 버튼 하나에 요약 한 문장이다
-              aria-label={`${name} 체력 ${enemy.hp} ${intent} ${passives.map(([id, stacks]) => `${passiveLabels[id]} ${stacks}`).join(" ")} ${tokenSummary(enemy.tokens)}`}
+              aria-label={`${slotLabel(slot)} ${name} 체력 ${enemy.hp} ${intent} ${passives.map(([id, stacks]) => `${passiveLabels[id]} ${stacks}`).join(" ")} ${tokenSummary(enemy.tokens)}`}
             >
               {/* 스프라이트는 이름 **위** 한 줄이다 — 옆에 세우면 405px 칸에서 의도 한 줄(nowrap)이 넘친다 */}
               {sprite && <span className="sprite"><img src={sprite} alt="" /></span>}
@@ -138,9 +160,9 @@ export function CombatScreen({ seed, decision, onAnswer }: {
               <span className="name">
                 <b>{name}</b>
                 {/* 패시브는 이름 옆이다 — guard·shell을 모르면 대상 선택이 도박이다 */}
-                {passives.map(([id, stacks]) => <em key={id} className="passive">{passiveLabels[id]} {stacks}</em>)}
+                {passives.map(([id, stacks]) => <em key={id} className="passive"><Icon name={id} />{passiveLabels[id]} {stacks}</em>)}
               </span>
-              <span className="intent">{intent}</span>
+              <span className="intent"><Icon name={hidden ? "omen" : intentIcon(enemy.intent)} />{intent}</span>
               <span className="hp">
                 <i style={{ width: `${Math.round((100 * enemy.hp) / enemy.maxHp)}%` }} />
                 <small>{enemy.hp} / {enemy.maxHp}</small>

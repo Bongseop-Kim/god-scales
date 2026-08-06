@@ -10,6 +10,7 @@ import { GameCard } from "./card.tsx";
 import { DemandScreen, GraceScreen, RestScreen } from "./choices.tsx";
 import { CombatScreen } from "./combat.tsx";
 import { godIds, godName, regionName, RunHeader } from "./header.tsx";
+import { Icon, IconSheet } from "./icon.tsx";
 import { RewardScreen } from "./reward.tsx";
 import { downloadReplay } from "./export.ts";
 import { playSound, sound } from "./sfx.ts";
@@ -22,10 +23,6 @@ type Steps = Generator<Decision, RunResult, string>;
 /** 화면 전환 애니메이션의 key. 여기 없는 phase는 이름 그대로 자기 화면이다 */
 const screens: Partial<Record<Decision["phase"], string>> = { path: "map", rest_card: "rest", card: "combat", target: "combat" };
 
-/**
- * 칸 표시. `omen`만 종류를 감춘다(`?`) — 다키스트 던전 2의 물음표 자리다. 색·간격은 P-26이 가져간다
- */
-const nodeMark: Record<MapNodeType, string> = { combat: "전", elite: "정", rest: "휴", omen: "?", boss: "보" };
 const laneName = ["왼쪽", "가운데", "오른쪽"];
 const nodeLabel: Record<MapNodeType, string> = { combat: "전투", elite: "정예", rest: "쉼터", omen: "예고", boss: "보스" };
 const nodeDetail: Record<MapNodeType, string> = {
@@ -107,6 +104,9 @@ export function App() {
 
   return (
     <LazyMotion features={domAnimation}>
+      {/* 아이콘 시트는 **화면 전환 밖**에 선다 — `AnimatePresence` 안에 넣으면 전환마다 `<use>`가 가리킬
+          대상이 사라졌다 다시 생긴다 */}
+      <IconSheet />
       <AnimatePresence mode="wait" initial={false}>
         {/**
          * E2E(`npm run e2e`)가 읽는 두 값이다. `data-phase`는 지금 무엇을 묻는지, `data-step`은 답한
@@ -245,7 +245,7 @@ export function MapScreen({ seed, decision, onChoosePath }: {
           const [lane, type] = option.split(":") as [string, MapNodeType];
           return (
             <button className={`choice ${type}`} type="button" key={option} onClick={() => onChoosePath(option)}>
-              <span>{nodeMark[type]}</span>
+              <span><Icon name={type} /></span>
               {/* 같은 종류가 두 갈래에 있으면 이름만으로는 못 가른다 — 갈래를 라벨에 적는다 */}
               <b>{laneName[Number(lane)]} · {nodeLabel[type]}</b>
               <small>{nodeDetail[type]}</small>
@@ -289,9 +289,11 @@ function MapPanel({ grid, region, open, here, taken = [] }: {
                 const walked = taken[depth] === lane;
                 const openHere = open?.depth === depth && open.lanes.includes(lane);
                 const standing = here?.depth === depth && here.lane === lane;
+                // 격자는 16px 아이콘 하나다 — 한 글자 한글이 있던 자리이므로 `title`이 이름을 든다.
+                // `omen`도 「예고」까지는 말한다: 감추는 것은 종류가 아니라 그 안의 내용이다
                 return (
-                  <i className={`map-node${type ? ` ${type}` : " empty"}${walked ? " current" : ""}${standing ? " here" : ""}${openHere ? " open" : ""}`} key={lane}>
-                    {type ? nodeMark[type] : ""}
+                  <i className={`map-node${type ? ` ${type}` : " empty"}${walked ? " current" : ""}${standing ? " here" : ""}${openHere ? " open" : ""}`} key={lane} title={type ? nodeLabel[type] : undefined}>
+                    {type ? <Icon name={type} /> : ""}
                   </i>
                 );
               })}

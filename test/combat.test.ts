@@ -136,7 +136,8 @@ describe("enemy passives", () => {
     const second = { ...idle, id: "second", hp: 30, passives: { guard: 1 } };
     const state = gameState([first, second], [strike.id]);
     playCard(state, new Map([[strike.id, strike]]), strike.id, "first");
-    expect(state.combat.enemies.map(({ hp }) => hp)).toEqual([30, 24]);
+    // 판은 언제나 네 칸이다 — 편성이 둘이면 뒤 두 칸이 처음부터 비어 있다
+    expect(state.combat.enemies.map(({ hp }) => hp)).toEqual([30, 24, 0, 0]);
   });
 
   it("pours ramp, rally, and spite into frenzy", () => {

@@ -21,7 +21,10 @@ const stageTargets = { self: "나에게", enemy: "적 하나에게", all_enemies
 export function godStageText(god: string, stage: FavorStage): { start: string; turn: string } {
   const hooks = gods.find(({ id }) => id === god)?.stage_effects[stage];
   const line = (effects: StageEffect[] = []) =>
-    effects.map(({ target, ...effect }) => `${stageTargets[target]} ${effectText({ target: "enemy", effects: [effect] })}`).join(" · ");
+    effects.map(({ target, ...effect }) => (effect.op === "join"
+      // 합류에는 대상이 없다 — `target: "self"`는 「한 번만 터진다」는 표시고, 그것을 문장으로 읽으면 거짓말이다
+      ? `${godName(effect.god ?? god)}가 적으로 합류`
+      : `${stageTargets[target]} ${effectText({ target: "enemy", effects: [effect] })}`)).join(" · ");
   return { start: line(hooks?.on_encounter_start), turn: line(hooks?.on_turn_start) };
 }
 export const regionName = (region: string) => (region === "underworld" ? "지하" : "지상");

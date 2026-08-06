@@ -10,6 +10,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { regions } from "../core/map.ts";
 import { godDecks } from "../sim/engine.ts";
 import { artRegion, backdropName, cardArtCandidates, tagParticle, type CardArtSource } from "../ui/art-keys.ts";
+import { iconIds } from "./icons.ts";
 
 type CardData = CardArtSource & { name: string; effects: { op: string; value?: number; token?: string; stacks?: number }[] };
 const readData = <T>(name: string): T => JSON.parse(readFileSync(new URL(`../data/${name}.json`, import.meta.url), "utf8")) as T;
@@ -23,6 +24,11 @@ const [sprites, cardArt, godArt, bg, props, fx, hero, frame, marker, particle, c
   [["sprites"], ["cards"], ["gods"], ["bg"], ["props"], ["fx"], ["hero"], ["ui"], ["ui", ".png"], ["particle"], ["cursor-pixel", ".png"]]
     .map(([directory, extension]) => names(directory, extension));
 const missingFrom = (have: Set<string>, need: string[]) => need.filter((name) => !have.has(name));
+/**
+ * 아이콘은 파일 28개가 아니라 **symbol 28개가 든 파일 하나**다. 그래서 대조도 파일명이 아니라 시트
+ * 안의 id로 한다 — `<use href="#icon-shock">`가 없는 id를 가리키면 배지가 조용히 빈 원이 된다
+ */
+const symbols = new Set([...readFileSync("art/icons.svg", "utf8").matchAll(/id="icon-([\w-]+)"/g)].map(([, id]) => id));
 /** 카드만 대조가 1:1이 아니다 — 129개 id가 30장으로 떨어지는 폴백을 인정해야 한다(R-32) */
 const unresolved = cards.filter((card) => !cardArtCandidates(card).some((key) => cardArt.has(key)));
 
@@ -42,9 +48,10 @@ const checks = [
       ...missingFrom(hero, ["hero-title", "hero-win", "hero-loss"]),
       ...missingFrom(frame, ["card-frame"]),
       ...missingFrom(marker, ["marker"]),
-      // 커서·파티클은 제작 83개가 아니다(Kenney CC0). 번들에 넣은 여덟 장만 이름을 잠근다
+      // 커서·파티클·아이콘은 제작 83개가 아니다(Kenney CC0 · game-icons.net CC BY). 쓰는 것만 이름을 잠근다
       ...missingFrom(particle, Object.values(tagParticle)),
       ...missingFrom(cursor, ["tile_0026", "tile_0134", "tile_0044", "tile_0015"]),
+      ...missingFrom(symbols, iconIds),
     ],
   },
 ];

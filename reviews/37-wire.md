@@ -1,6 +1,6 @@
 # R-37 · 에셋 배선
 
-[색인](00-index.md) · 계획 `plans/37-wire.md`(삭제됨) · [◀ R-34](34-tempo.md) · [R-32](32-art.md) · [P-33 ▶](../plans/33-icons.md)
+[색인](00-index.md) · 계획 `plans/37-wire.md`(삭제됨) · [◀ R-34](34-tempo.md) · [R-32](32-art.md) · [R-33 ▶](33-icons.md)
 
 ## 결론
 

@@ -2,12 +2,18 @@ import { bossLane } from "./map.ts";
 import { createRng } from "./rng.ts";
 import { addToken, dealDamage, executeCard, firePowers, takeEnemyTurn, tickBleed, type Card } from "./rules.ts";
 import type { ActorState, CombatState, EnemyState, GameState, Passives, TokenName } from "./state.ts";
+import { canReachTarget, livingInReach } from "./targeting.ts";
 
 export const MAX_HP = 100;
 export const ENERGY_PER_TURN = 3;
 export const DRAW_PER_TURN = 5;
 export const HAND_LIMIT = 10;
 export const TURN_LIMIT = 50;
+/**
+ * 칸 수. **0이 앞**(플레이어와 가까운 쪽)이고 3이 뒤다 — `laneCount`가 3을 박아 둔 것과 같은 자리다.
+ * 판은 언제나 이 길이고, 조우가 적게 데려오면 그 칸이 처음부터 비어 있다
+ */
+export const MAX_SLOTS = 4;
 
 /** 적 행동 하나. `target`이 없으면 플레이어를 친다 — StS의 「아군 지원」이 `ally` 자리다 */
 export type EnemyAction = {
@@ -16,6 +22,8 @@ export type EnemyAction = {
   target?: "player" | "self" | "ally";
 };
 export type EnemyDefinition = { id: string; hp: number; pattern: EnemyAction[]; bulwark?: number; passives?: Passives };
+/** 편성 한 줄. 순서가 곧 칸이고 `null`이 빈 칸이다 — `[a, null, null, b]`가 칸 0·3에 선다 */
+export type Lineup = (EnemyDefinition | null)[];
 
 export function shuffle<T>(items: T[], random: () => number): T[] {
   const result = [...items];
@@ -26,7 +34,24 @@ export function shuffle<T>(items: T[], random: () => number): T[] {
   return result;
 }
 
-export function createCombat(seed: number, deck: string[], definitions: EnemyDefinition[]): CombatState {
+// 패시브는 전투마다 복사한다 — `ward`·`guard`는 소모되므로 정의를 그대로 들면 다음 전투가 빈손이다
+const enemyState = ({ id, hp, bulwark, passives }: EnemyDefinition): EnemyState => ({
+  id,
+  hp,
+  maxHp: hp,
+  block: 0,
+  tokens: bulwark ? { bulwark } : {},
+  patternIndex: 0,
+  ...(passives ? { passives: { ...passives } } : {}),
+});
+/**
+ * 빈 칸. **시체와 같은 꼴**이라 `hp > 0` 필터가 전부 그대로 돈다 — `defeated`를 미리 찍어야
+ * `updateOutcome`이 이것을 방금 죽은 적으로 세지 않는다(`rally`가 헛돈다)
+ */
+const emptySlot = (slot: number): EnemyState => ({ id: `empty_${slot}`, hp: 0, maxHp: 0, block: 0, tokens: {}, patternIndex: 0, defeated: true });
+
+export function createCombat(seed: number, deck: string[], lineup: Lineup): CombatState {
+  if (lineup.length > MAX_SLOTS) throw new Error(`Encounter needs ${lineup.length} slots, the board has ${MAX_SLOTS}`);
   return {
     turn: 0,
     energy: 0,
@@ -37,17 +62,38 @@ export function createCombat(seed: number, deck: string[], definitions: EnemyDef
     hand: [],
     discardPile: [],
     powers: [],
-    // 패시브는 전투마다 복사한다 — `ward`·`guard`는 소모되므로 정의를 그대로 들면 다음 전투가 빈손이다
-    enemies: definitions.map(({ id, hp, bulwark, passives }) => ({
-      id,
-      hp,
-      maxHp: hp,
-      block: 0,
-      tokens: bulwark ? { bulwark } : {},
-      patternIndex: 0,
-      ...(passives ? { passives: { ...passives } } : {}),
-    })),
+    pending: [],
+    enemies: Array.from({ length: MAX_SLOTS }, (_, slot) => {
+      const definition = lineup[slot];
+      return definition ? enemyState(definition) : emptySlot(slot);
+    }),
   };
+}
+
+/** 이미 판에 서 있거나(시체도 서 있는 것이다) 큐에 있는 적은 다시 넣지 않는다 */
+export function queueEnemy(combat: CombatState, id: string): void {
+  if (combat.pending.includes(id) || combat.enemies.some((enemy) => enemy.id === id)) return;
+  combat.pending.push(id);
+}
+
+/**
+ * 큐에 선 적을 빈 칸에 세운다. 빈 칸이 없으면 아무 일도 없다 — 큐는 그대로 기다린다.
+ * 빈 칸이 여럿이면 가장 앞(인덱스 최소)이고, 시체는 그 자리에서 밀려난다(`defeated`가 이미 찍혀 있어
+ * `rally`가 두 번 세지 않는다).
+ *
+ * **카드 실행 중에는 부르지 않는다.** `executeCard`가 연쇄 대상을 카드 시작에 잡아 두므로 실행 중
+ * 배열이 바뀌면 방금 들어온 적이 진행 중인 연쇄에 맞는다
+ */
+export function admitPending(combat: CombatState, definitions: ReadonlyMap<string, EnemyDefinition>): void {
+  while (combat.pending.length > 0) {
+    const slot = combat.enemies.findIndex(({ hp }) => hp <= 0);
+    if (slot < 0) return;
+    const id = combat.pending[0];
+    const definition = definitions.get(id);
+    if (!definition) throw new Error(`Missing pending enemy definition: ${id}`);
+    combat.pending.shift();
+    combat.enemies[slot] = enemyState(definition);
+  }
 }
 
 export function drawCards(combat: CombatState, count: number, random: () => number): void {
@@ -152,6 +198,8 @@ export function endTurn(state: GameState, definitions: ReadonlyMap<string, Enemy
     delete actor.tokens.shock;
     actor.lostThisTurn = 0;
   }
+  // 청소가 다 끝난 뒤에 입장시킨다 — `updateOutcome` **앞**이어야 기다리던 신이 조우를 이어받는다
+  admitPending(combat, definitions);
   updateOutcome(combat);
 }
 
@@ -190,14 +238,19 @@ export function runCombat(
   };
   const snapshots: string[] = [];
 
+  const nextPlayable = () => state.combat.hand.find((id) => {
+    const card = cards.get(id);
+    return card !== undefined && card.cost <= state.combat.energy && canReachTarget(state.combat, card);
+  });
+
   while (state.combat.outcome === "ongoing") {
     startTurn(state, random);
     if (state.combat.outcome !== "ongoing") break;
-    let playable = state.combat.hand.find((id) => (cards.get(id)?.cost ?? Infinity) <= state.combat.energy);
+    let playable = nextPlayable();
     while (playable && state.combat.outcome === "ongoing") {
-      const target = state.combat.enemies.find(({ hp }) => hp > 0)?.id;
+      const target = livingInReach(state.combat, cards.get(playable)!.reach)[0]?.id;
       playCard(state, cards, playable, target);
-      playable = state.combat.hand.find((id) => (cards.get(id)?.cost ?? Infinity) <= state.combat.energy);
+      playable = nextPlayable();
     }
     if (state.combat.outcome === "ongoing") endTurn(state, definitions);
     snapshots.push(JSON.stringify(state.combat));

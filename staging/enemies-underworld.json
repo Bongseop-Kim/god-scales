@@ -24,19 +24,7 @@
         "value": 12
       }
     ],
-    "pattern_mode": "cycle",
-    "groups": [
-      {
-        "id": "group_under_pressure_solo",
-        "with": []
-      },
-      {
-        "id": "group_under_pair",
-        "with": [
-          "enemy_under_attrition"
-        ]
-      }
-    ]
+    "pattern_mode": "cycle"
   },
   {
     "id": "enemy_under_attrition",
@@ -62,8 +50,9 @@
     "pattern_mode": "cycle",
     "groups": [
       {
-        "id": "group_under_attrition_pair",
+        "id": "group_under_attrition_pressure",
         "with": [
+          null,
           "enemy_under_pressure"
         ]
       }
@@ -128,6 +117,14 @@
         "with": [
           "enemy_under_brute"
         ]
+      },
+      {
+        "id": "group_under_swarm_zealot",
+        "with": [
+          null,
+          null,
+          "enemy_under_zealot"
+        ]
       }
     ]
   },
@@ -157,8 +154,9 @@
     "pattern_mode": "cycle",
     "groups": [
       {
-        "id": "group_under_forcing",
+        "id": "group_under_guardian_zealot",
         "with": [
+          null,
           "enemy_under_zealot"
         ]
       }
@@ -181,15 +179,7 @@
         "value": 8
       }
     ],
-    "pattern_mode": "cycle",
-    "groups": [
-      {
-        "id": "group_under_zealot_forcing",
-        "with": [
-          "enemy_under_guardian"
-        ]
-      }
-    ]
+    "pattern_mode": "cycle"
   },
   {
     "id": "enemy_under_boss",
@@ -236,22 +226,7 @@
         "value": 16
       }
     ],
-    "pattern_mode": "cycle",
-    "groups": [
-      {
-        "id": "group_surface_pair",
-        "with": [
-          "enemy_surface_attrition"
-        ]
-      },
-      {
-        "id": "group_surface_trio",
-        "with": [
-          "enemy_surface_applier",
-          "enemy_surface_support"
-        ]
-      }
-    ]
+    "pattern_mode": "cycle"
   },
   {
     "id": "enemy_surface_attrition",
@@ -277,9 +252,26 @@
     "pattern_mode": "cycle",
     "groups": [
       {
-        "id": "group_surface_attrition_pair",
+        "id": "group_surface_attrition_pressure",
         "with": [
+          null,
           "enemy_surface_pressure"
+        ]
+      },
+      {
+        "id": "group_surface_trio",
+        "with": [
+          null,
+          "enemy_surface_applier",
+          "enemy_surface_pressure"
+        ]
+      },
+      {
+        "id": "group_surface_hunt",
+        "with": [
+          "enemy_surface_guardian",
+          "enemy_surface_support",
+          "enemy_surface_zealot"
         ]
       }
     ]
@@ -308,23 +300,7 @@
         "value": 6
       }
     ],
-    "pattern_mode": "cycle",
-    "groups": [
-      {
-        "id": "group_surface_applier_trio",
-        "with": [
-          "enemy_surface_pressure",
-          "enemy_surface_support"
-        ]
-      },
-      {
-        "id": "group_surface_applier_forcing",
-        "with": [
-          "enemy_surface_zealot",
-          "enemy_surface_guardian"
-        ]
-      }
-    ]
+    "pattern_mode": "cycle"
   },
   {
     "id": "enemy_surface_support",
@@ -350,16 +326,7 @@
         "target": "ally"
       }
     ],
-    "pattern_mode": "cycle",
-    "groups": [
-      {
-        "id": "group_surface_support_trio",
-        "with": [
-          "enemy_surface_pressure",
-          "enemy_surface_applier"
-        ]
-      }
-    ]
+    "pattern_mode": "cycle"
   },
   {
     "id": "enemy_surface_guardian",
@@ -387,10 +354,19 @@
     "pattern_mode": "cycle",
     "groups": [
       {
-        "id": "group_surface_guardian_forcing",
+        "id": "group_surface_support_trio",
         "with": [
-          "enemy_surface_zealot",
-          "enemy_surface_applier"
+          null,
+          "enemy_surface_support",
+          "enemy_surface_pressure"
+        ]
+      },
+      {
+        "id": "group_surface_line",
+        "with": [
+          "enemy_surface_attrition",
+          "enemy_surface_support",
+          "enemy_surface_pressure"
         ]
       }
     ]
@@ -409,16 +385,7 @@
         "value": 10
       }
     ],
-    "pattern_mode": "cycle",
-    "groups": [
-      {
-        "id": "group_surface_zealot_forcing",
-        "with": [
-          "enemy_surface_guardian",
-          "enemy_surface_applier"
-        ]
-      }
-    ]
+    "pattern_mode": "cycle"
   },
   {
     "id": "enemy_surface_boss",
@@ -448,7 +415,7 @@
     "name": "범위 이탈자",
     "region": "underworld",
     "tier": "normal",
-    "role": "pressure",
+    "role": "brute",
     "hp": 100,
     "intent_visible": true,
     "pattern": [

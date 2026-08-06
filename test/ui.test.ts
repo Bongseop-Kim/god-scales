@@ -1,6 +1,7 @@
 import { createElement, type ReactElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import iconSheet from "../art/icons.svg?raw";
 import cardDataJson from "../data/cards.json" with { type: "json" };
 import { endTurnAction, runSteps, type Decision } from "../sim/engine.ts";
 import { run } from "../sim/engine.ts";
@@ -12,6 +13,14 @@ import { DemandScreen, GraceScreen, RestScreen } from "../ui/choices.tsx";
 import { CombatScreen } from "../ui/combat.tsx";
 import { replayPayload } from "../ui/export.ts";
 import { RewardScreen } from "../ui/reward.tsx";
+
+/**
+ * 시트에 없는 id를 `<use>`가 가리키면 **아무 일도 안 일어난다** — 경고도, 빈 그림도 없이 자리만 빈다.
+ * 그래서 화면이 실제로 부른 이름을 시트와 맞춘다. `tools/art.ts`는 반대쪽(시트에 28개가 다 들었나)을 센다
+ */
+const sheetIds = new Set([...iconSheet.matchAll(/id="icon-([\w-]+)"/g)].map(([, id]) => id));
+const unresolvedIcons = (markup: string) =>
+  [...markup.matchAll(/href="#icon-([\w-]+)"/g)].map(([, id]) => id).filter((id) => !sheetIds.has(id));
 
 /** 갈래는 `"lane:type"`이다. 그 종류가 열려 있으면 고르고 없으면 봇 답을 쓴다 */
 const pickPath = (decision: Decision, type: string) => decision.options.find((option) => option.endsWith(`:${type}`)) ?? decision.bot;
@@ -58,6 +67,7 @@ describe("browser replay export", () => {
         const markup = renderToStaticMarkup(screens[phase](step.value as never));
         expect(markup, phase).toContain("아레스 + 아르테미스");
         expect(markup, phase).toContain(`체력 ${step.value.observation.hp}/${step.value.observation.maxHp}`);
+        expect(unresolvedIcons(markup), phase).toEqual([]);
         seen.add(phase);
       }
       step = steps.next(phase === "path" ? pickPath(step.value, "rest") : phase === "rest" ? "remove" : bot);
@@ -86,8 +96,9 @@ describe("browser replay export", () => {
           { trigger: "turn_start", card: { id: "p", name: "광란의 문", cost: 1, target: "self", effects: [{ op: "apply_token", token: "frenzy", stacks: 1 }] } },
           { trigger: "turn_start", card: { id: "p", name: "광란의 문", cost: 1, target: "self", effects: [{ op: "apply_token", token: "frenzy", stacks: 1 }] } },
         ],
+        // 칸 1에 세운다 — 나머지 셋이 빈 칸으로 서는지도 같이 본다
         enemies: [{
-          id: "enemy_under_guardian", hp: 20, maxHp: 30, block: 4,
+          id: "enemy_under_guardian", slot: 1, hp: 20, maxHp: 30, block: 4,
           tokens: { shock: 2 }, passives: { guard: 2 },
           intent: { damage: 9, token: "soaked", stacks: 1 },
         }],
@@ -104,16 +115,22 @@ describe("browser replay export", () => {
     expect(markup).toContain("token-badge harmful turn");
     // 툴팁은 한글 이름 + 효과 한 줄이다 — 영문 id가 화면에 남아 있으면 안 된다
     expect(markup).toContain("가시 — 맞을 때마다 스택만큼 반격 · 전투 내내");
-    expect(markup).not.toContain("soaked");
+    // 영문 id가 **글자로** 남아 있으면 안 된다 — `href="#icon-soaked"`는 그림을 가리키는 이름이고 안 읽힌다
+    expect(markup).not.toMatch(/>[^<]*soaked/);
     // 복합 의도가 「대기」로 뭉개지지 않고 토큰도 한글이다
     expect(markup).toContain("공격 9 + 침수 1");
     // 파워는 스택을 센다 — 두 장 낸 것이 화면에 서야 한다
     expect(markup).toContain("광란의 문");
     expect(markup).toContain("×2");
+    // 네 칸이 다 선다 — 적은 칸 1에 서고 나머지 셋은 빈 칸으로 자리를 지킨다
+    expect(markup).toContain("칸 0 앞");
+    expect(markup).toContain("칸 3 뒤");
+    expect(markup).toContain("aria-label=\"칸 1 스파르토이 방패병");
     // 우호도 둘 상시 + 진노 경고 + 그 단계의 개입, 경계는 favorBoundaries에서
     expect(markup).toContain("favor wrath");
     expect(markup).toContain("favor devotion");
-    expect(markup).toContain("진노 · 조우 시작에 나에게 감전 2");
+    // 진노는 이제 신을 적으로 부른다 — `join`이 「나에게 join 0」으로 읽히면 화면이 거짓말을 한다
+    expect(markup).toContain("진노 · 조우 시작에 나에게 감전 2 · 제우스가 적으로 합류");
     expect(markup).toContain("헌신 70 / 평온 30 / 분노 10");
     expect(markup).toContain("은총 3");
   });

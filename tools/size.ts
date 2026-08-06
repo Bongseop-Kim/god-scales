@@ -12,6 +12,8 @@ import { extname, join } from "node:path";
 const bundled: { directory: string; extension: string; only?: string[] }[] = [
   ...["sprites", "cards", "bg", "props", "gods", "fx", "hero", "ui", "particle"].map((kind) => ({ directory: `art/${kind}`, extension: ".webp" })),
   { directory: "art/ui", extension: ".png" },
+  // 아이콘 시트는 `?raw`로 JS 번들 안에 실린다 — 별도 파일로 안 나가도 바이트는 나간다
+  { directory: "art", extension: ".svg" },
   // 커서는 **쓰는 넷만** 들어간다 — 팩에 220장이 있다. 파티클도 81장 중 넷이지만 그 넷만 webp다
   { directory: "art/cursor-pixel", extension: ".png", only: ["tile_0026.png", "tile_0134.png", "tile_0044.png", "tile_0015.png"] },
   { directory: "audio", extension: "" },

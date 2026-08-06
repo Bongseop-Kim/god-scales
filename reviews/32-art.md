@@ -1,6 +1,6 @@
 # R-32 · 에셋 제작
 
-[색인](00-index.md) · 계획 `plans/32-art.md`(삭제됨) · [◀ R-30](30-intervention.md) · [P-33 ▶](../plans/33-icons.md)
+[색인](00-index.md) · 계획 `plans/32-art.md`(삭제됨) · [◀ R-30](30-intervention.md) · [R-33 ▶](33-icons.md)
 
 ## 결론
 

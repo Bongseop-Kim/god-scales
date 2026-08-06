@@ -75,8 +75,18 @@ button:not(:disabled):hover { border-color: #c6a969; }
 /* 지속 셋: 이번 턴은 점선, 1회 소모는 기본, 전투 내내는 고리 하나 더 */
 .token-badge.turn { border-style: dotted; }
 .token-badge.combat { outline: 1px solid color-mix(in srgb, currentColor 60%, transparent); outline-offset: 2px; }
-.token-badge i { color: var(--token-color); font-style: normal; opacity: .4; }
-.token-badge b { position: absolute; color: #fff; font-size: .75rem; text-shadow: 0 1px 3px #11131a; }
+/**
+ * 아이콘 28개는 `art/icons.svg` 한 장에서 온다. **`display: none`으로 감추지 않는다** — 시트가 그
+ * 안에 있으면 `<use>`가 못 그리는 브라우저가 있다. 0×0 + `overflow: hidden`이 같은 값에 안전하다
+ */
+.icon-sheet { position: absolute; width: 0; height: 0; overflow: hidden; }
+/* 기본은 16px — 의도와 지도 격자가 그대로 쓴다. 벡터지만 이 크기에서는 픽셀 배경과 어긋나지 않는다 */
+.icon { width: 16px; height: 16px; fill: currentColor; }
+/**
+ * 38px 배지 안 20px. **신 색을 그대로 쓰고 흐리지 않는다** — R-26이 글리프를 `.4`로 뒤에 뒀던 건 그것이
+ * 흰 글자 뒤의 장식이었기 때문이다. 이제 아이콘이 종류를 말하는 유일한 자리라 흐리면 아무것도 안 남는다
+ */
+.token-badge .icon { width: 20px; height: 20px; color: var(--token-color); }
 .token-badge small { position: absolute; right: -3px; bottom: -3px; display: grid; width: 16px; height: 16px; place-items: center; border-radius: 50%; color: #151821; background: currentColor; font-size: .62rem; font-weight: 750; }
 /* 배우 위 한 줄. 텍스트 줄에 섞이지 않는 것이 이 줄의 존재 이유다 */
 .actor-tokens { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
@@ -122,7 +132,9 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .map-node.open { box-shadow: 0 0 0 1px #c6a969 inset; }
 .decision-panel { display: grid; align-content: start; gap: 12px; }
 .choice { display: grid; grid-template-columns: 48px 1fr; gap: 2px 14px; padding: 18px; text-align: left; }
+/* 같은 아이콘이 격자에서 16px, 여기서 24px로 뜬다 — 둘 다 견디는 것만 골랐다(`tools/icons.ts`) */
 .choice > span { grid-row: 1 / 3; display: grid; width: 44px; height: 44px; place-items: center; border-radius: 50%; background: #2a3040; }
+.choice > span .icon { width: 24px; height: 24px; }
 .choice b { align-self: end; }
 .choice small { color: #949aad; }
 
@@ -131,6 +143,11 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .enemy-panel { display: grid; align-content: start; gap: 12px; }
 .enemy { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; padding: 14px; text-align: left; }
 .enemy:disabled { cursor: default; opacity: .82; }
+/**
+ * 빈 칸. 자리를 지키는 것이 이 줄의 존재 이유다 — 접으면 남은 적이 앞뒤 어디였는지 사라지고
+ * `▮▯▯▮` 사거리가 무엇을 가리키는지 화면에서 못 읽는다. 점선이 「여기 아무도 없다」를 말한다
+ */
+.enemy.empty { margin: 0; padding: 8px 14px; border: 1px dashed #2b3040; border-radius: 14px; color: #4e5566; font-size: .74rem; }
 .enemy .actor-tokens { grid-column: 1 / -1; }
 .enemy .actor-tokens:empty { display: none; }
 /* 스프라이트는 이름 위 한 줄이다 — 옆에 세우면 405px 칸에서 `nowrap`인 의도 한 줄이 넘친다 */
@@ -141,14 +158,16 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
  * 의도는 복합 행동이 다 서야 한다 — 「공격 10 + 아군 회복 4」가 한 글자씩 세로로 접히면 대상 선택이
  * 도박이 된다. 접히는 쪽은 이름이다: 이름은 길어도 읽히고 의도는 숫자가 붙어 있어야 읽힌다
  */
-.enemy .intent { justify-self: end; align-self: center; color: #efa198; font-size: .8rem; text-align: right; white-space: nowrap; }
+.enemy .intent { display: flex; align-items: center; gap: 4px; justify-self: end; align-self: center; color: #efa198; font-size: .8rem; text-align: right; white-space: nowrap; }
 .enemy .hp { position: relative; grid-column: 1 / -1; display: grid; height: 20px; padding: 0 8px; place-items: center start; overflow: hidden; border-radius: 5px; background: #2a3040; font-size: .74rem; }
 .enemy .hp i { position: absolute; inset: 0 auto 0 0; background: #6c3b3b; transition: width 200ms var(--ease-out); }
 .enemy .hp small { position: relative; }
 .enemy .badges { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .enemy .badges em { color: #9de0c7; font-size: .74rem; font-style: normal; }
 /* 패시브는 소모품이 아니다 — 방어·토큰 배지와 색을 나눈다. 소모되는 ward·guard는 숫자가 줄어든다 */
-.enemy .passive { padding: 0 5px; border: 1px solid #4a4260; border-radius: 4px; color: #bfa8e0; font-size: .74rem; font-style: normal; white-space: nowrap; }
+.enemy .passive { display: inline-flex; align-items: center; gap: 3px; padding: 0 5px; border: 1px solid #4a4260; border-radius: 4px; color: #bfa8e0; font-size: .74rem; font-style: normal; white-space: nowrap; }
+/* 패시브는 여덟이 한 줄에 설 수 있다 — 이름을 남기므로 아이콘은 14px로 물러난다 */
+.enemy .passive .icon { width: 14px; height: 14px; }
 .enemy:not(:disabled):hover { border-color: #efa198; }
 
 /* 의도 표시와 겹치지 않게 아래쪽에서 떠오른다 */
