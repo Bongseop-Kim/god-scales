@@ -1,0 +1,197 @@
+{
+  "characterId": "enemy_under_zealot",
+  "engine": "component-row",
+  "game_input": "sprite-sheet-alpha.png",
+  "degraded_static_fallback": false,
+  "curation_applied": false,
+  "frame_variant": "pixel",
+  "sprite_sheet_alpha": "sprite-sheet-alpha.png",
+  "sprite_sheet_alpha_report": "sprite-sheet-alpha.report.json",
+  "base_image": "base-source.png",
+  "cell": {
+    "shape": "rect",
+    "width": 896,
+    "height": 1024,
+    "safe_margin_x": 48,
+    "safe_margin_y": 96
+  },
+  "chroma_key": {
+    "name": "cyan",
+    "hex": "#00FFFF",
+    "rgb": [
+      0,
+      255,
+      255
+    ],
+    "selection": "auto",
+    "score": 243.34,
+    "min_subject_distance": 236.0,
+    "background": {
+      "mode": "flat",
+      "hex": "#F9F9F9",
+      "rgb": [
+        249,
+        249,
+        249
+      ],
+      "opaque_border_fraction": 1.0,
+      "border_coverage": 1.0,
+      "enclosed_background_pixels": 10,
+      "enclosed_material_pixels": 2,
+      "subject_pixels": 6760
+    },
+    "candidates": [
+      {
+        "name": "magenta",
+        "hex": "#FF00FF",
+        "score": 206.67,
+        "min_subject_distance": 196.07,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "green",
+        "hex": "#00FF00",
+        "score": 210.77,
+        "min_subject_distance": 208.97,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "cyan",
+        "hex": "#00FFFF",
+        "score": 243.34,
+        "min_subject_distance": 236.0,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "blue",
+        "hex": "#004DFF",
+        "score": 208.8,
+        "min_subject_distance": 201.65,
+        "clears_erase_radius": true
+      }
+    ],
+    "selection_reason": "highest 1st-percentile subject distance among the 4 candidate(s) clearing the 96 erase radius"
+  },
+  "animation": {
+    "cellWidth": 896,
+    "cellHeight": 1024,
+    "columns": 4,
+    "rows": {
+      "idle": {
+        "row": 0,
+        "frames": 4,
+        "fps": 4,
+        "durations_ms": [
+          250,
+          250,
+          250,
+          250
+        ],
+        "loop": true,
+        "frame_variant": "pixel"
+      },
+      "attack": {
+        "row": 1,
+        "frames": 2,
+        "fps": 8,
+        "durations_ms": [
+          125,
+          125
+        ],
+        "loop": false,
+        "frame_variant": "pixel"
+      },
+      "hit": {
+        "row": 2,
+        "frames": 1,
+        "fps": 6,
+        "durations_ms": [
+          167
+        ],
+        "loop": false,
+        "frame_variant": "pixel"
+      },
+      "death": {
+        "row": 3,
+        "frames": 2,
+        "fps": 4,
+        "durations_ms": [
+          250,
+          250
+        ],
+        "loop": false,
+        "frame_variant": "pixel"
+      }
+    }
+  },
+  "frame_layout": {
+    "sheetWidth": 3584,
+    "sheetHeight": 4096,
+    "cellWidth": 896,
+    "cellHeight": 1024,
+    "rows": {
+      "idle": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 896,
+          "h": 1024
+        },
+        {
+          "x": 896,
+          "y": 0,
+          "w": 896,
+          "h": 1024
+        },
+        {
+          "x": 1792,
+          "y": 0,
+          "w": 896,
+          "h": 1024
+        },
+        {
+          "x": 2688,
+          "y": 0,
+          "w": 896,
+          "h": 1024
+        }
+      ],
+      "attack": [
+        {
+          "x": 0,
+          "y": 1024,
+          "w": 896,
+          "h": 1024
+        },
+        {
+          "x": 896,
+          "y": 1024,
+          "w": 896,
+          "h": 1024
+        }
+      ],
+      "hit": [
+        {
+          "x": 0,
+          "y": 2048,
+          "w": 896,
+          "h": 1024
+        }
+      ],
+      "death": [
+        {
+          "x": 0,
+          "y": 3072,
+          "w": 896,
+          "h": 1024
+        },
+        {
+          "x": 896,
+          "y": 3072,
+          "w": 896,
+          "h": 1024
+        }
+      ]
+    }
+  }
+}

@@ -4,17 +4,15 @@
   "engine": "component-row",
   "character": {
     "id": "enemy_surface_guardian",
-    "description": "청동 탈로스 파편, facing left",
+    "description": "",
     "base_image": "base-source.png"
   },
   "cell": {
-    "shape": "square",
-    "width": 256,
-    "height": 256,
-    "safe_margin_x": 20,
-    "safe_margin_y": 20,
-    "size": 256,
-    "safe_margin": 20
+    "shape": "rect",
+    "width": 896,
+    "height": 1024,
+    "safe_margin_x": 48,
+    "safe_margin_y": 96
   },
   "chroma_key": {
     "name": "cyan",
@@ -25,40 +23,49 @@
       255
     ],
     "selection": "auto",
-    "score": 244.67,
-    "min_subject_distance": 224.39,
+    "score": 234.17,
+    "min_subject_distance": 224.2,
     "background": {
-      "mode": "transparent",
-      "opaque_border_fraction": 0.061,
-      "subject_pixels": 23737
+      "mode": "flat",
+      "hex": "#FAFAFA",
+      "rgb": [
+        250,
+        250,
+        250
+      ],
+      "opaque_border_fraction": 1.0,
+      "border_coverage": 1.0,
+      "enclosed_background_pixels": 324,
+      "enclosed_material_pixels": 22,
+      "subject_pixels": 14094
     },
     "candidates": [
       {
         "name": "magenta",
         "hex": "#FF00FF",
-        "score": 218.45,
-        "min_subject_distance": 212.76,
+        "score": 213.06,
+        "min_subject_distance": 209.12,
         "clears_erase_radius": true
       },
       {
         "name": "green",
         "hex": "#00FF00",
-        "score": 190.89,
-        "min_subject_distance": 170.8,
+        "score": 203.54,
+        "min_subject_distance": 196.08,
         "clears_erase_radius": true
       },
       {
         "name": "cyan",
         "hex": "#00FFFF",
-        "score": 244.67,
-        "min_subject_distance": 224.39,
+        "score": 234.17,
+        "min_subject_distance": 224.2,
         "clears_erase_radius": true
       },
       {
         "name": "blue",
         "hex": "#004DFF",
-        "score": 214.62,
-        "min_subject_distance": 194.86,
+        "score": 211.3,
+        "min_subject_distance": 194.44,
         "clears_erase_radius": true
       }
     ],
@@ -69,41 +76,41 @@
       "frames": 4,
       "fps": 4,
       "loop": true,
-      "action": "four-frame subtle guarded idle breathing loop, facing left; preserve the exact stance and identity"
+      "action": "four-frame compact guarded automaton idle facing left; huge cracked oval face shield stays forward and one complete short spear stays nearly vertical or low diagonal close to the body; each complete Talos pose uses at most 70 percent of its slot width with a broad uninterrupted background gutter; no shield edge, spear part, joint, fragment, or pixel crosses a slot boundary"
     },
     "attack": {
       "frames": 2,
       "fps": 8,
       "loop": false,
-      "action": "two-frame short attack toward the left: anticipation then committed strike; keep all anatomy, weapons, and asymmetric damage consistent"
+      "action": "two-frame compact attack facing left: heavy oval-shield shove, then a diagonal downward spear strike close across the body; never extend the spear horizontally; complete shield, shaft, spearhead, hands, and pale joints remain connected; broad gutters, no detached bronze piece, debris, or cross-slot pixel"
     },
     "hit": {
       "frames": 1,
       "fps": 6,
       "loop": false,
-      "action": "one-frame hit reaction recoiling away from an impact from the left; no new wounds or detached parts"
+      "action": "single compact crouching recoil from an impact at the left while braced behind the intact cracked oval shield and holding the complete spear nearly vertical; center all armor and joints within the middle 68 percent width and 72 percent height with broad padding; no new crack, debris, fragments, detached parts, or crop"
     },
     "death": {
       "frames": 2,
       "fps": 4,
       "loop": false,
-      "action": "two-frame death: body gives way, then collapsed still on the ground; preserve existing asymmetry, anatomy, and equipment"
+      "action": "two-frame non-graphic automaton defeat facing left: bronze knees buckle, then Talos settles low while the oval shield and complete spear stay held or directly touching the hands; each pose compact with broad gutters; no shattered joints, detached equipment, debris, blood, or cross-slot pixels"
     }
   },
-  "style": "match the attached canonical pixel-art sprite exactly: large uniform square pixel blocks, hard dark outline, no anti-aliasing, limited desaturated grim-dark palette, flat shading",
+  "style": "high-detail polished grim dark-fantasy pixel art matching production Ares and Artemis density, crisp near-black outline, restrained oxidized bronze pale stone and dark recess palette",
   "motion_phase_guides": false,
   "layout": "taxonomy/v1",
   "fit": {
     "resample": "kcentroid",
-    "align_x": "alpha-centroid",
+    "align_x": "bbox-center",
     "align_y": "bottom",
     "pixel_unfake": true,
-    "logical_height": 32,
-    "palette_size": 16,
+    "logical_height": 1024,
+    "palette_size": 96,
     "outline": true
   },
   "chroma": {
-    "mode": "rgb",
+    "mode": "ycbcr",
     "unmix_reach": 4,
     "spill_max_fraction": 0.005
   }

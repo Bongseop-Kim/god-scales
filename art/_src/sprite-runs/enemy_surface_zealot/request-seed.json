@@ -1,0 +1,11 @@
+{
+  "states": {
+    "idle": {"frames": 4, "fps": 4, "loop": true, "action": "four-frame compact ritual breathing loop facing left; tangled hair, ivy crown, ragged chiton, empty reaching hand, and one complete upright thyrsus remain consistent; each entire pose uses at most 68 percent of its slot width with broad uninterrupted background gutters; no hair tip, finger, staff, ribbon, fragment, or pixel crosses a slot boundary"},
+    "attack": {"frames": 2, "fps": 8, "loop": false, "action": "two-frame compact attack facing left: crouched ritual anticipation, then one close downward diagonal thyrsus strike across the body; never extend the staff horizontally; complete pine cone, straight shaft, attached ribbons, hands, and feet stay inside each slot with broad gutters; no detached ribbon, debris, blood, or cross-slot pixel"},
+    "hit": {"frames": 1, "fps": 6, "loop": false, "action": "single compact crouching recoil from an impact at the left while gripping the complete upright thyrsus; center the entire figure, pine cone, attached ribbons, shaft, hands, and feet within the middle 66 percent width and 70 percent height with broad padding; no new wound, blood, debris, fragments, detached effects, or crop"},
+    "death": {"frames": 2, "fps": 4, "loop": false, "action": "two-frame non-graphic defeat facing left: knees buckle, then the Maenad curls into a low grounded collapse while the complete thyrsus stays held or directly touching the hand; all ribbons remain attached; compact poses with broad gutters; no blood, gore, detached equipment, debris, or cross-slot pixel"}
+  },
+  "cell": {"shape": "rect", "width": 896, "height": 1024, "safe_margin_x": 48, "safe_margin_y": 96},
+  "style": "high-detail polished grim dark-fantasy pixel art matching production Ares and Artemis density, crisp near-black outline, restrained ivory charcoal antique gold and muted plum palette",
+  "fit": {"resample": "kcentroid", "align_x": "bbox-center", "align_y": "bottom", "pixel_unfake": true, "logical_height": 1024, "palette_size": 96, "outline": true}
+}

@@ -4,17 +4,15 @@
   "engine": "component-row",
   "character": {
     "id": "enemy_under_zealot",
-    "description": "마르시아스의 고행자, facing left",
+    "description": "",
     "base_image": "base-source.png"
   },
   "cell": {
-    "shape": "square",
-    "width": 256,
-    "height": 256,
-    "safe_margin_x": 20,
-    "safe_margin_y": 20,
-    "size": 256,
-    "safe_margin": 20
+    "shape": "rect",
+    "width": 896,
+    "height": 1024,
+    "safe_margin_x": 48,
+    "safe_margin_y": 96
   },
   "chroma_key": {
     "name": "cyan",
@@ -25,40 +23,49 @@
       255
     ],
     "selection": "auto",
-    "score": 245.07,
-    "min_subject_distance": 232.34,
+    "score": 243.34,
+    "min_subject_distance": 236.0,
     "background": {
-      "mode": "transparent",
-      "opaque_border_fraction": 0.032,
-      "subject_pixels": 10307
+      "mode": "flat",
+      "hex": "#F9F9F9",
+      "rgb": [
+        249,
+        249,
+        249
+      ],
+      "opaque_border_fraction": 1.0,
+      "border_coverage": 1.0,
+      "enclosed_background_pixels": 10,
+      "enclosed_material_pixels": 2,
+      "subject_pixels": 6760
     },
     "candidates": [
       {
         "name": "magenta",
         "hex": "#FF00FF",
-        "score": 202.58,
-        "min_subject_distance": 189.65,
+        "score": 206.67,
+        "min_subject_distance": 196.07,
         "clears_erase_radius": true
       },
       {
         "name": "green",
         "hex": "#00FF00",
-        "score": 214.57,
-        "min_subject_distance": 210.41,
+        "score": 210.77,
+        "min_subject_distance": 208.97,
         "clears_erase_radius": true
       },
       {
         "name": "cyan",
         "hex": "#00FFFF",
-        "score": 245.07,
-        "min_subject_distance": 232.34,
+        "score": 243.34,
+        "min_subject_distance": 236.0,
         "clears_erase_radius": true
       },
       {
         "name": "blue",
         "hex": "#004DFF",
-        "score": 210.26,
-        "min_subject_distance": 196.29,
+        "score": 208.8,
+        "min_subject_distance": 201.65,
         "clears_erase_radius": true
       }
     ],
@@ -69,41 +76,41 @@
       "frames": 4,
       "fps": 4,
       "loop": true,
-      "action": "four-frame subtle guarded idle breathing loop, facing left; preserve the exact stance and identity"
+      "action": "four-frame compact feral breathing loop facing left; horned head, hide mantle, open hands, goat legs, and complete hooves remain consistent; each entire pose uses at most 68 percent of its slot width with broad uninterrupted background gutters; no horn, finger, hide tip, hoof, fragment, or pixel crosses a slot boundary"
     },
     "attack": {
       "frames": 2,
       "fps": 8,
       "loop": false,
-      "action": "two-frame short attack toward the left: anticipation then committed strike; keep all anatomy, weapons, and asymmetric damage consistent"
+      "action": "two-frame compact unarmed attack facing left: crouched anticipation, then one close hooked-claw swipe held near the torso; keep both complete arms, hands, fingers, goat legs, and hooves inside their own slots; broad gutters; no long horizontal limb, detached claw, debris, blood, gore, or cross-slot pixel"
     },
     "hit": {
       "frames": 1,
       "fps": 6,
       "loop": false,
-      "action": "one-frame hit reaction recoiling away from an impact from the left; no new wounds or detached parts"
+      "action": "single compact crouching recoil from an impact at the left with both open hands and complete hooves visible; center the entire pose within the middle 66 percent width and 70 percent height with broad padding on all sides; no new wound, blood, gore, debris, fragments, detached anatomy, or crop"
     },
     "death": {
       "frames": 2,
       "fps": 4,
       "loop": false,
-      "action": "two-frame death: body gives way, then collapsed still on the ground; preserve existing asymmetry, anatomy, and equipment"
+      "action": "two-frame non-graphic defeat facing left: goat legs buckle, then the ascetic curls into a low grounded collapse; all horns, hands, fingers, legs, and hooves remain attached and complete; compact poses with broad gutters; no blood, gore, detached anatomy, debris, or cross-slot pixel"
     }
   },
-  "style": "match the attached canonical pixel-art sprite exactly: large uniform square pixel blocks, hard dark outline, no anti-aliasing, limited desaturated grim-dark palette, flat shading",
+  "style": "high-detail polished grim dark-fantasy pixel art matching production Ares and Artemis density, crisp near-black outline, non-graphic stylized anatomy, restrained muted crimson bone charcoal and hide palette",
   "motion_phase_guides": false,
   "layout": "taxonomy/v1",
   "fit": {
     "resample": "kcentroid",
-    "align_x": "alpha-centroid",
+    "align_x": "bbox-center",
     "align_y": "bottom",
     "pixel_unfake": true,
-    "logical_height": 32,
-    "palette_size": 16,
+    "logical_height": 1024,
+    "palette_size": 96,
     "outline": true
   },
   "chroma": {
-    "mode": "rgb",
+    "mode": "ycbcr",
     "unmix_reach": 4,
     "spill_max_fraction": 0.005
   }

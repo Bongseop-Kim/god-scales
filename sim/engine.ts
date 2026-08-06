@@ -1,4 +1,4 @@
-import { createCombat, endTurn, playCard, startTurn, type EnemyAction, type EnemyDefinition } from "../core/combat.ts";
+import { createCombat, endTurn, playCard, startTurn, updateOutcome, type EnemyAction, type EnemyDefinition } from "../core/combat.ts";
 import { createRng } from "../core/rng.ts";
 import cardDataJson from "../data/cards.json" with { type: "json" };
 import demandDataJson from "../data/demands.json" with { type: "json" };
@@ -6,7 +6,7 @@ import enemyDataJson from "../data/enemies.json" with { type: "json" };
 import godDataJson from "../data/gods.json" with { type: "json" };
 import graceDataJson from "../data/graces.json" with { type: "json" };
 import mapDataJson from "../data/map.json" with { type: "json" };
-import { applyFavorStageEffects, awardGrace, favorInitial, favorStage, finishCombatFavor, recordCardFavor, type FavorGod, type FavorUses } from "../core/favor.ts";
+import { applyFavorStageEffects, awardGrace, favorInitial, favorStage, finishCombatFavor, intervenesOnTurn, recordCardFavor, type FavorGod, type FavorUses } from "../core/favor.ts";
 import { demandPenalty, demandSatisfied, payDemandCost, resolveDemand, tierEnemies, type Demand, type DemandOffer, type DemandTier } from "../core/demands.ts";
 import { graceOffer, graceSlots, graceTier, takeGrace, type Grace, type GraceSlot } from "../core/grace.ts";
 import { advanceMap, bossLane, enemyDamageScale, enterNode, floorsPerRegion, generateMap, laneCount, mapDepth, mapSlot, reachableLanes, takeRest, type MapGrid, type MapNodeType } from "../core/map.ts";
@@ -36,8 +36,9 @@ const graces = graceDataJson as Grace[];
  */
 let devotionOff = false;
 export function setDevotionAura(off: boolean): void { devotionOff = off; }
+// 헌신 열만 뺀다 — 평온·분노도 같이 끄면 두 열의 차이가 「헌신 기여」가 아니라 「개입 전체 기여」가 된다
 const auraGods = (): FavorGod[] => devotionOff
-  ? godData.map((god) => ({ ...god, stage_effects: { wrath: god.stage_effects.wrath } }))
+  ? godData.map(({ stage_effects: { devotion, ...rest }, ...god }) => ({ ...god, stage_effects: rest }))
   : godData;
 /** 화면에는 단별 `text`만 나간다 — `condition` DSL은 사람이 읽을 문장이 아니다 */
 const demandData = demandDataJson as Demand[];
@@ -202,7 +203,12 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
   state.combat = createCombat(seed, deck, enemies);
   state.combat.player.hp = hp;
   state.combat.player.maxHp = maxHp;
-  applyFavorStageEffects(state, auraGods());
+  /**
+   * **후원 둘만** 개입한다. 전에는 단계 필터가 대신 걸러줬다 — 조합 밖의 신은 호의가 없어 평온으로
+   * 읽히고 평온에는 데이터가 없었다. 평온이 개입하는 지금(P-34) 그 필터는 사라졌으므로 여기서 거른다
+   */
+  const patronGods = () => auraGods().filter(({ id }) => (patrons as readonly string[]).includes(id));
+  applyFavorStageEffects(state, patronGods());
   const uses: FavorUses = {};
   let blockBuilt = 0;
   let blockAbsorbed = 0;
@@ -256,6 +262,18 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
 
   while (state.combat.outcome === "ongoing") {
     startTurn(state, random);
+    // 전투 중 개입. `startTurn` **뒤**여야 방어 리셋(`core/combat.ts:73`) 뒤에 아테나의 방어가 살아남고,
+    // 파워·뽑은 손패와 같은 화면에 선다. 죽인 적은 `updateOutcome`이 거둔다 — 안 거두면 `rally`가 안 돌고
+    // 마지막 적을 개입이 죽인 조우가 시간 초과까지 간다
+    if (state.combat.outcome === "ongoing" && intervenesOnTurn(state.combat.turn)) {
+      const beforeAura = healthBar();
+      const blockBefore = state.combat.player.block;
+      applyFavorStageEffects(state, patronGods(), "on_turn_start");
+      // 개입이 준 방어도 쌓은 방어다 — 안 세면 `block_efficiency`의 분모가 빠져 효율이 1을 넘는다
+      blockBuilt += state.combat.player.block - blockBefore;
+      recordHits(beforeAura);
+      updateOutcome(state.combat);
+    }
     while (state.combat.outcome === "ongoing") {
       const affordable = state.combat.hand.filter((id) => (cardMap.get(id)?.cost ?? Infinity) <= state.combat.energy);
       const cardId = yield {

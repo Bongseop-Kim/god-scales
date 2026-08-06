@@ -4,17 +4,15 @@
   "engine": "component-row",
   "character": {
     "id": "enemy_under_pressure",
-    "description": "Vengeful Erinys, winged snake-haired pursuer, facing left",
+    "description": "",
     "base_image": "base-source.png"
   },
   "cell": {
-    "shape": "square",
-    "width": 256,
-    "height": 256,
-    "safe_margin_x": 20,
-    "safe_margin_y": 20,
-    "size": 256,
-    "safe_margin": 20
+    "shape": "rect",
+    "width": 896,
+    "height": 1024,
+    "safe_margin_x": 48,
+    "safe_margin_y": 96
   },
   "chroma_key": {
     "name": "cyan",
@@ -25,40 +23,49 @@
       255
     ],
     "selection": "auto",
-    "score": 223.32,
-    "min_subject_distance": 214.62,
+    "score": 233.22,
+    "min_subject_distance": 218.83,
     "background": {
-      "mode": "transparent",
-      "opaque_border_fraction": 0.008,
-      "subject_pixels": 9509
+      "mode": "flat",
+      "hex": "#F8F8F8",
+      "rgb": [
+        248,
+        248,
+        248
+      ],
+      "opaque_border_fraction": 1.0,
+      "border_coverage": 1.0,
+      "enclosed_background_pixels": 58,
+      "enclosed_material_pixels": 24,
+      "subject_pixels": 5412
     },
     "candidates": [
       {
         "name": "magenta",
         "hex": "#FF00FF",
-        "score": 213.65,
-        "min_subject_distance": 207.26,
+        "score": 213.29,
+        "min_subject_distance": 209.12,
         "clears_erase_radius": true
       },
       {
         "name": "green",
         "hex": "#00FF00",
-        "score": 206.85,
-        "min_subject_distance": 166.14,
+        "score": 208.68,
+        "min_subject_distance": 205.61,
         "clears_erase_radius": true
       },
       {
         "name": "cyan",
         "hex": "#00FFFF",
-        "score": 223.32,
-        "min_subject_distance": 214.62,
+        "score": 233.22,
+        "min_subject_distance": 218.83,
         "clears_erase_radius": true
       },
       {
         "name": "blue",
         "hex": "#004DFF",
-        "score": 171.6,
-        "min_subject_distance": 166.95,
+        "score": 180.37,
+        "min_subject_distance": 175.0,
         "clears_erase_radius": true
       }
     ],
@@ -69,41 +76,41 @@
       "frames": 4,
       "fps": 4,
       "loop": true,
-      "action": "four-frame subtle guarded idle breathing loop, facing left; preserve the exact stance and identity"
+      "action": "four-frame compact left-facing airborne hover loop: the skeletal Erinys rises and settles slightly, both ragged wings flex close behind the torso, serpent hair shifts subtly, and both complete thorn whips remain held in short inward curves; each pose uses at most 70 percent of its slot width with broad gutters; no wing tip, whip, snake, foot, fragment, or pixel crosses a slot boundary"
     },
     "attack": {
       "frames": 2,
       "fps": 8,
       "loop": false,
-      "action": "two-frame short attack toward the left: anticipation then committed strike; keep the weapon and anatomy consistent"
+      "action": "two-frame compact attack facing left: wings brace, then both hands make a short downward whip snap close to the body; both complete thorn whips stay visibly connected to their handles and curve diagonally or vertically within the same slot, never extending horizontally; broad gutters; no detached snake, whip piece, effect, or cross-slot pixel"
     },
     "hit": {
       "frames": 1,
       "fps": 6,
       "loop": false,
-      "action": "one-frame hit reaction recoiling away from an impact from the left; no new wounds or detached parts"
+      "action": "single compact airborne recoil from an impact at the left: torso bends back, wings tuck inward, both hands retain the two complete short-curved whips, and both feet remain visible; center the entire figure within the middle 70 percent width and 74 percent height with broad padding; no detached snake, tear fragment, debris, or crop"
     },
     "death": {
       "frames": 2,
       "fps": 4,
       "loop": false,
-      "action": "two-frame death: knees or body give way, then collapsed still on the ground; preserve existing asymmetry and equipment"
+      "action": "two-frame non-graphic defeat facing left: wings lose lift and fold inward, then the Erinys settles into a low grounded collapse while both complete whips stay held or directly touching the hands and all wing pieces remain attached; compact poses with broad gutters; no blood, gore, detached snake, debris, or cross-slot pixel"
     }
   },
-  "style": "match the attached canonical pixel-art sprite exactly: large uniform square pixel blocks, hard dark outline, no anti-aliasing, limited desaturated grim-dark palette, flat shading",
+  "style": "high-detail polished grim dark-fantasy pixel art matching production Ares and Artemis density, crisp near-black outline, restrained bone charcoal iron and muted crimson palette",
   "motion_phase_guides": false,
   "layout": "taxonomy/v1",
   "fit": {
     "resample": "kcentroid",
-    "align_x": "alpha-centroid",
+    "align_x": "bbox-center",
     "align_y": "bottom",
     "pixel_unfake": true,
-    "logical_height": 32,
-    "palette_size": 16,
+    "logical_height": 1024,
+    "palette_size": 96,
     "outline": true
   },
   "chroma": {
-    "mode": "rgb",
+    "mode": "ycbcr",
     "unmix_reach": 4,
     "spill_max_fraction": 0.005
   }

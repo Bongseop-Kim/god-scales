@@ -4,61 +4,68 @@
   "engine": "component-row",
   "character": {
     "id": "enemy_under_boss",
-    "description": "케르베로스 (6층 보스), facing left",
+    "description": "",
     "base_image": "base-source.png"
   },
   "cell": {
-    "shape": "square",
-    "width": 256,
-    "height": 256,
-    "safe_margin_x": 20,
-    "safe_margin_y": 20,
-    "size": 256,
-    "safe_margin": 20
+    "shape": "rect",
+    "width": 896,
+    "height": 1024,
+    "safe_margin_x": 48,
+    "safe_margin_y": 96
   },
   "chroma_key": {
-    "name": "magenta",
-    "hex": "#FF00FF",
+    "name": "cyan",
+    "hex": "#00FFFF",
     "rgb": [
-      255,
       0,
+      255,
       255
     ],
     "selection": "auto",
-    "score": 226.01,
-    "min_subject_distance": 209.25,
+    "score": 246.99,
+    "min_subject_distance": 217.31,
     "background": {
-      "mode": "transparent",
-      "opaque_border_fraction": 0.134,
-      "subject_pixels": 29248
+      "mode": "flat",
+      "hex": "#FAFAFA",
+      "rgb": [
+        250,
+        250,
+        250
+      ],
+      "opaque_border_fraction": 1.0,
+      "border_coverage": 1.0,
+      "enclosed_background_pixels": 60,
+      "enclosed_material_pixels": 11,
+      "subject_pixels": 15600
     },
     "candidates": [
       {
         "name": "magenta",
         "hex": "#FF00FF",
-        "score": 226.01,
-        "min_subject_distance": 209.25,
+        "score": 241.41,
+        "min_subject_distance": 208.94,
         "clears_erase_radius": true
       },
       {
         "name": "green",
         "hex": "#00FF00",
-        "score": 208.86,
-        "min_subject_distance": 205.62,
+        "score": 208.28,
+        "min_subject_distance": 205.88,
         "clears_erase_radius": true
       },
       {
         "name": "cyan",
         "hex": "#00FFFF",
-        "score": 222.5,
-        "min_subject_distance": 203.27,
+        "score": 246.99,
+        "min_subject_distance": 217.31,
         "clears_erase_radius": true
       },
       {
         "name": "blue",
         "hex": "#004DFF",
-        "score": 179.03,
-        "min_subject_distance": 170.29,
+        "score": 189.09,
+        "min_subject_distance": 183.92,
         "clears_erase_radius": true
       }
     ],
@@ -69,41 +76,41 @@
       "frames": 4,
       "fps": 4,
       "loop": true,
-      "action": "four-frame subtle guarded idle breathing loop, facing left; preserve the exact stance and identity"
+      "action": "four-frame compact left-facing Cerberus guard loop: all three connected heads make small alternating snarls while the heavy body breathes and paws remain grounded; the complete shoulder chain stays attached and close to the back; every pose uses at most 72 percent of its slot width with broad uninterrupted gutters; no head, tail, paw, chain link, or pixel crosses a slot boundary"
     },
     "attack": {
       "frames": 2,
       "fps": 8,
       "loop": false,
-      "action": "two-frame short attack toward the left: anticipation then committed strike; keep all anatomy, weapons, and asymmetric damage consistent"
+      "action": "two-frame compact bite attack facing left: crouched anticipation, then all three connected heads make a short forward lunge while the hindquarters stay close; no long horizontal leap; complete chain stays on the body; broad gutters between poses; no saliva, blood, detached link, duplicated head, fragment, or cross-slot pixel"
     },
     "hit": {
       "frames": 1,
       "fps": 6,
       "loop": false,
-      "action": "one-frame hit reaction recoiling away from an impact from the left; no new wounds or detached parts"
+      "action": "single compact recoil from an impact at the left: all three attached heads pull back together, shoulders lower, paws stay visible, and the complete chain remains on the body; center the entire creature within the middle 72 percent width and 72 percent height with broad padding; no new wounds, debris, detached link, fragment, or crop"
     },
     "death": {
       "frames": 2,
       "fps": 4,
       "loop": false,
-      "action": "two-frame death: body gives way, then collapsed still on the ground; preserve existing asymmetry, anatomy, and equipment"
+      "action": "two-frame non-graphic defeat facing left: front legs buckle, then the one connected three-headed Cerberus settles into a low grounded collapse with all heads, paws, tail, and complete chain attached and visible; compact silhouettes with broad gutters; no blood, gore, saliva, detached equipment, debris, or cross-slot pixel"
     }
   },
-  "style": "match the attached canonical pixel-art sprite exactly: large uniform square pixel blocks, hard dark outline, no anti-aliasing, limited desaturated grim-dark palette, flat shading",
+  "style": "high-detail polished grim dark-fantasy pixel art matching production Ares and Artemis density, crisp near-black outline, restrained charcoal iron bone and muted crimson palette",
   "motion_phase_guides": false,
   "layout": "taxonomy/v1",
   "fit": {
     "resample": "kcentroid",
-    "align_x": "alpha-centroid",
+    "align_x": "bbox-center",
     "align_y": "bottom",
     "pixel_unfake": true,
-    "logical_height": 48,
-    "palette_size": 16,
+    "logical_height": 1024,
+    "palette_size": 96,
     "outline": true
   },
   "chroma": {
-    "mode": "rgb",
+    "mode": "ycbcr",
     "unmix_reach": 4,
     "spill_max_fraction": 0.005
   }

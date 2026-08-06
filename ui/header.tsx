@@ -1,4 +1,4 @@
-import type { FavorGod, FavorStage } from "../core/favor.ts";
+import type { FavorGod, FavorStage, StageEffect } from "../core/favor.ts";
 import godDataJson from "../data/gods.json" with { type: "json" };
 import type { RunView } from "../sim/engine.ts";
 import { effectText } from "./card.tsx";
@@ -12,12 +12,15 @@ export const godName = (god: string) => godNames.get(god) ?? god;
 const stageTargets = { self: "나에게", enemy: "적 하나에게", all_enemies: "적 전체에게" } as const;
 
 /**
- * 그 신이 이 단계에서 조우 시작에 하는 일. 헌신·진노만 터지므로(`applyFavorStageEffects`) 나머지
- * 단계는 빈 문자열이다 — 진노가 무엇을 할지 모르면 미터의 경고색이 「나쁘다」까지만 말하고 끝난다
+ * 그 신이 이 단계에서 하는 일 — 조우 시작 것과 **매 턴** 것을 나눠 준다. 네 단계가 다 개입하므로
+ * (P-34) 평온·분노도 빈 문자열이 아니다. 진노가 무엇을 할지 모르면 미터의 경고색이 「나쁘다」까지만
+ * 말하고 끝난다
  */
-export function godStageText(god: string, stage: FavorStage): string {
-  const effects = gods.find(({ id }) => id === god)?.stage_effects[stage as "devotion" | "wrath"]?.on_encounter_start ?? [];
-  return effects.map(({ target, ...effect }) => `${stageTargets[target]} ${effectText({ target: "enemy", effects: [effect] })}`).join(" · ");
+export function godStageText(god: string, stage: FavorStage): { start: string; turn: string } {
+  const hooks = gods.find(({ id }) => id === god)?.stage_effects[stage];
+  const line = (effects: StageEffect[] = []) =>
+    effects.map(({ target, ...effect }) => `${stageTargets[target]} ${effectText({ target: "enemy", effects: [effect] })}`).join(" · ");
+  return { start: line(hooks?.on_encounter_start), turn: line(hooks?.on_turn_start) };
 }
 export const regionName = (region: string) => (region === "underworld" ? "지하" : "지상");
 export const placeName = ({ region, floor }: Pick<RunView, "region" | "floor">) => `${regionName(region)} ${floor}층`;
