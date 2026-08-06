@@ -125,9 +125,14 @@ function encounter(seed: number, region: string, floor: number, type: MapNodeTyp
   const root = enemyData.find((enemy) => enemy.groups?.some(({ id }) => id === groupId));
   const group = root?.groups?.find(({ id }) => id === groupId);
   if (!root || !group) throw new Error(`Unknown encounter group: ${groupId}`);
-  // 편성의 순서가 곧 배치다 — 뿌리가 칸 0이고 `with`가 칸 1·2·3이다
-  return [root, ...group.with.map((id) => (id === null ? null : enemyData.find((enemy) => enemy.id === id)!))]
-    .map((enemy) => (enemy ? enemyDefinition(enemy) : null));
+  // 편성의 순서가 곧 배치다 — 뿌리가 칸 0이고 `with`가 칸 1·2·3이다. `null`만 빈 칸이다:
+  // 없는 id를 빈 칸으로 바꾸면 오타 하나가 한 명 모자란 편성이 되어 조용히 선다
+  return [enemyDefinition(root), ...group.with.map((id) => {
+    if (id === null) return null;
+    const member = enemyData.find((enemy) => enemy.id === id);
+    if (!member) throw new Error(`Unknown encounter member: ${id} (${groupId})`);
+    return enemyDefinition(member);
+  })];
 }
 
 /**

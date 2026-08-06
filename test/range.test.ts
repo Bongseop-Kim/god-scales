@@ -135,7 +135,7 @@ describe("god admission", () => {
   });
 
   it("waits at the door while the board is full and steps into the slot a death opens", () => {
-    const full = createCombat(1, [], [dummy("a"), dummy("b"), dummy("c"), dummy("d")]);
+    const full = createCombat(1, [], [dummy("a"), { ...dummy("b"), passives: { rally: 2 } }, dummy("c"), dummy("d")]);
     const state = wrap(full);
     const map = definitions(...["a", "b", "c", "d"].map((id) => dummy(id)), godDefinition("enemy_god_ares"));
     queueEnemy(full, "enemy_god_ares");
@@ -147,6 +147,8 @@ describe("god admission", () => {
     expect(full.enemies.map(({ id }) => id)).toEqual(["a", "b", "enemy_god_ares", "d"]);
     expect(full.pending).toEqual([]);
     expect(full.outcome, "들어선 신이 조우를 이어받는다").toBe("ongoing");
+    // 시체를 밀어내기 **전에** 거둔다 — 자리를 먼저 내주면 그 죽음은 아무도 못 보고 `rally`가 헛돈다
+    expect(full.enemies[1].tokens.frenzy, "죽은 칸을 신이 물려받아도 rally는 한 번 돈다").toBe(2);
   });
 
   it("never admits in the middle of a card", () => {

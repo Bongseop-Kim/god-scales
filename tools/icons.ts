@@ -58,8 +58,14 @@ const authors: Record<string, string> = { lorc: "Lorc", delapouite: "Delapouite"
 
 const background = '<path d="M0 0h512v512H0z"/>';
 
+/**
+ * 받아오는 자리를 **커밋에 못 박는다.** `@master`는 움직이므로 같은 스크립트가 다음 달에 다른 그림을
+ * 뱉는다 — 시트를 다시 뽑는 일이 재현이 되려면 이 한 줄이 판이어야 한다
+ */
+const revision = "82d948812bfe3f269ef8f731dcdb07b08160edc4";
+
 async function symbol(id: string, slug: string): Promise<string> {
-  const response = await fetch(`https://cdn.jsdelivr.net/gh/game-icons/icons@master/${slug}.svg`);
+  const response = await fetch(`https://cdn.jsdelivr.net/gh/game-icons/icons@${revision}/${slug}.svg`);
   if (!response.ok) throw new Error(`${slug} — ${response.status}. 없는 슬러그다`);
   const source = await response.text();
   const body = source.replace(/^.*?<svg[^>]*>/s, "").replace("</svg>", "").trim();

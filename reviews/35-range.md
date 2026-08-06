@@ -195,7 +195,7 @@ const guard = livingInReach(combat, reach).find((enemy) =>
 
 ## 측정 기록
 
-```
+```text
 3000런 층화 · v8/v7 · 착수 후
 win_rate=0.384  block_efficiency=0.817
 pairing_win_stddev=0.208  pairing_win_cv=0.541

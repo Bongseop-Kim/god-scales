@@ -127,6 +127,9 @@ function schemaFailure(item: Item, kind: string): boolean {
     if (!["normal", "boss", "god"].includes(enemy.tier)) return true;
     if ((enemy.tier === "god") === (enemy.region !== undefined)) return true;
     if (enemy.tier === "god" && enemy.groups !== undefined) return true;
+    // 편성도 컨테이너다 — `null` 항목 하나면 `slotFailure`의 구조분해가 반려가 아니라 예외를 낸다
+    if (enemy.groups !== undefined && (!Array.isArray(enemy.groups)
+      || enemy.groups.some((group) => typeof group?.id !== "string" || !Array.isArray(group?.with)))) return true;
   }
   // 단은 **둘**이다 — 수락과 시련. 가운데를 끼우는 것은 두 단이 실제로 갈린 뒤의 일이다 (P-29)
   if (kind === "demand") {

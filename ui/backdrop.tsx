@@ -22,8 +22,10 @@ export function Backdrop({ src, region, seed = 0, tone }: {
   tone?: "dim" | "hero";
 }) {
   const props = region ? propsOf(region) : [];
-  // 층마다 다른 둘. 일곱 중 고르므로 `+3`이 같은 것을 두 번 집는 일은 없다
-  const picked = props.length ? [props[seed % props.length], props[(seed + 3) % props.length]] : [];
+  // 층마다 다른 둘. 일곱 중 고르므로 `+3`이 같은 것을 두 번 집는 일은 없다.
+  // 시드는 음수도 온다(`ui/app.tsx`는 정수만 본다) — `%`가 음수를 내면 `props[-2]`가 빈 `src`가 된다
+  const pick = (offset: number) => props[(((seed + offset) % props.length) + props.length) % props.length];
+  const picked = props.length ? [pick(0), pick(3)] : [];
   return (
     <div className={`backdrop${tone ? ` ${tone}` : ""}`} aria-hidden="true">
       {src && <img className="bg" src={src} alt="" />}

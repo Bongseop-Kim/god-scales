@@ -77,14 +77,28 @@ export function queueEnemy(combat: CombatState, id: string): void {
 }
 
 /**
+ * 죽은 적을 거둔다. **자리를 다시 쓰기 전에** 찍어야 한다 — 시체가 밀려난 뒤에는 셀 것이 없고
+ * `rally`가 그 죽음을 못 본다. 그래서 `updateOutcome`과 `admitPending` 둘 다 여기를 지난다
+ */
+function markDefeated(combat: CombatState): void {
+  for (const dead of combat.enemies) {
+    if (dead.hp > 0 || dead.defeated) continue;
+    dead.defeated = true;
+    // rally는 「아무나 먼저 죽이기」를 처벌한다 — 처치 순서가 결정이 되는 자리다
+    for (const ally of combat.enemies) if (ally.hp > 0 && ally.passives?.rally) addToken(ally, "frenzy", ally.passives.rally);
+  }
+}
+
+/**
  * 큐에 선 적을 빈 칸에 세운다. 빈 칸이 없으면 아무 일도 없다 — 큐는 그대로 기다린다.
- * 빈 칸이 여럿이면 가장 앞(인덱스 최소)이고, 시체는 그 자리에서 밀려난다(`defeated`가 이미 찍혀 있어
- * `rally`가 두 번 세지 않는다).
+ * 빈 칸이 여럿이면 가장 앞(인덱스 최소)이고, 시체는 그 자리에서 밀려난다 — 밀어내기 전에 거두므로
+ * `rally`가 그 죽음을 한 번 본다(빈 칸은 `defeated`가 이미 찍혀 있어 두 번 세지 않는다).
  *
  * **카드 실행 중에는 부르지 않는다.** `executeCard`가 연쇄 대상을 카드 시작에 잡아 두므로 실행 중
  * 배열이 바뀌면 방금 들어온 적이 진행 중인 연쇄에 맞는다
  */
 export function admitPending(combat: CombatState, definitions: ReadonlyMap<string, EnemyDefinition>): void {
+  markDefeated(combat);
   while (combat.pending.length > 0) {
     const slot = combat.enemies.findIndex(({ hp }) => hp <= 0);
     if (slot < 0) return;
@@ -204,12 +218,7 @@ export function endTurn(state: GameState, definitions: ReadonlyMap<string, Enemy
 }
 
 export function updateOutcome(combat: CombatState): void {
-  for (const dead of combat.enemies) {
-    if (dead.hp > 0 || dead.defeated) continue;
-    dead.defeated = true;
-    // rally는 「아무나 먼저 죽이기」를 처벌한다 — 처치 순서가 결정이 되는 자리다
-    for (const ally of combat.enemies) if (ally.hp > 0 && ally.passives?.rally) addToken(ally, "frenzy", ally.passives.rally);
-  }
+  markDefeated(combat);
   if (combat.player.hp <= 0) combat.outcome = "defeat";
   else if (combat.enemies.every(({ hp }) => hp <= 0)) combat.outcome = "victory";
 }
