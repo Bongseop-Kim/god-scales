@@ -33,9 +33,12 @@ Illustration only, no card frame, no text, no numbers, no characters, no people,
 const ONE_HUE = (c) => `exactly one hue of light in the image, ${c}, covering about one quarter of the frame`;
 
 // 변환은 알파·크로마키 정리와 구도 crop까지만 한다 — `-resize`·`-colors`를 원본에 걸지 않는다 (art/README.md).
-// 입력은 항상 `art/_src/` 원본, 출력은 `art/`다. `in.png` 익명 입력이 원본 소실의 원인이었다
+// 입력은 항상 `art/_src/` 원본, 출력은 `art/`다. `in.png` 익명 입력이 원본 소실의 원인이었다.
+//
+// **카드만 예외로 축소한다.** 슬롯이 89×67이라 DPR 2에서 178×134이면 되고 512×384가 그것의 2.9배다.
+// 화면을 꽉 채우는 배경·컷인·일러와 달리 89px 썸네일은 화소가 값이 아니다 — 그래서 여기만 `-resize`가 있다
 const CARD_CONVERT = (name) => `magick art/_src/cards/${name}.png -gravity center -crop 1365x1024+0+0 +repage \\
-  -quality 88 art/cards/${name}.webp`;
+  -filter Lanczos -resize 512x384! -quality 88 art/cards/${name}.webp`;
 
 const SPRITE_CONVERT = (name) =>
   `magick art/_src/${name}.png -alpha on -fuzz 35% -transparent '#00ff00' \\
@@ -729,13 +732,13 @@ for (const [god, g] of Object.entries(GODS)) {
       path: `cards/${god}_${tag}.md`,
       title: `\`${god}_${tag}.webp\` — ${g.ko} · ${t.ko} 태그`,
       ref: "§3",
-      spec: `WebP **가로 4:3**, **생성 원본 해상도 유지 — 축소하지 않는다.** \`.card-art\`가 \`aspect-ratio: 4/3\` + \`object-fit: cover\`라 비율만 맞으면 된다 — 세로 2:3으로 그리면 높이의 절반이 잘린다.\n\n**화면** 약 89×67. 그게 썸네일 가독성 기준이고 **파일 크기 지시가 아니다.**\n\n템플릿은 [\`zeus_attack.md\`](zeus_attack.md)에서 확정됐다. 격자는 둘로만 갈린다 — **태그 = 형태(${t.dir}), 신 = 색.**`,
-      gen: "1536×1024 — 실제 출력이 1448×1086이면 이미 4:3이라 crop도 생략한다. **어느 쪽이든 축소하지 않는다**",
+      spec: `WebP **가로 4:3**, **\`512×384\`.** \`.card-art\`가 \`aspect-ratio: 4/3\` + \`object-fit: cover\`라 비율만 맞으면 된다 — 세로 2:3으로 그리면 높이의 절반이 잘린다.\n\n**화면** 약 89×67, DPR 2에서 178×134. 512×384가 그것의 2.9배다 — **카드는 이 계획에서 축소를 허용하는 유일한 자리다**(§3). 배경·컷인·일러는 그대로 원본을 지킨다.\n\n템플릿은 [\`zeus_attack.md\`](zeus_attack.md)에서 확정됐다. 격자는 둘로만 갈린다 — **태그 = 형태(${t.dir}), 신 = 색.**`,
+      gen: "1536×1024 — 4:3으로 crop한 뒤 512×384로 줄인다(§3). **카드만 이 축소를 허용한다**",
       convert: CARD_CONVERT(`${god}_${tag}`),
-      convertNote: "용량은 22~31KB에 떨어진다(R-21 기준).",
-      status: blocked
-        ? "**생성 보류** — §3의 신 색 정본이 코드에서 확정(`ui/app.tsx`의 `godColors` 삭제)되기 전에는 그리지 않는다. CSS 변수와 `godColors`가 이 신만 **색상 자체**가 다르다"
-        : "미생성",
+      convertNote: "용량은 22~31KB에 떨어진다(R-21 기준) — 실측 30장 평균 17KB, 최대 29KB로 맞았다.\n\n**`art/_src/cards/` 원본은 없다.** 팔레트나 구도를 바꾸려면 재생성밖에 없고, 그 대가를 감수하기로 했다(§3).",
+      status: "완료 · 512×384" + (blocked
+        ? " — 이 신은 `godColors`와 **색상 자체**가 달랐다. §3 표의 hex가 정본이고 그것으로 그렸다"
+        : ""),
       prompt: `${t.line(obj, stone)}\n\n${CARD_TAIL(ONE_HUE(g.hue))}`,
       notes: [
         t.note,
@@ -785,13 +788,13 @@ for (const [id, ko, a, b, subject] of FUSED) {
     path: `cards/${id}.md`,
     title: `\`${id}.webp\` — ${ko} (${KO[a]} + ${KO[b]})`,
     ref: "§3",
-    spec: `WebP **가로 4:3**, **생성 원본 해상도 유지 — 축소하지 않는다.** 화면은 약 89×67이지만 그건 참고값이다.\n\n**융합 10장은 폴백 대상이 아니다** — \`patron_pair\`라 \`{patron}_{tag}\` 폴백이 걸리지 않으므로 카드별 아트가 필수다.`,
-    gen: "1536×1024 — 실제 출력이 1448×1086이면 crop도 생략한다. **어느 쪽이든 축소하지 않는다**",
+    spec: `WebP **가로 4:3**, **\`512×384\`.** 화면이 약 89×67이라 DPR 2의 2.9배다 — **카드만 축소를 허용한다**(§3).\n\n**융합 10장은 폴백 대상이 아니다** — \`patron_pair\`라 \`{patron}_{tag}\` 폴백이 걸리지 않으므로 카드별 아트가 필수다.`,
+    gen: "1536×1024 — 4:3으로 crop한 뒤 512×384로 줄인다(§3). **카드만 이 축소를 허용한다**",
     convert: CARD_CONVERT(id),
-    convertNote: "용량은 22~31KB에 떨어진다(R-21 기준).",
-    status: blocked
-      ? "**생성 보류** — 아테나·아르테미스 색 정본이 코드에서 확정(`godColors` 삭제)된 뒤다"
-      : "미생성",
+    convertNote: "용량은 22~31KB에 떨어진다(R-21 기준) — 실측 30장 평균 17KB, 최대 29KB로 맞았다.\n\n**`art/_src/cards/` 원본은 없다.** 팔레트나 구도를 바꾸려면 재생성밖에 없고, 그 대가를 감수하기로 했다(§3).",
+    status: "완료 · 512×384" + (blocked
+      ? " — 아테나·아르테미스는 `godColors`와 색상 자체가 달랐다. §3 표의 hex가 정본이고 그것으로 그렸다"
+      : ""),
     prompt: `A single fused emblem filling the frame: ${subject}. Treat it like a game ability emblem: one instantly readable shape built from a few decisive angular strokes with hard corners, thick and heavy, no thin lines, no scenery, no architecture, no clouds.\n\n${CARD_TAIL(
       `exactly TWO hues of light in the image and no others, ${HUE[a]} and ${HUE[b]}, each holding its own part of the shape and never blending into a third colour, together covering about one third of the frame`,
     )}`,
@@ -1033,7 +1036,7 @@ const DISK_STATUS = {
   bg: "원본 해상도 그대로 · **네 장이 세로/정사각이라 가로로 재생성 대상** (`map-under`·`map-surface`·`surface-boss`·`surface-combat`)",
   props: "원본 해상도 그대로 · 안 늦었다",
   sprites: "적 14 · 진노 신 5 · 주인공 생성 완료 · 원본 해상도 그대로",
-  cards: "30장 생성 완료 · 원본 해상도 그대로",
+  cards: "30장 완료 · **512×384로 확정**(§3) · `art/_src/cards/` 원본 없음 — 감수한 값이다",
 };
 
 // ─────────────────────────────────────────── 출력
