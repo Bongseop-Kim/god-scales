@@ -164,6 +164,21 @@ describe("god admission", () => {
     expect(combat.pending).toEqual(["enemy_god_ares"]);
   });
 
+  it("does not call it a victory while a god waits at the door", () => {
+    const combat = createCombat(1, [], [dummy("a", 6)]);
+    const state = wrap(combat);
+    queueEnemy(combat, "enemy_god_ares");
+    combat.hand = ["strike"];
+    combat.energy = 3;
+    // 마지막 적을 카드가 죽여도 아직 끝이 아니다 — 여기서 승리를 박으면 진노가 부른 신이 사라진다
+    playCard(state, new Map([["strike", strike()]]), "strike", "a");
+    expect(combat.outcome).toBe("ongoing");
+    // 입장은 여전히 `endTurn`이 한다. 신이 들어서면 조우가 이어진다
+    endTurn(state, definitions(godDefinition("enemy_god_ares")));
+    expect(combat.enemies.map(({ id }) => id)).toEqual(["enemy_god_ares", "empty_1", "empty_2", "empty_3"]);
+    expect(combat.outcome).toBe("ongoing");
+  });
+
   it("wires every wrath to a shipped god enemy", () => {
     const enemies = JSON.parse(readFileSync("data/enemies.json", "utf8")) as { id: string; tier: string }[];
     const joined = gods.map(({ id }) => id);

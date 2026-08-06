@@ -220,7 +220,9 @@ export function endTurn(state: GameState, definitions: ReadonlyMap<string, Enemy
 export function updateOutcome(combat: CombatState): void {
   markDefeated(combat);
   if (combat.player.hp <= 0) combat.outcome = "defeat";
-  else if (combat.enemies.every(({ hp }) => hp <= 0)) combat.outcome = "victory";
+  // 문 앞에 신이 서 있으면 아직 이긴 것이 아니다. 카드가 마지막 적을 죽여도 승리를 박으면 `endTurn`의
+  // 입장이 오지 않고, 진노가 부른 신은 조우와 함께 조용히 사라진다 — 판이 꽉 찼던 조우가 그 자리다
+  else if (combat.pending.length === 0 && combat.enemies.every(({ hp }) => hp <= 0)) combat.outcome = "victory";
 }
 
 export function effectiveHp(enemy: EnemyState): number {
