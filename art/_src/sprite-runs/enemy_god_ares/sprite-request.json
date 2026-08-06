@@ -4,17 +4,15 @@
   "engine": "component-row",
   "character": {
     "id": "enemy_god_ares",
-    "description": "아레스 (진노), facing left",
+    "description": "High-density pixel-art Ares facing left, bronze Corinthian armour, red crest, dark teal cloak, long spear.",
     "base_image": "base-source.png"
   },
   "cell": {
-    "shape": "square",
-    "width": 256,
-    "height": 256,
-    "safe_margin_x": 20,
-    "safe_margin_y": 20,
-    "size": 256,
-    "safe_margin": 20
+    "shape": "rect",
+    "width": 896,
+    "height": 1024,
+    "safe_margin_x": 48,
+    "safe_margin_y": 96
   },
   "chroma_key": {
     "name": "cyan",
@@ -25,40 +23,49 @@
       255
     ],
     "selection": "auto",
-    "score": 260.33,
-    "min_subject_distance": 241.22,
+    "score": 270.31,
+    "min_subject_distance": 250.2,
     "background": {
-      "mode": "transparent",
-      "opaque_border_fraction": 0.066,
-      "subject_pixels": 18296
+      "mode": "flat",
+      "hex": "#01FAFD",
+      "rgb": [
+        1,
+        250,
+        253
+      ],
+      "opaque_border_fraction": 1.0,
+      "border_coverage": 1.0,
+      "enclosed_background_pixels": 18,
+      "enclosed_material_pixels": 0,
+      "subject_pixels": 10767
     },
     "candidates": [
       {
         "name": "magenta",
         "hex": "#FF00FF",
-        "score": 227.77,
-        "min_subject_distance": 220.33,
+        "score": 228.79,
+        "min_subject_distance": 220.52,
         "clears_erase_radius": true
       },
       {
         "name": "green",
         "hex": "#00FF00",
-        "score": 204.01,
-        "min_subject_distance": 186.95,
+        "score": 206.99,
+        "min_subject_distance": 199.67,
         "clears_erase_radius": true
       },
       {
         "name": "cyan",
         "hex": "#00FFFF",
-        "score": 260.33,
-        "min_subject_distance": 241.22,
+        "score": 270.31,
+        "min_subject_distance": 250.2,
         "clears_erase_radius": true
       },
       {
         "name": "blue",
         "hex": "#004DFF",
-        "score": 187.03,
-        "min_subject_distance": 173.39,
+        "score": 193.99,
+        "min_subject_distance": 181.9,
         "clears_erase_radius": true
       }
     ],
@@ -75,31 +82,31 @@
       "frames": 2,
       "fps": 8,
       "loop": false,
-      "action": "two-frame short attack toward the left: anticipation then committed strike; keep all anatomy, weapons, and asymmetric damage consistent"
+      "action": "two-frame long-spear attack toward the left: high diagonal guarded anticipation, then a committed thrust. The Ares body from helmet crest to feet must occupy 75–80% of each 896x1024 slot height, matching the idle body's scale exactly. Keep the complete spear and the complete trailing cloak strictly inside the 48px horizontal safe margins; gather the cloak close behind the body and use a diagonal or foreshortened spear when needed so the total silhouette stays under 800px wide. Never shrink the character to fit. Preserve the exact spear, anatomy, armour, cloak, and existing blood marks"
     },
     "hit": {
       "frames": 1,
       "fps": 6,
       "loop": false,
-      "action": "one-frame hit reaction recoiling away from an impact from the left; no new wounds or detached parts"
+      "action": "one-frame hit reaction recoiling away from an impact from the left; keep the same long spear and equipment attached, with no new wounds or detached parts"
     },
     "death": {
       "frames": 2,
       "fps": 4,
       "loop": false,
-      "action": "two-frame death: body gives way, then collapsed still on the ground; preserve existing asymmetry, anatomy, and equipment"
+      "action": "two-frame death toward the left: knees buckle and body gives way, then fully collapsed and still on the ground; preserve anatomy, armour, cloak, long spear, and existing asymmetry"
     }
   },
-  "style": "match the attached canonical pixel-art sprite exactly: large uniform square pixel blocks, hard dark outline, no anti-aliasing, limited desaturated grim-dark palette, flat shading",
+  "style": "match the attached base/anchor reference image EXACTLY: same pixel density (logical pixel block size), same body proportions, same outline weight, same palette, same shading style, same level of detail. Do not restyle, do not change proportions, do not add or remove detail density. Avoid polished illustration, painterly rendering, anime key art, 3D render, vector app-icon polish, glossy lighting, soft gradients, and anti-aliased high-detail edges.",
   "motion_phase_guides": false,
   "layout": "taxonomy/v1",
   "fit": {
     "resample": "kcentroid",
-    "align_x": "alpha-centroid",
+    "align_x": "bbox-center",
     "align_y": "bottom",
     "pixel_unfake": true,
-    "logical_height": 32,
-    "palette_size": 16,
+    "logical_height": 1024,
+    "palette_size": 96,
     "outline": true
   },
   "chroma": {
