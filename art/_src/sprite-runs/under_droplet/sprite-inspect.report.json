@@ -1,0 +1,65 @@
+{
+  "ok": true,
+  "engine": "component-row",
+  "kind": "sprite-gen-inspect-report",
+  "run_dir": "/Users/duegosystem/git/god-scales/art/_src/sprite-runs/under_droplet",
+  "states": [
+    "idle"
+  ],
+  "thresholds": {
+    "histogram_min": 0.0,
+    "dhash_min": 0.55,
+    "motion_min": 0.01
+  },
+  "rows": [
+    {
+      "state": "idle",
+      "source": "frames",
+      "expected_frames": 4,
+      "found_frames": 4,
+      "natural_pose_count": 4,
+      "frame_files": [
+        "frames/idle/frame-0.png",
+        "frames/idle/frame-1.png",
+        "frames/idle/frame-2.png",
+        "frames/idle/frame-3.png"
+      ],
+      "metrics": {
+        "histogram_intersection": {
+          "min": 0.9632348871958532,
+          "mean": 0.9783164832006189
+        },
+        "dhash_similarity": {
+          "min": 0.984375,
+          "mean": 0.9895833333333334
+        },
+        "motion_presence": 0.0023833231209150325,
+        "centroid_sigma": {
+          "x": 1.6642237575862755,
+          "y": 9.977862544715316
+        }
+      },
+      "ok": true,
+      "errors": [],
+      "warnings": [
+        "idle: dropped 1 collapsed per-frame pitch(es) below 8.69",
+        "idle: dropped 2 collapsed per-frame pitch(es) below 8.29",
+        "idle: pitch crosscheck: axis ratio y/x disagrees — run-length 1.028 vs grid 1.090 (5.7%); one axis may have collapsed to the other",
+        "idle: frame 0 own pitch 4.99x7.00 is outside the consensus pitch family 12.68x13.82 — harmonic/collapsed misdetection; snapped at consensus",
+        "idle: frame 1 own pitch 14.48x13.82 is outside the consensus pitch family 12.68x13.82 — harmonic/collapsed misdetection; snapped at consensus",
+        "idle: frame 3 own pitch 10.00x7.00 is outside the consensus pitch family 12.68x13.82 — harmonic/collapsed misdetection; snapped at consensus",
+        "idle: motion presence is too low (0.0024 < 0.0100)"
+      ]
+    }
+  ],
+  "errors": [],
+  "warnings": [
+    "idle: dropped 1 collapsed per-frame pitch(es) below 8.69",
+    "idle: dropped 2 collapsed per-frame pitch(es) below 8.29",
+    "idle: pitch crosscheck: axis ratio y/x disagrees — run-length 1.028 vs grid 1.090 (5.7%); one axis may have collapsed to the other",
+    "idle: frame 0 own pitch 4.99x7.00 is outside the consensus pitch family 12.68x13.82 — harmonic/collapsed misdetection; snapped at consensus",
+    "idle: frame 1 own pitch 14.48x13.82 is outside the consensus pitch family 12.68x13.82 — harmonic/collapsed misdetection; snapped at consensus",
+    "idle: frame 3 own pitch 10.00x7.00 is outside the consensus pitch family 12.68x13.82 — harmonic/collapsed misdetection; snapped at consensus",
+    "idle: motion presence is too low (0.0024 < 0.0100)"
+  ]
+}

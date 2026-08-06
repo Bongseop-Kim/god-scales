@@ -1,0 +1,59 @@
+{
+  "ok": true,
+  "engine": "component-row",
+  "kind": "sprite-gen-inspect-report",
+  "run_dir": "/Users/duegosystem/git/god-scales/art/_src/sprite-runs/surface_eagle",
+  "states": [
+    "idle"
+  ],
+  "thresholds": {
+    "histogram_min": 0.0,
+    "dhash_min": 0.55,
+    "motion_min": 0.01
+  },
+  "rows": [
+    {
+      "state": "idle",
+      "source": "frames",
+      "expected_frames": 4,
+      "found_frames": 4,
+      "natural_pose_count": 4,
+      "frame_files": [
+        "frames/idle/frame-0.png",
+        "frames/idle/frame-1.png",
+        "frames/idle/frame-2.png",
+        "frames/idle/frame-3.png"
+      ],
+      "metrics": {
+        "histogram_intersection": {
+          "min": 0.9800596845977722,
+          "mean": 0.9845920131055002
+        },
+        "dhash_similarity": {
+          "min": 0.84375,
+          "mean": 0.9010416666666666
+        },
+        "motion_presence": 0.027423215379901958,
+        "centroid_sigma": {
+          "x": 23.14616773900497,
+          "y": 33.50576347799425
+        }
+      },
+      "ok": true,
+      "errors": [],
+      "warnings": [
+        "idle: dropped 1 collapsed per-frame pitch(es) below 4.50",
+        "idle: frame 0 pitch detection inconclusive — consensus fallback 7.50x7.50",
+        "idle: frame 2 own pitch 3.00x3.00 is outside the consensus pitch family 7.50x7.50 — harmonic/collapsed misdetection; snapped at consensus",
+        "idle: frame 3 pitch detection inconclusive — consensus fallback 7.50x7.50"
+      ]
+    }
+  ],
+  "errors": [],
+  "warnings": [
+    "idle: dropped 1 collapsed per-frame pitch(es) below 4.50",
+    "idle: frame 0 pitch detection inconclusive — consensus fallback 7.50x7.50",
+    "idle: frame 2 own pitch 3.00x3.00 is outside the consensus pitch family 7.50x7.50 — harmonic/collapsed misdetection; snapped at consensus",
+    "idle: frame 3 pitch detection inconclusive — consensus fallback 7.50x7.50"
+  ]
+}

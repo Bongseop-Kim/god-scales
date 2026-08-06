@@ -1,0 +1,120 @@
+{
+  "characterId": "surface_olive_leaf",
+  "engine": "component-row",
+  "game_input": "sprite-sheet-alpha.png",
+  "degraded_static_fallback": false,
+  "curation_applied": false,
+  "frame_variant": "pixel",
+  "sprite_sheet_alpha": "sprite-sheet-alpha.png",
+  "sprite_sheet_alpha_report": "sprite-sheet-alpha.report.json",
+  "base_image": "base-source.png",
+  "cell": {
+    "shape": "rect",
+    "width": 896,
+    "height": 1024,
+    "safe_margin_x": 64,
+    "safe_margin_y": 96
+  },
+  "chroma_key": {
+    "name": "cyan",
+    "hex": "#00FFFF",
+    "rgb": [
+      0,
+      255,
+      255
+    ],
+    "selection": "auto",
+    "score": 233.72,
+    "min_subject_distance": 229.49,
+    "background": {
+      "mode": "transparent",
+      "opaque_border_fraction": 0.0,
+      "subject_pixels": 9918
+    },
+    "candidates": [
+      {
+        "name": "magenta",
+        "hex": "#FF00FF",
+        "score": 219.61,
+        "min_subject_distance": 216.71,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "green",
+        "hex": "#00FF00",
+        "score": 193.06,
+        "min_subject_distance": 191.13,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "cyan",
+        "hex": "#00FFFF",
+        "score": 233.72,
+        "min_subject_distance": 229.49,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "blue",
+        "hex": "#004DFF",
+        "score": 216.93,
+        "min_subject_distance": 212.26,
+        "clears_erase_radius": true
+      }
+    ],
+    "selection_reason": "highest 1st-percentile subject distance among the 4 candidate(s) clearing the 96 erase radius"
+  },
+  "animation": {
+    "cellWidth": 896,
+    "cellHeight": 1024,
+    "columns": 4,
+    "rows": {
+      "idle": {
+        "row": 0,
+        "frames": 4,
+        "fps": 4,
+        "durations_ms": [
+          250,
+          250,
+          250,
+          250
+        ],
+        "loop": true,
+        "frame_variant": "pixel"
+      }
+    }
+  },
+  "frame_layout": {
+    "sheetWidth": 3584,
+    "sheetHeight": 1024,
+    "cellWidth": 896,
+    "cellHeight": 1024,
+    "rows": {
+      "idle": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 896,
+          "h": 1024
+        },
+        {
+          "x": 896,
+          "y": 0,
+          "w": 896,
+          "h": 1024
+        },
+        {
+          "x": 1792,
+          "y": 0,
+          "w": 896,
+          "h": 1024
+        },
+        {
+          "x": 2688,
+          "y": 0,
+          "w": 896,
+          "h": 1024
+        }
+      ]
+    }
+  }
+}

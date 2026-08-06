@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "kind": "sprite-gen-request",
+  "engine": "component-row",
+  "character": {
+    "id": "surface_olive_leaf",
+    "description": "",
+    "base_image": "base-source.png"
+  },
+  "cell": {
+    "shape": "rect",
+    "width": 896,
+    "height": 1024,
+    "safe_margin_x": 64,
+    "safe_margin_y": 96
+  },
+  "chroma_key": {
+    "name": "cyan",
+    "hex": "#00FFFF",
+    "rgb": [
+      0,
+      255,
+      255
+    ],
+    "selection": "auto",
+    "score": 233.72,
+    "min_subject_distance": 229.49,
+    "background": {
+      "mode": "transparent",
+      "opaque_border_fraction": 0.0,
+      "subject_pixels": 9918
+    },
+    "candidates": [
+      {
+        "name": "magenta",
+        "hex": "#FF00FF",
+        "score": 219.61,
+        "min_subject_distance": 216.71,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "green",
+        "hex": "#00FF00",
+        "score": 193.06,
+        "min_subject_distance": 191.13,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "cyan",
+        "hex": "#00FFFF",
+        "score": 233.72,
+        "min_subject_distance": 229.49,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "blue",
+        "hex": "#004DFF",
+        "score": 216.93,
+        "min_subject_distance": 212.26,
+        "clears_erase_radius": true
+      }
+    ],
+    "selection_reason": "highest 1st-percentile subject distance among the 4 candidate(s) clearing the 96 erase radius"
+  },
+  "states": {
+    "idle": {
+      "frames": 4,
+      "fps": 4,
+      "loop": true,
+      "action": "four-frame seamless drifting idle loop: one complete olive leaf makes a restrained clockwise tilt, level hold, counter-tilt, and return around its fixed center; preserve the pointed oval, center rib, outline, and muted olive palette; no branch, fruit, second leaf, detached fragment, shadow, or translation"
+    }
+  },
+  "style": "polished grim Greek dark-fantasy true pixel art copied from the accepted base, crisp near-black hard outline, clearly visible uniform square-pixel grid, flat shading, restrained material-specific palette, no anti-aliasing and no painterly rendering",
+  "motion_phase_guides": false,
+  "layout": "taxonomy/v1",
+  "fit": {
+    "resample": "kcentroid",
+    "align_x": "bbox-center",
+    "align_y": "bbox-center",
+    "pixel_unfake": true,
+    "logical_height": 128,
+    "palette_size": 32,
+    "outline": true
+  },
+  "chroma": {
+    "mode": "ycbcr",
+    "unmix_reach": 4,
+    "spill_max_fraction": 0.005
+  }
+}

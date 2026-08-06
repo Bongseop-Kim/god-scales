@@ -1,0 +1,144 @@
+{
+  "ok": true,
+  "engine": "component-row",
+  "engine_revision": "9d4ecaf5ab56",
+  "extract_args": {
+    "chroma_mode": "ycbcr",
+    "segmentation": "projection",
+    "repalette": true,
+    "min_used_pixels": 128
+  },
+  "run_dir": "/Users/duegosystem/git/god-scales/art/_src/sprite-runs/surface_storm_cloud",
+  "cell": {
+    "shape": "rect",
+    "width": 896,
+    "height": 1024,
+    "safe_margin_x": 64,
+    "safe_margin_y": 96
+  },
+  "chroma_key": {
+    "name": "cyan",
+    "hex": "#00FFFF",
+    "rgb": [
+      0,
+      255,
+      255
+    ],
+    "selection": "auto",
+    "score": 241.02,
+    "min_subject_distance": 221.4,
+    "background": {
+      "mode": "transparent",
+      "opaque_border_fraction": 0.0,
+      "subject_pixels": 16725
+    },
+    "candidates": [
+      {
+        "name": "magenta",
+        "hex": "#FF00FF",
+        "score": 212.92,
+        "min_subject_distance": 207.98,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "green",
+        "hex": "#00FF00",
+        "score": 210.14,
+        "min_subject_distance": 206.13,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "cyan",
+        "hex": "#00FFFF",
+        "score": 241.02,
+        "min_subject_distance": 221.4,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "blue",
+        "hex": "#004DFF",
+        "score": 204.44,
+        "min_subject_distance": 199.62,
+        "clears_erase_radius": true
+      }
+    ],
+    "selection_reason": "highest 1st-percentile subject distance among the 4 candidate(s) clearing the 96 erase radius"
+  },
+  "rows": [
+    {
+      "state": "idle",
+      "frames": 4,
+      "method": "components",
+      "files": [
+        "frames/idle/frame-0.png",
+        "frames/idle/frame-1.png",
+        "frames/idle/frame-2.png",
+        "frames/idle/frame-3.png"
+      ],
+      "frame_records": [
+        {
+          "index": 0,
+          "nontransparent_pixels": 69694,
+          "bbox": [
+            247,
+            652,
+            643,
+            928
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 0
+        },
+        {
+          "index": 1,
+          "nontransparent_pixels": 71936,
+          "bbox": [
+            260,
+            628,
+            646,
+            928
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 0
+        },
+        {
+          "index": 2,
+          "nontransparent_pixels": 64216,
+          "bbox": [
+            253,
+            670,
+            638,
+            928
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 0
+        },
+        {
+          "index": 3,
+          "nontransparent_pixels": 66550,
+          "bbox": [
+            257,
+            657,
+            649,
+            928
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 0
+        }
+      ],
+      "ok": true,
+      "engine_revision": "9d4ecaf5ab56",
+      "plain_files": [
+        "frames/idle/frame-0.plain.png",
+        "frames/idle/frame-1.plain.png",
+        "frames/idle/frame-2.plain.png",
+        "frames/idle/frame-3.plain.png"
+      ]
+    }
+  ],
+  "errors": [],
+  "warnings": [
+    "idle: pitch disagreement — detect 1.00x1.00 (uniformity 79.1) vs runlen 2.44x2.47 (9.9); detect kept. large gap usually means the raw was drawn finer than the cell contract — reroll with a block-count hint",
+    "palette: rebuilt+pinned (32 colors → palette.lock.json)",
+    "pixel unfake: pitch=1.0 scale=1x logical<=896x1024 palette=32"
+  ]
+}

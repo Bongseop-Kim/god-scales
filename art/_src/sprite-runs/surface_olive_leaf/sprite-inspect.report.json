@@ -1,0 +1,53 @@
+{
+  "ok": true,
+  "engine": "component-row",
+  "kind": "sprite-gen-inspect-report",
+  "run_dir": "/Users/duegosystem/git/god-scales/art/_src/sprite-runs/surface_olive_leaf",
+  "states": [
+    "idle"
+  ],
+  "thresholds": {
+    "histogram_min": 0.0,
+    "dhash_min": 0.55,
+    "motion_min": 0.01
+  },
+  "rows": [
+    {
+      "state": "idle",
+      "source": "frames",
+      "expected_frames": 4,
+      "found_frames": 4,
+      "natural_pose_count": 4,
+      "frame_files": [
+        "frames/idle/frame-0.png",
+        "frames/idle/frame-1.png",
+        "frames/idle/frame-2.png",
+        "frames/idle/frame-3.png"
+      ],
+      "metrics": {
+        "histogram_intersection": {
+          "min": 0.915119044071635,
+          "mean": 0.9467703412602563
+        },
+        "dhash_similarity": {
+          "min": 0.859375,
+          "mean": 0.9244791666666666
+        },
+        "motion_presence": 0.01752498851102941,
+        "centroid_sigma": {
+          "x": 26.455406222707428,
+          "y": 31.51611961814127
+        }
+      },
+      "ok": true,
+      "errors": [],
+      "warnings": [
+        "idle: pitch crosscheck: axis ratio y/x disagrees — run-length 0.943 vs grid 1.040 (9.3%); one axis may have collapsed to the other"
+      ]
+    }
+  ],
+  "errors": [],
+  "warnings": [
+    "idle: pitch crosscheck: axis ratio y/x disagrees — run-length 0.943 vs grid 1.040 (9.3%); one axis may have collapsed to the other"
+  ]
+}

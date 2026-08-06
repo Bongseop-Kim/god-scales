@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "kind": "sprite-gen-request",
+  "engine": "component-row",
+  "character": {
+    "id": "under_river_glint",
+    "description": "",
+    "base_image": "base-source.png"
+  },
+  "cell": {
+    "shape": "rect",
+    "width": 896,
+    "height": 1024,
+    "safe_margin_x": 64,
+    "safe_margin_y": 96
+  },
+  "chroma_key": {
+    "name": "magenta",
+    "hex": "#FF00FF",
+    "rgb": [
+      255,
+      0,
+      255
+    ],
+    "selection": "auto",
+    "score": 226.29,
+    "min_subject_distance": 222.82,
+    "background": {
+      "mode": "transparent",
+      "opaque_border_fraction": 0.0,
+      "subject_pixels": 228
+    },
+    "candidates": [
+      {
+        "name": "magenta",
+        "hex": "#FF00FF",
+        "score": 226.29,
+        "min_subject_distance": 222.82,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "green",
+        "hex": "#00FF00",
+        "score": 204.05,
+        "min_subject_distance": 202.53,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "cyan",
+        "hex": "#00FFFF",
+        "score": 204.42,
+        "min_subject_distance": 200.35,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "blue",
+        "hex": "#004DFF",
+        "score": 165.75,
+        "min_subject_distance": 163.24,
+        "clears_erase_radius": true
+      }
+    ],
+    "selection_reason": "highest 1st-percentile subject distance among the 4 candidate(s) clearing the 96 erase radius"
+  },
+  "states": {
+    "idle": {
+      "frames": 4,
+      "fps": 4,
+      "loop": true,
+      "action": "four-frame seamless shimmer idle loop: one complete narrow horizontal broken glint keeps the same fixed length and height while its small pale core travels only slightly within the connected dark streak and returns; no wave, splash, reflected object, second glint, detached spark, glow halo, or translation"
+    }
+  },
+  "style": "polished grim Greek dark-fantasy true pixel art copied from the accepted base, crisp near-black hard outline, clearly visible uniform square-pixel grid, flat shading, restrained material-specific palette, no anti-aliasing and no painterly rendering",
+  "motion_phase_guides": false,
+  "layout": "taxonomy/v1",
+  "fit": {
+    "resample": "kcentroid",
+    "align_x": "bbox-center",
+    "align_y": "bbox-center",
+    "pixel_unfake": true,
+    "logical_height": 128,
+    "palette_size": 32,
+    "outline": true
+  },
+  "chroma": {
+    "mode": "ycbcr",
+    "unmix_reach": 4,
+    "spill_max_fraction": 0.005
+  }
+}

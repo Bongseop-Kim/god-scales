@@ -2,15 +2,15 @@
 
 [P-32](../../plans/32-art.md) §2 프롭 · [원본 규칙](../README.md) · **상태 원본 해상도 그대로 · 안 늦었다**
 
-**파일** PNG 알파, **생성 원본 해상도 유지 — 축소하지 않는다.**
+**파일** PNG 알파. `surface_lightning_afterglow_idle_1.png`~`surface_lightning_afterglow_idle_4.png`는 각각 `896×1024`, `surface_lightning_afterglow.png`는 4프레임 가로 스트립 `3584×1024`다.
 
 **화면** 24px. CSS가 8×8 격자를 3배 확대한 크기다 — **구도용 참고값이고 파일 크기 지시가 아니다.** 배경과 `.shell` 사이 레이어(`z-index: -1`).
 
-**정지 이미지 1장이다. 애니메이션 프레임을 그리지 않는다** — 움직임은 CSS `transform` 루프다.
+**idle 4프레임 루프다.** 재생 속도는 4fps이며 각 프레임의 위치와 캔버스가 고정된다.
 
-**생성** GPT-image 2.0, `1024×1536`, **투명 배경 옵션 ON**, PNG
+**생성** `sprite-gen` component-row 파이프라인, YCbCr 크로마 제거, 고정 팔레트, 투명 RGBA PNG
 
-**변환** — 입력은 `art/_src/` 원본이고 출력은 `art/`다. **두 경로를 같게 쓰면 원본이 그 자리에서 깎인다.**
+**기존 원본 변환 기록(참고 전용)** — 현재 원본은 `art/_src/props/surface_lightning_afterglow-base.png`, 재현 가능한 run은 `art/_src/sprite-runs/surface_lightning_afterglow/`에 있다.
 
 ```
 magick art/_src/props/surface_lightning_afterglow.png -alpha on -fuzz 35% -transparent '#00ff00' \

@@ -1,0 +1,55 @@
+{
+  "ok": true,
+  "engine": "component-row",
+  "kind": "sprite-gen-inspect-report",
+  "run_dir": "/Users/duegosystem/git/god-scales/art/_src/sprite-runs/surface_storm_cloud",
+  "states": [
+    "idle"
+  ],
+  "thresholds": {
+    "histogram_min": 0.0,
+    "dhash_min": 0.55,
+    "motion_min": 0.01
+  },
+  "rows": [
+    {
+      "state": "idle",
+      "source": "frames",
+      "expected_frames": 4,
+      "found_frames": 4,
+      "natural_pose_count": 4,
+      "frame_files": [
+        "frames/idle/frame-0.png",
+        "frames/idle/frame-1.png",
+        "frames/idle/frame-2.png",
+        "frames/idle/frame-3.png"
+      ],
+      "metrics": {
+        "histogram_intersection": {
+          "min": 0.9521244657600582,
+          "mean": 0.9669187354552322
+        },
+        "dhash_similarity": {
+          "min": 0.984375,
+          "mean": 0.9921875
+        },
+        "motion_presence": 0.004920630361519607,
+        "centroid_sigma": {
+          "x": 2.529348521926343,
+          "y": 5.182702530158606
+        }
+      },
+      "ok": true,
+      "errors": [],
+      "warnings": [
+        "idle: pitch disagreement — detect 1.00x1.00 (uniformity 79.1) vs runlen 2.44x2.47 (9.9); detect kept. large gap usually means the raw was drawn finer than the cell contract — reroll with a block-count hint",
+        "idle: motion presence is too low (0.0049 < 0.0100)"
+      ]
+    }
+  ],
+  "errors": [],
+  "warnings": [
+    "idle: pitch disagreement — detect 1.00x1.00 (uniformity 79.1) vs runlen 2.44x2.47 (9.9); detect kept. large gap usually means the raw was drawn finer than the cell contract — reroll with a block-count hint",
+    "idle: motion presence is too low (0.0049 < 0.0100)"
+  ]
+}

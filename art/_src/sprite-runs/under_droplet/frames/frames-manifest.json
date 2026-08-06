@@ -1,0 +1,391 @@
+{
+  "ok": true,
+  "engine": "component-row",
+  "engine_revision": "9d4ecaf5ab56",
+  "extract_args": {
+    "chroma_mode": "ycbcr",
+    "segmentation": "projection",
+    "repalette": true,
+    "min_used_pixels": 128
+  },
+  "run_dir": "/Users/duegosystem/git/god-scales/art/_src/sprite-runs/under_droplet",
+  "cell": {
+    "shape": "rect",
+    "width": 896,
+    "height": 1024,
+    "safe_margin_x": 64,
+    "safe_margin_y": 96
+  },
+  "chroma_key": {
+    "name": "green",
+    "hex": "#00FF00",
+    "rgb": [
+      0,
+      255,
+      0
+    ],
+    "selection": "auto",
+    "score": 214.68,
+    "min_subject_distance": 212.8,
+    "background": {
+      "mode": "transparent",
+      "opaque_border_fraction": 0.0,
+      "subject_pixels": 4790
+    },
+    "candidates": [
+      {
+        "name": "magenta",
+        "hex": "#FF00FF",
+        "score": 211.52,
+        "min_subject_distance": 207.11,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "green",
+        "hex": "#00FF00",
+        "score": 214.68,
+        "min_subject_distance": 212.8,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "cyan",
+        "hex": "#00FFFF",
+        "score": 195.98,
+        "min_subject_distance": 189.43,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "blue",
+        "hex": "#004DFF",
+        "score": 155.92,
+        "min_subject_distance": 153.19,
+        "clears_erase_radius": true
+      }
+    ],
+    "selection_reason": "highest 1st-percentile subject distance among the 4 candidate(s) clearing the 96 erase radius"
+  },
+  "rows": [
+    {
+      "state": "idle",
+      "frames": 4,
+      "method": "components",
+      "files": [
+        "frames/idle/frame-0.png",
+        "frames/idle/frame-1.png",
+        "frames/idle/frame-2.png",
+        "frames/idle/frame-3.png"
+      ],
+      "frame_records": [
+        {
+          "index": 0,
+          "nontransparent_pixels": 22336,
+          "bbox": [
+            376,
+            648,
+            512,
+            928
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 0
+        },
+        {
+          "index": 1,
+          "nontransparent_pixels": 22976,
+          "bbox": [
+            368,
+            680,
+            528,
+            928
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 0
+        },
+        {
+          "index": 2,
+          "nontransparent_pixels": 19328,
+          "bbox": [
+            368,
+            712,
+            528,
+            928
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 0
+        },
+        {
+          "index": 3,
+          "nontransparent_pixels": 21760,
+          "bbox": [
+            376,
+            648,
+            512,
+            928
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 0
+        }
+      ],
+      "ok": true,
+      "engine_revision": "9d4ecaf5ab56",
+      "plain_files": [
+        "frames/idle/frame-0.plain.png",
+        "frames/idle/frame-1.plain.png",
+        "frames/idle/frame-2.plain.png",
+        "frames/idle/frame-3.plain.png"
+      ],
+      "orig_files": [
+        "frames/idle/orig/frame-0.png",
+        "frames/idle/orig/frame-1.png",
+        "frames/idle/orig/frame-2.png",
+        "frames/idle/orig/frame-3.png"
+      ],
+      "input_grids": [
+        {
+          "x": [
+            380.0,
+            386.9,
+            393.3,
+            402.6,
+            410.7,
+            417.0,
+            423.4,
+            430.9,
+            439.6,
+            448.3,
+            453.5,
+            460.4,
+            465.6,
+            476.6,
+            481.8,
+            488.2,
+            499.8,
+            506.7
+          ],
+          "y": [
+            648.0,
+            656.1,
+            664.2,
+            671.7,
+            681.6,
+            687.9,
+            696.0,
+            704.1,
+            712.2,
+            719.7,
+            727.8,
+            734.8,
+            744.0,
+            752.7,
+            760.2,
+            770.1,
+            776.4,
+            786.3,
+            791.5,
+            802.5,
+            808.2,
+            815.8,
+            821.6,
+            832.0,
+            841.2,
+            850.5,
+            856.3,
+            863.8,
+            871.9,
+            880.0,
+            888.1,
+            896.8,
+            904.9,
+            913.0,
+            921.1,
+            928.0
+          ]
+        },
+        {
+          "x": [
+            374.0,
+            382.3,
+            390.0,
+            396.5,
+            403.6,
+            409.5,
+            417.2,
+            425.5,
+            433.8,
+            439.1,
+            446.8,
+            452.1,
+            461.6,
+            469.3,
+            477.6,
+            484.7,
+            491.8,
+            498.3,
+            505.4,
+            513.1,
+            520.8
+          ],
+          "y": [
+            680.0,
+            683.0,
+            691.2,
+            699.5,
+            707.2,
+            713.7,
+            723.8,
+            732.1,
+            739.2,
+            748.1,
+            754.0,
+            764.6,
+            772.9,
+            781.2,
+            788.9,
+            799.0,
+            807.8,
+            813.2,
+            823.2,
+            829.2,
+            838.6,
+            848.1,
+            854.6,
+            864.1,
+            870.0,
+            878.3,
+            888.9,
+            895.4,
+            903.7,
+            912.0,
+            920.3,
+            928.0
+          ]
+        },
+        {
+          "x": [
+            368.0,
+            376.8,
+            384.9,
+            392.5,
+            400.0,
+            406.9,
+            415.1,
+            423.2,
+            432.6,
+            442.7,
+            448.3,
+            453.3,
+            463.4,
+            472.2,
+            480.3,
+            487.8,
+            495.4,
+            503.5,
+            511.7,
+            519.2,
+            528.0
+          ],
+          "y": [
+            718.0,
+            724.3,
+            732.4,
+            740.0,
+            749.4,
+            756.3,
+            763.8,
+            774.5,
+            780.1,
+            789.5,
+            795.8,
+            804.0,
+            809.6,
+            818.4,
+            828.4,
+            837.2,
+            843.5,
+            851.6,
+            858.5,
+            866.1,
+            874.9,
+            881.1,
+            889.3,
+            901.8,
+            910.0,
+            915.0,
+            920.7,
+            927.6
+          ]
+        },
+        {
+          "x": [
+            382.0,
+            388.9,
+            395.3,
+            404.0,
+            411.5,
+            417.3,
+            424.2,
+            431.8,
+            440.4,
+            449.1,
+            454.3,
+            464.1,
+            470.5,
+            476.3,
+            481.5,
+            492.5,
+            498.3,
+            505.8
+          ],
+          "y": [
+            648.0,
+            656.1,
+            664.2,
+            671.7,
+            681.6,
+            687.9,
+            698.3,
+            704.1,
+            712.2,
+            719.7,
+            729.0,
+            734.8,
+            744.0,
+            752.7,
+            760.2,
+            770.1,
+            775.9,
+            786.3,
+            792.0,
+            802.5,
+            808.2,
+            815.8,
+            821.6,
+            832.0,
+            841.2,
+            849.9,
+            855.1,
+            861.5,
+            869.6,
+            880.0,
+            888.1,
+            896.8,
+            904.9,
+            913.0,
+            921.1,
+            928.0
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "warnings": [
+    "idle: dropped 1 collapsed per-frame pitch(es) below 8.69",
+    "idle: dropped 2 collapsed per-frame pitch(es) below 8.29",
+    "idle: pitch crosscheck: axis ratio y/x disagrees — run-length 1.028 vs grid 1.090 (5.7%); one axis may have collapsed to the other",
+    "idle: frame 0 own pitch 4.99x7.00 is outside the consensus pitch family 12.68x13.82 — harmonic/collapsed misdetection; snapped at consensus",
+    "idle: frame 1 own pitch 14.48x13.82 is outside the consensus pitch family 12.68x13.82 — harmonic/collapsed misdetection; snapped at consensus",
+    "idle: frame 3 own pitch 10.00x7.00 is outside the consensus pitch family 12.68x13.82 — harmonic/collapsed misdetection; snapped at consensus",
+    "palette: rebuilt+pinned (32 colors → palette.lock.json)",
+    "pixel unfake: pitch=[(12.68, 13.82), (12.68, 13.82), 12.68, (12.68, 13.82)] scale=8x logical<=112x128 palette=32"
+  ]
+}

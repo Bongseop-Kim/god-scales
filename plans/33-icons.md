@@ -1,6 +1,6 @@
 # P-33 · game-icons.net으로 아이콘 33개 대체
 
-`plans/33-icons.md` · [◀ P-32](32-art.md) · [색인](../reviews/00-index.md) · [R-34 ▶](../reviews/34-tempo.md)
+`plans/33-icons.md` · [◀ P-32](32-art.md) · [색인](../reviews/00-index.md) · [P-35 ▶](35-range.md)
 
 **크기** 작음 · **착수 조건** **P-26 완료** (진영색이 정해진 뒤) + 사용자가 아이콘 슬러그 목록을 고른다 — 그리기 작업은 없다
 
