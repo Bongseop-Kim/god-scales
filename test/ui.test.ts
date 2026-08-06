@@ -7,8 +7,10 @@ import { endTurnAction, runSteps, type Decision } from "../sim/engine.ts";
 import { run } from "../sim/engine.ts";
 import type { RunResult } from "../sim/report.ts";
 import type { ReplayAction } from "../sim/replay.ts";
-import { App, MapScreen } from "../ui/app.tsx";
+import { bossLane, generateMap } from "../core/map.ts";
+import { App, MapPanel, MapScreen, patronPair } from "../ui/app.tsx";
 import { cardArtCandidates, type CardArtSource } from "../ui/art-keys.ts";
+import { conditionLabel } from "../ui/card.tsx";
 import { DemandScreen, GraceScreen, RestScreen } from "../ui/choices.tsx";
 import { CombatScreen } from "../ui/combat.tsx";
 import { replayPayload } from "../ui/export.ts";
@@ -129,10 +131,73 @@ describe("browser replay export", () => {
     // 우호도 둘 상시 + 진노 경고 + 그 단계의 개입, 경계는 favorBoundaries에서
     expect(markup).toContain("favor wrath");
     expect(markup).toContain("favor devotion");
+    // 단계 펄스는 **경계를 넘는 순간에만** 돈다 — 첫 렌더에 붙으면 전투마다 미터 둘이 번쩍인다
+    expect(markup).not.toContain("crossed");
     // 진노는 이제 신을 적으로 부른다 — `join`이 「나에게 join 0」으로 읽히면 화면이 거짓말을 한다
     expect(markup).toContain("진노 · 조우 시작에 나에게 감전 2 · 제우스가 적으로 합류");
     expect(markup).toContain("헌신 70 / 평온 30 / 분노 10");
     expect(markup).toContain("은총 3");
+  });
+
+  /**
+   * 카드 면 채널 넷(비용 젬 · 예외 배지 · 아이콘 효과 줄 · 이름 캡션)과 무대. 손으로 짠 관측을 쓰는
+   * 이유는 「파워·전체·자해·사거리·조건이 한 손에 다 있는」 턴이 실제 런에 거의 없어서다.
+   * 값은 손으로 적었지만 **id·이름·비용·효과는 `data/cards.json`에 있는 그대로**다
+   */
+  it("draws the cost gem, icon effects, and the card waiting on the stage", () => {
+    const hand = [
+      { id: "card_zeus_19", name: "감전 연쇄", cost: 2, target: "enemy", reach: "03", effects: [{ op: "damage", value: 6 }, { op: "apply_token", token: "shock", stacks: 2 }, { op: "chain", value: 4 }] },
+      { id: "card_ares_14", name: "피의 갈증", cost: 2, target: "enemy", effects: [{ op: "damage", value: 6 }, { op: "heal", value: 6 }, { op: "self_damage", value: 1 }] },
+      { id: "card_zeus_23", name: "천 개의 벼락", cost: 1, target: "enemy", effects: [{ op: "apply_token", token: "shock", stacks: 1 }, { op: "chain", value: 1 }] },
+      { id: "card_artemis_retry_04", name: "달의 화살비", cost: 3, target: "all_enemies", effects: [{ op: "damage", value: 5 }, { op: "apply_token", token: "mark", stacks: 1 }, { op: "draw", value: 1 }] },
+    ];
+    const decision = {
+      phase: "target",
+      options: ["enemy_under_guardian"],
+      bot: "enemy_under_guardian",
+      observation: {
+        depth: 3, lane: 1, region: "underworld", floor: 4, hp: 44, maxHp: 92,
+        patrons: ["zeus", "athena"], grid: [], favor: { zeus: 40, athena: 40 }, grace: {},
+        turn: 5, block: 0, energy: 3, draw: 4, tokens: {}, hand, powers: [],
+        enemies: [{ id: "enemy_under_guardian", slot: 0, hp: 20, maxHp: 30, block: 0, tokens: {}, passives: {}, intent: { damage: 9 } }],
+        hits: [], hitSeq: 0,
+        // 무대에 오른 카드. **`view.card`는 id다** — 그것을 그대로 문장에 넣으면 화면에 영문 id가 뜬다
+        card: "card_zeus_19",
+      },
+    } as never;
+    const markup = renderToStaticMarkup(createElement(CombatScreen, { seed: 1, decision, onAnswer: () => {} }));
+
+    // 비용은 젬 하나가 든다 — 효과문 앞의 「2 에너지 ·」가 사라진 자리다
+    expect(markup).toContain('<b class="cost-gem">2</b>');
+    expect(markup).toContain('<b class="cost-gem">3</b>');
+    // 효과는 적 머리 위 배지와 **같은 글리프**를 쓰고, 시트에 없는 op는 짧은 한글이다
+    expect(markup).toContain('href="#icon-damage"');
+    expect(markup).toContain('href="#icon-shock"');
+    expect(markup).toContain('href="#icon-heal"');
+    expect(markup).toContain("뽑기");
+    expect(unresolvedIcons(markup)).toEqual([]);
+    // 영문 id가 글자로 남으면 안 된다 — 아이콘은 `href`가 가리키는 이름이라 읽히지 않는다
+    expect(markup).not.toMatch(/>[^<]*(shock|mark)/);
+    // 예외만 배지가 된다: 파워와 전체. 나머지 129장은 배지 자리가 빈다
+    expect(markup).toContain('<em class="card-kind">파워</em>');
+    expect(markup).toContain('<em class="card-kind">전체</em>');
+    // 자해는 경고색, 사거리는 마스크를 적은 카드에만
+    expect(markup).toContain('class="harm"');
+    expect(markup).toContain("▮▯▯▮");
+    // 화면이 채널 넷으로 갈렸으므로 문장은 `aria-label`이 든다 — 숫자만 남으면 「6 2 4」로 읽힌다
+    expect(markup).toContain('aria-label="감전 연쇄 · 2 에너지 · ▮▯▯▮ 양 끝 · 피해 6 · 감전 2 · 연쇄 4"');
+    // e2e 드라이버가 읽는 값. 화면 문구를 긁던 정규식을 대신한다 — 피의 갈증은 피해 6에 회복·자해다
+    expect(markup).toContain('data-cost="2" data-damage="6"');
+    // 무대에 선 카드는 **손패에서 빠진다** — 넷 중 한 장이 무대라 부채꼴은 셋이다
+    expect(markup).toContain('class="stage"');
+    expect(markup).toContain("--n:3");
+    expect([...markup.matchAll(/class="game-card"/g)]).toHaveLength(4);
+    // 아무것도 안 붙은 토큰 줄은 이름 없는 `role="img"`가 된다 — 스크린 리더에서 정체 불명의 그림 한 장이다
+    expect(markup).toContain('aria-label="" aria-hidden="true"');
+    // 대상 선택 중에는 손 전체가 물러난다. 힌트에 id가 들어가면 「card_zeus_19 · 대상을」이 뜬다
+    expect(markup).toContain("fan aiming");
+    expect(markup).toContain("대상을 고르세요");
+    expect(markup).not.toContain("card_zeus_19 ·");
   });
 
   it("renders the setup screen through React", () => {
@@ -141,14 +206,43 @@ describe("browser replay export", () => {
     expect(markup).toContain("신들의 저울");
     expect(markup).toContain("런 시작");
     expect(markup).toContain("aria-label=\"상태 토큰\"");
+    // 다섯이 다 눌리는 버튼이고 기본으로 눌린 것은 둘이다 — 아무것도 안 고르고 시작하던 사람이 같은 런을 얻는다
+    const legend = markup.match(/<div class="god-legend".*?<\/div>/s)?.[0] ?? "";
+    expect(legend.match(/aria-pressed/g)).toHaveLength(5);
+    expect(legend.match(/aria-pressed="true"/g)).toHaveLength(2);
+    // 둘이므로 「런 시작」이 눌린다 — 이 화면에서 `disabled`가 붙는 자리는 그것 하나뿐이다
+    expect(markup).not.toContain("disabled");
+    // 편집기는 한 방향 문이 아니다 — 조합을 하나로 줄여 슬롯을 비운 사람이 여기로 돌아온다
+    expect(markup).toContain("규칙 덱으로");
+  });
+
+  /**
+   * 조건부 효과는 화면에서 흐려진다 — **왜 흐린지**는 `title`과 `aria-label`이 든다. 표에 없는 조건은
+   * DSL 원문이 그대로 나가므로, 데이터에 여섯째 조건이 붙는 날 이 줄이 그것을 잡는다
+   */
+  it("names every shipped condition in Korean instead of printing the DSL", () => {
+    const shipped = new Set((cardDataJson as { effects: { when?: string }[] }[])
+      .flatMap(({ effects }) => effects.map(({ when }) => when).filter(Boolean) as string[]));
+    expect(shipped.size).toBeGreaterThan(0);
+    for (const when of shipped) expect(conditionLabel(when), when).not.toBe(when);
+  });
+
+  /**
+   * 고른 순서는 결정이 아니다 — 시작 덱이 `patrons[0]`에게 2·2·1, `[1]`에게 3·1·1을 주므로
+   * 정규화를 빼먹으면 같은 조합이 두 게임이 되고, 화면에는 아무 표시도 안 난다
+   */
+  it("plays the same run whichever order the two gods were picked", () => {
+    expect(patronPair(["athena", "zeus"])).toEqual(["zeus", "athena"]);
+    expect(run(9, undefined, [], patronPair(["artemis", "poseidon"])).actions)
+      .toEqual(run(9, undefined, [], patronPair(["poseidon", "artemis"])).actions);
   });
 
   it("replays the same outcome, progress, and final favor", () => {
     // 봇이 실제로 걸은 갈래를 기록으로 되먹인다 — 갈래 문자열이 이제 격자에 달려 있어 상수로 못 적는다
     const actions: ReplayAction[] = run(42).actions.filter(({ type }) => type === "path");
     const browser = run(42, undefined, actions);
-    const replay = replayPayload(42, actions);
-    const cli = run(replay.seed, undefined, replay.actions);
+    const replay = replayPayload(42, actions, ["zeus", "athena"]);
+    const cli = run(replay.seed, undefined, replay.actions, replay.patrons);
 
     expect({ won: cli.won, floors: cli.hpCurve.length - 1, favor: cli.favorCurve.at(-1) }).toEqual({
       won: browser.won,
@@ -174,8 +268,8 @@ describe("browser replay export", () => {
       diverged = Boolean(other);
       return other ?? bot;
     });
-    const replay = replayPayload(11, actions);
-    const cli = run(replay.seed, undefined, replay.actions);
+    const replay = replayPayload(11, actions, ["zeus", "athena"]);
+    const cli = run(replay.seed, undefined, replay.actions, replay.patrons);
 
     // 반출에 사람이 고른 여덟 종류가 전부 있어야 한다 — 빠지면 재생 때 봇이 대신 채운다
     for (const type of ["path", "card", "target", "rest", "rest_card", "reward", "grace", "demand"]) {
@@ -192,12 +286,60 @@ describe("browser replay export", () => {
 });
 
 /**
- * 129개 id를 그림 30장이 덮는 규칙(`ui/art-keys.ts`)만 본다 — 파일이 실제로 있는지는
+ * 격자가 유일한 조작 면이 됐다(P-42). 보는 것은 셋이다 — 마커가 안 뜨던 두 화면(저승 1층·지상 1층),
+ * 열린 갈래만 눌린다는 것, 결과 화면의 같은 격자가 읽는 그림으로 남는다는 것.
+ * **이동 중 전 칸 잠김은 여기서 못 본다** — 클릭이 필요하고 vitest 환경에 DOM이 없다(`npm run e2e`가 본다)
+ */
+describe("지도를 걷는다", () => {
+  const grid = generateMap(7);
+  const walkable = (region: string, depth: number) =>
+    renderToStaticMarkup(createElement(MapPanel, {
+      grid,
+      region,
+      here: { depth, lane: bossLane },
+      open: { depth: depth + 1, options: ["0:combat", "1:combat", "2:combat"] },
+      text: "무너진 다리를 건넌다",
+      onEnter: () => {},
+    }));
+
+  it("마커가 저승 1층·지상 1층에도 선다", () => {
+    // 시작 칸이 없으면 12화면 중 이 둘에서 마커가 사라진다 — `here.depth`가 −1과 5라 격자에 자리가 없다
+    for (const [region, depth, label] of [["underworld", -1, "시작"], ["surface", 5, "지하에서"]] as const) {
+      const markup = walkable(region, depth);
+      expect(markup, region).toContain(label);
+      // 마커는 그 칸 **안에** 선다 — 밖에 있으면 `layoutId`가 옮길 것이 없다
+      expect(markup.match(/class="map-node here"[^>]*>(.*?)<\/i>/s)?.[1] ?? "", region).toContain("marker");
+    }
+  });
+
+  it("열린 갈래만 눌린다", () => {
+    const buttons = [...walkable("underworld", -1).matchAll(/<button class="map-node ([^"]*)"([^>]*)>/g)];
+    // 5층 × 3갈래 + 보스 하나. 보스 층의 빈 두 자리는 `<i>`로 남아 버튼이 아니다
+    expect(buttons).toHaveLength(16);
+    const [open, locked] = [buttons.filter(([, cls]) => cls.includes("open")), buttons.filter(([, cls]) => !cls.includes("open"))];
+    expect(open).toHaveLength(3);
+    expect(open.filter(([, , rest]) => rest.includes("disabled"))).toEqual([]);
+    expect(locked.filter(([, , rest]) => !rest.includes("disabled"))).toEqual([]);
+    // 갈래 이름은 화면에서 사라지고 여기 남는다 — 격자에는 위치가 있지만 스크린리더에는 없다
+    expect(open[0][2]).toContain('aria-label="왼쪽 · 전투 · 보상을 노리고');
+  });
+
+  it("결과 화면의 같은 격자는 눌리지 않는다", () => {
+    const markup = renderToStaticMarkup(createElement(MapPanel, { grid, region: "underworld", taken: [] }));
+    expect(markup).not.toContain("<button");
+    // 크기와 설명 줄은 `.walkable`에만 붙는다 — 결과 화면은 30px 칸 둘을 `0.8fr` 열에 나란히 세운다
+    expect(markup).not.toContain("walkable");
+    expect(markup).not.toContain("node-hint");
+  });
+});
+
+/**
+ * 149개 id를 그림 30장이 덮는 규칙(`ui/art-keys.ts`)만 본다 — 파일이 실제로 있는지는
  * `npm run art -- --check`가 전수로 대조한다. **함정 둘이 이 한 줄에 다 걸린다**: 후보에서 `id`를
  * 빼면 융합 10장이, `tags[0]`에서 멈추면 첫 태그가 `power`인 다섯 장이 여기서 안 떨어진다
  */
 describe("카드 그림 폴백", () => {
-  it("129개 id가 전부 그림 한 장으로 떨어진다", () => {
+  it("149개 id가 전부 그림 한 장으로 떨어진다", () => {
     const have = new Set(Object.keys(import.meta.glob("../art/cards/*.webp")).map((path) => path.replace(/^.*\/|\.webp$/g, "")));
     expect((cardDataJson as CardArtSource[]).filter((card) => !cardArtCandidates(card).some((key) => have.has(key)))).toEqual([]);
   });

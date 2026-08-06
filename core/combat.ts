@@ -1,6 +1,6 @@
 import { bossLane } from "./map.ts";
 import { createRng } from "./rng.ts";
-import { addToken, dealDamage, executeCard, firePowers, takeEnemyTurn, tickBleed, type Card } from "./rules.ts";
+import { addToken, dealDamage, executeCard, firePowers, shoveDisplaced, tickBleed, type Card } from "./rules.ts";
 import type { ActorState, CombatState, EnemyState, GameState, Passives, TokenName } from "./state.ts";
 import { canReachTarget, livingInReach } from "./targeting.ts";
 
@@ -184,13 +184,18 @@ export function endTurn(state: GameState, definitions: ReadonlyMap<string, Enemy
   // 적이 행동하기 **전에** 터뜨린다 — 턴 끝 방벽이 이번 턴의 공격을 못 받으면 아무 값도 없다
   firePowers(state, "turn_end");
 
+  /**
+   * 밀림은 적 행동 **앞에서 한 번** 돈다 — 밀린 적은 자리를 뒤로 내주고 그 턴을 쉰다.
+   * `firePowers("turn_end")` 뒤여야 턴 끝 파워가 붙인 밀림도 이번 턴에 값을 한다
+   */
+  const shoved = shoveDisplaced(combat);
+
   for (const enemy of combat.enemies) {
-    if (enemy.hp <= 0) continue;
+    if (enemy.hp <= 0 || shoved.has(enemy)) continue;
     const definition = definitions.get(enemy.id);
     if (!definition || definition.pattern.length === 0) throw new Error(`Missing enemy pattern: ${enemy.id}`);
-    const patternIndex = enemy.patternIndex;
-    if (!takeEnemyTurn(enemy)) continue;
-    const action = definition.pattern[patternIndex % definition.pattern.length];
+    const action = definition.pattern[enemy.patternIndex % definition.pattern.length];
+    enemy.patternIndex += 1;
     // ramp는 장기전을 처벌한다 — 매 턴 광란이 쌓이므로 오래 끌수록 같은 패턴이 더 아프다
     if (enemy.passives?.ramp) addToken(enemy, "frenzy", enemy.passives.ramp);
     for (const target of actionTargets(combat, enemy, action.target ?? "player")) {

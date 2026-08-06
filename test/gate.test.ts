@@ -83,7 +83,8 @@ describe("validation gate", () => {
   it("accepts valid single-patron and fusion cards", () => {
     const report = validateItems([
       { id: "card_valid_guard", name: "온전한 방어", patron: "athena", cost: 1, target: "self", effects: [{ op: "block", value: 5 }], tags: ["defend"] },
-      { id: "card_valid_fusion", name: "온전한 폭풍", patron_pair: ["poseidon", "zeus"], cost: 1, target: "enemy", effects: [{ op: "apply_token", token: "soaked", stacks: 1 }, { op: "damage", value: 5 }, { op: "chain", value: 4 }], tags: ["attack", "fused", "multi"] },
+      // 융합은 tier3 밴드 `[10, 13]`이다 — 값 9.8이면 patron 밴드 아래로 떨어지지 않고 **어디에도 안 든다**
+      { id: "card_valid_fusion", name: "온전한 폭풍", patron_pair: ["poseidon", "zeus"], cost: 1, target: "enemy", effects: [{ op: "apply_token", token: "soaked", stacks: 1 }, { op: "damage", value: 6 }, { op: "chain", value: 4 }], tags: ["attack", "fused", "multi"] },
     ]);
     expect(report.rejected).toEqual([]);
     expect(report.accepted).toHaveLength(2);

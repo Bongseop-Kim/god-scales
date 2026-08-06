@@ -5,7 +5,6 @@ import {
   evaluateCondition,
   executeCard,
   loadCards,
-  takeEnemyTurn,
   tickBleed,
   type Card,
 } from "../core/rules";
@@ -94,11 +93,6 @@ describe("tokens", () => {
     attacker.tokens.crit = 1;
     dealDamage(attacker, defender, 2);
     expect(attacker.tokens.crit).toBeUndefined();
-
-    const displaced = { ...actor("enemy"), patternIndex: 2 };
-    displaced.tokens.displace = 1;
-    expect(takeEnemyTurn(displaced)).toBe(false);
-    expect(displaced.patternIndex).toBe(2);
   });
 
   // 적 패턴은 `target: self`로 아무 토큰이나 붙일 수 있다 — 양쪽이 가시를 들면 반사가 무한히 튕겼다
@@ -121,6 +115,8 @@ describe("conditions", () => {
     ["hp_pct(self) < 60", "hp_pct(self) < 50"],
     ["deck_count(attack) >= 1", "deck_count(attack) >= 2"],
     ["enemy_count() >= 3", "enemy_count() >= 4"],
+    // 대상이 칸 0이다 — 자리 조건은 사거리와 달리 닿은 뒤의 값을 바꾼다
+    ["slot(target) < 2", "slot(target) >= 2"],
   ])("evaluates %s", (truthy, falsy) => {
     const combat = state();
     combat.combat.player.hp = 10;

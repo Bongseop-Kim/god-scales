@@ -1,0 +1,86 @@
+[
+  {
+    "id": "card_zeus_08",
+    "name": "충격 밀침",
+    "patron": "zeus",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      { "op": "apply_token", "token": "displace", "stacks": 1 },
+      { "op": "damage", "value": 2 }
+    ],
+    "tags": ["attack", "token"]
+  },
+  {
+    "id": "card_zeus_17",
+    "name": "폭풍 압박",
+    "patron": "zeus",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 7 },
+      { "op": "apply_token", "token": "displace", "stacks": 1 }
+    ],
+    "tags": ["attack", "token"]
+  },
+  {
+    "id": "card_zeus_24",
+    "name": "후열 낙뢰",
+    "patron": "zeus",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 6 },
+      { "op": "chain", "value": 5, "when": "slot(target) >= 2" }
+    ],
+    "tags": ["attack", "multi"]
+  },
+  {
+    "id": "card_poseidon_18",
+    "name": "해안 파쇄",
+    "patron": "poseidon",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 8 },
+      { "op": "apply_token", "token": "soaked", "stacks": 3, "when": "slot(target) < 2" }
+    ],
+    "tags": ["attack", "token"]
+  },
+  {
+    "id": "card_athena_19",
+    "name": "전열 받아치기",
+    "patron": "athena",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 7 },
+      { "op": "block", "value": 6, "when": "slot(target) < 2" }
+    ],
+    "tags": ["attack", "defend"]
+  },
+  {
+    "id": "card_ares_25",
+    "name": "선봉 도끼",
+    "patron": "ares",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 6 },
+      { "op": "damage", "value": 6, "when": "slot(target) < 2" }
+    ],
+    "tags": ["attack"]
+  },
+  {
+    "id": "card_artemis_24",
+    "name": "후열 저격",
+    "patron": "artemis",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 5 },
+      { "op": "damage", "value": 7, "when": "slot(target) >= 2" }
+    ],
+    "tags": ["attack"]
+  }
+]

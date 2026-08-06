@@ -39,6 +39,11 @@ export type Card = {
   trigger?: Trigger;
   /** 닿는 칸을 오름차순으로 적은 숫자열(`"012"`). 없으면 네 칸 전부다 */
   reach?: string;
+  /**
+   * 값의 계단. 없으면 1이고 융합은 적지 않는다 — `patronPair`가 곧 3이다(`tools/value.ts`의 `cardTier`).
+   * 보상 3택1에서 어느 자리가 몇 티어인지는 깊이가 정한다(`sim/engine.ts`의 `tier2Slots`)
+   */
+  tier?: 1 | 2;
 };
 
 export function loadCards(cards: Card[]): Card[] {
@@ -145,10 +150,29 @@ export function tickBleed(actor: ActorState): number {
   return damage;
 }
 
-export function takeEnemyTurn(enemy: ActorState & { patternIndex: number }): boolean {
-  if (consumeToken(enemy, "displace")) return false;
-  enemy.patternIndex += 1;
-  return true;
+/**
+ * 밀려난 적을 뒤로 한 칸 보내고, 이번 턴을 쉬는 적을 돌려준다. 토큰 하나가 두 일을 하지만
+ * 그 둘은 같은 그림이다 — 밀려난 적은 자세를 잃고 자리를 내준다.
+ *
+ * **역순(칸 3 → 0)으로 돈다.** 정순이면 앞칸이 비켜 준 자리로 올라온 적을 같은 턴에 다시 만나
+ * 한 카드가 두 칸을 움직인다. 맨 뒤는 불발이다 — 토큰은 소모되고 자리는 그대로다.
+ *
+ * **뒤가 비어 있어도 이동이 아니라 맞바꿈이다.** 앞에 구멍이 나는 것은 어느 쪽이든 같다 —
+ * 밀어내기는 그래서 실제로 「진노한 신을 앞칸에 불러오는 카드」이기도 하다(`admitPending`이 가장 앞
+ * 빈 칸을 쓴다). 맞바꿈이 지키는 것은 **뒤칸에 있던 것 자체**다: 이동은 그 자리의 시체를 덮어 쓰고,
+ * `queueEnemy`는 판에 선 id로 중복을 막으므로 그러면 방금 죽인 신이 같은 조우에 다시 큐에 든다
+ */
+export function shoveDisplaced(combat: CombatState): Set<ActorState> {
+  // 배우 **그 자체**로 센다 — id로 세면 같은 적 둘이 선 편성에서 한쪽의 밀림이 둘의 턴을 지운다
+  const shoved = new Set<ActorState>();
+  for (let slot = combat.enemies.length - 1; slot >= 0; slot -= 1) {
+    const enemy = combat.enemies[slot];
+    if (enemy.hp <= 0 || !consumeToken(enemy, "displace")) continue;
+    shoved.add(enemy);
+    // 자리를 통째로 맞바꾸므로 상태·토큰·패턴 진행이 다 따라간다 — `definitions.get`은 id로 읽는다
+    if (slot + 1 < combat.enemies.length) [combat.enemies[slot], combat.enemies[slot + 1]] = [combat.enemies[slot + 1], combat.enemies[slot]];
+  }
+  return shoved;
 }
 
 type ConditionContext = {
@@ -177,6 +201,12 @@ export function evaluateCondition(expression: string, context: ConditionContext)
 
   match = expression.match(/^has_token\(target, ([a-z_]+)\) >= (\d+)$/);
   if (match) return (context.target.tokens[match[1] as TokenName] ?? 0) >= Number(match[2]);
+  /**
+   * 칸은 배열 인덱스다(`core/targeting.ts`) — 사거리와 다른 것을 잰다: 사거리는 닿는지를 정하고
+   * 이 조건은 닿은 뒤 값을 바꾼다. 대상이 적이 아니면 -1이라 `>=`는 거짓이다
+   */
+  match = expression.match(/^slot\(target\) (>=|<) (\d+)$/);
+  if (match) return compare(context.state.combat.enemies.findIndex((enemy) => enemy === context.target), match[1], Number(match[2]));
   match = expression.match(/^turn > (\d+)$/);
   if (match) return context.state.combat.turn > Number(match[1]);
   match = expression.match(/^hp_pct\(self\) < (\d+)$/);

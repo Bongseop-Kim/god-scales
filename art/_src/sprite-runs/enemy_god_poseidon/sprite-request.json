@@ -76,25 +76,25 @@
       "frames": 4,
       "fps": 4,
       "loop": true,
-      "action": "four-frame imposing idle breathing loop facing left; vertical trident remains planted in both hands and solid flat-topped water wall remains connected beside him; only small beard, robe, and water-surface movement; no detached droplets"
+      "action": "four-frame imposing idle breathing loop facing left; complete vertical trident remains planted in both hands; only small beard, robe, and ankle-high water-ribbon movement; both legs stay readable; no tall water, detached droplets, or separate effects"
     },
     "attack": {
       "frames": 2,
       "fps": 8,
       "loop": false,
-      "action": "two-frame compact attack toward the left: Poseidon braces, then takes one forceful step and shoulder-shoves the solid water wall forward; in both poses the same complete symmetrical three-tined trident stays perfectly upright and vertical, gripped in both hands, with an unbroken straight shaft from fork to butt; do not rotate, swing, thrust, bend, or redesign the trident; each figure and connected water wall uses at most 68 percent of its slot width with a broad uninterrupted magenta gutter; no projectile, splash, detached weapon piece, debris, fragment, or cross-slot pixel"
+      "action": "two-frame compact attack toward the left: Poseidon braces with the complete trident upright, then takes one forceful step and thrusts that same trident toward the left; all three tines and the entire unbroken shaft remain connected and fully inside each frame; ankle-high water stays attached to his feet and never becomes a wall or projectile; each figure uses at most 68 percent of its slot width with a broad uninterrupted magenta gutter; no splash, detached weapon piece, debris, fragment, or cross-slot pixel"
     },
     "hit": {
       "frames": 1,
       "fps": 6,
       "loop": false,
-      "action": "single compact crouching impact recoil from the left while gripping the complete upright trident and sheltering behind the solid water wall; center the full figure, all three tines, shaft, feet, and wall within the middle 68 percent of the canvas width and 72 percent of its height, leaving broad uninterrupted magenta padding on all four sides; flawless and unwounded, no loose water, cropped parts, fragments, or detached effects"
+      "action": "single compact crouching impact recoil from the left while gripping the complete upright trident; ankle-high water remains attached around his planted feet; center the full figure, all three tines, shaft, and feet within the middle 68 percent of the canvas width and 72 percent of its height, leaving broad uninterrupted magenta padding on all four sides; flawless and unwounded, no tall water, loose water, cropped parts, fragments, or detached effects"
     },
     "death": {
       "frames": 2,
       "fps": 4,
       "loop": false,
-      "action": "two-frame non-graphic defeat facing left: Poseidon sinks to one knee, then collapses low while still gripping one complete unbroken trident; all three tines and the entire continuous shaft stay attached to his hand in both poses; the water wall lowers as one connected mass behind him; each pose stays centered inside at most 72 percent of its slot with a broad uninterrupted magenta gutter; no broken weapon, floating pieces, droplets, debris, fragments, blood, wounds, or gore"
+      "action": "two-frame non-graphic defeat facing left: Poseidon sinks to one knee, then collapses low while still gripping one complete unbroken trident; all three tines and the entire continuous shaft stay attached to his hand in both poses; the ankle-high water ribbon settles flat while remaining connected to his feet; each pose stays centered inside at most 72 percent of its slot with a broad uninterrupted magenta gutter; no tall water, broken weapon, floating pieces, droplets, debris, fragments, blood, wounds, or gore"
     }
   },
   "style": "high-detail polished grim dark-fantasy pixel art matching production Ares and Artemis density, crisp near-black outline, restrained marble bronze and deep teal palette",

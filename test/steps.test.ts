@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import cardData from "../data/cards.json" with { type: "json" };
-import { endTurnAction, run, runSteps, type Decision } from "../sim/engine";
+import godData from "../data/gods.json" with { type: "json" };
+import { endTurnAction, gods, run, runSteps, type Decision } from "../sim/engine";
 import type { ReplayAction } from "../sim/replay";
 
 /** 갈래는 이제 `"lane:type"`이다. 그 종류가 열려 있으면 고르고, 없으면 봇 답을 쓴다 */
@@ -19,6 +20,18 @@ describe("steppable engine", () => {
       step = steps.next(answer);
     }
     expect(seen).toEqual(new Set(["path", "card", "target", "rest", "rest_card", "reward", "grace", "demand"]));
+  });
+
+  /**
+   * 타이틀이 조합을 열었으므로 열 칸이 다 사람의 선택지다 — 하나라도 융합 카드가 없으면 `runSteps`가
+   * 첫 `next()`에서 던지고 화면이 통째로 빈다. `data/gods.json`을 직접 보는 이유는 UI(브라우저 모듈)를
+   * 안 끌어오기 위해서다: 두 배열이 갈리면 화면 순서와 엔진 순서가 어긋난다
+   */
+  it("starts every one of the ten pairings", () => {
+    expect(godData.map(({ id }) => id)).toEqual(gods);
+    const pairs = gods.flatMap((left, index) => gods.slice(index + 1).map((right) => [left, right] as const));
+    expect(pairs).toHaveLength(10);
+    for (const pair of pairs) expect(() => runSteps(1, undefined, pair).next(), pair.join("+")).not.toThrow();
   });
 
   it("offers three of that god's graces, each on a distinct slot", () => {

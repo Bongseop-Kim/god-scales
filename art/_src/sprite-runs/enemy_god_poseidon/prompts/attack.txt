@@ -7,7 +7,7 @@ Style contract: high-detail polished grim dark-fantasy pixel art matching produc
 
 Use this prompt as an authoritative sprite-production spec. Do not expand it into a polished illustration, painterly character image, anime key art, 3D render, vector mascot, glossy app icon, realistic portrait, or marketing artwork.
 
-Animation action: two-frame compact attack toward the left: Poseidon braces, then takes one forceful step and shoulder-shoves the solid water wall forward; in both poses the same complete symmetrical three-tined trident stays perfectly upright and vertical, gripped in both hands, with an unbroken straight shaft from fork to butt; do not rotate, swing, thrust, bend, or redesign the trident; each figure and connected water wall uses at most 68 percent of its slot width with a broad uninterrupted magenta gutter; no projectile, splash, detached weapon piece, debris, fragment, or cross-slot pixel.
+Animation action: two-frame compact attack toward the left: Poseidon braces with the complete trident upright, then takes one forceful step and thrusts that same trident toward the left; all three tines and the entire unbroken shaft remain connected and fully inside each frame; ankle-high water stays attached to his feet and never becomes a wall or projectile; each figure uses at most 68 percent of its slot width with a broad uninterrupted magenta gutter; no splash, detached weapon piece, debris, fragment, or cross-slot pixel.
 
 Anchor lock:
 - Accepted idle/direction anchors own character identity, outfit details, colors, face design, asymmetric markings, and side-specific accessories for final action rows.
@@ -24,6 +24,7 @@ Anchor lock:
 Transparency and artifact rules:
 - Prefer pose, expression, and silhouette changes over decorative effects.
 - Effects are allowed only when state-relevant, opaque, hard-edged, sprite-like, fully inside the same frame slot, and physically touching or overlapping the character silhouette.
+- Water may appear only as the approved ankle-high ribbon attached to Poseidon's feet. Never draw a tall wave, standing water wall, water slab, shield, curtain, or water backdrop.
 - Do not draw detached effects: floating stars, loose sparkles, floating punctuation, floating icons, separated smoke clouds, loose dust, disconnected outline bits, or stray pixels.
 - Do not draw wave marks, motion arcs, speed lines, action streaks, afterimages, blur, smears, halos, glows, auras, floor patches, cast shadows, contact shadows, drop shadows, oval floor shadows, landing marks, or impact bursts.
 - Do not include text, labels, frame numbers, visible grids, guide marks, speech bubbles, thought bubbles, UI panels, code snippets, scenery, checkerboard transparency, white backgrounds, or black backgrounds.

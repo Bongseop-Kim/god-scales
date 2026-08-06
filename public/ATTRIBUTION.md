@@ -1,6 +1,6 @@
 # 사용한 자산
 
-배포본은 그림 91장과 아이콘 시트 한 장(symbol 28개)을 담습니다. 외부 폰트 파일은 없고 운영체제의 시스템 폰트와 Georgia를 씁니다.
+배포본은 그림 91장과 아이콘 시트 한 장(symbol 28개), 폰트 두 벌을 담습니다.
 
 ## 그림 · 스프라이트 — 프로젝트 제작 83장
 
@@ -64,6 +64,11 @@ CC0이라 귀속 의무는 없습니다. 출처를 남기는 것은 예의이자
 | `boss` | [dragon-head](https://game-icons.net/1x1/lorc/dragon-head.html) | Lorc |
 
 패널·버튼·바는 CSS로 만들었습니다.
+
+## 폰트 — Galmuri11 (SIL OFL 1.1) 2벌
+
+Copyright (c) 2019–2025 Lee Minseo (quiple@quiple.dev), with Reserved Font Name "Galmuri".
+SIL Open Font License 1.1 — <https://openfontlicense.org> · <https://galmuri.quiple.dev>
 
 ## 사운드
 
