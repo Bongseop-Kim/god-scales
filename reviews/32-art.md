@@ -42,15 +42,37 @@
 
 **그림 쪽 결정은 다 끝나 있으므로 코드 계획은 규격만 받으면 된다** — §1 「방향」(병사 오른쪽 봄 · 적 왼쪽 봄), §3 팔레트 hex 다섯, §0 화면 크기.
 
-## `required_missing`은 에셋 상태를 재지 않는다
+## `required_missing`은 에셋 상태를 재지 않는다 — 이 계획의 게이트가 아니다
 
+```console
+$ npm run art -- --check   # 옛 기준. 이 계획의 완료 판정에 쓰지 않는다
+cards=129 present=10 required_missing=15
 ```
-npm run art -- --check   →  cards=129 present=10 required_missing=15
+
+**위 15는 남은 작업 목록이 아니다.** 이 숫자를 완료 정의로 쓰면 **영원히 통과하지 못한다.** `tools/art.ts:22`가 카드당 1장(`{cardId}.webp`, 129장)을 세는데 §3이 그 구조를 `{patron}_{tag}.webp` 30장으로 줄였다. 30장이 다 있어도 15가 나오고, 0이 되는 조건은 위 표의 폴백 코드다.
+
+계획의 완료 정의를 `identify` 기반 게이트로 바꾼 이유가 이것이다. **완료 근거는 아래 명령의 출력이다.**
+
+```console
+$ shopt -s nullglob; n=0; for f in art/{bg,cards,fx,gods,hero,props,sprites,ui}/*.png art/{bg,cards,fx,gods,hero,props,sprites,ui}/*.webp; do
+    case $f in *_idle_[0-9]*|*_attack_[0-9]*|*_death_[0-9]*|*_hit.png) continue;; esac
+    n=$((n+1)); read -r w h <<<"$(magick identify -format '%w %h' "$f")"
+    case $f in
+      art/bg/*|art/hero/*|art/fx/*) ((w > h)) || echo "가로 아님 ${w}x${h}  $f";;
+      art/gods/*)                   ((w < h)) || echo "세로 아님 ${w}x${h}  $f";;
+      art/cards/*)   [[ "${w}x${h}" == 512x384   ]] || echo "카드 규격 아님 ${w}x${h}  $f";;
+      art/props/*)   [[ "${w}x${h}" == 3584x1024 ]] || echo "프롭 규격 아님 ${w}x${h}  $f";;
+      art/sprites/player.png) [[ "${w}x${h}" == 10352x1368 ]] || echo "병사 규격 아님 ${w}x${h}  $f";;
+      art/sprites/*) [[ "${w}x${h}" == 8064x1024 ]] || echo "스트립 규격 아님 ${w}x${h}  $f";;
+    esac
+    case $f in art/fx/*|art/props/*|art/sprites/*|art/ui/marker.png)
+      [[ "$(magick "$f" -alpha extract -format '%[fx:minima<0.02?0:1]' info:)" == 0 ]] || echo "투명 픽셀 없음  $f";;
+    esac
+  done; echo "checked=$n"
+checked=83
 ```
 
-이 숫자를 완료 정의로 쓰면 **영원히 통과하지 못한다.** `tools/art.ts:22`가 카드당 1장(`{cardId}.webp`, 129장)을 세는데 §3이 그 구조를 `{patron}_{tag}.webp` 30장으로 줄였다. 30장이 다 있어도 15가 나오고, 0이 되는 조건은 위 표의 폴백 코드다.
-
-계획의 완료 정의를 `identify` 기반 게이트로 바꾼 이유가 이것이다.
+위반 줄이 하나도 안 나왔다 — 83개 전부 통과다.
 
 ## 게이트가 두 번 새어 나갔다 — 목록을 눈으로 훑었기 때문이다
 
@@ -82,7 +104,9 @@ npm run art -- --check   →  cards=129 present=10 required_missing=15
 
 [R-21](21-assets.md)의 「장당 22~31KB」가 실측과 맞는다. **89px 썸네일은 화소가 값이 아니다** — 화면을 꽉 채우는 배경·컷인·일러와 반대다. 그게 카드만 예외인 이유고, 그 하나 때문에 원본 보존 규칙 전체를 흔들지 않는다.
 
-**감수한 것:** `art/_src/cards/`가 비어 있으므로 팔레트나 구도를 바꾸려면 재생성밖에 없다. 30장이 이미 톤이 맞고 89px에서 읽히니 그 대가를 지불한다 — **재생성 비용이 얻는 것보다 크다.**
+**89×67에서 갈리는지 실제로 봤다.** 같은 신 4장을 `magick ... -resize 89x67! ... +append`로 줄여 나란히 놓고 ares·athena·zeus 셋을 확인했다. 네 장이 실루엣만으로 갈린다 — `attack`은 사선 무기, `defend`는 가로 판, `token`은 흩어진 조각, `utility`는 고리다. 세 신 다 같은 규칙이라 태그를 형태로 읽는다.
+
+**감수한 것:** `art/_src/cards/`가 비어 있으므로 팔레트나 구도를 바꾸려면 재생성밖에 없다. 30장이 이미 톤이 맞고 89px에서 읽히는 걸 확인했으니 그 대가를 지불한다 — **재생성 비용이 얻는 것보다 크다.**
 
 `art/_src/zeus_attack-1448.png`(1448×1086) 한 장만 남아 있다. 30장 중 1장이다.
 
@@ -100,7 +124,7 @@ npm run art -- --check   →  cards=129 present=10 required_missing=15
 
 `art/fx/`·`art/hero/` 6장이 1440×900으로 깎이고 원본이 없었던 게 이 계획의 시작점이었다. 재생성 때 **「생성물을 `art/_src/{경로}/`에 먼저 저장하고 나서 변환한다」**를 사이드카 명령에 박았고, 결과가 남았다:
 
-```
+```text
 art/_src/bg 4 · fx 3 · gods 5 · hero 3 · player 9 · ui 3   = 27장
 ```
 
@@ -120,4 +144,3 @@ art/_src/bg 4 · fx 3 · gods 5 · hero 3 · player 9 · ui 3   = 27장
 - **`godColors`가 아직 `ui/app.tsx:37`에 있다.** hex 정본은 §3 표로 확정됐고 카드 30장도 그것으로 그렸다 — 코드에서 지우는 것만 남았다
 - **정본 밖 사이드카 9장**
 - **카드 원본이 없다.** 감수한 값이지만 되돌릴 수 없다는 사실은 남는다
-- **`art/cards/` 아트가 89px에서 실제로 갈리는지 안 봤다.** 사이드카의 통과 기준(같은 신 4장을 89×67로 줄여 나란히 놓고 형태가 갈리는지)은 붙이는 코드와 무관하게 지금 할 수 있다 — 하지 않았다

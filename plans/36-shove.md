@@ -1,6 +1,6 @@
 # P-36 · 밀어내기 — 자리를 움직이고 자리를 읽는다
 
-`plans/36-shove.md` · [◀ P-35](35-range.md) · [색인](../reviews/00-index.md)
+`plans/36-shove.md` · [◀ P-35](35-range.md) · [색인](../reviews/00-index.md) · [P-37 ▶](37-wire.md)
 
 **크기** 작음 · **착수 조건** **P-35 완료.** 자리가 없으면 밀 곳이 없다
 

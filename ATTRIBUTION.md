@@ -6,11 +6,26 @@
 
 ## UI
 
-패널, 버튼, 바는 CSS로 직접 제작했습니다. Kenney 에셋 파일은 포함하지 않았습니다.
+패널, 버튼, 바는 CSS로 직접 제작했습니다.
 
-## 카드 일러스트 · 스프라이트 · 사운드
+## 커서 · 파티클 — Kenney (CC0)
 
-`strike.webp`, `guard.webp`, `spark.webp`는 OpenAI built-in 이미지 생성 도구로 프로젝트에서 직접 제작하고 WebP로 최적화했습니다. 최종 프롬프트는 `art/cards/PROMPTS.md`에 있습니다. 그 밖의 파일이 없을 때는 CSS placeholder 또는 무음으로 동작합니다.
+| 자리 | 팩 | 라이선스 |
+|---|---|---|
+| `art/cursor-pixel/` 220장 | [Cursor Pixel Pack](https://kenney.nl/assets/cursor-pixel-pack) | CC0 1.0 |
+| `art/particle/` 81장 | [Particle Pack](https://kenney.nl/assets/particle-pack) | CC0 1.0 |
+
+CC0이라 귀속 의무는 없습니다. 출처를 남기는 것은 예의이자 재수급 경로를 잃지 않기 위해서입니다.
+
+**두 팩 모두 배포본에는 일부만 들어갑니다** — 커서 4장, 파티클 4장. 나머지는 저장소에만 있습니다.
+
+## 그림 · 스프라이트
+
+`art/` 아래 제작 에셋 83개(스프라이트 20 · 배경 6 · 프롭 14 · 카드 30 + 프레임 1 · 신 일러 5 · 컷인 3 · 주인공 3 · 마커 1)는 이미지 생성 도구로 프로젝트에서 직접 만들었습니다. 프롬프트 정본은 `art/_src/gen-docs.mjs`이고, 파일마다 옆에 놓인 `.md` 사이드카에 최종 프롬프트가 남아 있습니다. 파일이 없을 때는 CSS placeholder로 동작합니다.
+
+## 사운드
+
+없습니다. 무음으로 동작합니다.
 
 ## 폰트
 
