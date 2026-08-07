@@ -159,14 +159,14 @@ function dslFailure(card: Card): boolean {
   /**
    * 업그레이드 예외. 값 밴드는 base만 재고(`isValueAllowed`) 올린 뒤 값은 조합 승률 하한이 본다 —
    * 여기서 보는 것은 **꼴** 둘뿐이다: 효과 델타가 카드의 효과와 같은 길이인가, `+2`까지 올린 비용이
-   * 0~3 안인가. 융합은 업그레이드 대상 밖이라(`sim/engine.ts`) 거기 적힌 `upgrade`는 죽은 데이터다
+   * 3 이하인가. 융합은 업그레이드 대상 밖이라(`sim/engine.ts`) 거기 적힌 `upgrade`는 죽은 데이터다
    */
   if (card.upgrade !== undefined) {
     const { cost, effects } = card.upgrade;
     if (card.patron_pair !== undefined) return true;
     if (effects !== undefined && (!Array.isArray(effects) || effects.length !== card.effects.length)) return true;
-    const raised = Math.max(0, card.cost + (cost ?? 0) * MAX_UPGRADE);
-    if (raised < 0 || raised > 3) return true;
+    // 아래쪽은 안 잰다 — 비용은 `upgraded`가 0에서 멈추고 배포 다섯 장이 그 자리다(cost 1 · 델타 −1)
+    if (card.cost + (cost ?? 0) * MAX_UPGRADE > 3) return true;
   }
   return card.effects.some((effect) =>
     ![...commonOps, "chain"].includes(effect.op)

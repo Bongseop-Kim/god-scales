@@ -44,7 +44,8 @@ function DeltaHistogram({ hist, steps }: { hist: Record<string, number>; steps: 
       <text x={x(-13)} y={mt + 2} textAnchor="end" className="stats-note">요구 벌 ←</text>
       <text x={x(0) + barW / 2} y={mt + 2} textAnchor="middle" className="stats-note">드리프트</text>
       <text x={x(13)} y={mt + 2} textAnchor="start" className="stats-note">→ 요구 보상</text>
-      {[lo, -12, 0, 12, hi].map((v) => <text key={v} x={x(v) + barW / 2} y={H - 8} textAnchor="middle" className="stats-axis">{v}</text>)}
+      {/* lo·hi가 ±12에 붙으면 눈금이 겹친다 — 같은 자리에 두 번 그리지 않는다 */}
+      {[...new Set([lo, -12, 0, 12, hi])].map((v) => <text key={v} x={x(v) + barW / 2} y={H - 8} textAnchor="middle" className="stats-axis">{v}</text>)}
       {entries.map(([delta, count]) => (
         <rect key={delta} x={x(delta)} y={y(count)} width={barW} height={H - mb - y(count)} rx={1}
           className={Math.abs(delta) >= 12 ? "stats-bar-strong" : "stats-bar"}>
@@ -180,10 +181,13 @@ export function StatsPage({ data }: { data: StatsPayload }) {
   const { meta, favor, clear, winVsLoss } = data;
   const defeatTotal = Object.values(clear.defeatByFloor).reduce((sum, count) => sum + count, 0) || 1;
   const clearKeys = Object.keys(clear.encounterClearRate).sort(byFloor);
+  // 조합 수는 행렬의 축이 든다 — `simulateStratified`의 짝이 곧 이 축이라 신이 늘면 캡션이 따라 움직인다
+  const godCount = Object.keys(clear.winRateMatrix).length;
+  const pairings = (godCount * (godCount - 1)) / 2;
   return (
     <div className="stats-page">
       <header>
-        <p className="eyebrow">결정론 층화 시뮬 · 조합 10 × 시드 {meta.runs / 10} · 봇 {meta.botPolicyVersion}</p>
+        <p className="eyebrow">결정론 층화 시뮬 · 조합 {pairings} × 시드 {meta.runs / pairings} · 봇 {meta.botPolicyVersion}</p>
         <h1>시뮬 통계</h1>
         <p className="stats-lead">
           룰 봇 {meta.runs}런의 실측. 판정은 여기 없다 — 밸런스 게이트는 <code>npm run tune</code> 하나다.
@@ -216,7 +220,7 @@ export function StatsPage({ data }: { data: StatsPayload }) {
       <section>
         <h2>클리어 / 실패</h2>
         <figure className="stats-panel">
-          <figcaption><b>조합 승률</b> · 신 5 × 5</figcaption>
+          <figcaption><b>조합 승률</b> · 신 {godCount} × {godCount}</figcaption>
           <PairingMatrix matrix={clear.winRateMatrix} />
         </figure>
         <div className="stats-cols">

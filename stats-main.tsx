@@ -14,4 +14,8 @@ const render = (node: ReactNode) => root.render(<StrictMode>{node}</StrictMode>)
 fetch("./stats.json")
   .then((response) => { if (!response.ok) throw new Error(String(response.status)); return response.json(); })
   .then((data: StatsPayload) => render(<StatsPage data={data} />))
-  .catch(() => render(<p className="stats-missing"><code>stats.json</code>이 없습니다 — <code>npm run stats</code>를 먼저 돌리세요.</p>));
+  // 없는 것만이 아니라 깨진 JSON도 여기로 온다 — 문구는 하나지만 원인은 콘솔에 남긴다
+  .catch((error: unknown) => {
+    console.error(error);
+    render(<p className="stats-missing"><code>stats.json</code>이 없습니다 — <code>npm run stats</code>를 먼저 돌리세요.</p>);
+  });
