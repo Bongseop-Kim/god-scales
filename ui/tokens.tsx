@@ -96,5 +96,6 @@ export function TokenRow({ tokens, limit = 4 }: { tokens: Tokens; limit?: number
 }
 
 export function TokenLegend() {
-  return (Object.keys(tokenStyle) as TokenName[]).map((token) => <TokenBadge key={token} token={token} />);
+  const reducedMotion = useReducedMotion();
+  return (Object.keys(tokenStyle) as TokenName[]).map((token) => <TokenBadge key={token} token={token} still={!!reducedMotion} />);
 }

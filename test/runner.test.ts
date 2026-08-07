@@ -31,8 +31,10 @@ describe("headless runner", () => {
     expect(run(old.seed, undefined, old.actions, old.patrons).pairing).toBe("zeus+athena");
     expect(readReplay(write("pair", { ...base, patrons: ["ares", "artemis"] })).patrons).toEqual(["ares", "artemis"]);
 
-    for (const patrons of [["zeus"], ["zeus", "athena", "ares"], ["zeus", "zeus"], ["zeus", "hades"]]) {
-      expect(() => readReplay(write(patrons.join("-"), { ...base, patrons })), patrons.join("+")).toThrow(/Invalid patrons/);
+    // `null`과 배열 아닌 값도 반려다 — 통과시키면 `patrons.length`·`.every`가 파일을 읽는 자리에서 터진다
+    const bad = [["zeus"], ["zeus", "athena", "ares"], ["zeus", "zeus"], ["zeus", "hades"], null, "za", { 0: "zeus", 1: "athena", length: 2 }];
+    for (const [index, patrons] of bad.entries()) {
+      expect(() => readReplay(write(`bad-${index}`, { ...base, patrons })), JSON.stringify(patrons)).toThrow(/Invalid patrons/);
     }
   });
 });

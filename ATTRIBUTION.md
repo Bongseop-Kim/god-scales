@@ -33,7 +33,7 @@ CC0이라 귀속 의무는 없습니다. 출처를 남기는 것은 예의이자
 |---|---|---|
 | 화면 전체 | `ui/fonts/Galmuri11.woff2` · `Galmuri11-Bold.woff2` | [SIL OFL 1.1](ui/fonts/LICENSE.txt) |
 
-Copyright (c) 2019–2025 Lee Minseo (quiple@quiple.dev), with Reserved Font Name "Galmuri".
+Copyright (c) 2019–2025 Lee Minseo (quiple@quiple.dev).
 받은 곳: <https://galmuri.quiple.dev>
 
 OFL은 저작권 고지 유지를 요구합니다 — 위 고지와 `ui/fonts/LICENSE.txt`가 그 자리입니다.

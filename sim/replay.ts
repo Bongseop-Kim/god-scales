@@ -27,7 +27,7 @@ export function readReplay(path: string): ReplayFile {
   }
   // 조합이 어긋나면 시작 덱이 달라 카드 id가 손에 없다 — 봇이 대신 답하며 조용히 다른 게임이 된다
   const { patrons } = replay;
-  if (patrons && !(patrons.length === 2 && patrons[0] !== patrons[1] && patrons.every((god) => gods.includes(god)))) {
+  if (patrons !== undefined && !(Array.isArray(patrons) && patrons.length === 2 && patrons[0] !== patrons[1] && patrons.every((god) => gods.includes(god)))) {
     throw new Error(`Invalid patrons: ${path}`);
   }
   // 열 장 · 존재하는 id · tier1 patron 카드 안 — 셋을 `deckOk` 하나가 잰다(`sim/engine.ts`)

@@ -162,7 +162,7 @@ function dslFailure(card: Card): boolean {
     if (card.target === "self") return true;
   }
   // 같은 이유로 자리 조건은 적을 가리켜야 한다 — 자기 대상 카드의 대상은 플레이어고 플레이어에게는 칸이 없다
-  if (card.target === "self" && card.effects.some(({ when }) => when?.startsWith("slot(target)"))) return true;
+  if (card.target === "self" && card.effects.some(({ when }) => typeof when === "string" && when.startsWith("slot(target)"))) return true;
   // 한 칸짜리 사거리에서는 연쇄가 닿을 곳이 없다 — `loadCards`가 낼 때 던지는 자리를 여기서 잡는다
   if (card.effects.some(({ op }) => op === "chain") && reachSlots(card.reach).length < 2) return true;
   return card.effects.some((effect) =>
@@ -617,9 +617,11 @@ export function validateItems(items: Item[], basePool: Card[] = []): { accepted:
    */
   const pools = Object.fromEntries(Object.keys(gods).flatMap((god) => {
     const owned = survivors.filter((card) => card.patron === god);
+    // 비율은 은혜까지 넣어 잰다 — `poolRejects`가 거는 값과 같아야 보고가 `pool_ratio` 반려를 설명한다
+    const { ratio } = poolStat([...owned, ...graces.filter((grace) => grace.patron === god && grace.tier === graceRatioTier).map(graceAsCard)]);
     return Object.keys(poolValueMax).flatMap((tier) => {
       const step = owned.filter((card) => cardTier(card) === Number(tier));
-      return step.length > 0 ? [[`${god}:${tier}`, { ...poolStat(step), ratio: poolStat(owned).ratio }] as const] : [];
+      return step.length > 0 ? [[`${god}:${tier}`, { ...poolStat(step), ratio }] as const] : [];
     });
   }));
 

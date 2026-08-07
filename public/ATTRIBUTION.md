@@ -15,7 +15,7 @@
 | 주인공 일러 | 3 |
 | 카드 프레임 · 지도 마커 | 2 |
 
-이미지 생성 도구로 프로젝트에서 직접 만들었습니다. 프롬프트 정본은 `art/_src/gen-docs.mjs`이고 파일마다 옆에 `.md` 사이드카가 있습니다. 카드 129장은 이 30장이 `{patron}_{tag}`·`card_fused_*`로 덮고, 파일이 없을 때는 CSS placeholder로 동작합니다.
+이미지 생성 도구로 프로젝트에서 직접 만들었습니다. 프롬프트 정본은 `art/_src/gen-docs.mjs`이고 파일마다 옆에 `.md` 사이드카가 있습니다. 카드 149장은 이 30장이 `{patron}_{tag}`·`card_fused_*`로 덮고, 파일이 없을 때는 CSS placeholder로 동작합니다.
 
 ## 커서 · 파티클 — Kenney (CC0) 8장
 
@@ -67,8 +67,8 @@ CC0이라 귀속 의무는 없습니다. 출처를 남기는 것은 예의이자
 
 ## 폰트 — Galmuri11 (SIL OFL 1.1) 2벌
 
-Copyright (c) 2019–2025 Lee Minseo (quiple@quiple.dev), with Reserved Font Name "Galmuri".
-SIL Open Font License 1.1 — <https://openfontlicense.org> · <https://galmuri.quiple.dev>
+Copyright (c) 2019–2025 Lee Minseo (quiple@quiple.dev).
+SIL Open Font License 1.1 — 전문은 배포본에 함께 실린 [`Galmuri11-LICENSE.txt`](Galmuri11-LICENSE.txt)에 있다(OFL 조항 2가 요구하는 자리다) · <https://galmuri.quiple.dev>
 
 ## 사운드
 
