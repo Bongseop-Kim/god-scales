@@ -1,5 +1,6 @@
 import { finishRestFavor } from "./favor.ts";
 import { createRng } from "./rng.ts";
+import { upgradeId } from "./rules.ts";
 import type { GameState } from "./state.ts";
 
 export const regions = ["underworld", "surface"] as const;
@@ -19,7 +20,12 @@ export const laneCount = 3;
  */
 export const bossLane = 1;
 export const restHealing = 25;
-export const enemyDamageScale = 0.55;
+/**
+ * 0.55 → **0.38**(P-41) — 조우가 1.7인에서 4인이 되어 때리는 입이 2.3배가 됐다. 개체 damage를 인원만큼
+ * 내려도 `Math.ceil`이 네 번 올림해 한 턴 피해가 그대로 오른다: 이 배율이 그 몫을 되돌린다.
+ * 값은 (체력 배수 × 피해 배율) 격자 25점 실측에서 일곱 지표가 동시에 서는 유일한 행이다(reviews/41-pack.md §밸런싱)
+ */
+export const enemyDamageScale = 0.38;
 export type MapNodeType = "combat" | "elite" | "rest" | "omen" | "boss";
 /** `[depth][lane]`. `null`은 그 갈래에 칸이 없다는 뜻이다 — 보스 층이 유일하다 */
 export type MapGrid = (MapNodeType | null)[][];
@@ -163,18 +169,24 @@ export function advanceMap(state: GameState): void {
   state.map.depth += 1;
 }
 
+/**
+ * 3택이다. **강화는 덱의 그 자리를 `+N` 붙은 id로 바꾼다** — 지우는 것이 아니라 갈아 끼우는 것이라
+ * 덱 길이가 그대로고, 그래야 자유 모드의 열 장이 열 장으로 남는다([P-40](../reviews/40-free.md)).
+ * 상한과 융합 제외는 호출자가 `options`로 거른다 — 여기서는 레벨 상한만 문자열로 막는다
+ */
 export function takeRest(
   state: GameState,
   patrons: string[],
   deck: string[],
-  choice: "heal" | "remove",
+  choice: "heal" | "remove" | "upgrade",
   cardId?: string,
 ): void {
   if (choice === "heal") state.combat.player.hp = Math.min(state.combat.player.maxHp, state.combat.player.hp + restHealing);
   else {
     const index = deck.indexOf(cardId ?? "");
-    if (index < 0) throw new Error(`Cannot remove card: ${cardId ?? "none"}`);
-    deck.splice(index, 1);
+    if (index < 0) throw new Error(`Cannot ${choice} card: ${cardId ?? "none"}`);
+    if (choice === "remove") deck.splice(index, 1);
+    else deck[index] = upgradeId(deck[index]);
   }
   finishRestFavor(state.favor, patrons);
 }

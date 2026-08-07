@@ -11,11 +11,15 @@ export const reachOk = (reach: string): boolean =>
 
 /**
  * 사거리 안에 살아 있는 적. **칸은 배열 인덱스다** — `EnemyState`에 `slot`을 넣으면 두 번째 진실이 된다.
- * 죽은 적은 자리를 비운 채 배열에 남으므로 아무도 밀려 오지 않는다(StS와 같다)
+ * 죽은 적은 자리를 비운 채 배열에 남으므로 아무도 밀려 오지 않는다(StS와 같다).
+ *
+ * 두 칸을 차지한 적은 **같은 참조가 두 칸에** 있다 — 여기 한 곳에서 동일성으로 지우면 `resolveTargets`·
+ * `resolveChainTargets`·`canReachTarget`이 전부 따라온다. 안 지우면 `all_enemies`가 보스를 두 번 때린다.
+ * 지운 뒤에도 사거리 `0`·`1`이 둘 다 그 적에 닿는다: 걸러 낸 **뒤에** 지우기 때문이다
  */
 export function livingInReach(combat: CombatState, reach?: string): EnemyState[] {
   const slots = reachSlots(reach);
-  return combat.enemies.filter((enemy, slot) => enemy.hp > 0 && slots.includes(slot));
+  return [...new Set(combat.enemies.filter((enemy, slot) => enemy.hp > 0 && slots.includes(slot)))];
 }
 
 /**

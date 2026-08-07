@@ -38,7 +38,7 @@ const phases = ["path", "card", "target", "rest", "rest_card", "reward", "grace"
  * 않는다(두 번째 진실이 생긴다). 대신 사람이 화면만 보고 낼 법한 최소한의 규칙을 쓴다:
  *
  * - 갈림길: 열린 갈래에 쉼터가 있으면 쉼터, 없으면 첫 칸
- * - 휴식: 첫 번째만 카드 제거(그래야 `rest_card`를 지난다), 이후는 회복
+ * - 휴식: 첫 번째는 카드 제거(그래야 `rest_card`를 지난다), 두 번째는 강화, 이후는 회복
  * - 요구: 수락
  * - 은혜: 첫 후보 — 3택1이 카드가 아니라 `button.choice` 셋이 됐다(P-28). 빈 슬롯이 먼저 서므로 첫 칸이다
  * - 표적: 체력이 가장 낮은 적 — 동점이면 화면 순서
@@ -162,7 +162,9 @@ await tab.evaluate(() => {
         // 걸려 있어 우선순위가 바뀌면 런의 모양이 바뀌고 CLI ↔ 브라우저가 다른 경로를 비교한다
         ? [document.querySelector("button.map-node.open.rest") ?? enabled("button.map-node.open")[0]]
         : phase === "rest"
-        ? [enabled("button.choice")[driver.rests++ === 0 ? 1 : 0]]
+        // 제거 → 강화 → 회복 순. 백틱은 이 스크립트가 템플릿 문자열이라 못 쓴다.
+        // 강화 칸이 안 서는 덱이면 회복으로 떨어진다 — 화면이 실은 답만 누른다
+        ? [enabled("button.choice")[[1, 2][driver.rests++] ?? 0] ?? enabled("button.choice")[0]]
         : phase === "demand" || phase === "grace"
         ? [enabled("button.choice")[0]]
         : phase === "target"

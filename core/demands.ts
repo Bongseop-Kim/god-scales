@@ -9,7 +9,8 @@ export type PenaltyKey = "rival_18" | "non_rival_9" | "none";
  * 눈금으로 바꾸는 상수를 만들지 않아도 된다. `maxHp`는 `encounters` 조우 동안 붙는다
  */
 export type DemandCost = { favor?: number; maxHp?: number; encounters?: number };
-export type DemandReward = { favor?: number; grace?: number };
+/** 서열은 사전식 한 줄이다 — 은혜 > 업그레이드 > 호의(`tools/validate.ts`의 `rewardRises`) */
+export type DemandReward = { favor?: number; grace?: number; upgrade?: number };
 /** 한 단. `text`가 화면에 나가는 문장이고 `condition`은 사람이 읽을 것이 아니다 */
 export type DemandTier = { text: string; condition: string; cost?: DemandCost; reward: DemandReward };
 export type Demand = {

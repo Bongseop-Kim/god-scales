@@ -1,12 +1,15 @@
 import { readFileSync } from "node:fs";
 import { deckOk, gods, type PatronPair } from "./engine.ts";
 
+/** 휴식처의 3택. `"upgrade"`는 P-44가 더한 자리고 옛 로그에는 없다 — 없으면 그냥 안 나올 뿐이다 */
+export type RestChoice = "heal" | "remove" | "upgrade";
+
 export type ReplayAction =
   /** `"1:elite"` — 갈래와 종류. P-27 이전의 `"combat"`은 어느 갈래였는지 정보를 안 갖는다 */
   | { type: "path"; choice: string }
   | { type: "card"; choice: string }
   | { type: "target"; choice: string }
-  | { type: "rest"; choice: "heal" | "remove" }
+  | { type: "rest"; choice: RestChoice }
   | { type: "rest_card"; choice: string }
   | { type: "grace"; choice: string }
   /** `"tier1"`(수락) · `"tier2"`(시련) · `"reject"`. `"accept"` 별칭은 남기지 않았다 — R-27이 옛 로그를 아카이브했다 */

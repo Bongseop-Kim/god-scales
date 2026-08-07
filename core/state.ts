@@ -7,9 +7,13 @@ export type CardId = string;
 /**
  * 토큰 어휘. 스택 방식은 소모하는 자리(`consumeToken`·`tickBleed`·`dealDamage`)가 정하고 여기서는
  * 세지 않는다 — 분류를 표로 두면 읽는 코드가 없어 주석과 다를 게 없다. `mark`만 비스택(켜짐/꺼짐),
- * `thorns`만 소모되지 않는다. 만료형(턴 수)은 아직 없다
+ * `thorns`·`might`만 소모되지 않는다. 만료형(턴 수)은 아직 없다.
+ *
+ * `drain`·`fog`는 **플레이어에게만 뜻이 있다** — 소모 자리가 `startTurn`의 에너지·뽑기 한 줄뿐이라
+ * 적에게 붙으면 `displace`가 플레이어에게 붙은 것과 같은 죽은 토큰이다. `selfTokens`에 없으므로
+ * 카드가 이것을 적는 순간 적에게 날아간다: 신 어휘(`data/gods.json`)에 넣지 않는 것이 그 잠금이다
  */
-export const tokenNames = ["shock", "displace", "soaked", "bulwark", "deflect", "bleed", "frenzy", "mark", "crit", "thorns"] as const;
+export const tokenNames = ["shock", "displace", "soaked", "bulwark", "deflect", "bleed", "frenzy", "mark", "crit", "thorns", "might", "drain", "fog"] as const;
 
 export type TokenName = (typeof tokenNames)[number];
 export type Tokens = Partial<Record<TokenName, number>>;
@@ -66,6 +70,12 @@ export type CombatState = {
   pending: string[];
   /** 낸 순서대로. 같은 파워를 두 번 내면 두 개 등록된다(StS와 같다) — 덱에 두 장 넣는 것 자체가 비용이다 */
   powers: Power[];
+  /**
+   * 이번 턴에 낸 것. `startTurn`이 0으로 돌리고 `playCard`가 센다 — 조건 셋이 이것만 읽는다.
+   * **내는 카드가 자기를 센다**: `cards_played_in_turn >= 3`은 「이번 턴 세 번째 카드부터」다.
+   * 파워 발동은 세지 않는다 — 카드를 낸 것이 아니다
+   */
+  turnPlays: { cards_played: number; attacks: number; energy_spent: number };
 };
 
 export type GameState = {

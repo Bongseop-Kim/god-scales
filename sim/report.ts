@@ -4,6 +4,7 @@ import { globalParamVersion } from "../core/favor.ts";
 import type { GraceHeld } from "../core/grace.ts";
 import type { MapGrid } from "../core/map.ts";
 import { botPolicyVersion } from "./bots/rule.ts";
+import type { RestChoice } from "./replay.ts";
 
 export type RunResult = {
   won: boolean;
@@ -20,7 +21,7 @@ export type RunResult = {
   hpCurve: number[];
   /** `"1:elite"` 꼴 — 갈래와 종류를 같이 든다 */
   pathChoices: string[];
-  restChoices: ("heal" | "remove")[];
+  restChoices: RestChoice[];
   regionsCleared: string[];
   /** 신별 은혜 획득 수 */
   grace: Record<string, number>;

@@ -380,6 +380,7 @@ function SetupScreen({
         </button>
       </div>
       <p className="hint">갈림길·카드·대상·보상·휴식·은혜·요구를 전부 당신이 고릅니다. 룰 봇이 대신 정하는 것은 없습니다.</p>
+      <p className="hint"><a href="./stats.html">시뮬 통계 →</a></p>
       </form>
     </>
   );

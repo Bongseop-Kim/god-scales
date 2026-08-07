@@ -154,8 +154,9 @@ button:not(:disabled):hover { border-color: #c6a969; }
 /* 색만으로 진영을 말하면 색각 이상에서 사라진다 — 해로움은 채움, 이로움은 외곽이다 */
 .token-badge.boon { color: var(--boon); }
 .token-badge.harmful { color: var(--bane); background: color-mix(in srgb, var(--bane) 30%, #181c27); }
-/* 지속 셋: 이번 턴은 점선, 1회 소모는 기본, 전투 내내는 고리 하나 더 */
+/* 지속 넷: 이번 턴은 점선, 다음 턴은 파선, 1회 소모는 기본, 전투 내내는 고리 하나 더 */
 .token-badge.turn { border-style: dotted; }
+.token-badge.next { border-style: dashed; }
 .token-badge.combat { outline: 1px solid color-mix(in srgb, currentColor 60%, transparent); outline-offset: 2px; }
 /**
  * 아이콘 28개는 `art/icons.svg` 한 장에서 온다. **`display: none`으로 감추지 않는다** — 시트가 그
@@ -253,6 +254,11 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
  * `▮▯▯▮` 사거리가 무엇을 가리키는지 화면에서 못 읽는다. 점선이 「여기 아무도 없다」를 말한다
  */
 .enemy.empty { margin: 0; padding: 8px 14px; border: 1px dashed #2b3040; border-radius: 14px; color: #4e5566; font-size: .74rem; }
+/**
+ * 두 칸을 차지한 적(보스). 칸 수는 `grid-row: span`이 인라인으로 들고 여기는 **그만큼의 높이**만 준다 —
+ * 자동 행은 내용 높이라 span만으로는 아무것도 안 커지고, 그러면 판이 두 칸이라는 사실이 화면에 없다
+ */
+.enemy.wide { min-height: 220px; border-color: #6d4b52; }
 .enemy .actor-tokens { grid-column: 1 / -1; }
 /**
  * 빈 줄은 자리를 안 먹는다. **`TokenRow`가 `null`을 돌려주지 않는 이유가 여기 있다** — 컨테이너가

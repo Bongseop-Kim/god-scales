@@ -3,15 +3,15 @@
   "name": "없는 패시브를 든 적",
   "region": "underworld",
   "tier": "normal",
-  "role": "pressure",
-  "hp": 40,
+  "role": "brute",
+  "hp": 25,
   "intent_visible": true,
   "passives": { "hardened": 2 },
   "pattern": [
-    { "op": "damage", "value": 10 }
+    { "op": "damage", "value": 1 }
   ],
   "pattern_mode": "cycle",
   "groups": [
-    { "id": "group_bad_passive_solo", "with": [] }
+    { "id": "group_bad_passive_wall", "with": ["enemy_under_swarm", "enemy_under_pressure", "enemy_under_zealot"] }
   ]
 }

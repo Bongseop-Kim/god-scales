@@ -20,8 +20,16 @@ const wrap = (combat: CombatState): GameState => ({ seed: 1, combat, favor: {}, 
 const dummy = (id: string, hp = 30): EnemyDefinition => ({ id, hp, pattern: [{ block: 1 }] });
 const strike = (reach?: string, effects: Card["effects"] = [{ op: "damage", value: 6 }]): Card =>
   ({ id: "strike", name: "타격", patron: "ares", cost: 1, target: "enemy", effects, tags: ["attack"], ...(reach ? { reach } : {}) });
-/** 칸 0·3에 하나씩. 「빈 칸으로 들어오는 신」과 「지킴이를 지나가는 카드」가 같은 판을 쓴다 */
-const endsBoard = () => createCombat(1, [], [dummy("front"), null, null, dummy("back")]);
+/**
+ * 칸 0·3에 산 적 하나씩, 가운데 둘은 **시체**다. 편성은 칸 0부터 붙여 채우므로(P-41) 판 가운데의
+ * 구멍은 이제 죽음으로만 생긴다 — 「빈 칸으로 들어오는 신」과 「지킴이를 지나가는 카드」가 같은 판을 쓴다
+ */
+const endsBoard = () => {
+  const combat = createCombat(1, [], [dummy("front"), dummy("mid1"), dummy("mid2"), dummy("back")]);
+  combat.enemies[1].hp = 0;
+  combat.enemies[2].hp = 0;
+  return combat;
+};
 
 describe("reach", () => {
   it("parses the nine shapes and refuses everything else", () => {
@@ -93,16 +101,23 @@ describe("slots", () => {
       .toEqual([[0, true], [0, true], [0, true]]);
   });
 
-  it("rejects a lineup whose role does not fit its slot", () => {
+  /**
+   * 자리 규칙은 칸 번호 표가 아니라 **순서 하나**다(P-41) — 앞줄 역할이 뒷줄 역할보다 뒤에 서면 반려.
+   * 뿌리가 칸 0이라 「뒷줄 역할은 편성을 소유할 수 없다」가 그 첫 항으로 그대로 따라온다
+   */
+  it("rejects a lineup that stands a front role behind a back role", () => {
     const back = {
       id: "enemy_under_pressure", name: "뒷줄", region: "underworld", tier: "normal", role: "pressure",
       hp: 40, intent_visible: true, pattern: [{ op: "damage", value: 10 }], pattern_mode: "cycle",
-      // 뿌리는 칸 0이다 — 뒷줄 역할이 편성을 소유하면 앞칸에 서게 된다
-      groups: [{ id: "group_bad_slot", with: [] }],
+      // 뿌리가 압박(뒷줄)인데 칸 1에 난동(앞줄)이 선다 — 순서가 뒤집혔다
+      groups: [{ id: "group_bad_slot", with: ["enemy_under_brute", "enemy_under_swarm", "enemy_under_zealot"] }],
     };
     expect(validateItems([back]).rejected).toEqual([{ id: "enemy_under_pressure", failure: "slot_scope" }]);
-    // 다섯째 칸을 적은 편성도 같은 자리에서 걸린다
-    const wide = { ...back, role: "brute", groups: [{ id: "group_wide", with: [null, null, null, "enemy_under_zealot"] }] };
+    // 같은 넷을 앞줄 셋 · 뒷줄 하나로 세우면 순서가 맞는다 — 세기는 `value_outlier`가 따로 본다
+    const ordered = { ...back, role: "brute", groups: [{ id: "group_ok_slot", with: ["enemy_under_swarm", "enemy_under_attrition", "enemy_under_zealot"] }] };
+    expect(validateItems([ordered]).rejected.map(({ failure }) => failure)).toEqual(["value_outlier"]);
+    // 다섯째 칸을 적은 편성은 여전히 자리에서 걸린다
+    const wide = { ...back, role: "brute", groups: [{ id: "group_wide", with: ["a", "b", "c", "enemy_under_zealot"] }] };
     expect(validateItems([wide]).rejected).toEqual([{ id: "enemy_under_pressure", failure: "slot_scope" }]);
   });
 
@@ -135,7 +150,7 @@ describe("shove", () => {
     combat.enemies[0].tokens.displace = 1;
     endTurn(wrap(combat), idle("front", "back"));
     // 뒤가 비어 있어도 맞바꿈이다. 칸 0이 비는 것은 이동도 마찬가지다 — 다른 것은 아래 시체다
-    expect(ids(combat)).toEqual(["empty_1", "front", "empty_2", "back"]);
+    expect(ids(combat)).toEqual(["mid1", "front", "mid2", "back"]);
     expect(combat.enemies.filter(({ hp }) => hp <= 0)).toHaveLength(2);
   });
 
@@ -154,7 +169,7 @@ describe("shove", () => {
     const combat = endsBoard();
     combat.enemies[3].tokens.displace = 1;
     endTurn(wrap(combat), idle("front", "back"));
-    expect(ids(combat)).toEqual(["front", "empty_1", "empty_2", "back"]);
+    expect(ids(combat)).toEqual(["front", "mid1", "mid2", "back"]);
     expect(combat.enemies[3].tokens.displace).toBeUndefined();
     expect(combat.enemies[3].patternIndex, "쉬는 것은 그대로다").toBe(0);
   });
@@ -213,7 +228,7 @@ describe("god admission", () => {
     admitPending(combat, definitions(godDefinition(godEnemyId("zeus"))));
     expect(combat.pending).toEqual([]);
     // 빈 칸이 여럿이면 가장 앞이다 — 칸 1이 비어 있고 칸 2도 비어 있다
-    expect(combat.enemies.map(({ id }) => id)).toEqual(["front", godEnemyId("zeus"), "empty_2", "back"]);
+    expect(combat.enemies.map(({ id }) => id)).toEqual(["front", godEnemyId("zeus"), "mid2", "back"]);
     // 이미 판에 서 있는 신은 다시 큐에 안 들어간다
     applyFavorStageEffects(state, zeus);
     expect(combat.pending).toEqual([]);
@@ -275,5 +290,69 @@ describe("god admission", () => {
     const broken = structuredClone(gods[0]) as FavorGod & { id: string };
     broken.stage_effects.wrath!.on_encounter_start = [{ op: "join", god: "hades", target: "self" } as never];
     expect(validateItems([broken as never]).rejected).toEqual([{ id: "zeus", failure: "token_scope" }]);
+  });
+});
+
+/**
+ * 두 칸을 차지하는 적. **같은 `EnemyState` 참조가 칸 0과 1 양쪽에 선다** — 체력·토큰·패턴이 하나라
+ * 두 번째 진실이 안 생기고, 대가는 순회 다섯 곳의 중복 제거뿐이다(`core/combat.ts`의 `actors`)
+ */
+describe("two-slot enemy", () => {
+  const boss = (id = "boss", hp = 60): EnemyDefinition => ({ id, hp, pattern: [{ damage: 5 }], size: 2 });
+  const ids = (combat: CombatState) => combat.enemies.map(({ id }) => id);
+
+  it("stands the same object in both slots and leaves the rest empty", () => {
+    const combat = createCombat(1, [], [boss()]);
+    expect(ids(combat)).toEqual(["boss", "boss", "empty_2", "empty_3"]);
+    expect(combat.enemies[0], "칸 0과 1은 같은 객체다 — 체력 막대가 하나다").toBe(combat.enemies[1]);
+    // 칸 합이 판을 넘으면 지금처럼 던진다 — 두 칸짜리 둘은 넷을 채우고 셋째는 다섯째 칸이다
+    expect(() => createCombat(1, [], [boss("a"), boss("b"), boss("c")])).toThrow(/needs 6 slots/);
+  });
+
+  it("is reached from either slot and takes the damage once", () => {
+    const combat = createCombat(1, [], [boss()]);
+    for (const reach of ["0", "1", "01", "12", undefined]) {
+      expect(livingInReach(combat, reach).map(({ id }) => id), reach ?? "0123").toEqual(["boss"]);
+    }
+    // 사거리 `23`은 빈 칸 둘뿐이라 닿지 않는다 — 두 칸짜리라도 판 전체를 덮지는 않는다
+    expect(livingInReach(combat, "23")).toEqual([]);
+    // 광역이 두 번 때리면 두 칸짜리는 체력이 반값이다. `livingInReach` 한 곳의 중복 제거가 그것을 막는다
+    executeCard(wrap(combat), { ...strike(), target: "all_enemies" }, undefined);
+    expect(combat.enemies[0].hp).toBe(54);
+  });
+
+  it("acts once a turn and bleeds once", () => {
+    const combat = createCombat(1, [], [boss()]);
+    combat.enemies[0].tokens.bleed = 2;
+    endTurn(wrap(combat), new Map([["boss", { id: "boss", hp: 60, pattern: [{ damage: 5 }] } as EnemyDefinition]]));
+    // 배열을 그대로 돌면 여기가 90이고 이 계획은 난이도 개편이 된다
+    expect(combat.player.hp).toBe(95);
+    expect(combat.enemies[0].hp, "출혈도 한 번이다").toBe(58);
+  });
+
+  it("burns the displace token without moving", () => {
+    const combat = createCombat(1, [], [boss()]);
+    combat.enemies[0].tokens.displace = 1;
+    endTurn(wrap(combat), new Map([["boss", { id: "boss", hp: 60, pattern: [{ damage: 5 }] } as EnemyDefinition]]));
+    // 자리는 그대로고 토큰은 소모된다 — 맨 뒤 불발과 같은 자리다. 밀린 턴은 쉰다
+    expect(ids(combat)).toEqual(["boss", "boss", "empty_2", "empty_3"]);
+    expect(combat.enemies[0].tokens.displace).toBeUndefined();
+    expect(combat.player.hp).toBe(100);
+  });
+
+  it("frees both slots when it dies and admits the waiting god at the front", () => {
+    const combat = createCombat(1, [], [boss()]);
+    const state = wrap(combat);
+    queueEnemy(combat, "enemy_god_ares");
+    combat.enemies[0].hp = 0;
+    endTurn(state, new Map([["enemy_god_ares", { id: "enemy_god_ares", hp: 60, pattern: [{ damage: 5 }] } as EnemyDefinition]]));
+    expect(ids(combat)).toEqual(["enemy_god_ares", "boss", "empty_2", "empty_3"]);
+    expect(combat.outcome).toBe("ongoing");
+  });
+
+  it("ships the region bosses two slots wide", () => {
+    const enemies = JSON.parse(readFileSync("data/enemies.json", "utf8")) as { id: string; tier: string }[];
+    const bosses = enemies.filter(({ tier }) => tier === "boss").map(({ id }) => id);
+    expect(bosses).toHaveLength(2);
   });
 });

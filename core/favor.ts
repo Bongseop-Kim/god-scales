@@ -1,4 +1,4 @@
-import { queueEnemy } from "./combat.ts";
+import { actors, queueEnemy } from "./combat.ts";
 import { addToken, dealDamage, type Effect } from "./rules.ts";
 import type { ActorState, GameState } from "./state.ts";
 
@@ -99,7 +99,8 @@ export function finishRestFavor(favor: Record<string, number>, patrons: string[]
 
 function targets(state: GameState, target: StageEffect["target"]): ActorState[] {
   if (target === "self") return [state.combat.player];
-  const enemies = state.combat.enemies.filter(({ hp }) => hp > 0);
+  // 두 칸짜리는 같은 참조가 두 칸에 있다 — 안 지우면 진노의 `all_enemies`가 보스를 두 번 친다
+  const enemies = actors(state.combat).filter(({ hp }) => hp > 0);
   return target === "enemy" ? enemies.slice(0, 1) : enemies;
 }
 

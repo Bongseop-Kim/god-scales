@@ -5,16 +5,16 @@ import { tierEnemies } from "../core/demands.ts";
 import { godEnemyId } from "../core/favor.ts";
 import { graceMilestones, graceSlots } from "../core/grace.ts";
 import { floorsPerRegion } from "../core/map.ts";
-import { enemyOnlyTokens, harmfulTokens, selfTokens } from "../core/rules.ts";
+import { conditionPatterns, enemyOnlyTokens, harmfulTokens, MAX_UPGRADE, selfTokens } from "../core/rules.ts";
 import { passiveNames, triggers, type Passives } from "../core/state.ts";
-import { reachOk, reachSlots } from "../core/targeting.ts";
+import { fullReach, reachOk, reachSlots } from "../core/targeting.ts";
 import { cardTier, expectedValue, graceBand, graceValue, isValueAllowed, mitigationTokens, mitigationValue, slotCards, tokenWeights } from "./value.ts";
 
 export type FailureKey = "schema" | "dsl_parse" | "token_scope" | "fusion_scope" | "demand_axis" | "duplicate" | "value_outlier" | "pool_ratio" | "passive_coverage" | "map_layout" | "slot_scope";
 type Item = Record<string, unknown>;
-type Card = Item & { id: string; name: string; patron?: string; patron_pair?: string[]; cost: number; target: string; effects: Effect[]; tags: string[]; trigger?: string; reach?: string; tier?: number };
+type Card = Item & { id: string; name: string; patron?: string; patron_pair?: string[]; cost: number; target: string; effects: Effect[]; tags: string[]; trigger?: string; reach?: string; tier?: number; upgrade?: { cost?: number; effects?: unknown[] } };
 type Effect = { op: string; value?: number; token?: string; stacks?: number; when?: string; god?: string };
-type DemandTier = { text: string; condition: string; cost?: Record<string, number>; reward: { favor?: number; grace?: number } };
+type DemandTier = { text: string; condition: string; cost?: Record<string, number>; reward: { favor?: number; grace?: number; upgrade?: number } };
 type Demand = Item & { id: string; patron: string; axis: string; polarity: string; min_enemies: number; tiers: DemandTier[] };
 /** 라이벌 반대편을 찾는 데 필요한 것만. 후보 하나로도 판정이 서야 하므로 베이스라인은 단을 들지 않는다 */
 type DemandAxisOnly = { id: string; patron: string; axis: string; polarity: string };
@@ -27,8 +27,8 @@ type Enemy = Item & {
   hp: number;
   pattern: (Effect & { repeat?: number; target?: string })[];
   passives?: Passives;
-  /** `with`의 순서가 칸 1·2·3이고 `null`이 빈 칸이다 */
-  groups?: { id: string; with: (string | null)[] }[];
+  /** `with`의 순서가 칸 1·2·3이다. 빈 칸은 못 적는다 — 편성은 칸 0부터 붙여 채운다 */
+  groups?: { id: string; with: string[] }[];
 };
 type MapSlot = Item & { id: string; region: string; floor: number; text: string; groups: Partial<Record<"combat" | "elite", string[]>> };
 type Grace = Item & { id: string; patron: string; slot: string; tier: number; text: string; effects: Effect[] };
@@ -67,15 +67,6 @@ const gods: Record<string, GodData> = Object.fromEntries(
 );
 const commonOps = ["damage", "block", "draw", "energy", "heal", "self_damage", "apply_token", "favor_shift"];
 const allTokens = Object.values(gods).flatMap(({ tokens }) => tokens);
-const conditionPatterns = [
-  /^favor\((patron|[a-z_]+)\) (>=|<) \d+$/,
-  /^has_token\(target, [a-z_]+\) >= \d+$/,
-  /^turn > \d+$/,
-  /^hp_pct\(self\) < \d+$/,
-  /^deck_count\([a-z_]+\) >= \d+$/,
-  /^enemy_count\(\) >= \d+$/,
-  /^slot\(target\) (>=|<) \d+$/,
-];
 const axes = ["target_spread", "damage_taken", "turn_economy", "token_load"];
 const baselineCards: Card[] = [{
   id: "card_existing_strike",
@@ -165,6 +156,18 @@ function dslFailure(card: Card): boolean {
   if (card.target === "self" && card.effects.some(({ when }) => typeof when === "string" && when.startsWith("slot(target)"))) return true;
   // 한 칸짜리 사거리에서는 연쇄가 닿을 곳이 없다 — `loadCards`가 낼 때 던지는 자리를 여기서 잡는다
   if (card.effects.some(({ op }) => op === "chain") && reachSlots(card.reach).length < 2) return true;
+  /**
+   * 업그레이드 예외. 값 밴드는 base만 재고(`isValueAllowed`) 올린 뒤 값은 조합 승률 하한이 본다 —
+   * 여기서 보는 것은 **꼴** 둘뿐이다: 효과 델타가 카드의 효과와 같은 길이인가, `+2`까지 올린 비용이
+   * 0~3 안인가. 융합은 업그레이드 대상 밖이라(`sim/engine.ts`) 거기 적힌 `upgrade`는 죽은 데이터다
+   */
+  if (card.upgrade !== undefined) {
+    const { cost, effects } = card.upgrade;
+    if (card.patron_pair !== undefined) return true;
+    if (effects !== undefined && (!Array.isArray(effects) || effects.length !== card.effects.length)) return true;
+    const raised = Math.max(0, card.cost + (cost ?? 0) * MAX_UPGRADE);
+    if (raised < 0 || raised > 3) return true;
+  }
   return card.effects.some((effect) =>
     ![...commonOps, "chain"].includes(effect.op)
     || (effect.token !== undefined && !allTokens.includes(effect.token))
@@ -231,8 +234,11 @@ const costFields = ["favor", "maxHp", "encounters"] as const;
  * 두 값을 한 숫자로 섞는 상수를 만들지 않고 (은혜, 호의) 사전식으로 잰다
  */
 const rewardRises = (easy: DemandTier["reward"], trial: DemandTier["reward"]): boolean => {
-  const [low, high] = [easy.grace ?? 0, trial.grace ?? 0];
-  return high > low || (high === low && (trial.favor ?? 0) > (easy.favor ?? 0));
+  for (const key of ["grace", "upgrade", "favor"] as const) {
+    const [low, high] = [easy[key] ?? 0, trial[key] ?? 0];
+    if (high !== low) return high > low;
+  }
+  return false;
 };
 
 /**
@@ -266,8 +272,18 @@ function demandFailure(demand: Demand, demands: DemandAxisOnly[]): boolean {
   );
 }
 
+/**
+ * 카드의 정체성은 **효과의 모양**이다 — 피해 5와 피해 11은 같은 카드의 두 숫자고, 그것을 다른
+ * 카드로 세면 풀이 늘어난 것이 아니라 같은 결정이 반복되는 것이다. 수치 성장은 업그레이드가 맡는다.
+ *
+ * 대상과 사거리는 정체성에 든다: 격랑(`all_enemies`/`012`)과 관통 사격(`23`)은 같은 `damage`여도
+ * 판 위에서 다른 일을 한다 — 그 둘이 P-35가 만든 축이다. 훅도 든다(파워는 같은 효과가 다른 시점이다).
+ *
+ * `when`은 **있는지 없는지만** 든다 — 조건식까지 넣으면 조건 문자열만 바꿔 같은 카드를 다시 낼 수 있다
+ */
 function fingerprint(card: Card): string {
-  return card.effects.map(({ op, value, stacks }) => `${op}:${Math.floor((value ?? stacks ?? 0) / 3)}`).join("|");
+  const shape = card.effects.map(({ op, token, when }) => `${op}${token ? `:${token}` : ""}${when ? "?" : ""}`).join("|");
+  return `${shape}@${card.target}/${card.reach ?? fullReach}${card.trigger ? `/${card.trigger}` : ""}`;
 }
 
 function duplicateFailure(card: Card, existing: Card[]): boolean {
@@ -359,25 +375,24 @@ const intent = (member: Enemy) => member.pattern.reduce((total, effect) => total
 /**
  * 자리가 역할을 정한다. **런타임 보정이 아니라 배치 규칙이다** — 칸 0·1에 방어 +N을 얹으면 배포된
  * 편성 전부가 재측정 대상이 되고, 어느 값이 적의 것이고 어느 값이 자리의 것인지 화면에서 못 읽는다.
- * 역할이 이미 그 성격을 들고 있으므로 게이트가 어긋난 편성을 반려한다.
  *
- * 뿌리가 칸 0이라 **뒷줄 역할은 편성을 소유할 수 없다** — 혼자 서는 뒷줄 적은 앞칸에 서는 셈이다
+ * 규칙은 **칸 번호 표가 아니라 순서 하나**다: 앞줄 역할이 뒷줄 역할보다 뒤에 서면 반려. 표로 못 박으면
+ * 4인으로 붙여 채우는 판에서 저승 뒷줄이 `pressure`·`zealot` 둘뿐이라 칸 2·3이 언제나 그 둘이 된다.
+ * 순서 규칙은 「앞 셋 + 뒤 하나」와 「앞 둘 + 뒤 둘」을 둘 다 세운다.
+ *
+ * 뿌리가 칸 0이라 **뒷줄 역할이 소유한 편성은 그 뒤에 앞줄이 서는 순간 걸린다** — 기존 계약이
+ * 순서 규칙의 첫 항으로 그대로 따라온다. `boss`·`god`은 규칙 밖이다
  */
-const roleSlots: Record<string, number[]> = {
-  guardian: [0, 1], attrition: [0, 1], brute: [0, 1], swarm: [0, 1],
-  pressure: [2, 3], applier: [2, 3], support: [2, 3], zealot: [2, 3],
-  boss: [0, 1, 2, 3], god: [0, 1, 2, 3],
-};
+const frontRoles = ["guardian", "attrition", "brute", "swarm"];
+const backRoles = ["pressure", "applier", "support", "zealot"];
 
 function slotFailure(enemy: Enemy, enemies: Enemy[]): boolean {
   return (enemy.groups ?? []).some(({ with: rest }) => {
     if (!Array.isArray(rest) || rest.length > MAX_SLOTS - 1) return true;
-    return [enemy.id, ...rest].some((id, slot) => {
-      if (id === null) return false;
-      const member = enemies.find((candidate) => candidate.id === id);
-      // 없는 id는 `groupStrength`가 `value_outlier`로 잡는다 — 여기서는 자리만 본다
-      return member !== undefined && !(roleSlots[member.role] ?? []).includes(slot);
-    });
+    // 없는 id는 `groupStrength`가 `value_outlier`로 잡는다 — 여기서는 순서만 본다
+    const roles = [enemy.id, ...rest].map((id) => enemies.find((candidate) => candidate.id === id)?.role ?? "");
+    const back = roles.findIndex((role) => backRoles.includes(role));
+    return back >= 0 && roles.slice(back).some((role) => frontRoles.includes(role));
   });
 }
 
@@ -386,8 +401,7 @@ function groupStrength(groupId: string, enemies: Enemy[]): Strength | undefined 
   const root = enemies.find((enemy) => enemy.groups?.some((group) => group.id === groupId));
   const group = root?.groups?.find(({ id }) => id === groupId);
   if (!root || !group) return undefined;
-  // 빈 칸은 세지 않는다 — 세기는 사람 수고 자리는 `slotFailure`가 본다
-  const members = [root, ...group.with.filter((id) => id !== null).map((id) => enemies.find((enemy) => enemy.id === id))];
+  const members = [root, ...group.with.map((id) => enemies.find((enemy) => enemy.id === id))];
   if (members.some((member) => !member)) return undefined;
   const complete = members as Enemy[];
   return {
@@ -398,13 +412,21 @@ function groupStrength(groupId: string, enemies: Enemy[]): Strength | undefined 
 }
 
 /**
- * 지상 `count` 상한이 3 → **4**다(P-35 §6) — 4인 편성은 그 전까지 사람 수에서 반려됐다.
- * `hp` 상한도 170 → **200**을 한 번 올렸다: 앞칸 둘(실효 체력 115)만으로 이미 170에 붙어
- * 4인 편성이 어떤 값으로도 못 서고, 밴드를 새로 만들지 않는 유일한 길이 상한을 옮기는 것이었다
+ * `count`는 **양쪽 다 4**다(P-41) — 편성은 칸 0부터 빈틈없이 채우므로 사람 수는 판 크기와 같다.
+ *
+ * **`damage` 두 줄은 안 옮겼다.** 개체 damage를 인원이 늘어난 만큼 내리면 4인 총합이 옛 밴드 안으로
+ * 그대로 들어온다(저승 9.1~12.9 ⊂ `[8,14]` · 지상 14.5~21.7 ⊂ `[14,22]`).
+ *
+ * **`hp` 두 줄은 옮겼다** — `[40,90]` → `[40,72]` · `[90,200]` → `[70,110]`. 계획은 「조우 총 체력을
+ * 지금 자리에 남긴다」였는데 실측이 그것을 되돌렸다: 총 체력을 유지하면 4인 조우가 **두 배로 길어지고**
+ * 쌓은 방어가 버려져 `block_efficiency`가 밴드 아래로 내려가며, 누적 칩 피해가 헌신을 무너뜨려
+ * 은혜 슬롯이 1을 못 넘는다. 두 지표를 다 지키는 자리는 「한 턴 피해는 그대로, 조우 총 체력은 절반」
+ * 하나뿐이었다(측정은 reviews/41-pack.md의 격자). 하한도 같이 내린 것은 `floorCeiling`이 1층 상한을
+ * 밴드 가운데로 잡기 때문이다 — 하한을 두고 상한만 내리면 1층에 놓을 편성이 하나도 없다
  */
 const regionBands: Record<string, Record<"hp" | "damage" | "count", [number, number]>> = {
-  underworld: { hp: [40, 90], damage: [8, 14], count: [1, 2] },
-  surface: { hp: [90, 200], damage: [14, 22], count: [2, 4] },
+  underworld: { hp: [40, 72], damage: [8, 14], count: [4, 4] },
+  surface: { hp: [70, 110], damage: [14, 22], count: [4, 4] },
 };
 /** 전투가 서는 층 수. 6층은 보스라 진행 함수 밖이다 */
 const combatFloors = floorsPerRegion - 1;
@@ -575,7 +597,12 @@ export function validateItems(items: Item[], basePool: Card[] = []): { accepted:
   const accepted: Item[] = [];
   const rejected: { id: string; failure: FailureKey }[] = [];
   const failure_breakdown: Partial<Record<FailureKey, number>> = {};
-  const cards = [...baselineCards];
+  /**
+   * 중복은 **배포분까지 넣고** 잰다 — 지문이 모양이 된 뒤로 「이미 있는 모양의 새 숫자」가 반려의
+   * 대상이고, 그것은 후보를 배포된 풀과 비교해야만 보인다. 149장끼리는 다시 재지 않는다:
+   * 배포분은 후보가 아니라 비교 대상으로만 들어온다
+   */
+  const cards = [...baselineCards, ...basePool];
   const demands = [...baselineDemands, ...items.filter((item) => kindOf(item) === "demand") as Demand[]];
   const enemies = mergeById(shippedEnemies, items.filter((item) => kindOf(item) === "enemy") as Enemy[]);
 

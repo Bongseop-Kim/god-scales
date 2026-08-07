@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MAX_SLOTS } from "../core/combat.ts";
+import { cardLevel } from "../core/rules.ts";
 import { fullReach, reachSlots } from "../core/targeting.ts";
 import cardDataJson from "../data/cards.json" with { type: "json" };
 import type { CardView } from "../sim/engine.ts";
@@ -31,7 +32,7 @@ const cardFace = new Map((cardDataJson as (CardArtSource & { name: string; tier?
 const tierNames: Record<number, string> = { 2: "상급", 3: "융합" };
 
 /** 카드를 낼 때 튀는 파티클의 태그. 전투 화면이 이걸로 `art/particle/`을 고른다 */
-export const cardTagOf = (cardId: string): string | undefined => cardFace.get(cardId)?.tag;
+export const cardTagOf = (cardId: string): string | undefined => cardFace.get(cardLevel(cardId).base)?.tag;
 const opLabels: Record<string, string> = {
   damage: "피해",
   block: "방어",
@@ -60,6 +61,17 @@ const conditionText: Record<string, string> = {
   "hp_pct(self) < 50": "내 체력 절반 미만",
   "slot(target) < 2": "앞 두 칸의 대상",
   "slot(target) >= 2": "뒤 두 칸의 대상",
+  "cards_played_in_turn >= 3": "이번 턴 세 장째부터",
+  "attacks_in_turn >= 3": "이번 턴 공격 세 번째부터",
+  "energy_spent_in_turn >= 3": "이번 턴 에너지 3 이상 썼을 때",
+  "hand_count < 2": "손패 한 장 이하",
+  "hand_count < 3": "손패 두 장 이하",
+  "hp_pct(target) < 30": "대상 체력 30% 미만",
+  "hp_pct(target) < 40": "대상 체력 40% 미만",
+  "block(self) >= 6": "내 방어 6 이상",
+  "block(self) >= 8": "내 방어 8 이상",
+  "block(self) >= 10": "내 방어 10 이상",
+  "block(self) >= 12": "내 방어 12 이상",
 };
 export const conditionLabel = (when: string): string => conditionText[when] ?? when;
 
@@ -148,7 +160,8 @@ export function GameCard({ cardId, card, disabled, onSelect }: {
   disabled?: boolean;
   onSelect?: () => void;
 }) {
-  const face = cardFace.get(cardId);
+  // 업그레이드본은 `card_zeus_12+1`이다 — 그림·프레임색·등급은 base의 것이고 `+N`은 이름이 든다
+  const face = cardFace.get(cardLevel(cardId).base);
   const source = face?.art;
   const [missing, setMissing] = useState(!source);
   // 예외만 적는다 — 149장 중 20장이다(파워 6 · 전체 14, 데이터상 안 겹친다). 슬롯이 하나뿐이다

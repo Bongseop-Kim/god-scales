@@ -5,13 +5,24 @@
     "region": "underworld",
     "tier": "normal",
     "role": "pressure",
-    "hp": 40,
+    "hp": 9,
     "intent_visible": true,
-    "passives": { "ramp": 1 },
+    "passives": {
+      "ramp": 1
+    },
     "pattern": [
-      { "op": "damage", "value": 6 },
-      { "op": "damage", "value": 7 },
-      { "op": "damage", "value": 13 }
+      {
+        "op": "damage",
+        "value": 3
+      },
+      {
+        "op": "damage",
+        "value": 3
+      },
+      {
+        "op": "damage",
+        "value": 6
+      }
     ],
     "pattern_mode": "cycle"
   },
@@ -21,16 +32,36 @@
     "region": "underworld",
     "tier": "normal",
     "role": "attrition",
-    "hp": 35,
+    "hp": 8,
     "intent_visible": true,
-    "passives": { "shell": 8 },
+    "passives": {
+      "shell": 8
+    },
     "pattern": [
-      { "op": "block", "value": 4 },
-      { "op": "damage", "value": 4 }
+      {
+        "op": "block",
+        "value": 4
+      },
+      {
+        "op": "apply_token",
+        "token": "drain",
+        "stacks": 1
+      },
+      {
+        "op": "damage",
+        "value": 2
+      }
     ],
     "pattern_mode": "cycle",
     "groups": [
-      { "id": "group_under_attrition_pressure", "with": [null, "enemy_under_pressure"] }
+      {
+        "id": "group_under_attrition_pressure",
+        "with": [
+          "enemy_under_guardian",
+          "enemy_under_brute",
+          "enemy_under_pressure"
+        ]
+      }
     ]
   },
   {
@@ -39,17 +70,39 @@
     "region": "underworld",
     "tier": "normal",
     "role": "brute",
-    "hp": 40,
+    "hp": 9,
     "intent_visible": true,
-    "passives": { "angry": 1 },
+    "passives": {
+      "angry": 1
+    },
     "pattern": [
-      { "op": "damage", "value": 16 },
-      { "op": "block", "value": 4 }
+      {
+        "op": "damage",
+        "value": 7
+      },
+      {
+        "op": "block",
+        "value": 4
+      }
     ],
     "pattern_mode": "cycle",
     "groups": [
-      { "id": "group_under_brute_solo", "with": [] },
-      { "id": "group_under_brute_swarm", "with": ["enemy_under_swarm"] }
+      {
+        "id": "group_under_brute_wall",
+        "with": [
+          "enemy_under_attrition",
+          "enemy_under_swarm",
+          "enemy_under_zealot"
+        ]
+      },
+      {
+        "id": "group_under_brute_swarm",
+        "with": [
+          "enemy_under_swarm",
+          "enemy_under_pressure",
+          "enemy_under_zealot"
+        ]
+      }
     ]
   },
   {
@@ -58,16 +111,40 @@
     "region": "underworld",
     "tier": "normal",
     "role": "swarm",
-    "hp": 30,
+    "hp": 7,
     "intent_visible": true,
-    "passives": { "curl": 6 },
+    "passives": {
+      "curl": 6
+    },
     "pattern": [
-      { "op": "damage", "value": 3 }
+      {
+        "op": "damage",
+        "value": 1
+      },
+      {
+        "op": "apply_token",
+        "token": "soaked",
+        "stacks": 1
+      }
     ],
     "pattern_mode": "cycle",
     "groups": [
-      { "id": "group_under_swarm_brute", "with": ["enemy_under_brute"] },
-      { "id": "group_under_swarm_zealot", "with": [null, null, "enemy_under_zealot"] }
+      {
+        "id": "group_under_swarm_brute",
+        "with": [
+          "enemy_under_brute",
+          "enemy_under_attrition",
+          "enemy_under_pressure"
+        ]
+      },
+      {
+        "id": "group_under_swarm_zealot",
+        "with": [
+          "enemy_under_guardian",
+          "enemy_under_pressure",
+          "enemy_under_zealot"
+        ]
+      }
     ]
   },
   {
@@ -76,16 +153,39 @@
     "region": "underworld",
     "tier": "normal",
     "role": "guardian",
-    "hp": 30,
+    "hp": 7,
     "intent_visible": true,
-    "passives": { "guard": 2 },
+    "passives": {
+      "guard": 2
+    },
     "pattern": [
-      { "op": "apply_token", "token": "bulwark", "stacks": 3, "target": "self" },
-      { "op": "damage", "value": 4 }
+      {
+        "op": "apply_token",
+        "token": "bulwark",
+        "stacks": 3,
+        "target": "self"
+      },
+      {
+        "op": "apply_token",
+        "token": "bulwark",
+        "stacks": 2,
+        "target": "all_allies"
+      },
+      {
+        "op": "damage",
+        "value": 2
+      }
     ],
     "pattern_mode": "cycle",
     "groups": [
-      { "id": "group_under_guardian_zealot", "with": [null, "enemy_under_zealot"] }
+      {
+        "id": "group_under_guardian_zealot",
+        "with": [
+          "enemy_under_brute",
+          "enemy_under_pressure",
+          "enemy_under_zealot"
+        ]
+      }
     ]
   },
   {
@@ -94,11 +194,16 @@
     "region": "underworld",
     "tier": "normal",
     "role": "zealot",
-    "hp": 35,
+    "hp": 8,
     "intent_visible": true,
-    "passives": { "spite": 1 },
+    "passives": {
+      "spite": 1
+    },
     "pattern": [
-      { "op": "damage", "value": 8 }
+      {
+        "op": "damage",
+        "value": 3
+      }
     ],
     "pattern_mode": "cycle"
   },
@@ -110,10 +215,26 @@
     "role": "boss",
     "hp": 130,
     "intent_visible": true,
-    "passives": { "ward": 2 },
+    "passives": {
+      "ward": 2
+    },
     "pattern": [
-      { "op": "damage", "value": 18 },
-      { "op": "block", "value": 8 }
+      {
+        "op": "damage",
+        "value": 18
+      },
+      {
+        "op": "block",
+        "value": 8
+      },
+      {
+        "op": "damage",
+        "value": 18
+      },
+      {
+        "op": "favor_shift",
+        "value": -3
+      }
     ],
     "pattern_mode": "cycle"
   },
@@ -123,12 +244,21 @@
     "region": "surface",
     "tier": "normal",
     "role": "pressure",
-    "hp": 40,
+    "hp": 15,
     "intent_visible": true,
     "pattern": [
-      { "op": "damage", "value": 8 },
-      { "op": "damage", "value": 10 },
-      { "op": "damage", "value": 18 }
+      {
+        "op": "damage",
+        "value": 6
+      },
+      {
+        "op": "damage",
+        "value": 7
+      },
+      {
+        "op": "damage",
+        "value": 13
+      }
     ],
     "pattern_mode": "cycle"
   },
@@ -138,18 +268,47 @@
     "region": "surface",
     "tier": "normal",
     "role": "attrition",
-    "hp": 46,
+    "hp": 18,
     "intent_visible": true,
-    "passives": { "shell": 8 },
+    "passives": {
+      "shell": 8
+    },
     "pattern": [
-      { "op": "block", "value": 6 },
-      { "op": "damage", "value": 8 }
+      {
+        "op": "block",
+        "value": 6
+      },
+      {
+        "op": "damage",
+        "value": 6
+      }
     ],
     "pattern_mode": "cycle",
     "groups": [
-      { "id": "group_surface_attrition_pressure", "with": [null, "enemy_surface_pressure"] },
-      { "id": "group_surface_trio", "with": [null, "enemy_surface_applier", "enemy_surface_pressure"] },
-      { "id": "group_surface_hunt", "with": ["enemy_surface_guardian", "enemy_surface_support", "enemy_surface_zealot"] }
+      {
+        "id": "group_surface_attrition_pressure",
+        "with": [
+          "enemy_surface_pressure",
+          "enemy_surface_applier",
+          "enemy_surface_support"
+        ]
+      },
+      {
+        "id": "group_surface_attrition_zealot",
+        "with": [
+          "enemy_surface_guardian",
+          "enemy_surface_applier",
+          "enemy_surface_zealot"
+        ]
+      },
+      {
+        "id": "group_surface_hunt",
+        "with": [
+          "enemy_surface_guardian",
+          "enemy_surface_pressure",
+          "enemy_surface_support"
+        ]
+      }
     ]
   },
   {
@@ -158,12 +317,28 @@
     "region": "surface",
     "tier": "normal",
     "role": "applier",
-    "hp": 40,
+    "hp": 15,
     "intent_visible": true,
     "pattern": [
-      { "op": "apply_token", "token": "soaked", "stacks": 2 },
-      { "op": "apply_token", "token": "shock", "stacks": 3 },
-      { "op": "damage", "value": 7 }
+      {
+        "op": "apply_token",
+        "token": "soaked",
+        "stacks": 2
+      },
+      {
+        "op": "apply_token",
+        "token": "fog",
+        "stacks": 1
+      },
+      {
+        "op": "apply_token",
+        "token": "shock",
+        "stacks": 3
+      },
+      {
+        "op": "damage",
+        "value": 5
+      }
     ],
     "pattern_mode": "cycle"
   },
@@ -173,12 +348,23 @@
     "region": "surface",
     "tier": "normal",
     "role": "support",
-    "hp": 35,
+    "hp": 13,
     "intent_visible": true,
-    "passives": { "rally": 2 },
+    "passives": {
+      "rally": 2
+    },
     "pattern": [
-      { "op": "apply_token", "token": "frenzy", "stacks": 2, "target": "ally" },
-      { "op": "heal", "value": 6, "target": "ally" }
+      {
+        "op": "apply_token",
+        "token": "frenzy",
+        "stacks": 2,
+        "target": "all_allies"
+      },
+      {
+        "op": "heal",
+        "value": 6,
+        "target": "ally"
+      }
     ],
     "pattern_mode": "cycle"
   },
@@ -188,18 +374,55 @@
     "region": "surface",
     "tier": "normal",
     "role": "guardian",
-    "hp": 40,
+    "hp": 15,
     "intent_visible": true,
-    "passives": { "guard": 2 },
+    "passives": {
+      "guard": 2
+    },
     "pattern": [
-      { "op": "apply_token", "token": "bulwark", "stacks": 3, "target": "self" },
-      { "op": "damage", "value": 6 }
+      {
+        "op": "apply_token",
+        "token": "bulwark",
+        "stacks": 3,
+        "target": "self"
+      },
+      {
+        "op": "apply_token",
+        "token": "thorns",
+        "stacks": 1,
+        "target": "self"
+      },
+      {
+        "op": "damage",
+        "value": 5
+      }
     ],
     "pattern_mode": "cycle",
     "groups": [
-      { "id": "group_surface_guardian_zealot", "with": [null, null, "enemy_surface_zealot"] },
-      { "id": "group_surface_support_trio", "with": [null, "enemy_surface_support", "enemy_surface_pressure"] },
-      { "id": "group_surface_line", "with": ["enemy_surface_attrition", "enemy_surface_support", "enemy_surface_pressure"] }
+      {
+        "id": "group_surface_guardian_zealot",
+        "with": [
+          "enemy_surface_applier",
+          "enemy_surface_support",
+          "enemy_surface_zealot"
+        ]
+      },
+      {
+        "id": "group_surface_guardian_support",
+        "with": [
+          "enemy_surface_attrition",
+          "enemy_surface_support",
+          "enemy_surface_zealot"
+        ]
+      },
+      {
+        "id": "group_surface_line",
+        "with": [
+          "enemy_surface_attrition",
+          "enemy_surface_pressure",
+          "enemy_surface_zealot"
+        ]
+      }
     ]
   },
   {
@@ -208,10 +431,13 @@
     "region": "surface",
     "tier": "normal",
     "role": "zealot",
-    "hp": 35,
+    "hp": 13,
     "intent_visible": true,
     "pattern": [
-      { "op": "damage", "value": 12 }
+      {
+        "op": "damage",
+        "value": 7
+      }
     ],
     "pattern_mode": "cycle"
   },
@@ -223,10 +449,27 @@
     "role": "boss",
     "hp": 190,
     "intent_visible": true,
-    "passives": { "ward": 2 },
+    "passives": {
+      "ward": 2
+    },
     "pattern": [
-      { "op": "damage", "value": 24 },
-      { "op": "block", "value": 12 }
+      {
+        "op": "damage",
+        "value": 24
+      },
+      {
+        "op": "block",
+        "value": 12
+      },
+      {
+        "op": "damage",
+        "value": 24
+      },
+      {
+        "op": "apply_token",
+        "token": "drain",
+        "stacks": 2
+      }
     ],
     "pattern_mode": "cycle"
   },
@@ -237,11 +480,28 @@
     "role": "god",
     "hp": 60,
     "intent_visible": true,
-    "passives": { "ramp": 1 },
+    "passives": {
+      "ramp": 1
+    },
     "pattern": [
-      { "op": "damage", "value": 7 },
-      { "op": "apply_token", "token": "shock", "stacks": 1 },
-      { "op": "damage", "value": 10 }
+      {
+        "op": "damage",
+        "value": 7
+      },
+      {
+        "op": "apply_token",
+        "token": "shock",
+        "stacks": 1
+      },
+      {
+        "op": "damage",
+        "value": 10
+      },
+      {
+        "op": "apply_token",
+        "token": "drain",
+        "stacks": 1
+      }
     ],
     "pattern_mode": "cycle"
   },
@@ -252,11 +512,28 @@
     "role": "god",
     "hp": 60,
     "intent_visible": true,
-    "passives": { "ward": 2 },
+    "passives": {
+      "ward": 2
+    },
     "pattern": [
-      { "op": "apply_token", "token": "soaked", "stacks": 1 },
-      { "op": "damage", "value": 8 },
-      { "op": "damage", "value": 8 }
+      {
+        "op": "apply_token",
+        "token": "soaked",
+        "stacks": 1
+      },
+      {
+        "op": "damage",
+        "value": 8
+      },
+      {
+        "op": "apply_token",
+        "token": "fog",
+        "stacks": 1
+      },
+      {
+        "op": "damage",
+        "value": 8
+      }
     ],
     "pattern_mode": "cycle"
   },
@@ -267,11 +544,30 @@
     "role": "god",
     "hp": 60,
     "intent_visible": true,
-    "passives": { "guard": 2 },
+    "passives": {
+      "guard": 2
+    },
     "pattern": [
-      { "op": "apply_token", "token": "bulwark", "stacks": 3, "target": "self" },
-      { "op": "damage", "value": 8 },
-      { "op": "block", "value": 7 }
+      {
+        "op": "apply_token",
+        "token": "bulwark",
+        "stacks": 3,
+        "target": "self"
+      },
+      {
+        "op": "apply_token",
+        "token": "deflect",
+        "stacks": 1,
+        "target": "self"
+      },
+      {
+        "op": "damage",
+        "value": 8
+      },
+      {
+        "op": "block",
+        "value": 7
+      }
     ],
     "pattern_mode": "cycle"
   },
@@ -282,11 +578,29 @@
     "role": "god",
     "hp": 60,
     "intent_visible": true,
-    "passives": { "spite": 1 },
+    "passives": {
+      "spite": 1
+    },
     "pattern": [
-      { "op": "damage", "value": 11 },
-      { "op": "apply_token", "token": "bleed", "stacks": 1 },
-      { "op": "damage", "value": 8 }
+      {
+        "op": "apply_token",
+        "token": "thorns",
+        "stacks": 2,
+        "target": "self"
+      },
+      {
+        "op": "damage",
+        "value": 11
+      },
+      {
+        "op": "apply_token",
+        "token": "bleed",
+        "stacks": 1
+      },
+      {
+        "op": "damage",
+        "value": 8
+      }
     ],
     "pattern_mode": "cycle"
   },
@@ -297,11 +611,29 @@
     "role": "god",
     "hp": 60,
     "intent_visible": true,
-    "passives": { "shell": 8 },
+    "passives": {
+      "shell": 8
+    },
     "pattern": [
-      { "op": "apply_token", "token": "mark", "stacks": 1 },
-      { "op": "damage", "value": 10 },
-      { "op": "damage", "value": 7 }
+      {
+        "op": "apply_token",
+        "token": "mark",
+        "stacks": 1
+      },
+      {
+        "op": "apply_token",
+        "token": "crit",
+        "stacks": 1,
+        "target": "self"
+      },
+      {
+        "op": "damage",
+        "value": 10
+      },
+      {
+        "op": "damage",
+        "value": 7
+      }
     ],
     "pattern_mode": "cycle"
   }

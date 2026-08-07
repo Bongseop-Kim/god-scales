@@ -30,13 +30,14 @@ describe("value tiers", () => {
   });
 
   it("keeps the shipped pool inside its own step", () => {
-    expect([1, 2, 3].map((tier) => cards.filter((card) => cardTier(card) === tier).length)).toEqual([124, 15, 10]);
+    expect([1, 2, 3].map((tier) => cards.filter((card) => cardTier(card) === tier).length)).toEqual([139, 30, 10]);
     expect(cards.filter((card) => !isValueAllowed(card)).map(({ id }) => id)).toEqual([]);
     // 융합은 `tier`를 적지 않는다 — `patron_pair`가 곧 3이고, 두 곳에 적으면 어긋난다
     expect(cards.filter(({ patron_pair, tier }) => patron_pair && tier !== undefined)).toEqual([]);
-    // 신마다 세 장이라 3택1이 tier2만으로도 선다(정예·보스가 그것을 요구한다)
+    // 신마다 여섯 장이다 — 3택1이 tier2만으로도 서고(정예·보스가 그것을 요구한다), 런당 2~3회뿐인
+    // 그 자리에서 조합의 여섯 장을 사실상 다 보게 된다(P-44 §4)
     for (const god of ["zeus", "poseidon", "athena", "ares", "artemis"]) {
-      expect(cards.filter((card) => card.patron === god && cardTier(card) === 2), god).toHaveLength(3);
+      expect(cards.filter((card) => card.patron === god && cardTier(card) === 2), god).toHaveLength(6);
     }
   });
 });
@@ -75,8 +76,8 @@ describe("tier2 reward slots", () => {
   /** 후보가 자리 수보다 적으면 뽑기 루프가 영원히 돈다. 배포 데이터로는 못 만드는 상황이라 자리 수로 만든다 */
   it("throws instead of looping when the tier2 pool is short", () => {
     const patrons: PatronPair = ["zeus", "athena"];
-    expect(() => rewardOffer(createRng(1), patrons, 6)).not.toThrow();
-    expect(() => rewardOffer(createRng(1), patrons, 7)).toThrow(/needs 7 tier2/);
+    expect(() => rewardOffer(createRng(1), patrons, 12)).not.toThrow();
+    expect(() => rewardOffer(createRng(1), patrons, 13)).toThrow(/needs 13 tier2/);
   });
 
   /**

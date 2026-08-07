@@ -19,11 +19,17 @@ export const MAX_SLOTS = 4;
 export type EnemyAction = {
   damage?: number; block?: number; token?: TokenName; stacks?: number;
   heal?: number;
-  target?: "player" | "self" | "ally";
+  /**
+   * 후원 신 **전부**의 호의를 이만큼 민다(값이 음수다). 판 밖으로 나가는 유일한 적 행동이라 대상이
+   * 없다 — `state.favor`의 키가 곧 후원 둘이므로 어느 신을 칠지 데이터가 고르지 않는다
+   */
+  favor?: number;
+  target?: "player" | "self" | "ally" | "all_allies";
 };
-export type EnemyDefinition = { id: string; hp: number; pattern: EnemyAction[]; bulwark?: number; passives?: Passives };
-/** 편성 한 줄. 순서가 곧 칸이고 `null`이 빈 칸이다 — `[a, null, null, b]`가 칸 0·3에 선다 */
-export type Lineup = (EnemyDefinition | null)[];
+/** `size`는 차지하는 칸 수다. 보스만 `2`를 쓰고 나머지는 없다(=1) */
+export type EnemyDefinition = { id: string; hp: number; pattern: EnemyAction[]; bulwark?: number; passives?: Passives; size?: number };
+/** 편성 한 줄. **칸 0부터 붙여 채운다** — 순서가 곧 칸이고 빈 칸을 사이에 둘 방법이 없다 */
+export type Lineup = EnemyDefinition[];
 
 export function shuffle<T>(items: T[], random: () => number): T[] {
   const result = [...items];
@@ -50,8 +56,24 @@ const enemyState = ({ id, hp, bulwark, passives }: EnemyDefinition): EnemyState 
  */
 const emptySlot = (slot: number): EnemyState => ({ id: `empty_${slot}`, hp: 0, maxHp: 0, block: 0, tokens: {}, patternIndex: 0, defeated: true });
 
+/**
+ * 판에 선 배우들, 중복 없이. **두 칸짜리는 같은 참조가 두 칸에 있다**(`createCombat`) — 배열을 그대로
+ * 도는 순회는 그 적을 두 번 세므로 행동·출혈·`spite`·`rally`가 전부 여기를 지난다. 칸이 필요한 쪽은
+ * 배열을 그대로 읽는다: 칸은 여전히 배열 인덱스 하나다(`core/targeting.ts`의 「두 번째 진실」)
+ */
+export const actors = (combat: CombatState): EnemyState[] => [...new Set(combat.enemies)];
+
 export function createCombat(seed: number, deck: string[], lineup: Lineup): CombatState {
-  if (lineup.length > MAX_SLOTS) throw new Error(`Encounter needs ${lineup.length} slots, the board has ${MAX_SLOTS}`);
+  /**
+   * 칸 0부터 붙여 채운다. `size`가 2인 적은 **같은 객체를 두 칸에** 넣는다 — 체력·토큰·패턴이 하나라
+   * 두 번째 진실이 안 생긴다. 남는 칸은 시체와 같은 꼴의 빈 칸이다
+   */
+  const enemies = lineup.flatMap((definition) => {
+    const state = enemyState(definition);
+    return Array.from({ length: definition.size ?? 1 }, () => state);
+  });
+  if (enemies.length > MAX_SLOTS) throw new Error(`Encounter needs ${enemies.length} slots, the board has ${MAX_SLOTS}`);
+  while (enemies.length < MAX_SLOTS) enemies.push(emptySlot(enemies.length));
   return {
     turn: 0,
     energy: 0,
@@ -63,10 +85,8 @@ export function createCombat(seed: number, deck: string[], lineup: Lineup): Comb
     discardPile: [],
     powers: [],
     pending: [],
-    enemies: Array.from({ length: MAX_SLOTS }, (_, slot) => {
-      const definition = lineup[slot];
-      return definition ? enemyState(definition) : emptySlot(slot);
-    }),
+    turnPlays: { cards_played: 0, attacks: 0, energy_spent: 0 },
+    enemies,
   };
 }
 
@@ -81,11 +101,11 @@ export function queueEnemy(combat: CombatState, id: string): void {
  * `rally`가 그 죽음을 못 본다. 그래서 `updateOutcome`과 `admitPending` 둘 다 여기를 지난다
  */
 function markDefeated(combat: CombatState): void {
-  for (const dead of combat.enemies) {
+  for (const dead of actors(combat)) {
     if (dead.hp > 0 || dead.defeated) continue;
     dead.defeated = true;
     // rally는 「아무나 먼저 죽이기」를 처벌한다 — 처치 순서가 결정이 되는 자리다
-    for (const ally of combat.enemies) if (ally.hp > 0 && ally.passives?.rally) addToken(ally, "frenzy", ally.passives.rally);
+    for (const ally of actors(combat)) if (ally.hp > 0 && ally.passives?.rally) addToken(ally, "frenzy", ally.passives.rally);
   }
 }
 
@@ -131,8 +151,18 @@ export function startTurn(state: GameState, random: () => number): void {
     return;
   }
   combat.player.block = 0;
-  combat.energy = ENERGY_PER_TURN;
-  drawCards(combat, DRAW_PER_TURN, random);
+  combat.turnPlays = { cards_played: 0, attacks: 0, energy_spent: 0 };
+  /**
+   * 고갈·안개는 적 턴에 붙어 **다음 플레이어 턴 하나**를 깎는다 — 붙는 자리와 무는 자리가 갈려 있어
+   * 여기가 유일한 소모 자리다(`shock`이 `endTurn` 끝에서 지워지는 것과 같은 꼴이지만 방향이 반대다).
+   * 바닥이 0이라 고갈 3은 그 턴을 통째로 지운다 — 「스턴」을 따로 만들지 않고 눈금으로 둔 자리다
+   */
+  const drain = combat.player.tokens.drain ?? 0;
+  const fog = combat.player.tokens.fog ?? 0;
+  delete combat.player.tokens.drain;
+  delete combat.player.tokens.fog;
+  combat.energy = Math.max(0, ENERGY_PER_TURN - drain);
+  drawCards(combat, Math.max(0, DRAW_PER_TURN - fog), random);
   // 뽑은 뒤에 터뜨린다 — 파워가 준 토큰이 이번 턴 손패와 같은 화면에 서야 한다
   firePowers(state, "turn_start");
   updateOutcome(combat);
@@ -150,6 +180,11 @@ export function playCard(
   if (card.cost > state.combat.energy) throw new Error(`Not enough energy for: ${cardId}`);
   state.combat.energy -= card.cost;
   state.combat.hand.splice(handIndex, 1);
+  // 세는 것이 실행보다 앞이다 — 조건은 「이 카드까지 세어 몇 장째인가」를 읽는다(`core/state.ts`)
+  const plays = state.combat.turnPlays;
+  plays.cards_played += 1;
+  plays.energy_spent += card.cost;
+  if (card.tags.includes("attack")) plays.attacks += 1;
   // 파워는 지금 일하지 않는다 — 트리거에 등록하고 전투 내내 남는다
   if (card.tags.includes("power")) {
     if (!card.trigger) throw new Error(`${card.id}: power requires a trigger`);
@@ -159,7 +194,7 @@ export function playCard(
   firePowers(state, "on_play", enemyId);
   // spite는 비공격 카드를 처벌한다 — 방어만 쌓는 판을 시간이 흐를수록 비싸게 만든다
   if (!card.tags.includes("attack")) {
-    for (const enemy of state.combat.enemies) if (enemy.hp > 0 && enemy.passives?.spite) addToken(enemy, "frenzy", enemy.passives.spite);
+    for (const enemy of actors(state.combat)) if (enemy.hp > 0 && enemy.passives?.spite) addToken(enemy, "frenzy", enemy.passives.spite);
   }
   // 등록한 파워는 덱으로 돌아가지 않는다 — 버림더미에 두면 다시 뽑혀 한 장이 스스로 두 번 등록한다.
   // 스택은 덱에 두 장을 넣은 대가여야 한다(`test/combat.test.ts`의 「상한은 없다」)
@@ -169,12 +204,14 @@ export function playCard(
 
 /**
  * 대상이 없으면 피해·토큰은 플레이어, 방어·회복은 자신이다 — 적이 플레이어에게 방어를 줄 일은 없고,
- * 그래서 기존 `block` 패턴이 그대로 돈다. `ally`는 자신을 뺀 살아 있는 하나(없으면 불발)다
+ * 그래서 기존 `block` 패턴이 그대로 돈다. `ally`는 자신을 뺀 살아 있는 하나(없으면 불발)이고
+ * `all_allies`는 그 전부다 — 편성이 클수록 값이 커지므로 지휘형은 혼자 서면 아무것도 아니다
  */
 function actionTargets(combat: CombatState, enemy: EnemyState, target: EnemyAction["target"]): ActorState[] {
   if (target === "player") return [combat.player];
   if (target === "self") return [enemy];
-  return combat.enemies.filter(({ hp, id }) => hp > 0 && id !== enemy.id).slice(0, 1);
+  const allies = actors(combat).filter(({ hp, id }) => hp > 0 && id !== enemy.id);
+  return target === "all_allies" ? allies : allies.slice(0, 1);
 }
 
 export function endTurn(state: GameState, definitions: ReadonlyMap<string, EnemyDefinition>): void {
@@ -190,7 +227,8 @@ export function endTurn(state: GameState, definitions: ReadonlyMap<string, Enemy
    */
   const shoved = shoveDisplaced(combat);
 
-  for (const enemy of combat.enemies) {
+  // 두 칸짜리도 한 턴에 **한 번** 행동한다 — 배열을 그대로 돌면 보스가 두 번 친다
+  for (const enemy of actors(combat)) {
     if (enemy.hp <= 0 || shoved.has(enemy)) continue;
     const definition = definitions.get(enemy.id);
     if (!definition || definition.pattern.length === 0) throw new Error(`Missing enemy pattern: ${enemy.id}`);
@@ -206,11 +244,17 @@ export function endTurn(state: GameState, definitions: ReadonlyMap<string, Enemy
       if (action.block) target.block += action.block;
       if (action.heal) target.hp = Math.min(target.maxHp, target.hp + action.heal);
     }
+    /**
+     * 판 밖으로 나가는 유일한 적 행동이다 — 조우를 이겨도 값이 남는 유일한 자리라 크기가 작아야 한다.
+     * `shiftFavor`를 못 부른다: `favor.ts`가 `queueEnemy`로 이 파일을 이미 읽어 순환이 된다.
+     * 상한 100은 여기 쓸 일이 없다(적은 내리기만 한다) — `core/rules.ts`의 `favor_shift`와 같은 줄이다
+     */
+    if (action.favor) for (const god of Object.keys(state.favor)) state.favor[god] = Math.max(0, state.favor[god] + action.favor);
     if (combat.player.hp <= 0) break;
   }
 
   tickBleed(combat.player);
-  for (const enemy of combat.enemies) tickBleed(enemy);
+  for (const enemy of actors(combat)) tickBleed(enemy);
   // 감전은 한 턴짜리다. 적의 공격까지 끝난 뒤에 지운다 — 플레이어에게 걸린 감전도 그 턴에 값을 해야 한다.
   // shell의 「한 턴」도 여기서 끝난다: 플레이어 턴 + 적 턴 한 바퀴다
   for (const actor of [combat.player, ...combat.enemies]) {

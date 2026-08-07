@@ -4,6 +4,7 @@
   "patron": "ares",
   "cost": 1,
   "target": "enemy",
+  "reach": "0",
   "effects": [{ "op": "damage", "value": 20 }],
   "tags": ["attack"]
 }

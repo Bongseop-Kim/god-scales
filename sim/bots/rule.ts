@@ -1,4 +1,4 @@
-import type { EnemyDefinition } from "../../core/combat.ts";
+import { actors, type EnemyDefinition } from "../../core/combat.ts";
 import type { Grace, GraceHeld } from "../../core/grace.ts";
 import { floorsPerRegion, type MapGrid } from "../../core/map.ts";
 import type { Card } from "../../core/rules.ts";
@@ -57,7 +57,8 @@ export function setPolicy(value?: Policy): void {
 }
 
 function intent(combat: CombatState, definitions: ReadonlyMap<string, EnemyDefinition>): number {
-  return combat.enemies.reduce((total, enemy) => {
+  // 두 칸짜리를 두 번 세면 보스전에서 봇이 들어오는 피해를 두 배로 읽는다
+  return actors(combat).reduce((total, enemy) => {
     if (enemy.hp <= 0 || (enemy.tokens.displace ?? 0) > 0) return total;
     const pattern = definitions.get(enemy.id)?.pattern;
     return total + (pattern?.[enemy.patternIndex % pattern.length]?.damage ?? 0);
@@ -130,17 +131,27 @@ export function choosePath(options: string[], hp: number, maxHp: number, grid: M
   return [...options].sort((left, right) => score(left) - score(right) || detour(left) - detour(right) || (left < right ? -1 : 1))[0];
 }
 
-export function chooseRest(hp: number, maxHp: number): "heal" | "remove" {
-  return hp < maxHp * 0.7 ? "heal" : "remove";
+/**
+ * 3택이 됐다(P-44). **다치면 회복**은 그대로다 — 살아남는 것에는 취향이 없다. 멀쩡하면 강화가
+ * 먼저다: 제거는 덱을 얇게 해 핵심 카드를 자주 뽑게 하지만, 강화는 그 핵심 카드 자체를 키우고
+ * 덱 길이를 안 건드린다. 강화할 것이 없으면 옛 규칙 그대로 제거다
+ */
+export function chooseRest(hp: number, maxHp: number, canUpgrade = false): "heal" | "remove" | "upgrade" {
+  if (hp < maxHp * 0.7) return "heal";
+  return canUpgrade ? "upgrade" : "remove";
 }
 
-export function chooseRestCard(deck: string[], cards: ReadonlyMap<string, Card>, combat: CombatState): string {
+/**
+ * 제거는 **가장 나쁜** 한 장, 강화는 **가장 좋은** 한 장이다 — 같은 눈금을 방향만 뒤집어 읽는다.
+ * 후보가 비면 `undefined`다(강화할 것이 없는 덱)
+ */
+export function chooseRestCard(deck: string[], cards: ReadonlyMap<string, Card>, combat: CombatState, best = false): string {
   return [...deck].sort((left, right) => {
     const efficiency = (id: string) => {
       const card = cards.get(id);
       return card ? cardValue(card, combat, 0, {}) / Math.max(card.cost, 0.5) : Infinity;
     };
-    return efficiency(left) - efficiency(right);
+    return best ? efficiency(right) - efficiency(left) : efficiency(left) - efficiency(right);
   })[0];
 }
 

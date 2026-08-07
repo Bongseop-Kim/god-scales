@@ -7,10 +7,11 @@ import { Icon } from "./icon.tsx";
 /**
  * 지속은 셋뿐이고 근거는 코드다 — `shock`은 `core/combat.ts`의 `endTurn` 맨 끝에서 지워지고,
  * `mark`·`thorns`는 `consumeToken`을 아예 타지 않는다(`core/state.ts:9`의 주석과 같은 사실).
- * 나머지는 한 번 쓰면 스택이 하나 빠진다
+ * 나머지는 한 번 쓰면 스택이 하나 빠진다. `drain`·`fog`만 「다음 턴」이다 — 적 턴에 붙어
+ * `startTurn`이 지우므로 붙은 자리에서는 아직 아무 일도 안 했다
  */
-type Duration = "turn" | "consume" | "combat";
-const durationText: Record<Duration, string> = { turn: "이번 턴", consume: "1회 소모", combat: "전투 내내" };
+type Duration = "turn" | "next" | "consume" | "combat";
+const durationText: Record<Duration, string> = { turn: "이번 턴", next: "다음 턴", consume: "1회 소모", combat: "전투 내내" };
 
 /**
  * 색은 신이 아니라 **진영**이다(DD2: 노랑=이로움, 파랑=해로움) — 전투 중에 급한 정보는 출처가 아니라
@@ -24,10 +25,15 @@ const tokenStyle: Record<TokenName, { name: string; color: string; duration: Dur
   bulwark: { name: "방벽", color: "var(--athena)", duration: "consume", text: "방어 뒤 스택만큼 피해를 흡수" },
   deflect: { name: "반사", color: "var(--athena)", duration: "consume", text: "다음 공격을 통째로 되돌린다" },
   thorns: { name: "가시", color: "var(--athena)", duration: "combat", text: "맞을 때마다 스택만큼 반격" },
+  // 제우스·포세이돈이 나눠 든다 — 색은 앞선 신 쪽이다. 소모되지 않는 유일한 공격 버프다
+  might: { name: "위력", color: "var(--zeus)", duration: "combat", text: "주는 피해 +스택" },
   bleed: { name: "출혈", color: "var(--ares)", duration: "consume", text: "턴 끝에 스택만큼 피해" },
   frenzy: { name: "광란", color: "var(--ares)", duration: "consume", text: "다음 공격 피해 +2" },
   mark: { name: "표식", color: "var(--artemis)", duration: "combat", text: "받는 피해 1.5배" },
   crit: { name: "치명", color: "var(--artemis)", duration: "consume", text: "다음 공격 피해 2배" },
+  // 적만 붙인다 — 신 색이 없어 해로움 기본색으로 선다. `startTurn`이 다음 턴 시작에 통째로 지운다
+  drain: { name: "고갈", color: "var(--bane)", duration: "next", text: "다음 턴 에너지 −스택" },
+  fog: { name: "안개", color: "var(--bane)", duration: "next", text: "다음 턴 뽑기 −스택" },
 };
 
 export const tokenName = (token: TokenName) => tokenStyle[token].name;

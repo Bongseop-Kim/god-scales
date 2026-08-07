@@ -1,0 +1,391 @@
+[
+  {
+    "id": "card_zeus_28",
+    "name": "축적된 전하",
+    "patron": "zeus",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      { "op": "apply_token", "token": "might", "stacks": 1 },
+      { "op": "draw", "value": 1 }
+    ],
+    "tags": ["utility", "token"]
+  },
+  {
+    "id": "card_zeus_29",
+    "name": "연쇄 격발",
+    "patron": "zeus",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 3 },
+      { "op": "chain", "value": 3 },
+      { "op": "apply_token", "token": "might", "stacks": 1, "when": "cards_played_in_turn >= 3" }
+    ],
+    "tags": ["attack", "multi", "token"]
+  },
+  {
+    "id": "card_zeus_30",
+    "name": "과충전",
+    "patron": "zeus",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 7 },
+      { "op": "apply_token", "token": "shock", "stacks": 2, "when": "energy_spent_in_turn >= 3" }
+    ],
+    "tags": ["attack", "token"]
+  },
+  {
+    "id": "card_zeus_31",
+    "name": "뇌신의 각인",
+    "patron": "zeus",
+    "tier": 2,
+    "cost": 1,
+    "target": "self",
+    "effects": [{ "op": "apply_token", "token": "might", "stacks": 3 }],
+    "tags": ["utility", "token"]
+  },
+  {
+    "id": "card_zeus_32",
+    "name": "일순의 폭뢰",
+    "patron": "zeus",
+    "tier": 2,
+    "cost": 0,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 4 },
+      { "op": "chain", "value": 4 }
+    ],
+    "tags": ["attack", "multi", "exhaust"]
+  },
+  {
+    "id": "card_zeus_33",
+    "name": "누적 방전",
+    "patron": "zeus",
+    "tier": 2,
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 5 },
+      { "op": "apply_token", "token": "might", "stacks": 2, "when": "cards_played_in_turn >= 3" }
+    ],
+    "tags": ["attack", "token"]
+  },
+
+  {
+    "id": "card_poseidon_22",
+    "name": "해류의 완력",
+    "patron": "poseidon",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      { "op": "apply_token", "token": "might", "stacks": 1 },
+      { "op": "block", "value": 3 }
+    ],
+    "tags": ["defend", "token"]
+  },
+  {
+    "id": "card_poseidon_23",
+    "name": "밀물의 완력",
+    "patron": "poseidon",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 6 },
+      { "op": "apply_token", "token": "might", "stacks": 1 }
+    ],
+    "tags": ["attack", "token"]
+  },
+  {
+    "id": "card_poseidon_24",
+    "name": "썰물의 손",
+    "patron": "poseidon",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      { "op": "apply_token", "token": "displace", "stacks": 1 },
+      { "op": "damage", "value": 3, "when": "slot(target) < 2" }
+    ],
+    "tags": ["attack", "token"]
+  },
+  {
+    "id": "card_poseidon_25",
+    "name": "심해의 완력",
+    "patron": "poseidon",
+    "tier": 2,
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      { "op": "apply_token", "token": "might", "stacks": 2 },
+      { "op": "heal", "value": 3 }
+    ],
+    "tags": ["utility", "token"]
+  },
+  {
+    "id": "card_poseidon_26",
+    "name": "해구의 아가리",
+    "patron": "poseidon",
+    "tier": 2,
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 14 },
+      { "op": "apply_token", "token": "displace", "stacks": 1, "when": "slot(target) < 2" }
+    ],
+    "tags": ["attack", "token"]
+  },
+  {
+    "id": "card_poseidon_27",
+    "name": "관통 해류",
+    "patron": "poseidon",
+    "tier": 2,
+    "cost": 0,
+    "target": "enemy",
+    "reach": "23",
+    "effects": [
+      { "op": "damage", "value": 6 },
+      { "op": "apply_token", "token": "soaked", "stacks": 2 }
+    ],
+    "tags": ["attack", "token", "exhaust"]
+  },
+
+  {
+    "id": "card_athena_23",
+    "name": "성벽 돌진",
+    "patron": "athena",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 4 },
+      { "op": "apply_token", "token": "bulwark", "stacks": 1 },
+      { "op": "damage", "value": 4, "when": "block(self) >= 8" }
+    ],
+    "tags": ["attack", "token"]
+  },
+  {
+    "id": "card_athena_24",
+    "name": "반격의 벽",
+    "patron": "athena",
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      { "op": "apply_token", "token": "thorns", "stacks": 1, "when": "block(self) >= 6" },
+      { "op": "block", "value": 3 }
+    ],
+    "tags": ["defend", "token"]
+  },
+  {
+    "id": "card_athena_25",
+    "name": "성벽 붕괴",
+    "patron": "athena",
+    "cost": 2,
+    "target": "all_enemies",
+    "effects": [
+      { "op": "damage", "value": 3 },
+      { "op": "damage", "value": 4, "when": "block(self) >= 8" }
+    ],
+    "tags": ["attack", "multi"]
+  },
+  {
+    "id": "card_athena_26",
+    "name": "아이기스의 심판",
+    "patron": "athena",
+    "tier": 2,
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 4 },
+      { "op": "damage", "value": 6, "when": "block(self) >= 12" },
+      { "op": "apply_token", "token": "bulwark", "stacks": 1 }
+    ],
+    "tags": ["attack", "token"]
+  },
+  {
+    "id": "card_athena_27",
+    "name": "가시 갑주",
+    "patron": "athena",
+    "tier": 2,
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      { "op": "apply_token", "token": "thorns", "stacks": 1 },
+      { "op": "draw", "value": 1 },
+      { "op": "block", "value": 3 }
+    ],
+    "tags": ["defend", "utility", "token"]
+  },
+  {
+    "id": "card_athena_28",
+    "name": "가시의 응보",
+    "patron": "athena",
+    "tier": 2,
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 5 },
+      { "op": "apply_token", "token": "thorns", "stacks": 2, "when": "block(self) >= 10" }
+    ],
+    "tags": ["attack", "token"]
+  },
+
+  {
+    "id": "card_ares_29",
+    "name": "굶주린 칼날",
+    "patron": "ares",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 4 },
+      { "op": "apply_token", "token": "frenzy", "stacks": 1, "when": "hand_count < 3" }
+    ],
+    "tags": ["attack", "token"]
+  },
+  {
+    "id": "card_ares_30",
+    "name": "빈손의 돌격",
+    "patron": "ares",
+    "cost": 1,
+    "target": "enemy",
+    "reach": "012",
+    "effects": [
+      { "op": "damage", "value": 4 },
+      { "op": "damage", "value": 2, "when": "hand_count < 3" }
+    ],
+    "tags": ["attack"]
+  },
+  {
+    "id": "card_ares_31",
+    "name": "피의 회오리",
+    "patron": "ares",
+    "cost": 2,
+    "target": "all_enemies",
+    "effects": [
+      { "op": "damage", "value": 4 },
+      { "op": "apply_token", "token": "bleed", "stacks": 1, "when": "hand_count < 3" }
+    ],
+    "tags": ["attack", "multi", "token"]
+  },
+  {
+    "id": "card_ares_32",
+    "name": "최후의 격노",
+    "patron": "ares",
+    "tier": 2,
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 5 },
+      { "op": "apply_token", "token": "bleed", "stacks": 1 },
+      { "op": "damage", "value": 3, "when": "hand_count < 2" }
+    ],
+    "tags": ["attack", "token"]
+  },
+  {
+    "id": "card_ares_33",
+    "name": "광전사의 돌진",
+    "patron": "ares",
+    "tier": 2,
+    "cost": 0,
+    "target": "enemy",
+    "reach": "01",
+    "effects": [
+      { "op": "damage", "value": 6 },
+      { "op": "apply_token", "token": "frenzy", "stacks": 1 }
+    ],
+    "tags": ["attack", "token", "exhaust"]
+  },
+  {
+    "id": "card_ares_34",
+    "name": "학살의 폭풍",
+    "patron": "ares",
+    "tier": 2,
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 6 },
+      { "op": "apply_token", "token": "bleed", "stacks": 2 },
+      { "op": "apply_token", "token": "frenzy", "stacks": 1, "when": "attacks_in_turn >= 3" }
+    ],
+    "tags": ["attack", "token"]
+  },
+
+  {
+    "id": "card_artemis_28",
+    "name": "후열 마무리",
+    "patron": "artemis",
+    "cost": 1,
+    "target": "enemy",
+    "reach": "23",
+    "effects": [
+      { "op": "damage", "value": 3 },
+      { "op": "damage", "value": 6, "when": "hp_pct(target) < 30" }
+    ],
+    "tags": ["attack"]
+  },
+  {
+    "id": "card_artemis_29",
+    "name": "추적의 표식",
+    "patron": "artemis",
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      { "op": "apply_token", "token": "mark", "stacks": 2 },
+      { "op": "apply_token", "token": "crit", "stacks": 1, "when": "hp_pct(target) < 40" }
+    ],
+    "tags": ["utility", "token"]
+  },
+  {
+    "id": "card_artemis_30",
+    "name": "몰이 사냥",
+    "patron": "artemis",
+    "cost": 2,
+    "target": "all_enemies",
+    "reach": "123",
+    "effects": [
+      { "op": "damage", "value": 3 },
+      { "op": "damage", "value": 3, "when": "hp_pct(target) < 40" }
+    ],
+    "tags": ["attack", "multi"]
+  },
+  {
+    "id": "card_artemis_31",
+    "name": "숨통 끊기",
+    "patron": "artemis",
+    "tier": 2,
+    "cost": 1,
+    "target": "enemy",
+    "reach": "3",
+    "effects": [
+      { "op": "damage", "value": 5 },
+      { "op": "damage", "value": 8, "when": "hp_pct(target) < 30" }
+    ],
+    "tags": ["attack"]
+  },
+  {
+    "id": "card_artemis_32",
+    "name": "연속 사격",
+    "patron": "artemis",
+    "tier": 2,
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 5 },
+      { "op": "apply_token", "token": "crit", "stacks": 2, "when": "attacks_in_turn >= 3" }
+    ],
+    "tags": ["attack", "token"]
+  },
+  {
+    "id": "card_artemis_33",
+    "name": "달빛 조준",
+    "patron": "artemis",
+    "tier": 2,
+    "cost": 0,
+    "target": "enemy",
+    "effects": [
+      { "op": "damage", "value": 3 },
+      { "op": "apply_token", "token": "mark", "stacks": 1 },
+      { "op": "apply_token", "token": "crit", "stacks": 1 }
+    ],
+    "tags": ["attack", "token", "exhaust"]
+  }
+]
