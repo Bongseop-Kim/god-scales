@@ -217,6 +217,17 @@ describe("browser replay export", () => {
   });
 
   /**
+   * 전체화면 버튼은 열 화면 어디에나 같은 자리에 서므로 화면 전환 밖이고 **`form.setup` 바깥이다** —
+   * `<button>`의 기본값이 submit이라, 폼 안으로 옮기는 사람이 이 버튼으로 런을 시작시킨다
+   */
+  it("stands the fullscreen button outside the setup form", () => {
+    const markup = renderToStaticMarkup(createElement(App));
+
+    expect(markup).toContain('<button type="button" class="fullscreen">전체화면</button>');
+    expect(markup.match(/<form[\s\S]*<\/form>/)?.[0] ?? "").not.toContain("fullscreen");
+  });
+
+  /**
    * 조건부 효과는 화면에서 흐려진다 — **왜 흐린지**는 `title`과 `aria-label`이 든다. 표에 없는 조건은
    * DSL 원문이 그대로 나가므로, 데이터에 여섯째 조건이 붙는 날 이 줄이 그것을 잡는다
    */

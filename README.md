@@ -53,6 +53,7 @@ npm run tune                               # 조합별 승률 ε=0 · ε=0.45 �
 
 | | |
 |---|---|
+| [CARDS.md](CARDS.md) | 배포된 카드 전체 — `npm run cards`가 데이터에서 만든다 |
 | [DEPLOY.md](DEPLOY.md) | 배포 절차와 게이트 |
 | [reports/final.md](reports/final.md) | 회차별 밸런스 리포트 · B-0 판정 |
 | [reviews/00-index.md](reviews/00-index.md) | 실행 계획 전체 리뷰 |
