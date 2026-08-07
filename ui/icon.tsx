@@ -6,7 +6,7 @@ import sheet from "../art/icons.svg?raw";
  * 이름이 유니온인 이유는 **오타가 조용히 빈 자리로 뜨기 때문이다.** 시트에 없는 id를 `<use>`가 가리키면
  * 아무 일도 안 일어난다 — 경고도 없다. 여기서 컴파일이 막히고, 시트 쪽 28개는 `tools/art.ts`가 센다
  */
-type IntentKind = "damage" | "block" | "heal" | "token" | "idle";
+type IntentKind = "damage" | "block" | "heal" | "token" | "favor" | "idle";
 export type IconName = TokenName | PassiveName | MapNodeType | IntentKind;
 
 /**

@@ -19,11 +19,8 @@ const spriteArt = import.meta.glob<string>("../art/sprites/*.webp", { eager: tru
 const fxArt = import.meta.glob<string>("../art/fx/*.webp", { eager: true, query: "?url", import: "default" });
 const godArt = import.meta.glob<string>("../art/gods/*.webp", { eager: true, query: "?url", import: "default" });
 const particleArt = import.meta.glob<string>("../art/particle/*.webp", { eager: true, query: "?url", import: "default" });
-/**
- * 개입 컷인. **오버레이 셋이 단계 넷을 덮는다** — `open`은 헌신(길이 열린다), `block`은 진노(길이 막힌다),
- * `burst`는 그 사이 둘이다(`art/fx/*.md`). 진노는 조우 시작에만 신 일러가 대신 선다
- */
-const stageCut: Record<FavorStage, string> = { devotion: "open", calm: "burst", anger: "burst", wrath: "block" };
+/** 개입 컷인. P-46이 단계 이름을 직접 경로로 쓰기 전까지 개명된 파일을 잇는다. */
+const stageCut: Record<FavorStage, string> = { devotion: "devotion", calm: "calm", anger: "anger", wrath: "wrath" };
 
 type EnemyInfo = { id: string; name: string; intent_visible: boolean };
 const enemyInfo = new Map((enemyDataJson as EnemyInfo[]).map((enemy) => [enemy.id, enemy]));
@@ -64,13 +61,15 @@ function DamagePop({ hits, id, seq, still }: { hits: CombatObservation["hits"]; 
  * 아군을 향하는 행동은 누구에게 가는지까지 적는다: 회복이 자기 것인지 옆 것인지가 처치 순서를 바꾼다
  */
 function intentLabel(action?: EnemyAction): string {
-  const side = action?.target === "ally" ? "아군 " : "";
+  const side = action?.target === "ally" ? "아군 " : action?.target === "all_allies" ? "적 전체 " : "";
   const parts = [
     action?.damage && `공격 ${action.damage}`,
     action?.block && `${side}방어 ${action.block}`,
     action?.heal && `${side}회복 ${action.heal}`,
     // 토큰은 한글 이름으로 적는다 — 배지가 「감전」인데 의도가 `shock`이면 같은 것이 두 이름을 갖는다
     action?.token && `${side}${tokenName(action.token)} ${action.stacks ?? 1}`,
+    // 판 밖으로 나간다 — 「누구의」를 안 적는다: 후원 신 둘 다 같은 값만큼 내려간다
+    action?.favor && `호의 ${action.favor}`,
   ].filter(Boolean);
   return parts.length ? parts.join(" + ") : "대기";
 }
@@ -81,7 +80,7 @@ function intentLabel(action?: EnemyAction): string {
  * 의도를 감추는 적은 `omen`을 쓴다: 지도의 「무엇인지는 들어가야 압니다」와 같은 뜻이다
  */
 const intentIcon = (action?: EnemyAction): IconName =>
-  action?.damage ? "damage" : action?.block ? "block" : action?.heal ? "heal" : action?.token ? "token" : "idle";
+  action?.damage ? "damage" : action?.block ? "block" : action?.heal ? "heal" : action?.token ? "token" : action?.favor ? "favor" : "idle";
 
 /** 칸 넷. **0이 앞**(병사와 가까운 쪽)이고 3이 뒤다 */
 const slots = Array.from({ length: MAX_SLOTS }, (_, slot) => slot);
@@ -89,7 +88,8 @@ const slots = Array.from({ length: MAX_SLOTS }, (_, slot) => slot);
  * 칸 이름. 그림에서는 위아래 순서가 앞뒤를 말하지만 **스크린 리더에는 순서가 없다** — 그래서
  * 배지가 아니라 `aria-label`이 칸 번호를 들고, 양 끝만 앞·뒤를 덧붙인다
  */
-const slotLabel = (slot: number) => `칸 ${slot}${slot === 0 ? " 앞" : slot === MAX_SLOTS - 1 ? " 뒤" : ""}`;
+const slotLabel = (slot: number, span = 1) =>
+  `칸 ${span > 1 ? `${slot}~${slot + span - 1}` : slot}${slot === 0 ? " 앞" : slot + span - 1 === MAX_SLOTS - 1 ? " 뒤" : ""}`;
 
 /**
  * 손패에는 같은 카드가 두 장 있다. 키를 `id-index`로 쓰면 한 장이 무대로 빠질 때 **뒤 카드의 인덱스가
@@ -165,6 +165,9 @@ export function CombatScreen({ seed, decision, onAnswer }: {
         <AnimatePresence initial={false} mode="popLayout">
           {slots.map((slot) => {
             const enemy = view.enemies.find((candidate) => candidate.slot === slot);
+            // 두 칸짜리가 덮은 칸. 자리표시를 그리면 판이 다섯 칸이 된다
+            const covered = view.enemies.some((candidate) => candidate.slot < slot && candidate.slot + candidate.span > slot);
+            if (covered) return null;
             // 빈 칸은 스크린 리더에서 감춘다 — 산 적의 라벨이 칸 번호를 들고 있어 앞뒤는 그것으로 읽힌다
             if (!enemy) return <p key={slot} className="enemy empty" aria-hidden="true">{slotLabel(slot)}</p>;
             return (
@@ -294,12 +297,14 @@ function EnemyButton({ enemy, slot, hits, hitSeq, enabled, reducedMotion, onSele
       layout={!reducedMotion}
       transition={reducedMotion ? { duration: 0 } : pop}
       exit={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.92, transition: exitPop }}
-      className="enemy"
+      className={enemy.span > 1 ? "enemy wide" : "enemy"}
+      // 두 칸을 차지한 적은 두 칸 높이로 선다 — 인라인인 이유는 폭이 데이터라서다(`EnemyView.span`)
+      style={enemy.span > 1 ? { gridRow: `span ${enemy.span}` } : undefined}
       type="button"
       disabled={!enabled || !present}
       onClick={onSelect}
       // 배지마다 읽히면 적 하나가 문장 여섯이 된다 — 버튼 하나에 요약 한 문장이다
-      aria-label={`${slotLabel(slot)} ${name} 체력 ${enemy.hp} ${intent} ${passives.map(([id, stacks]) => `${passiveLabels[id]} ${stacks}`).join(" ")} ${tokenSummary(enemy.tokens)}`}
+      aria-label={`${slotLabel(slot, enemy.span)} ${name} 체력 ${enemy.hp} ${intent} ${passives.map(([id, stacks]) => `${passiveLabels[id]} ${stacks}`).join(" ")} ${tokenSummary(enemy.tokens)}`}
     >
       {/* 스프라이트는 이름 **위** 한 줄이다 — 옆에 세우면 405px 칸에서 의도 한 줄(nowrap)이 넘친다 */}
       {sprite && <span className="sprite"><img src={sprite} alt="" /></span>}

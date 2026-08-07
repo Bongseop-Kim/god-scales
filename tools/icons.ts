@@ -26,10 +26,15 @@ const icons: Record<string, string> = {
   bulwark: "delapouite/brick-wall",
   deflect: "lorc/shield-reflect",
   thorns: "lorc/crown-of-thorns",
+  // 제우스·포세이돈 공유라 신 계열이 없다 — 「굵어진 팔」이 형태만으로 「내가 커졌다」로 읽힌다
+  might: "delapouite/mighty-force",
   bleed: "skoll/blood",
   frenzy: "delapouite/claws",
   mark: "delapouite/crosshair",
   crit: "skoll/bullseye",
+  // 적 전용 둘. 자원을 빼앗는 쪽이라 신 계열이 없다 — 형태만으로 「빈 병」·「가린 눈」이 읽혀야 한다
+  drain: "lorc/empty-hourglass",
+  fog: "lorc/dust-cloud",
   // 패시브 8 — 14px. 토큰보다 더 단순한 것을 골랐다
   guard: "delapouite/closed-barbute",
   shell: "lorc/scale-mail",
@@ -45,6 +50,8 @@ const icons: Record<string, string> = {
   heal: "sbed/health-increase",
   token: "lorc/magic-swirl",
   idle: "lorc/hourglass",
+  // 판 밖으로 나가는 의도 하나 — 기도가 끊긴다. 「대기」로 떨어지면 화면이 거짓말을 한다
+  favor: "lorc/prayer",
   // 맵 노드 5 — 격자 16px + 선택지 24px. `elite`↔`combat`은 색이 거의 같아 형태로만 갈린다
   combat: "lorc/crossed-swords",
   elite: "lorc/crowned-skull",

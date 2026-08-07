@@ -1,6 +1,6 @@
 // `domMax`는 `domAnimation` + drag + **layout**이다 — 적이 자리를 맞바꿀 때 미끄러지는 데 그 셋째가 필요하다
 import { AnimatePresence, LazyMotion, domMax, m, useReducedMotion } from "motion/react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, FormEvent, RefObject } from "react";
 import { bossLane, floorsPerRegion, laneCount, mapSlot, type MapGrid, type MapNodeType } from "../core/map.ts";
 import type { GodId } from "../core/rules.ts";
@@ -150,6 +150,8 @@ export function App() {
       {/* 아이콘 시트는 **화면 전환 밖**에 선다 — `AnimatePresence` 안에 넣으면 전환마다 `<use>`가 가리킬
           대상이 사라졌다 다시 생긴다 */}
       <IconSheet />
+      {/* 아이콘 시트와 같은 이유로 전환 밖이다 — 열 화면 어디에나 같은 자리에 서야 한다 */}
+      <FullscreenButton />
       <AnimatePresence mode="wait" initial={false}>
         {/**
          * E2E(`npm run e2e`)가 읽는 두 값이다. `data-phase`는 지금 무엇을 묻는지, `data-step`은 답한
@@ -205,6 +207,29 @@ export function App() {
         </m.section>
       </AnimatePresence>
     </LazyMotion>
+  );
+}
+
+/**
+ * 1040px 게임이 브라우저 탭·주소창·북마크바 아래에 앉아 있는 것을 지운다. **상태를 직접 들지 않는다** —
+ * F11·Esc·창 전환으로 나가면 내 state와 화면이 어긋난다. 정본은 언제나 `document.fullscreenElement`고
+ * `fullscreenchange`는 그래서 `document`에 건다(`element`에 걸면 나가는 순간을 놓친다).
+ *
+ * `requestFullscreen()`은 **클릭 핸들러 안에서만** 통한다 — 밖에서 부르면 조용히 거부된 Promise만
+ * 남는다. 시작 화면에서 자동으로 켜는 것은 불가능하고, 시도해서도 안 된다
+ */
+function FullscreenButton() {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    const sync = () => setOn(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", sync);
+    return () => document.removeEventListener("fullscreenchange", sync);
+  }, []);
+  // `type="button"` 필수 — 지금은 `<form className="shell setup">` 바깥이지만 `<button>`의 기본값은 submit이다
+  return (
+    <button type="button" className="fullscreen" onClick={() => (on ? document.exitFullscreen() : document.body.requestFullscreen())}>
+      {on ? "창 모드" : "전체화면"}
+    </button>
   );
 }
 
@@ -355,6 +380,7 @@ function SetupScreen({
         </button>
       </div>
       <p className="hint">갈림길·카드·대상·보상·휴식·은혜·요구를 전부 당신이 고릅니다. 룰 봇이 대신 정하는 것은 없습니다.</p>
+      <p className="hint"><a href="./stats.html">시뮬 통계 →</a></p>
       </form>
     </>
   );

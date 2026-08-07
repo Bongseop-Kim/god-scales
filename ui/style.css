@@ -51,7 +51,15 @@
 }
 
 * { box-sizing: border-box; }
-body { margin: 0; min-width: 320px; min-height: 100vh; }
+/**
+ * 게임에 드래그도 선택도 없다. 살짝 끄는 순간 브라우저가 그림을 반투명 고스트로 뜯어 가고, 그동안
+ * 아래 커서 넷이 전부 기본 드래그 커서로 바뀐다 — 커서로 상태를 말하는 화면에서 커서가 거짓말을 한다.
+ * `-webkit-user-drag`는 **Firefox에 없으므로** `main.tsx`의 `dragstart` 한 줄이 그 짝이다
+ */
+body { margin: 0; min-width: 320px; min-height: 100vh; user-select: none; -webkit-user-select: none; }
+img { -webkit-user-drag: none; }
+/* 시드 입력만 예외다 — **Chrome은 `<input>`을 예외로 안 둔다.** 그러면 사람이 시드를 골라 지울 수 없다 */
+input { user-select: text; }
 button, input { font: inherit; }
 button { color: inherit; cursor: pointer; }
 
@@ -86,8 +94,24 @@ button:disabled { cursor: url(../art/cursor-pixel/tile_0015.png) 8 8, not-allowe
 .backdrop .p0 { bottom: 11%; left: 5%; }
 .backdrop .p1 { top: 15%; right: 7%; }
 
-.shell { width: min(1040px, calc(100% - 32px)); margin: 0 auto; padding: 64px 0; }
-.setup { max-width: 720px; min-height: 100vh; display: grid; align-content: center; justify-items: start; }
+/**
+ * 전체화면 버튼. **`.shell` 바깥에 선다** — 안에 두면 `tools/e2e.ts`의 열 측정이 버튼을 칸으로 센다.
+ * `fixed`라 `zoom` 밖이고, 좁은 창에서 본문만 줄고 이 버튼은 원래 크기로 남는다(조작 부품이라 그게 옳다).
+ * **위가 아니라 아래다** — 좁은 창에서는 여백이 3%뿐이라 위 오른쪽이면 머리글 배지(「1턴」·「3 / 12층」)를
+ * 덮는다. 열 화면 다 오른쪽 아래는 배경뿐이다. 흐리게 서고 가리키면 또렷해진다
+ */
+.fullscreen { position: fixed; right: 8px; bottom: 8px; z-index: 2; padding: 4px 9px; border-radius: 6px; font-size: .68rem; opacity: .4; }
+.fullscreen:hover { opacity: 1; }
+
+/**
+ * 폭은 **고정이다.** 좁은 창에서는 그릇만 줄이지 않고 `--fit`(`main.tsx`)이 통째로 줄인다 —
+ * `--card-w`가 고정이라(위) 그릇만 줄면 열 사이가 먼저 죽고 그 다음 카드가 줄바꿈한다.
+ * `transform: scale`이 아닌 이유가 셋이다: 레이아웃 박스가 실제로 줄고, `fixed` 자손을 안 가두고,
+ * `transform-origin`이 없다. 대가는 Firefox 126+(2024-05)이고 PC 웹 전용이라 받는다
+ */
+.shell { width: 1040px; margin: 0 auto; padding: 64px 0; zoom: var(--fit, 1); }
+/* `100vh`도 `zoom`만큼 짧아진다 — 나누지 않으면 좁은 창에서 시작 화면의 세로 중앙이 위로 뜬다 */
+.setup { max-width: 720px; min-height: calc(100vh / var(--fit, 1)); display: grid; align-content: center; justify-items: start; }
 .eyebrow { margin: 0 0 8px; color: #c6a969; font-size: .78rem; font-weight: 750; letter-spacing: .14em; text-transform: uppercase; }
 h1, h2, p { margin-top: 0; }
 h1 { margin-bottom: 16px; font-size: clamp(3rem, 9vw, 6.4rem); font-weight: 500; line-height: .95; }
@@ -130,8 +154,9 @@ button:not(:disabled):hover { border-color: #c6a969; }
 /* 색만으로 진영을 말하면 색각 이상에서 사라진다 — 해로움은 채움, 이로움은 외곽이다 */
 .token-badge.boon { color: var(--boon); }
 .token-badge.harmful { color: var(--bane); background: color-mix(in srgb, var(--bane) 30%, #181c27); }
-/* 지속 셋: 이번 턴은 점선, 1회 소모는 기본, 전투 내내는 고리 하나 더 */
+/* 지속 넷: 이번 턴은 점선, 다음 턴은 파선, 1회 소모는 기본, 전투 내내는 고리 하나 더 */
 .token-badge.turn { border-style: dotted; }
+.token-badge.next { border-style: dashed; }
 .token-badge.combat { outline: 1px solid color-mix(in srgb, currentColor 60%, transparent); outline-offset: 2px; }
 /**
  * 아이콘 28개는 `art/icons.svg` 한 장에서 온다. **`display: none`으로 감추지 않는다** — 시트가 그
@@ -229,6 +254,11 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
  * `▮▯▯▮` 사거리가 무엇을 가리키는지 화면에서 못 읽는다. 점선이 「여기 아무도 없다」를 말한다
  */
 .enemy.empty { margin: 0; padding: 8px 14px; border: 1px dashed #2b3040; border-radius: 14px; color: #4e5566; font-size: .74rem; }
+/**
+ * 두 칸을 차지한 적(보스). 칸 수는 `grid-row: span`이 인라인으로 들고 여기는 **그만큼의 높이**만 준다 —
+ * 자동 행은 내용 높이라 span만으로는 아무것도 안 커지고, 그러면 판이 두 칸이라는 사실이 화면에 없다
+ */
+.enemy.wide { min-height: 220px; border-color: #6d4b52; }
 .enemy .actor-tokens { grid-column: 1 / -1; }
 /**
  * 빈 줄은 자리를 안 먹는다. **`TokenRow`가 `null`을 돌려주지 않는 이유가 여기 있다** — 컨테이너가
@@ -369,9 +399,7 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .card-art.missing img { display: none; }
 .actions { display: flex; gap: 10px; margin-top: 20px; }
 
-@media (max-width: 720px) {
-  .shell { padding: 34px 0; }
-  .run-layout, .result-columns { grid-template-columns: 1fr; }
-  .run-layout header { grid-column: auto; }
-  .summary-grid { grid-template-columns: repeat(2, 1fr); }
-}
+/**
+ * 720px 미만의 1열 대비는 **없앴다.** 미디어 쿼리는 뷰포트를 보고 `zoom`은 그 안을 줄이므로 둘이
+ * 같이 서면 좁은 창에서만 열 구성이 달라진다 — 그 구간을 재는 것은 `.shell`의 `--fit` 하나다
+ */

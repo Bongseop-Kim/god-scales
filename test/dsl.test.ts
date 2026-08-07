@@ -28,6 +28,7 @@ const state = (): GameState => ({
     discardPile: [],
     powers: [],
     pending: [],
+    turnPlays: { cards_played: 2, attacks: 1, energy_spent: 3 },
     enemies: [
       { ...actor("a", 20), patternIndex: 0 },
       { ...actor("b", 20), patternIndex: 0 },
@@ -117,9 +118,20 @@ describe("conditions", () => {
     ["enemy_count() >= 3", "enemy_count() >= 4"],
     // 대상이 칸 0이다 — 자리 조건은 사거리와 달리 닿은 뒤의 값을 바꾼다
     ["slot(target) < 2", "slot(target) >= 2"],
+    // 카운터 셋. 내는 카드가 자기를 세므로 「두 장째」가 곧 `>= 2`다
+    ["cards_played_in_turn >= 2", "cards_played_in_turn >= 3"],
+    ["attacks_in_turn >= 1", "attacks_in_turn >= 2"],
+    ["energy_spent_in_turn >= 3", "energy_spent_in_turn >= 4"],
+    ["hand_count >= 2", "hand_count >= 3"],
+    ["hand_count < 3", "hand_count < 2"],
+    ["hp_pct(target) < 60", "hp_pct(target) < 50"],
+    ["block(self) >= 6", "block(self) >= 7"],
   ])("evaluates %s", (truthy, falsy) => {
     const combat = state();
     combat.combat.player.hp = 10;
+    combat.combat.player.block = 6;
+    combat.combat.hand = ["a", "b"];
+    combat.combat.enemies[0].hp = 11;
     combat.combat.enemies[0].tokens.shock = 1;
     const fixture = card("enemy", []);
     const context = { state: combat, card: fixture, target: combat.combat.enemies[0], deckCards: [fixture] };

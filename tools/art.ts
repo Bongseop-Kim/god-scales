@@ -41,12 +41,12 @@ const checks = [
   { kind: "props", made: 14, found: props.size, missing: regions.filter((region) => [...props].filter((name) => name.startsWith(`${artRegion(region)}_`)).length < 2) },
   {
     kind: "fixed",
-    made: 8,
-    found: 8,
+    made: 12,
+    found: 12,
     missing: [
-      ...missingFrom(fx, ["block", "burst", "open"]),
+      ...missingFrom(fx, ["devotion", "calm", "anger", "wrath", "burst", "strike"]),
       ...missingFrom(hero, ["hero-title", "hero-win", "hero-loss"]),
-      ...missingFrom(frame, ["card-frame"]),
+      ...missingFrom(frame, ["card-frame", "dialogue"]),
       ...missingFrom(marker, ["marker"]),
       // 커서·파티클·아이콘은 제작 83개가 아니다(Kenney CC0 · game-icons.net CC BY). 쓰는 것만 이름을 잠근다
       ...missingFrom(particle, Object.values(tagParticle)),

@@ -60,7 +60,7 @@ describe("validation gate", () => {
       region: "underworld",
       floor: 3,
       text: "반려된 적의 편성을 가리키는 층.",
-      groups: { combat: ["group_bad_passive_solo"] },
+      groups: { combat: ["group_bad_passive_wall"] },
     };
     const report = validateItems([enemy, slot]);
     expect(report.rejected).toContainEqual({ id: "map_underworld_borrowed", failure: "map_layout" });
@@ -78,6 +78,40 @@ describe("validation gate", () => {
     const report = validateItems(graces, JSON.parse(readFileSync("data/cards.json", "utf8")));
     expect(report.rejected).toEqual([]);
     expect(report.grace_coverage).toEqual([]);
+  });
+
+  /**
+   * 카드의 정체성은 **효과의 모양**이다(P-44 §1) — 배포된 `block|draw@self` 열 장 옆에 열한째를
+   * 세우는 길은 새 숫자가 아니라 새 모양이어야 한다. 배포분끼리는 다시 재지 않으므로 149장은 그대로 산다
+   */
+  it("rejects a candidate that only changes the numbers of a shipped card", () => {
+    const shipped = JSON.parse(readFileSync("data/cards.json", "utf8"));
+    const twin = shipped.find(({ id }: { id: string }) => id === "card_zeus_09");
+    const report = validateItems([
+      // 값과 코스트만 다른 쌍둥이 — 지문이 값을 3으로 나눠 들던 시절에는 통과했다
+      { ...twin, id: "card_zeus_twin", name: "값만 바꾼 호흡", cost: 2, effects: twin.effects.map((effect: { value: number }) => ({ ...effect, value: effect.value * 3 })) },
+      // 같은 op라도 사거리가 다르면 판 위에서 다른 일을 한다 — 그것은 새 카드다
+      { id: "card_zeus_narrow", name: "좁은 벼락", patron: "zeus", cost: 1, target: "enemy", reach: "3", effects: [{ op: "damage", value: 6 }], tags: ["attack"] },
+    ], shipped);
+    expect(report.rejected).toEqual([{ id: "card_zeus_twin", failure: "duplicate" }]);
+  });
+
+  /** 게이트가 업그레이드에서 보는 것 둘. 값 밴드는 base만 재고 올린 뒤 값은 조합 승률 하한이 본다 */
+  it("rejects an upgrade block with the wrong effect count, an out-of-band cost, or a fusion owner", () => {
+    // 값 밴드는 base만 잰다 — cost 3에 방어 15면 기대값 4.0으로 tier1 `[4, 8)`의 바닥이다
+    const base = { patron: "athena", cost: 3, target: "self", effects: [{ op: "block", value: 15 }], tags: ["defend"] };
+    const report = validateItems([
+      { ...base, id: "card_up_length", name: "길이가 틀린 강화", upgrade: { effects: [{ value: 1 }, { value: 1 }] } },
+      { ...base, id: "card_up_cost", name: "비용이 넘치는 강화", upgrade: { cost: 1 } },
+      { id: "card_up_fused", name: "융합에 적은 강화", patron_pair: ["poseidon", "zeus"], cost: 1, target: "enemy", effects: [{ op: "apply_token", token: "soaked", stacks: 1 }, { op: "damage", value: 6 }, { op: "chain", value: 4 }], tags: ["attack", "fused", "multi"], upgrade: { cost: -1 } },
+      // 같은 카드에서 `upgrade`만 빼면 통과한다 — 반려의 원인이 그 한 칸이라는 증거다
+      { ...base, id: "card_up_ok", name: "온전한 강화", upgrade: { cost: -1 } },
+    ]);
+    expect(report.rejected).toEqual([
+      { id: "card_up_length", failure: "dsl_parse" },
+      { id: "card_up_cost", failure: "dsl_parse" },
+      { id: "card_up_fused", failure: "dsl_parse" },
+    ]);
   });
 
   it("accepts valid single-patron and fusion cards", () => {

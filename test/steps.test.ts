@@ -9,8 +9,9 @@ const pickPath = (decision: Decision, type: string) => decision.options.find((op
 
 describe("steppable engine", () => {
   it("stops at every decision phase", () => {
-    // 시드 5 → 11: 여덟 종류를 전부 지나는 시드다. 갈래가 격자에서 오면서 5가 은총 전에 끝났다
-    const steps = runSteps(11);
+    // 시드 5 → 11 → 1: 여덟 종류를 전부 지나는 시드다. 갈래가 격자에서 오면서 5가 은총 전에 끝났고,
+    // P-44의 카드 30장이 보상 3택1을 바꾸자 11이 헌신에 못 닿는다(400시드 중 첫 자리가 1이다)
+    const steps = runSteps(1);
     const seen = new Set<string>();
     let step = steps.next();
     while (!step.done) {

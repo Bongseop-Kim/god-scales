@@ -44,7 +44,77 @@ export type Card = {
    * 보상 3택1에서 어느 자리가 몇 티어인지는 깊이가 정한다(`sim/engine.ts`의 `tier2Slots`)
    */
   tier?: 1 | 2;
+  /** 규칙(`upgraded`)으로 못 올리는 카드만 적는다 — 179장 중 19장이다 */
+  upgrade?: CardUpgrade;
 };
+
+/**
+ * 업그레이드 예외. 값은 전부 **레벨마다 더하는 델타**다 — `+2`는 두 번 더한 것이고, 그래야 규칙
+ * 배율(×1.4를 두 번)과 계단이 같은 꼴이 된다. `effects`는 카드의 효과와 **같은 길이**여야 하고
+ * 안 바꿀 자리는 `{}`다(게이트가 길이를 잰다)
+ */
+export type CardUpgrade = { cost?: number; effects?: { value?: number; stacks?: number }[] };
+
+/** 업그레이드 상한. 융합 열 장은 대상 밖이고 그것은 데이터가 아니라 소유 규칙이다(`sim/engine.ts`) */
+export const MAX_UPGRADE = 2;
+/** 규칙 배율. 다이얼이다 — `MAX_UPGRADE`와 이 둘로 업그레이드 전체의 세기를 잡는다 (P-44 §다이얼) */
+export const upgradeScale = 1.4;
+/** 규칙이 올리는 op 넷. `draw`·`energy`·`self_damage`와 토큰 스택은 그대로다 — 자해가 안 오르는 것이 핵심이다 */
+const scaledOps = new Set<Op>(["damage", "block", "heal", "chain"]);
+
+/**
+ * `card_zeus_12+1` → base id와 레벨. 접미사가 없으면 레벨 0이다 — **덱·손패·뽑기·버림이 `string[]`
+ * 그대로인 이유**가 이 한 줄이고, replay 파일 형식도 한 글자도 안 바뀐다. 같은 카드 두 장 중 한
+ * 장만 업그레이드된 상태를 병행 맵으로는 표현할 수 없다
+ */
+export function cardLevel(id: string): { base: string; level: number } {
+  const plus = id.lastIndexOf("+");
+  return plus < 0 ? { base: id, level: 0 } : { base: id.slice(0, plus), level: Number(id.slice(plus + 1)) };
+}
+
+/** 한 단 올린 id. 상한을 넘기면 던진다 — 고를 수 있는 것을 거르는 쪽은 호출자다 */
+export function upgradeId(id: string): string {
+  const { base, level } = cardLevel(id);
+  if (level >= MAX_UPGRADE) throw new Error(`Card is already at max upgrade: ${id}`);
+  return `${base}+${level + 1}`;
+}
+
+/** 레벨만큼 ×1.4 올림을 되풀이한다. 5 → 7 → 10, 11 → 16 → 23 */
+const grow = (value: number, level: number): number => {
+  let out = value;
+  for (let step = 0; step < level; step += 1) out = Math.ceil(out * upgradeScale);
+  return out;
+};
+
+/**
+ * base 카드 + 레벨 → 실제로 낼 카드. 규칙이 먼저 돌고 `upgrade`가 있으면 그것이 덮는다.
+ * 이름과 id에 `+N`이 붙으므로 화면·로그·CARDS.md가 따로 붙일 것이 없다.
+ *
+ * **비용은 0에서 멈춘다** — cost 델타만 적힌 카드(에너지 다섯 장·아이기스)는 그래서 `+1`이 곧 상한이다
+ */
+export function upgraded(card: Card, level: number): Card {
+  if (level <= 0) return card;
+  const written = card.upgrade;
+  const effects = written?.effects
+    ? card.effects.map((effect, index) => {
+      const delta = written.effects![index] ?? {};
+      return {
+        ...effect,
+        ...(delta.value ? { value: (effect.value ?? 0) + delta.value * level } : {}),
+        ...(delta.stacks ? { stacks: (effect.stacks ?? 1) + delta.stacks * level } : {}),
+      };
+    })
+    : card.effects.map((effect) => (effect.value !== undefined && scaledOps.has(effect.op)
+      ? { ...effect, value: grow(effect.value, level) }
+      : effect));
+  return {
+    ...card,
+    id: `${card.id}+${level}`,
+    name: `${card.name}+${level}`,
+    cost: written?.cost ? Math.max(0, card.cost + written.cost * level) : card.cost,
+    effects,
+  };
+}
 
 export function loadCards(cards: Card[]): Card[] {
   for (const card of cards) {
@@ -96,7 +166,9 @@ export function dealDamage(attacker: ActorState, target: ActorState, amount: num
   }
 
   if (consumeToken(attacker, "crit")) amount *= 2;
-  // 공격자 쪽 보정 둘(광란 +2, 침수 -1), 대상 쪽 보정 둘. tools/value.ts의 tokenWeights와 같은 눈금이다
+  // 공격자 쪽 보정 셋(위력 +스택, 광란 +2, 침수 -1), 대상 쪽 보정 둘. tools/value.ts의 tokenWeights와 같은 눈금이다.
+  // 위력만 **소모되지 않는다** — 전투가 끝날 때까지 남으므로 `consumeToken`을 안 탄다(가시와 같은 자리다)
+  amount += attacker.tokens.might ?? 0;
   if (consumeToken(attacker, "frenzy")) amount += 2;
   if (consumeToken(attacker, "soaked")) amount = Math.max(0, amount - 1);
   // 감전은 스택마다 +1로 이번 턴의 모든 피해를 키운다(턴 끝에 사라진다). 한 방에 소모되면 후속타가 없는
@@ -169,6 +241,8 @@ export function shoveDisplaced(combat: CombatState): Set<ActorState> {
     const enemy = combat.enemies[slot];
     if (enemy.hp <= 0 || !consumeToken(enemy, "displace")) continue;
     shoved.add(enemy);
+    // 두 칸을 차지한 적은 부동이다 — 토큰은 소모되고 자리는 그대로다(맨 뒤 불발과 같은 자리)
+    if (combat.enemies.indexOf(enemy) !== combat.enemies.lastIndexOf(enemy)) continue;
     // 자리를 통째로 맞바꾸므로 상태·토큰·패턴 진행이 다 따라간다 — `definitions.get`은 id로 읽는다
     if (slot + 1 < combat.enemies.length) [combat.enemies[slot], combat.enemies[slot + 1]] = [combat.enemies[slot + 1], combat.enemies[slot]];
   }
@@ -189,37 +263,49 @@ function compare(left: number, operator: string, right: number): boolean {
   throw new Error(`Unsupported comparator: ${operator}`);
 }
 
-export function evaluateCondition(expression: string, context: ConditionContext): boolean {
-  let match = expression.match(/^favor\((patron|[a-z_]+)\) (>=|<) (\d+)$/);
-  if (match) {
-    const gods = match[1] === "patron"
-      ? context.card.patronPair ?? (context.card.patron ? [context.card.patron] : [])
-      : [match[1]];
-    const favor = Math.min(...gods.map((god) => context.state.favor[god] ?? 0));
-    return compare(favor, match[2], Number(match[3]));
-  }
-
-  match = expression.match(/^has_token\(target, ([a-z_]+)\) >= (\d+)$/);
-  if (match) return (context.target.tokens[match[1] as TokenName] ?? 0) >= Number(match[2]);
+/** 조건 DSL 전체가 이 표 하나다 — 게이트(`tools/validate.ts`)는 `conditionPatterns`로 같은 목록을 읽는다 */
+const conditions: [RegExp, (match: RegExpMatchArray, context: ConditionContext) => boolean][] = [
+  [/^favor\((patron|[a-z_]+)\) (>=|<) (\d+)$/, (match, { state, card }) => {
+    const gods = match[1] === "patron" ? card.patronPair ?? (card.patron ? [card.patron] : []) : [match[1]];
+    return compare(Math.min(...gods.map((god) => state.favor[god] ?? 0)), match[2], Number(match[3]));
+  }],
+  [/^has_token\(target, ([a-z_]+)\) >= (\d+)$/, (match, { target }) => (target.tokens[match[1] as TokenName] ?? 0) >= Number(match[2])],
   /**
    * 칸은 배열 인덱스다(`core/targeting.ts`) — 사거리와 다른 것을 잰다: 사거리는 닿는지를 정하고
    * 이 조건은 닿은 뒤 값을 바꾼다. 대상이 적이 아니면 -1이라 `>=`는 거짓이다
    */
-  match = expression.match(/^slot\(target\) (>=|<) (\d+)$/);
-  if (match) return compare(context.state.combat.enemies.findIndex((enemy) => enemy === context.target), match[1], Number(match[2]));
-  match = expression.match(/^turn > (\d+)$/);
-  if (match) return context.state.combat.turn > Number(match[1]);
-  match = expression.match(/^hp_pct\(self\) < (\d+)$/);
-  if (match) return (context.state.combat.player.hp / context.state.combat.player.maxHp) * 100 < Number(match[1]);
-  match = expression.match(/^deck_count\(([a-z_]+)\) >= (\d+)$/);
-  if (match) return (context.deckCards ?? []).filter(({ tags }) => tags.includes(match![1] as Tag)).length >= Number(match[2]);
-  match = expression.match(/^enemy_count\(\) >= (\d+)$/);
-  if (match) return context.state.combat.enemies.filter(({ hp }) => hp > 0).length >= Number(match[1]);
+  [/^slot\(target\) (>=|<) (\d+)$/, (match, { state, target }) => compare(state.combat.enemies.findIndex((enemy) => enemy === target), match[1], Number(match[2]))],
+  [/^turn > (\d+)$/, (match, { state }) => state.combat.turn > Number(match[1])],
+  // 남은 체력 비율. self는 배수진, target이 처형·치명타의 자리다
+  [/^hp_pct\((self|target)\) < (\d+)$/, (match, { state, target }) => {
+    const actor = match[1] === "self" ? state.combat.player : target;
+    return (actor.hp / actor.maxHp) * 100 < Number(match[2]);
+  }],
+  [/^deck_count\(([a-z_]+)\) >= (\d+)$/, (match, { deckCards }) => (deckCards ?? []).filter(({ tags }) => tags.includes(match[1] as Tag)).length >= Number(match[2])],
+  [/^enemy_count\(\) >= (\d+)$/, (match, { state }) => state.combat.enemies.filter(({ hp }) => hp > 0).length >= Number(match[1])],
+  /**
+   * 이번 턴의 카운터 셋. `CombatState.turnPlays`가 유일한 출처이고 내는 카드가 자기를 센다 —
+   * 콤보·다단 히트·「에너지를 모아 때리기」가 전부 이 셋 위에 선다
+   */
+  [/^(cards_played|attacks|energy_spent)_in_turn >= (\d+)$/, (match, { state }) => state.combat.turnPlays[match[1] as keyof CombatState["turnPlays"]] >= Number(match[2])],
+  [/^hand_count (>=|<) (\d+)$/, (match, { state }) => compare(state.combat.hand.length, match[1], Number(match[2]))],
+  // 쌓은 방어를 피해로 바꾸는 자리 — 아테나의 빈 정체성이 여기서 선다
+  [/^block\(self\) >= (\d+)$/, (match, { state }) => state.combat.player.block >= Number(match[1])],
+];
+
+/** 게이트가 읽는 문법 표면. 여기서 꺼내 가므로 「게이트가 통과시킨 조건을 엔진이 던지는」 어긋남이 없다 */
+export const conditionPatterns = conditions.map(([regex]) => regex);
+
+export function evaluateCondition(expression: string, context: ConditionContext): boolean {
+  for (const [regex, evaluate] of conditions) {
+    const match = expression.match(regex);
+    if (match) return evaluate(match, context);
+  }
   throw new Error(`Invalid condition: ${expression}`);
 }
 
 /** 카드의 target이 무엇이든 플레이어에게 붙는 토큰. 나머지는 target으로 간다 — 게이트도 이 목록을 읽는다 */
-export const selfTokens = new Set<TokenName>(["bulwark", "deflect", "crit", "frenzy", "thorns"]);
+export const selfTokens = new Set<TokenName>(["bulwark", "deflect", "crit", "frenzy", "thorns", "might"]);
 /** 이로운 넷의 여집합이다 — 세 번째 목록을 만들지 않는다. `ward`와 P-26의 HUD 색이 같은 집합을 읽는다 */
 export const harmfulTokens = new Set(tokenNames.filter((token) => !selfTokens.has(token)));
 /**

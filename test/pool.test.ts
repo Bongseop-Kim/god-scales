@@ -25,29 +25,38 @@ describe("per-god pool gate", () => {
 
   it("rejects a pool that spends everything on mitigation", () => {
     /**
-     * 열 장 전부 block 하나짜리다. 장당 기대값은 4.0~7.2으로 tier1 밴드 `[4, 8)` 안이라 개별 판정은 다 통과한다.
-     * 값이 흩어진 이유는 `duplicateFailure`의 지문이 value를 3으로 나눠 버킷팅하기 때문 — 같은 버킷이면 중복으로 먼저 걸린다.
-     * 옛 열째 장은 block 30(값 8.0)이었는데 반개구간이 그것을 밴드 밖으로 밀어냈고, 아홉 장은 「10장 미만」이라
-     * 풀 규칙이 아예 안 돈다 — 그래서 열째만 같은 완화인 `bulwark`로 바꿨다
+     * 열 장 전부 완화 하나짜리다. 장당 기대값은 4.0~5.7이라 tier1 밴드 `[4, 8)` 안이고 개별 판정은 다 통과한다.
+     *
+     * **열 장이 서로 다른 모양이어야 한다**(P-44) — 지문이 값을 버리고 모양만 들므로 옛 판의
+     * 「block 하나짜리 아홉 장」은 이제 여덟 장이 `duplicate`로 먼저 걸리고, 남은 둘로는 「10장 미만」이라
+     * 풀 규칙이 아예 안 돈다. 아테나의 완화 어휘 셋(`block`·`bulwark`·`deflect`)과 조건 유무를 조합해
+     * 열 모양을 만든다 — 값이 아니라 모양이 장수를 만드는 것이 §1이 옮긴 축 그 자체다
      */
-    const turtles = [[5, 1], [6, 1], [9, 1], [12, 2], [15, 2], [18, 2], [21, 3], [24, 3], [27, 3]].map(([value, cost], index) => ({
-      id: `card_athena_turtle_${index}`,
-      name: `거북 ${index}`,
-      patron: "athena",
-      cost,
-      target: "self",
-      effects: [{ op: "block", value }],
-      tags: ["defend"],
-    }));
-    const report = validateItems([...turtles, {
-      id: "card_athena_turtle_9",
-      name: "거북 9",
-      patron: "athena",
-      cost: 2,
-      target: "self",
-      effects: [{ op: "apply_token", token: "bulwark", stacks: 4 }],
-      tags: ["defend", "token"],
-    }]);
+    const guard = (op: string, amount: number) => (op === "block" ? { op, value: amount } : { op: "apply_token", token: op, stacks: amount });
+    const turtles = [
+      [["block", 5], 1, false], [["block", 12], 1, true],
+      [["bulwark", 2], 1, false], [["bulwark", 4], 1, true],
+      [["deflect", 1], 2, false], [["deflect", 2], 2, true],
+      [["block", 4], 1, false, ["bulwark", 1]],
+      [["block", 5], 3, false, ["deflect", 1]],
+      [["bulwark", 2], 3, false, ["deflect", 1]],
+      [["block", 3], 3, false, ["bulwark", 1], ["deflect", 1]],
+    ].map((row, index) => {
+      const [first, cost, conditional, ...rest] = row as [[string, number], number, boolean, ...[string, number][]];
+      const effects = [first, ...rest].map(([op, amount]) => guard(op, amount));
+      return {
+        id: `card_athena_turtle_${index}`,
+        name: `거북 ${index}`,
+        patron: "athena",
+        cost,
+        target: "self",
+        effects: conditional ? effects.map((effect) => ({ ...effect, when: "turn > 2" })) : effects,
+        tags: ["defend", "token"],
+      };
+    });
+    const report = validateItems(turtles);
+    // 개별 판정은 열 장이 다 지난다 — 반려는 풀이 다 모인 뒤에야 뜬다
+    expect(report.rejected.map(({ failure }) => failure).filter((failure) => failure !== "pool_ratio")).toEqual([]);
     expect(report.rejected.some(({ failure }) => failure === "pool_ratio")).toBe(true);
   });
 });

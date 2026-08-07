@@ -100,7 +100,7 @@ describe("browser replay export", () => {
         ],
         // 칸 1에 세운다 — 나머지 셋이 빈 칸으로 서는지도 같이 본다
         enemies: [{
-          id: "enemy_under_guardian", slot: 1, hp: 20, maxHp: 30, block: 4,
+          id: "enemy_under_guardian", slot: 1, span: 1, hp: 20, maxHp: 30, block: 4,
           tokens: { shock: 2 }, passives: { guard: 2 },
           intent: { damage: 9, token: "soaked", stacks: 1 },
         }],
@@ -140,6 +140,33 @@ describe("browser replay export", () => {
   });
 
   /**
+   * 두 칸을 차지한 보스. 화면이 보는 것은 셋이다 — **한 판만** 뜨는가(엔진이 별칭을 한 번만 내보낸다),
+   * 그 판이 두 칸 높이인가, 덮은 칸 1에 빈 칸 자리표시가 안 서는가(서면 판이 다섯 칸이 된다)
+   */
+  it("draws a two-slot boss as one panel spanning both slots", () => {
+    const decision = {
+      phase: "card",
+      options: [],
+      bot: endTurnAction,
+      observation: {
+        depth: 5, lane: 1, region: "underworld", floor: 6, hp: 60, maxHp: 100,
+        patrons: ["zeus", "athena"], grid: [], favor: { zeus: 50, athena: 50 }, grace: {},
+        turn: 2, block: 0, energy: 3, draw: 4, tokens: {}, hand: [], powers: [],
+        enemies: [{ id: "enemy_under_boss", slot: 0, span: 2, hp: 100, maxHp: 130, block: 0, tokens: {}, passives: { ward: 2 }, intent: { damage: 6 } }],
+        hits: [], hitSeq: 0,
+      },
+    } as never;
+    const markup = renderToStaticMarkup(createElement(CombatScreen, { seed: 1, decision, onAnswer: () => {} }));
+
+    expect([...markup.matchAll(/<b>케르베로스<\/b>/g)], "같은 보스가 두 판에 겹쳐 뜨면 안 된다").toHaveLength(1);
+    expect(markup).toContain("grid-row:span 2");
+    expect(markup).toContain('aria-label="칸 0~1 앞 케르베로스');
+    // 칸 1은 보스가 덮었다. 남는 자리표시는 칸 2·3 둘뿐이다
+    expect([...markup.matchAll(/class="enemy empty"/g)]).toHaveLength(2);
+    expect(markup).not.toContain("칸 1<");
+  });
+
+  /**
    * 카드 면 채널 넷(비용 젬 · 예외 배지 · 아이콘 효과 줄 · 이름 캡션)과 무대. 손으로 짠 관측을 쓰는
    * 이유는 「파워·전체·자해·사거리·조건이 한 손에 다 있는」 턴이 실제 런에 거의 없어서다.
    * 값은 손으로 적었지만 **id·이름·비용·효과는 `data/cards.json`에 있는 그대로**다
@@ -159,7 +186,7 @@ describe("browser replay export", () => {
         depth: 3, lane: 1, region: "underworld", floor: 4, hp: 44, maxHp: 92,
         patrons: ["zeus", "athena"], grid: [], favor: { zeus: 40, athena: 40 }, grace: {},
         turn: 5, block: 0, energy: 3, draw: 4, tokens: {}, hand, powers: [],
-        enemies: [{ id: "enemy_under_guardian", slot: 0, hp: 20, maxHp: 30, block: 0, tokens: {}, passives: {}, intent: { damage: 9 } }],
+        enemies: [{ id: "enemy_under_guardian", slot: 0, span: 1, hp: 20, maxHp: 30, block: 0, tokens: {}, passives: {}, intent: { damage: 9 } }],
         hits: [], hitSeq: 0,
         // 무대에 오른 카드. **`view.card`는 id다** — 그것을 그대로 문장에 넣으면 화면에 영문 id가 뜬다
         card: "card_zeus_19",
@@ -214,6 +241,17 @@ describe("browser replay export", () => {
     expect(markup).not.toContain("disabled");
     // 편집기는 한 방향 문이 아니다 — 조합을 하나로 줄여 슬롯을 비운 사람이 여기로 돌아온다
     expect(markup).toContain("규칙 덱으로");
+  });
+
+  /**
+   * 전체화면 버튼은 열 화면 어디에나 같은 자리에 서므로 화면 전환 밖이고 **`form.setup` 바깥이다** —
+   * `<button>`의 기본값이 submit이라, 폼 안으로 옮기는 사람이 이 버튼으로 런을 시작시킨다
+   */
+  it("stands the fullscreen button outside the setup form", () => {
+    const markup = renderToStaticMarkup(createElement(App));
+
+    expect(markup).toContain('<button type="button" class="fullscreen">전체화면</button>');
+    expect(markup.match(/<form[\s\S]*<\/form>/)?.[0] ?? "").not.toContain("fullscreen");
   });
 
   /**

@@ -11,13 +11,13 @@ import { demandPenalty, demandSatisfied, payDemandCost, resolveDemand, tierEnemi
 import { graceOffer, graceSlots, graceTier, takeGrace, type Grace, type GraceSlot } from "../core/grace.ts";
 import { advanceMap, bossLane, enemyDamageScale, enterNode, floorsPerRegion, generateMap, laneCount, mapDepth, mapSlot, reachableLanes, takeRest, type MapGrid, type MapNodeType } from "../core/map.ts";
 import { canFuse } from "../core/fusion.ts";
-import { cardEffects, type Card, type GodId } from "../core/rules.ts";
+import { cardEffects, cardLevel, MAX_UPGRADE, upgradeId, upgraded, type Card, type GodId } from "../core/rules.ts";
 import { canReachTarget, livingInReach } from "../core/targeting.ts";
 import type { GameState, Passives, Tokens, Trigger } from "../core/state.ts";
 import { chooseCard, chooseDemandAnswer, chooseGrace, choosePath, chooseRest, chooseRestCard, chooseReward, chooseTarget } from "./bots/rule.ts";
 import { renderPlay } from "./log.ts";
 import type { RunResult } from "./report.ts";
-import type { ReplayAction } from "./replay.ts";
+import type { ReplayAction, RestChoice } from "./replay.ts";
 
 export const gods: GodId[] = ["zeus", "poseidon", "athena", "ares", "artemis"];
 export type PatronPair = readonly [GodId, GodId];
@@ -50,9 +50,14 @@ const mapSlots = new Map(mapData.map((slot) => [`${slot.region}:${slot.floor}`, 
 /** 정예를 놓을 수 있는 층 = 정예 편성이 있는 층. 층을 코드로 열면 없는 편성을 찾게 된다 */
 export const eliteSlots = new Set(mapData.filter(({ groups }) => groups.elite?.length).map(({ region, floor }) => `${region}:${floor}`));
 
-/** 시작 덱의 3장은 신별 태그가 정한다 — 공격 1 · 방어 1 · 유틸 1, 같은 비용이면 데이터 순서 */
+/**
+ * 시작 덱의 3장은 신별 태그가 정한다 — 공격 1 · 방어 1 · 유틸 1, 같은 비용이면 데이터 순서.
+ * **tier1만 본다**: 시작 덱은 보상 계단의 아래칸이고 편집기가 고를 수 있는 것과 같은 목록이어야 한다
+ * (`startableCards`). P-44가 cost 0짜리 tier2를 넣자 그 카드들이 「가장 싼 공격」이 되어 시작 덱을
+ * 통째로 가져갔다 — 정렬 기준이 비용 하나뿐인 것이 그때까지 안 드러난 자리다
+ */
 function starterCards(god: GodId): [string, string, string] {
-  const own = cards.filter((card) => card.patron === god).sort((a, b) => a.cost - b.cost);
+  const own = cards.filter((card) => card.patron === god && (card.tier ?? 1) === 1).sort((a, b) => a.cost - b.cost);
   const picked: string[] = [];
   for (const tag of ["attack", "defend", "utility"] as const) {
     const card = own.find(({ id, tags }) => tags.includes(tag) && !picked.includes(id));
@@ -125,8 +130,8 @@ type EnemyData = {
   hp: number;
   passives?: Passives;
   pattern: { op: string; value?: number; token?: import("../core/state.ts").TokenName; stacks?: number; repeat?: number; target?: EnemyAction["target"] }[];
-  /** `with`의 순서가 칸 1·2·3이다. `null`이 빈 칸이라 `03` 같은 사거리가 뜻을 갖는다 */
-  groups?: { id: string; with: (string | null)[] }[];
+  /** `with`의 순서가 칸 1·2·3이다. 빈 칸은 못 적는다 — 편성은 언제나 칸 0부터 붙여 채운다 */
+  groups?: { id: string; with: string[] }[];
 };
 const enemyData = enemyDataJson as EnemyData[];
 
@@ -141,6 +146,8 @@ function enemyDefinition(enemy: EnemyData): EnemyDefinition {
       block: effect.op === "block" ? effect.value : undefined,
       heal: effect.op === "heal" ? effect.value : undefined,
       token: effect.op === "apply_token" ? effect.token : undefined,
+      // 호의는 난이도 눈금을 안 탄다 — 판 밖의 값이라 `enemyDamageScale`이 손댈 자리가 아니다
+      favor: effect.op === "favor_shift" ? effect.value : undefined,
       stacks: effect.stacks,
       target: effect.target,
     })),
@@ -156,7 +163,9 @@ function encounter(seed: number, region: string, floor: number, type: MapNodeTyp
     const bosses = enemyData.filter((enemy) => enemy.region === region && enemy.tier === "boss");
     const boss = bosses[seed % bosses.length];
     if (!boss) throw new Error(`${region}: no boss`);
-    return [enemyDefinition(boss)];
+    // 보스는 칸 0·1 두 칸을 차지한다 — 사거리 `1`·`01`·`12` 카드가 보스전에서 처음으로 산다.
+    // 칸 2·3은 빈다: 부하를 붙이면 보스 층 편성 데이터·밴드·재측정이 통째로 딸려온다
+    return [{ ...enemyDefinition(boss), size: 2 }];
   }
   const candidates = mapSlots.get(`${region}:${floor}`)?.groups[type === "elite" ? "elite" : "combat"] ?? [];
   if (!candidates.length) throw new Error(`${region} ${floor}: no ${type} group`);
@@ -164,10 +173,9 @@ function encounter(seed: number, region: string, floor: number, type: MapNodeTyp
   const root = enemyData.find((enemy) => enemy.groups?.some(({ id }) => id === groupId));
   const group = root?.groups?.find(({ id }) => id === groupId);
   if (!root || !group) throw new Error(`Unknown encounter group: ${groupId}`);
-  // 편성의 순서가 곧 배치다 — 뿌리가 칸 0이고 `with`가 칸 1·2·3이다. `null`만 빈 칸이다:
-  // 없는 id를 빈 칸으로 바꾸면 오타 하나가 한 명 모자란 편성이 되어 조용히 선다
+  // 편성의 순서가 곧 배치다 — 뿌리가 칸 0이고 `with`가 칸 1·2·3이다. 없는 id를 빈 칸으로 바꾸지
+  // 않는다: 그러면 오타 하나가 한 명 모자란 편성이 되어 조용히 선다
   return [enemyDefinition(root), ...group.with.map((id) => {
-    if (id === null) return null;
     const member = enemyData.find((enemy) => enemy.id === id);
     if (!member) throw new Error(`Unknown encounter member: ${id} (${groupId})`);
     return enemyDefinition(member);
@@ -180,8 +188,11 @@ function encounter(seed: number, region: string, floor: number, type: MapNodeTyp
  */
 const godEnemies = enemyData.filter(({ tier }) => tier === "god").map(enemyDefinition);
 
-/** `slot`은 칸 번호(0이 앞)다 — 화면이 이것으로 빈 칸을 그린다. 위치만으로는 스크린 리더가 앞뒤를 모른다 */
-type EnemyView = { id: string; slot: number; hp: number; maxHp: number; block: number; tokens: Tokens; passives: Passives; intent?: EnemyAction };
+/**
+ * `slot`은 칸 번호(0이 앞)다 — 화면이 이것으로 빈 칸을 그린다. 위치만으로는 스크린 리더가 앞뒤를 모른다.
+ * `span`은 차지한 칸 수(보스만 2)이고, 그 적은 **한 번만** 나간다 — 두 번 내보내면 같은 보스가 두 판에 뜬다
+ */
+type EnemyView = { id: string; slot: number; span: number; hp: number; maxHp: number; block: number; tokens: Tokens; passives: Passives; intent?: EnemyAction };
 /** UI가 data/cards.json을 따로 읽으면 두 번째 진실이 된다 — 카드는 엔진이 준 것만 그린다 */
 export type CardView = { id: string; name: string; cost: number; target: Card["target"]; effects: Card["effects"]; reach?: string };
 const cardView = ({ id, name, cost, target, effects, reach }: Card): CardView => ({ id, name, cost, target, effects, ...(reach ? { reach } : {}) });
@@ -200,6 +211,31 @@ const startableIds = new Set(Object.values(startableCards).flatMap((list) => lis
  */
 export const deckOk = (deck: readonly string[]): boolean =>
   deck.length === deckSize && deck.every((id) => startableIds.has(id));
+
+/**
+ * `+N` 붙은 id를 만나면 그 자리에서 만들어 사전에 넣는다 — **카드를 조회하는 자리가 전부 그대로 돈다.**
+ * 덱을 건드린 뒤 한 번씩 부르므로 사전에는 실제로 덱에 든 등급만 선다(`deck_count`가 유령을 세지 않는다)
+ */
+function syncUpgrades(cardMap: Map<string, Card>, deck: readonly string[]): void {
+  for (const id of deck) {
+    if (cardMap.has(id)) continue;
+    const { base, level } = cardLevel(id);
+    const card = cardMap.get(base);
+    if (!card) throw new Error(`Unknown upgraded card: ${id}`);
+    cardMap.set(id, upgraded(card, level));
+  }
+}
+
+/**
+ * 지금 덱에서 강화할 수 있는 카드. 상한 `+2`이고 **융합 열 장은 대상 밖이다** — 여는 데 이미 은혜
+ * 둘이 들었고 거기에 ×1.4를 얹으면 「융합을 뽑았는가」가 런의 결말이 된다(P-44 §6). 조건이 카드가
+ * 아니라 소유 규칙이므로 데이터에 필드를 더하지 않는다
+ */
+const upgradable = (deck: readonly string[], cardMap: ReadonlyMap<string, Card>): string[] =>
+  [...new Set(deck)].filter((id) => {
+    const { base, level } = cardLevel(id);
+    return level < MAX_UPGRADE && !cardMap.get(base)?.patronPair;
+  });
 const runView = (state: GameState, patrons: PatronPair): RunView => {
   const { region, floor } = mapSlot(state.map.depth);
   return { depth: state.map.depth, lane: state.map.lane, region, floor, hp: state.combat.player.hp, maxHp: state.combat.player.maxHp, patrons, grid: state.map.grid, favor: { ...state.favor }, grace: { ...state.grace } };
@@ -268,7 +304,7 @@ type EncounterResult = {
 
 function* playEncounter(state: GameState, seed: number, deck: string[], cardMap: Map<string, Card>, lineup: Lineup, log: string[], patrons: PatronPair, noise: () => number): Generator<Decision, EncounterResult, string> {
   /** **판과 사전을 갈라 둔다** — 사전에는 신 적 다섯이 미리 들어 있고 판에는 편성만 선다 */
-  const enemyMap = new Map([...lineup.filter((enemy): enemy is EnemyDefinition => enemy !== null), ...godEnemies].map((enemy) => [enemy.id, enemy]));
+  const enemyMap = new Map([...lineup, ...godEnemies].map((enemy) => [enemy.id, enemy]));
   const random = createRng(seed);
   // 최대 체력도 이어 받는다 — 시련의 선불 대가가 여기 걸려 있고, `createCombat`은 매번 MAX_HP로 돌린다
   const { hp, maxHp } = state.combat.player;
@@ -325,11 +361,13 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
     powers: state.combat.powers.map(({ trigger, card }) => ({ trigger, card: cardView(card) })),
     // 칸을 실어 보낸다 — 살아 있는 적만 보내면 화면이 남은 적이 앞뒤 어디였는지 그릴 수 없다
     enemies: state.combat.enemies.flatMap((enemy, slot) => {
-      if (enemy.hp <= 0) return [];
+      // 별칭은 **동일성으로** 한 번만 내보낸다 — 안 지우면 같은 보스가 두 판에 겹쳐 뜬다
+      if (enemy.hp <= 0 || state.combat.enemies.indexOf(enemy) !== slot) return [];
       const pattern = enemyMap.get(enemy.id)!.pattern;
       // 패시브는 정의가 아니라 **상태**에서 온다 — `ward`·`guard`는 소모되므로 정의를 읽으면 화면이 안 움직인다
       const passives = Object.fromEntries(Object.entries(enemy.passives ?? {}).filter(([, stacks]) => stacks > 0));
-      return [{ id: enemy.id, slot, hp: enemy.hp, maxHp: enemy.maxHp, block: enemy.block, tokens: { ...enemy.tokens }, passives, intent: pattern[enemy.patternIndex % pattern.length] }];
+      const span = state.combat.enemies.lastIndexOf(enemy) - slot + 1;
+      return [{ id: enemy.id, slot, span, hp: enemy.hp, maxHp: enemy.maxHp, block: enemy.block, tokens: { ...enemy.tokens }, passives, intent: pattern[enemy.patternIndex % pattern.length] }];
     }),
     hits,
     hitSeq,
@@ -435,7 +473,21 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
   const hpCurve = [state.combat.player.hp];
   /** `"1:elite"` 꼴. 갈래와 종류를 같이 들어야 옛 로그가 어느 갈래였는지 못 갖는 것이 드러난다 */
   const pathChoices: string[] = [];
-  const restChoices: ("heal" | "remove")[] = [];
+  const restChoices: RestChoice[] = [];
+  /**
+   * 지킨 요구가 주는 강화. **고르는 자리가 아니다** — 새 결정 phase는 replay·화면·e2e가 통째로
+   * 딸려오고, 고르는 자리는 이미 휴식처다. 규칙은 `chooseReward`와 같은 표를 쓴다: 지금 덱에서
+   * 기대값이 가장 큰 강화 가능한 카드 한 장
+   */
+  const grantUpgrade = (count: number): void => {
+    for (let given = 0; given < count; given += 1) {
+      const raisable = upgradable(deck, cardMap);
+      if (!raisable.length) return;
+      const best = chooseReward(raisable, cardMap);
+      deck[deck.indexOf(best)] = upgradeId(best);
+      syncUpgrades(cardMap, deck);
+    }
+  };
   const regionsCleared: string[] = [];
   let encounters = 0;
   let restCount = 0;
@@ -624,31 +676,37 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
       carried = (yield* askDemand(1, nodeSeed, true)) ?? carried;
       advanceMap(state);
     } else if (path === "rest") {
+      // 강화할 카드가 없으면 그 칸은 서지 않는다 — 융합만 남은 덱은 실제로 그 자리다
+      const raisable = upgradable(deck, cardMap);
+      const restOptions = raisable.length ? ["heal", "remove", "upgrade"] : ["heal", "remove"];
       const rest = yield {
         phase: "rest",
-        options: ["heal", "remove"],
-        bot: chooseRest(state.combat.player.hp, state.combat.player.maxHp),
+        options: restOptions,
+        bot: chooseRest(state.combat.player.hp, state.combat.player.maxHp, raisable.length > 0),
         observation: mapObservation,
       };
-      if (rest !== "heal" && rest !== "remove") throw new Error(`Invalid rest action: ${rest}`);
-      const cardId = rest === "remove"
+      if (!restOptions.includes(rest)) throw new Error(`Invalid rest action: ${rest}`);
+      const choice = rest as RestChoice;
+      const picked = choice === "upgrade" ? raisable : choice === "remove" ? [...deck] : [];
+      const cardId = picked.length
         ? yield {
           phase: "rest_card",
-          options: [...deck],
-          bot: chooseRestCard(deck, cardMap, state.combat),
+          options: picked,
+          bot: chooseRestCard(picked, cardMap, state.combat, choice === "upgrade"),
           observation: mapObservation,
         }
         : undefined;
-      takeRest(state, [...patrons], deck, rest, cardId);
-      actions.push({ type: "rest", choice: rest });
+      takeRest(state, [...patrons], deck, choice, cardId);
+      syncUpgrades(cardMap, deck);
+      actions.push({ type: "rest", choice });
       if (cardId !== undefined) actions.push({ type: "rest_card", choice: cardId });
-      restChoices.push(rest);
+      restChoices.push(choice);
       restCount += 1;
       advanceMap(state);
     } else {
       const lineup = encounter(seed + nodeSeed, region, floor, path);
-      /** 실제로 선 적. 빈 칸은 세지 않는다 — 요구의 `min_enemies`도 원장의 조우 크기도 사람 수다 */
-      const members = lineup.filter((enemy): enemy is EnemyDefinition => enemy !== null);
+      /** 실제로 선 적. 칸이 아니라 **사람 수**다 — 두 칸짜리 보스도 하나고, 요구의 `min_enemies`가 그 눈금이다 */
+      const members = lineup;
       /** 이 조우가 무엇을 요구했는지. `--aura-matrix`가 개입의 부호를 여기서 갈라 읽는다 */
       const passives = [...new Set(members.flatMap(({ passives: own }) => Object.keys(own ?? {})))].sort();
       const devoted = patrons.filter((god) => favorStage(state.favor[god] ?? favorInitial) === "devotion");
@@ -687,6 +745,7 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
         // 지키지 못한 약속은 아무것도 움직이지 않는다 — 실패 벌금은 만들지 않는다. 선불 대가는 이미 나갔다
         const held = tier ? demandSatisfied(tier, result.facts) : false;
         resolveDemand(state.favor, patron, other, held ? tier : undefined);
+        if (held && tier?.reward.upgrade) grantUpgrade(tier.reward.upgrade);
         // 시련의 보상은 그 신의 은혜 하나다 — `awardGrace`와 같은 상한(6)을 쓰고 3택1을 그 자리에서 띄운다
         if (held && tier?.reward.grace) {
           state.grace[patron] = Math.min(6, (state.grace[patron] ?? 0) + tier.reward.grace);

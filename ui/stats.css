@@ -1,0 +1,61 @@
+/* 통계 페이지 전용. 토큰(신 색·--boon·--bane·Galmuri11)은 style.css의 것을 그대로 쓴다 */
+.stats-page { max-width: 880px; margin: 0 auto; padding: 44px 20px 90px; display: flex; flex-direction: column; gap: 36px; user-select: text; -webkit-user-select: text; }
+.stats-page h1 { font-size: clamp(2.2rem, 6vw, 3.4rem); margin-bottom: 10px; }
+.stats-page h2 { font-size: 1.15rem; margin-bottom: 6px; }
+.stats-page section { display: flex; flex-direction: column; gap: 14px; }
+.stats-page section > p { max-width: 62ch; margin: 0; color: #b9b2a3; font-size: .84rem; line-height: 1.7; }
+.stats-lead { color: #b9b2a3; font-size: .9rem; max-width: 62ch; }
+.stats-page a { color: var(--boon); }
+.stats-missing { padding: 60px 24px; text-align: center; }
+
+.stats-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 18px; }
+@media (max-width: 620px) { .stats-tiles { grid-template-columns: repeat(2, 1fr); } }
+.stats-tile { background: rgba(255, 255, 255, .05); border-radius: 8px; padding: 12px 14px; }
+.stats-tile-value { font-size: 1.7rem; font-weight: 700; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.stats-tile-label { margin-top: 4px; color: #948d7f; font-size: .72rem; }
+
+.stats-panel { margin: 0; background: rgba(255, 255, 255, .04); border-radius: 10px; padding: 12px 14px 10px; }
+.stats-panel figcaption { font-size: .78rem; color: #948d7f; margin-bottom: 8px; }
+.stats-panel figcaption b { color: #f4efe5; }
+.stats-panel svg { display: block; width: 100%; height: auto; }
+.stats-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+@media (max-width: 700px) { .stats-cols { grid-template-columns: 1fr; } }
+
+.stats-grid { stroke: rgba(255, 255, 255, .09); }
+.stats-guide { stroke: rgba(255, 255, 255, .2); stroke-dasharray: 3 4; }
+.stats-axis { fill: #948d7f; font-size: 10px; font-variant-numeric: tabular-nums; }
+.stats-note { fill: #948d7f; font-size: 10px; }
+.stats-bar { fill: var(--boon); opacity: .45; }
+.stats-bar-strong { fill: var(--boon); opacity: .95; }
+.stats-line { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
+.stats-dot { fill: currentColor; }
+.stats-series-label { fill: currentColor; font-size: 11px; font-weight: 700; }
+
+.stats-stagebar { display: flex; gap: 2px; }
+.stats-stagebar .stats-stageseg { position: relative; min-width: 2px; height: 40px; }
+.stats-stagebar.compact .stats-stageseg { height: 28px; }
+.stats-stageseg i { position: absolute; inset: 0; background: var(--boon); border-radius: 3px; }
+.stats-stageseg span { position: absolute; inset: 0; display: grid; place-items: center; font-size: .68rem; color: #f4efe5; text-shadow: 0 1px 2px rgba(0, 0, 0, .8); white-space: nowrap; }
+
+.stats-scroll { overflow-x: auto; }
+.stats-matrix { border-collapse: collapse; font-size: .78rem; font-variant-numeric: tabular-nums; }
+.stats-matrix th, .stats-matrix td { padding: 6px 10px; text-align: center; border: 1px solid rgba(255, 255, 255, .08); }
+.stats-matrix th { color: #b9b2a3; font-weight: 400; white-space: nowrap; }
+.stats-matrix td { min-width: 52px; }
+.stats-diag { color: #5a554b; }
+.stats-chip { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+
+.stats-barrow { display: grid; grid-template-columns: 128px 1fr 76px; gap: 8px; align-items: center; font-size: .74rem; padding: 2px 0; }
+.stats-barrow-label { color: #b9b2a3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stats-barrow-track { height: 9px; background: rgba(255, 255, 255, .06); border-radius: 3px; overflow: hidden; }
+.stats-barrow-track i { display: block; height: 100%; border-radius: 3px; }
+.stats-fill { background: var(--bane); }
+.stats-fill-strong { background: var(--boon); }
+.stats-barrow-value { text-align: right; color: #f4efe5; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.stats-versus-head { display: flex; gap: 16px; font-size: .74rem; color: #948d7f; margin-bottom: 6px; }
+.stats-versus-head span:first-child::before, .stats-versus-head span:last-child::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.stats-versus-head span:first-child::before { background: var(--boon); }
+.stats-versus-head span:last-child::before { background: var(--bane); }
+.stats-versus-row { margin-bottom: 7px; }
+.stats-versus-row .stats-barrow:last-child .stats-barrow-label { visibility: hidden; }

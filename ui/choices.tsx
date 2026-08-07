@@ -47,11 +47,16 @@ export function RestScreen({ seed, decision, onAnswer }: {
             <h2>어떻게 쉴까요?</h2>
             <Choice mark="회" label="회복" detail={`체력을 ${restHealing} 회복합니다.`} onChoose={() => onAnswer("heal")} />
             <Choice mark="제" label="카드 제거" detail="덱에서 한 장을 영구히 뺍니다. 얇은 덱이 핵심 카드를 더 자주 뽑습니다." onChoose={() => onAnswer("remove")} />
+            {/* 강화할 카드가 없으면 관측이 이 답을 안 싣는다 — 서지 않는 칸은 그리지 않는다 */}
+            {options.includes("upgrade") && (
+              <Choice mark="강" label="카드 강화" detail="덱의 한 장을 키웁니다. 장수는 그대로고, 같은 카드 두 장 중 한 장만 커집니다." onChoose={() => onAnswer("upgrade")} />
+            )}
           </>
         )
         : (
           <>
-            <h2>어느 카드를 뺄까요?</h2>
+            <h2>어느 카드를 고를까요?</h2>
+            {/* 후보가 덱 전체가 아닐 수 있다 — 강화는 `+2`에 닿은 카드와 융합을 뺀다(`sim/engine.ts`) */}
             <CardRow cards={view.deck} options={options} onSelect={onAnswer} />
           </>
         )}
@@ -106,8 +111,13 @@ const costText = (other: string, cost?: DemandCost): string => {
   ].filter(Boolean).join(" · ");
 };
 
+/** 서열이 곧 문장 순서다 — 은혜 > 업그레이드 > 호의(`tools/validate.ts`의 `rewardRises`) */
 const rewardText = (patron: string, reward: DemandReward): string =>
-  reward.grace ? `${godName(patron)}의 은혜 ${reward.grace}개` : `${godName(patron)} 호의 +${reward.favor ?? 0}`;
+  [
+    reward.grace ? `${godName(patron)}의 은혜 ${reward.grace}개` : "",
+    reward.upgrade ? `카드 강화 ${reward.upgrade}장` : "",
+    reward.favor ? `${godName(patron)} 호의 +${reward.favor}` : "",
+  ].filter(Boolean).join(" · ") || `${godName(patron)} 호의 +0`;
 
 /**
  * 요구는 수락·시련·거절 셋이다. 시련은 값을 **선불로** 치르고 은혜를 받는다 — 5층과 적이 모자란

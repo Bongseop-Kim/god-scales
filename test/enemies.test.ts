@@ -5,6 +5,7 @@ import { summarize } from "../sim/report";
 import { validateItems } from "../tools/validate";
 
 describe("generated enemies", () => {
+  // 후보 하나면 판정이 선다 — 배포된 적을 그대로 베낀 열넷은 밴드가 움직일 때마다 두 곳을 고치게 했다
   it("rejects an encounter outside its regional thresholds", () => {
     const items = JSON.parse(readFileSync("staging/enemies-underworld.json", "utf8"));
     const report = validateItems(items);
