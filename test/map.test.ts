@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createCombat } from "../core/combat";
-import { bossLane, floorsPerRegion, generateMap, laneCount, mapLayoutFailure, mapSlot, reachableLanes, takeRest, type MapGrid } from "../core/map";
+import { bossLane, floorsPerRegion, generateMap, laneCount, mapDepth, mapLayoutFailure, mapSlot, reachableLanes, takeRest, type MapGrid } from "../core/map";
 import type { GameState } from "../core/state";
 import { runSteps, simulate } from "../sim/engine";
 import { summarize } from "../sim/report";
@@ -91,7 +91,12 @@ describe("map", () => {
     // N-04에서 0.05 → 0.358로 깨졌던 자리다. P-22 이후 0.167(64000런)까지 돌아왔다 —
     // 쉼터가 의미를 되찾는 방향이다. 원래 밴드(0.05)와는 아직 멀다
     expect(report.low_rest_clear_rate).toBeLessThan(0.24);
-    expect(results.filter(({ won }) => won).every(({ encounters }) => encounters >= 6 && encounters <= 12)).toBe(true);
+    /**
+     * 하한이 6이었는데 그것은 밴드가 아니라 우연이었다 — 5조우로 12칸을 걷는 길은 HEAD에도 있었고
+     * (시드 267) 그 런이 이기지 않았을 뿐이다. 격자가 정하는 하한은 **지역당 보스 하나**다:
+     * 층 5는 쉼터가 보장되고 층 1~4는 넷 다 예고가 될 수 있다. 상한은 칸 수다
+     */
+    expect(results.filter(({ won }) => won).every(({ encounters }) => encounters >= 2 && encounters <= mapDepth)).toBe(true);
     expect(report).toMatchObject({ hp_curve: expect.any(Array), path_choices: expect.any(Object), lane_choices: expect.any(Object), rest_choices: expect.any(Object), region_clear_rate: expect.any(Object) });
   });
 });

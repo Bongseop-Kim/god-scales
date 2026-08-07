@@ -63,16 +63,55 @@ function starterCards(god: GodId): [string, string, string] {
 }
 export const godDecks = Object.fromEntries(gods.map((god) => [god, starterCards(god)])) as Record<GodId, [string, string, string]>;
 
+/** 시작 덱은 언제나 열 장이다. 다이얼로 열면 자유 모드가 「모드」가 아니라 난이도 슬라이더가 된다 */
+export const deckSize = 10;
+/**
+ * 규칙이 뽑는 시작 덱 — `patrons[0]`에게 2·2·1, `[1]`에게 3·1·1. **자유 모드의 기본값이기도 하다**:
+ * 편집기가 이 열 장으로 차 있고, 손대지 않은 덱은 반출에 안 적힌다(`ui/export.ts`)
+ */
+export const ruleDeck = (patrons: PatronPair): string[] => [
+  godDecks[patrons[0]][0], godDecks[patrons[0]][0], godDecks[patrons[0]][1], godDecks[patrons[0]][1], godDecks[patrons[0]][2],
+  godDecks[patrons[1]][0], godDecks[patrons[1]][0], godDecks[patrons[1]][0], godDecks[patrons[1]][1], godDecks[patrons[1]][2],
+];
+
 /** 보상은 조합에 속한 신 둘의 카드에서만 3장 나온다 — 신 선택이 보상에 반영되는 지점 */
 export const skipReward = "";
-function rewardOffer(random: () => number, patrons: PatronPair): string[] {
-  const candidates = cards.filter(({ patron }) => patron && patrons.includes(patron));
-  // 후보가 셋보다 적으면 아래 루프가 영원히 돈다 — 멈추는 대신 왜 멈췄는지 말한다
-  if (new Set(candidates.map(({ id }) => id)).size < 3) throw new Error(`${patrons.join("+")}: reward offer needs 3 cards`);
+/**
+ * 3택1 중 tier2가 차지하는 자리 수. **깊이가 아니라 갈래가 정한다** — P-39는 「지상 일반 전투도 한
+ * 자리」로 설계했고 3000런 층화가 그것을 되돌렸다:
+ *
+ * | 판 | 승률 | 최저 셀 | 변동계수 |
+ * |---|---:|---:|---:|
+ * | 기준선(P-38) | 0.399 | 0.147 | 0.489 |
+ * | 융합 8장만 상향 | 0.401 | 0.140 | 0.486 |
+ * | **+ 정예·보스 세 자리** | **0.424** | **0.140** | **0.444** |
+ * | + 지상 일반 한 자리(설계) | 0.369 | 0.083 | 0.527 |
+ * | + 지상 일반 세 자리 | 0.391 | 0.090 | 0.454 |
+ *
+ * 지상 일반 전투에 tier2를 주면 자리 수가 1이든 3이든 최저 셀이 0.14 → 0.08~0.09으로 내려간다.
+ * **아레스 셀 넷이 전부 내려간다** — `expectedValue`가 값싼 자기 강화(`frenzy`·`self_damage`·`thorns`)를
+ * 실제 세기보다 높게 재고 `chooseReward`가 같은 표로 고르므로, 3장뿐인 tier2 풀이 덱에 반복해 쌓인다.
+ * 정예·보스는 그 자리가 런당 1~3회뿐이라 같은 카드가 세 장 나오는 일이 없다.
+ *
+ * `depth`를 안 읽으므로 지역이 늘어도 안 바뀐다 — 저승이 tier1뿐인 것은 이제 **저승에 정예 편성이 없다**는
+ * 사실이 든다(`data/map.json`). 저승에 정예를 놓으면 이 규칙이 아니라 그 편성이 등급을 옮긴다
+ */
+const tier2Slots = (path: MapNodeType): number => (path === "elite" || path === "boss" ? 3 : 0);
+/** 테스트가 부른다 — 자리 수보다 후보가 적을 때 던지는 가드는 배포 데이터로는 못 만드는 상황이다 */
+export function rewardOffer(random: () => number, patrons: PatronPair, tier2 = 0): string[] {
   const offer: string[] = [];
-  while (offer.length < 3) {
-    const { id } = candidates[Math.floor(random() * candidates.length)];
-    if (!offer.includes(id)) offer.push(id);
+  /**
+   * **tier2를 먼저 뽑는다.** 같은 `createRng(seed * 1000 + nodeSeed)` 스트림을 쓰므로 소비 순서가 곧
+   * 결과다 — 나중에 뽑으면 tier2 자리가 0인 저승에서도 tier1 카드열이 흔들려 옛 replay가 깨진다
+   */
+  for (const [tier, wanted] of [[2, tier2], [1, 3]] as const) {
+    const candidates = cards.filter((card) => card.patron && patrons.includes(card.patron) && (card.tier ?? 1) === tier);
+    // 후보가 자리 수보다 적으면 아래 루프가 영원히 돈다 — 멈추는 대신 왜 멈췄는지 말한다
+    if (candidates.length < wanted - offer.length) throw new Error(`${patrons.join("+")}: reward offer needs ${wanted - offer.length} tier${tier} cards`);
+    while (offer.length < wanted) {
+      const { id } = candidates[Math.floor(random() * candidates.length)];
+      if (!offer.includes(id)) offer.push(id);
+    }
   }
   return offer;
 }
@@ -146,6 +185,21 @@ type EnemyView = { id: string; slot: number; hp: number; maxHp: number; block: n
 /** UI가 data/cards.json을 따로 읽으면 두 번째 진실이 된다 — 카드는 엔진이 준 것만 그린다 */
 export type CardView = { id: string; name: string; cost: number; target: Card["target"]; effects: Card["effects"]; reach?: string };
 const cardView = ({ id, name, cost, target, effects, reach }: Card): CardView => ({ id, name, cost, target, effects, ...(reach ? { reach } : {}) });
+/**
+ * 자유 덱 편집기가 고를 수 있는 카드 124장을 신별로. **tier1 patron 카드뿐이다** — tier2 15장은
+ * 보상이 주는 계단이고, 융합 10장은 `patron`이 없어 같은 줄에서 빠진다(은혜 둘을 모아 여는 자리다).
+ * `rewardOffer`와 같은 필터를 쓴다: 등급 규칙이 두 벌이면 화면과 게이트가 갈린다.
+ * 신별로 갈라 두는 이유는 편집기가 다섯 탭이어서다 — 화면이 다시 `patron`으로 나누면 두 번째 진실이다
+ */
+export const startableCards = Object.fromEntries(gods.map((god) =>
+  [god, cards.filter((card) => card.patron === god && (card.tier ?? 1) === 1).map(cardView)])) as Record<GodId, CardView[]>;
+const startableIds = new Set(Object.values(startableCards).flatMap((list) => list.map(({ id }) => id)));
+/**
+ * 자유 덱 하나가 성립하는가. **파일은 신뢰 경계다** — 여기서 안 걸리면 `cardMap.get(id)!`가 엔진
+ * 안에서 터진다. 조용히 규칙 덱으로 되돌리지 않는다: 그러면 「재생했는데 다른 게임」이 된다
+ */
+export const deckOk = (deck: readonly string[]): boolean =>
+  deck.length === deckSize && deck.every((id) => startableIds.has(id));
 const runView = (state: GameState, patrons: PatronPair): RunView => {
   const { region, floor } = mapSlot(state.map.depth);
   return { depth: state.map.depth, lane: state.map.lane, region, floor, hp: state.combat.player.hp, maxHp: state.combat.player.maxHp, patrons, grid: state.map.grid, favor: { ...state.favor }, grace: { ...state.grace } };
@@ -354,13 +408,14 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
   return { turns: state.combat.turn, blockBuilt, blockAbsorbed, targetSpread, cardsPlayed, facts };
 }
 
-export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair = ["zeus", "athena"]): Generator<Decision, RunResult, string> {
+/**
+ * `startingDeck`이 자유 모드의 전부다 — **엔진에 모드 플래그가 없다.** 안 넘기면 규칙 덱이고,
+ * `tune`·`sim`·`heatmap`이 안 넘기므로 그것이 곧 게이트에서의 제외다. `--free` 같은 CLI 옵션을
+ * 만들지 않는 이유도 같다: 만드는 순간 누군가 그걸로 게이트를 돌린다
+ */
+export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair = ["zeus", "athena"], startingDeck: string[] = ruleDeck(patrons)): Generator<Decision, RunResult, string> {
   const fusedCard = fusionCards.find(({ patronPair }) => patronPair?.every((god) => patrons.includes(god)));
   if (!fusedCard) throw new Error(`${patrons.join("+")}: no fused card for this pairing`);
-  const startingDeck = [
-    godDecks[patrons[0]][0], godDecks[patrons[0]][0], godDecks[patrons[0]][1], godDecks[patrons[0]][1], godDecks[patrons[0]][2],
-    godDecks[patrons[1]][0], godDecks[patrons[1]][0], godDecks[patrons[1]][0], godDecks[patrons[1]][1], godDecks[patrons[1]][2],
-  ];
   const deck = [...startingDeck, ...(scenario === "fused_deck" ? [fusedCard.id] : [])];
   const cardMap = new Map(cards.map((card) => [card.id, structuredClone(card)]));
   const graced = scenario === "grace_4" ? 4 : scenario === "grace_6" ? 6 : 0;
@@ -516,9 +571,9 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
     return { demand, patron, other, choice, tier };
   }
 
-  function* offerReward(nodeSeed: number): Generator<Decision, void, string> {
+  function* offerReward(nodeSeed: number, path: MapNodeType): Generator<Decision, void, string> {
     // 전투/셔플과 겹치지 않는 새 스트림이다. 겹치면 기존 replay 재생이 깨진다
-    const offer = rewardOffer(createRng(seed * 1000 + nodeSeed), patrons);
+    const offer = rewardOffer(createRng(seed * 1000 + nodeSeed), patrons, tier2Slots(path));
     const picked = yield {
       phase: "reward",
       options: [...offer, skipReward],
@@ -645,7 +700,7 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
         demandOutcomes[`${demand.id}:${choice}`] = [asked + 1, heldCount + (held ? 1 : 0)];
       }
       carried = undefined;
-      yield* offerReward(nodeSeed);
+      yield* offerReward(nodeSeed, path);
       // 은혜를 먼저 준다 — 합성 전제가 은혜 보유이므로 이 순서라야 마지막 은혜가 그 자리에서 합성을 연다
       for (const god of awardGrace(state.favor, state.grace, [...patrons])) yield* grantGrace(god);
       if (!fused && canFuse(state.grace, patrons)) {
@@ -672,8 +727,8 @@ export function* runSteps(seed: number, scenario?: Scenario, patrons: PatronPair
  * phase가 맞아도 그 선택이 지금 낼 수 있는 것이 아니면 쓰지 않는다 — 규칙이 바뀌면 옛 로그의
  * 카드열은 손에 없는 카드를 가리키고, 그때 엔진이 죽는 대신 봇이 답하고 `substituted`가 오른다
  */
-export function run(seed: number, scenario?: Scenario, scriptedActions: ReplayAction[] = [], patrons: PatronPair = ["zeus", "athena"]): RunResult {
-  const steps = runSteps(seed, scenario, patrons);
+export function run(seed: number, scenario?: Scenario, scriptedActions: ReplayAction[] = [], patrons: PatronPair = ["zeus", "athena"], startingDeck?: string[]): RunResult {
+  const steps = runSteps(seed, scenario, patrons, startingDeck);
   let actionIndex = 0;
   let substituted = 0;
   let step = steps.next();

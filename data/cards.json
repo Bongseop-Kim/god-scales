@@ -135,7 +135,7 @@
   },
   {
     "id": "card_zeus_08",
-    "name": "마비 벼락",
+    "name": "충격 밀침",
     "patron": "zeus",
     "cost": 2,
     "target": "enemy",
@@ -314,7 +314,7 @@
   },
   {
     "id": "card_zeus_17",
-    "name": "고압 감전",
+    "name": "폭풍 압박",
     "patron": "zeus",
     "cost": 2,
     "target": "enemy",
@@ -607,28 +607,28 @@
     ],
     "cost": 2,
     "target": "enemy",
+    "reach": "012",
     "effects": [
       {
         "op": "apply_token",
         "token": "bleed",
-        "stacks": 2
+        "stacks": 3
       },
       {
         "op": "apply_token",
         "token": "soaked",
-        "stacks": 1
+        "stacks": 2
       },
       {
         "op": "damage",
-        "value": 9
+        "value": 16
       }
     ],
     "tags": [
       "attack",
       "fused",
       "token"
-    ],
-    "reach": "012"
+    ]
   },
   {
     "id": "card_fused_zeus_ares",
@@ -639,11 +639,12 @@
     ],
     "cost": 2,
     "target": "enemy",
+    "reach": "03",
     "effects": [
       {
         "op": "apply_token",
         "token": "bleed",
-        "stacks": 2
+        "stacks": 3
       },
       {
         "op": "apply_token",
@@ -652,11 +653,11 @@
       },
       {
         "op": "damage",
-        "value": 5
+        "value": 9
       },
       {
         "op": "chain",
-        "value": 3
+        "value": 6
       }
     ],
     "tags": [
@@ -664,8 +665,7 @@
       "fused",
       "multi",
       "token"
-    ],
-    "reach": "03"
+    ]
   },
   {
     "id": "card_fused_zeus_artemis",
@@ -713,15 +713,16 @@
     ],
     "cost": 2,
     "target": "enemy",
+    "reach": "01",
     "effects": [
       {
         "op": "damage",
-        "value": 7
+        "value": 11
       },
       {
         "op": "apply_token",
         "token": "bleed",
-        "stacks": 2
+        "stacks": 3
       },
       {
         "op": "apply_token",
@@ -733,8 +734,7 @@
       "attack",
       "fused",
       "token"
-    ],
-    "reach": "01"
+    ]
   },
   {
     "id": "card_fused_athena_artemis",
@@ -745,6 +745,7 @@
     ],
     "cost": 3,
     "target": "enemy",
+    "reach": "12",
     "effects": [
       {
         "op": "apply_token",
@@ -753,20 +754,19 @@
       },
       {
         "op": "damage",
-        "value": 20
+        "value": 24
       },
       {
         "op": "apply_token",
         "token": "bulwark",
-        "stacks": 2
+        "stacks": 3
       }
     ],
     "tags": [
       "attack",
       "fused",
       "token"
-    ],
-    "reach": "12"
+    ]
   },
   {
     "id": "card_fused_poseidon_artemis",
@@ -777,28 +777,28 @@
     ],
     "cost": 3,
     "target": "enemy",
+    "reach": "23",
     "effects": [
       {
         "op": "damage",
-        "value": 27
+        "value": 28
       },
       {
         "op": "apply_token",
         "token": "mark",
-        "stacks": 1
+        "stacks": 2
       },
       {
         "op": "apply_token",
         "token": "soaked",
-        "stacks": 1
+        "stacks": 2
       }
     ],
     "tags": [
       "attack",
       "fused",
       "token"
-    ],
-    "reach": "23"
+    ]
   },
   {
     "id": "card_fused_poseidon_athena",
@@ -809,28 +809,28 @@
     ],
     "cost": 2,
     "target": "enemy",
+    "reach": "01",
     "effects": [
       {
         "op": "apply_token",
         "token": "bulwark",
-        "stacks": 2
+        "stacks": 3
       },
       {
         "op": "damage",
-        "value": 10
+        "value": 13
       },
       {
         "op": "apply_token",
         "token": "soaked",
-        "stacks": 1
+        "stacks": 2
       }
     ],
     "tags": [
       "attack",
       "fused",
       "token"
-    ],
-    "reach": "01"
+    ]
   },
   {
     "id": "card_fused_zeus_athena",
@@ -841,6 +841,7 @@
     ],
     "cost": 2,
     "target": "enemy",
+    "reach": "01",
     "effects": [
       {
         "op": "apply_token",
@@ -849,11 +850,11 @@
       },
       {
         "op": "damage",
-        "value": 6
+        "value": 9
       },
       {
         "op": "chain",
-        "value": 3
+        "value": 6
       },
       {
         "op": "apply_token",
@@ -866,8 +867,7 @@
       "fused",
       "multi",
       "token"
-    ],
-    "reach": "01"
+    ]
   },
   {
     "id": "card_fused_zeus_poseidon",
@@ -878,24 +878,25 @@
     ],
     "cost": 2,
     "target": "enemy",
+    "reach": "03",
     "effects": [
       {
         "op": "damage",
-        "value": 7
+        "value": 10
       },
       {
         "op": "apply_token",
         "token": "soaked",
-        "stacks": 1
+        "stacks": 2
       },
       {
         "op": "apply_token",
         "token": "shock",
-        "stacks": 1
+        "stacks": 2
       },
       {
         "op": "chain",
-        "value": 4
+        "value": 8
       }
     ],
     "tags": [
@@ -903,8 +904,7 @@
       "fused",
       "multi",
       "token"
-    ],
-    "reach": "03"
+    ]
   },
   {
     "id": "card_poseidon_01",
@@ -2835,6 +2835,477 @@
     ],
     "tags": [
       "power",
+      "token"
+    ]
+  },
+  {
+    "id": "card_zeus_24",
+    "name": "후열 낙뢰",
+    "patron": "zeus",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 6
+      },
+      {
+        "op": "chain",
+        "value": 5,
+        "when": "slot(target) >= 2"
+      }
+    ],
+    "tags": [
+      "attack",
+      "multi"
+    ]
+  },
+  {
+    "id": "card_poseidon_18",
+    "name": "해안 파쇄",
+    "patron": "poseidon",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 8
+      },
+      {
+        "op": "apply_token",
+        "token": "soaked",
+        "stacks": 3,
+        "when": "slot(target) < 2"
+      }
+    ],
+    "tags": [
+      "attack",
+      "token"
+    ]
+  },
+  {
+    "id": "card_athena_19",
+    "name": "전열 받아치기",
+    "patron": "athena",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 7
+      },
+      {
+        "op": "block",
+        "value": 6,
+        "when": "slot(target) < 2"
+      }
+    ],
+    "tags": [
+      "attack",
+      "defend"
+    ]
+  },
+  {
+    "id": "card_ares_25",
+    "name": "선봉 도끼",
+    "patron": "ares",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 6
+      },
+      {
+        "op": "damage",
+        "value": 6,
+        "when": "slot(target) < 2"
+      }
+    ],
+    "tags": [
+      "attack"
+    ]
+  },
+  {
+    "id": "card_artemis_24",
+    "name": "후열 저격",
+    "patron": "artemis",
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 5
+      },
+      {
+        "op": "damage",
+        "value": 7,
+        "when": "slot(target) >= 2"
+      }
+    ],
+    "tags": [
+      "attack"
+    ]
+  },
+  {
+    "id": "card_zeus_25",
+    "name": "뇌신의 좌",
+    "patron": "zeus",
+    "tier": 2,
+    "cost": 2,
+    "target": "enemy",
+    "trigger": "turn_start",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 3
+      },
+      {
+        "op": "chain",
+        "value": 2
+      },
+      {
+        "op": "apply_token",
+        "token": "shock",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "power",
+      "multi",
+      "token"
+    ]
+  },
+  {
+    "id": "card_zeus_26",
+    "name": "뇌우",
+    "patron": "zeus",
+    "tier": 2,
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 8
+      },
+      {
+        "op": "chain",
+        "value": 6
+      },
+      {
+        "op": "apply_token",
+        "token": "shock",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "attack",
+      "multi",
+      "token"
+    ]
+  },
+  {
+    "id": "card_zeus_27",
+    "name": "천공의 심판",
+    "patron": "zeus",
+    "tier": 2,
+    "cost": 3,
+    "target": "all_enemies",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 9
+      },
+      {
+        "op": "apply_token",
+        "token": "shock",
+        "stacks": 3
+      }
+    ],
+    "tags": [
+      "attack",
+      "multi",
+      "token"
+    ]
+  },
+  {
+    "id": "card_poseidon_19",
+    "name": "대해일",
+    "patron": "poseidon",
+    "tier": 2,
+    "cost": 3,
+    "target": "all_enemies",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 12
+      },
+      {
+        "op": "apply_token",
+        "token": "soaked",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "attack",
+      "multi",
+      "token"
+    ]
+  },
+  {
+    "id": "card_poseidon_20",
+    "name": "격류의 손아귀",
+    "patron": "poseidon",
+    "tier": 2,
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 6
+      },
+      {
+        "op": "draw",
+        "value": 1
+      }
+    ],
+    "tags": [
+      "attack",
+      "utility"
+    ]
+  },
+  {
+    "id": "card_poseidon_21",
+    "name": "해구의 압력",
+    "patron": "poseidon",
+    "tier": 2,
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 15
+      },
+      {
+        "op": "apply_token",
+        "token": "soaked",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "attack",
+      "token"
+    ]
+  },
+  {
+    "id": "card_athena_20",
+    "name": "가시 왕관",
+    "patron": "athena",
+    "tier": 2,
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "thorns",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "defend",
+      "token"
+    ]
+  },
+  {
+    "id": "card_athena_21",
+    "name": "응보의 일격",
+    "patron": "athena",
+    "tier": 2,
+    "cost": 2,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 6
+      },
+      {
+        "op": "apply_token",
+        "token": "thorns",
+        "stacks": 3
+      }
+    ],
+    "tags": [
+      "attack",
+      "token"
+    ]
+  },
+  {
+    "id": "card_athena_22",
+    "name": "가시 성벽",
+    "patron": "athena",
+    "tier": 2,
+    "cost": 2,
+    "target": "self",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "thorns",
+        "stacks": 3
+      },
+      {
+        "op": "apply_token",
+        "token": "bulwark",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "defend",
+      "token"
+    ]
+  },
+  {
+    "id": "card_ares_26",
+    "name": "피의 도끼",
+    "patron": "ares",
+    "tier": 2,
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 5
+      },
+      {
+        "op": "apply_token",
+        "token": "bleed",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "attack",
+      "token"
+    ]
+  },
+  {
+    "id": "card_ares_27",
+    "name": "학살",
+    "patron": "ares",
+    "tier": 2,
+    "cost": 2,
+    "target": "all_enemies",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 6
+      },
+      {
+        "op": "apply_token",
+        "token": "bleed",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "attack",
+      "multi",
+      "token"
+    ]
+  },
+  {
+    "id": "card_ares_28",
+    "name": "광란의 돌진",
+    "patron": "ares",
+    "tier": 2,
+    "cost": 1,
+    "target": "enemy",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 8
+      },
+      {
+        "op": "apply_token",
+        "token": "frenzy",
+        "stacks": 2
+      },
+      {
+        "op": "self_damage",
+        "value": 2
+      }
+    ],
+    "tags": [
+      "attack",
+      "token"
+    ]
+  },
+  {
+    "id": "card_artemis_25",
+    "name": "사냥꾼의 집중",
+    "patron": "artemis",
+    "tier": 2,
+    "cost": 1,
+    "target": "self",
+    "effects": [
+      {
+        "op": "apply_token",
+        "token": "crit",
+        "stacks": 3
+      }
+    ],
+    "tags": [
+      "utility",
+      "token"
+    ]
+  },
+  {
+    "id": "card_artemis_26",
+    "name": "후열 관통",
+    "patron": "artemis",
+    "tier": 2,
+    "cost": 2,
+    "target": "enemy",
+    "reach": "3",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 13
+      },
+      {
+        "op": "apply_token",
+        "token": "mark",
+        "stacks": 1
+      },
+      {
+        "op": "apply_token",
+        "token": "crit",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "attack",
+      "token"
+    ]
+  },
+  {
+    "id": "card_artemis_27",
+    "name": "달의 사냥",
+    "patron": "artemis",
+    "tier": 2,
+    "cost": 3,
+    "target": "all_enemies",
+    "effects": [
+      {
+        "op": "damage",
+        "value": 10
+      },
+      {
+        "op": "apply_token",
+        "token": "mark",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "attack",
+      "multi",
       "token"
     ]
   }

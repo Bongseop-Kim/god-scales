@@ -167,7 +167,7 @@ if (process.argv[1]?.endsWith("runner.ts")) {
     else {
       const replays = options.replays.map(readReplay);
       setPolicy(options.policy);
-      const results = replays.length ? replays.map((replay) => run(replay.seed, undefined, replay.actions)) : options.stratified ? simulateStratified(options.runs) : simulate(options.runs, options.scenario);
+      const results = replays.length ? replays.map((replay) => run(replay.seed, undefined, replay.actions, replay.patrons, replay.deck)) : options.stratified ? simulateStratified(options.runs) : simulate(options.runs, options.scenario);
       setPolicy(undefined);
       if (options.log) console.log(results[0].log.join("\n"));
       console.log(renderReport(summarize(results)));

@@ -27,6 +27,14 @@ CC0이라 귀속 의무는 없습니다. 출처를 남기는 것은 예의이자
 
 없습니다. 무음으로 동작합니다.
 
-## 폰트
+## 폰트 — Galmuri11 (SIL OFL 1.1)
 
-운영체제의 시스템 폰트와 Georgia를 사용합니다.
+| 자리 | 파일 | 라이선스 |
+|---|---|---|
+| 화면 전체 | `ui/fonts/Galmuri11.woff2` · `Galmuri11-Bold.woff2` | [SIL OFL 1.1](ui/fonts/LICENSE.txt) |
+
+Copyright (c) 2019–2025 Lee Minseo (quiple@quiple.dev).
+받은 곳: <https://galmuri.quiple.dev>
+
+OFL은 저작권 고지 유지를 요구합니다 — 위 고지와 `ui/fonts/LICENSE.txt`가 그 자리입니다.
+폰트 파일 자체를 판매하지 않는 한 게임에 실어 배포할 수 있습니다.

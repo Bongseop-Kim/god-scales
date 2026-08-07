@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { deckOk, gods, type PatronPair } from "./engine.ts";
 
 export type ReplayAction =
   /** `"1:elite"` — 갈래와 종류. P-27 이전의 `"combat"`은 어느 갈래였는지 정보를 안 갖는다 */
@@ -12,12 +13,25 @@ export type ReplayAction =
   | { type: "demand"; choice: "tier1" | "tier2" | "reject" }
   /** `choice: ""`는 건너뛰기다. 기록하지 않으면 재생 때 봇이 대신 한 장 집는다 */
   | { type: "reward"; choice: string };
-export type ReplayFile = { seed: number; actions: ReplayAction[]; replay_mode: "action_log" };
+/**
+ * `patrons`·`deck`은 선택 필드다 — 없으면 `run`의 기본값(제우스+아테나 · 규칙 덱)으로 재생된다.
+ * 옛 로그가 그대로 산다. **모드 필드를 따로 두지 않는다**: 자유 모드인지는 `deck`의 유무가 이미
+ * 말하고, 둘을 다 두면 어긋날 수 있는 두 번째 진실이 된다
+ */
+export type ReplayFile = { seed: number; actions: ReplayAction[]; replay_mode: "action_log"; patrons?: PatronPair; deck?: string[] };
 
 export function readReplay(path: string): ReplayFile {
   const replay = JSON.parse(readFileSync(path, "utf8")) as ReplayFile;
   if (!Number.isInteger(replay.seed) || replay.replay_mode !== "action_log" || !Array.isArray(replay.actions)) {
     throw new Error(`Invalid replay: ${path}`);
   }
+  // 조합이 어긋나면 시작 덱이 달라 카드 id가 손에 없다 — 봇이 대신 답하며 조용히 다른 게임이 된다
+  const { patrons } = replay;
+  if (patrons !== undefined && !(Array.isArray(patrons) && patrons.length === 2 && patrons[0] !== patrons[1] && patrons.every((god) => gods.includes(god)))) {
+    throw new Error(`Invalid patrons: ${path}`);
+  }
+  // 열 장 · 존재하는 id · tier1 patron 카드 안 — 셋을 `deckOk` 하나가 잰다(`sim/engine.ts`)
+  const { deck } = replay;
+  if (deck !== undefined && (!Array.isArray(deck) || !deckOk(deck))) throw new Error(`Invalid deck: ${path}`);
   return replay;
 }

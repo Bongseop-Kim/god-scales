@@ -29,7 +29,7 @@ const missingFrom = (have: Set<string>, need: string[]) => need.filter((name) =>
  * 안의 id로 한다 — `<use href="#icon-shock">`가 없는 id를 가리키면 배지가 조용히 빈 원이 된다
  */
 const symbols = new Set([...readFileSync("art/icons.svg", "utf8").matchAll(/id="icon-([\w-]+)"/g)].map(([, id]) => id));
-/** 카드만 대조가 1:1이 아니다 — 129개 id가 30장으로 떨어지는 폴백을 인정해야 한다(R-32) */
+/** 카드만 대조가 1:1이 아니다 — 149개 id가 30장으로 떨어지는 폴백을 인정해야 한다(R-32) */
 const unresolved = cards.filter((card) => !cardArtCandidates(card).some((key) => cardArt.has(key)));
 
 const checks = [

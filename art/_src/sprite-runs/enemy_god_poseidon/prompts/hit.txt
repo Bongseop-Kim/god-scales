@@ -7,7 +7,7 @@ Style contract: high-detail polished grim dark-fantasy pixel art matching produc
 
 Use this prompt as an authoritative sprite-production spec. Do not expand it into a polished illustration, painterly character image, anime key art, 3D render, vector mascot, glossy app icon, realistic portrait, or marketing artwork.
 
-Animation action: single compact crouching impact recoil from the left while gripping the complete upright trident and sheltering behind the solid water wall; center the full figure, all three tines, shaft, feet, and wall within the middle 68 percent of the canvas width and 72 percent of its height, leaving broad uninterrupted magenta padding on all four sides; flawless and unwounded, no loose water, cropped parts, fragments, or detached effects.
+Animation action: single compact crouching impact recoil from the left while gripping the complete upright trident; ankle-high water remains attached around his planted feet; center the full figure, all three tines, shaft, and feet within the middle 68 percent of the canvas width and 72 percent of its height, leaving broad uninterrupted magenta padding on all four sides; flawless and unwounded, no tall water, loose water, cropped parts, fragments, or detached effects.
 
 Anchor lock:
 - Accepted idle/direction anchors own character identity, outfit details, colors, face design, asymmetric markings, and side-specific accessories for final action rows.
@@ -24,6 +24,7 @@ Anchor lock:
 Transparency and artifact rules:
 - Prefer pose, expression, and silhouette changes over decorative effects.
 - Effects are allowed only when state-relevant, opaque, hard-edged, sprite-like, fully inside the same frame slot, and physically touching or overlapping the character silhouette.
+- Water may appear only as the approved ankle-high ribbon attached to Poseidon's feet. Never draw a tall wave, standing water wall, water slab, shield, curtain, or water backdrop.
 - Do not draw detached effects: floating stars, loose sparkles, floating punctuation, floating icons, separated smoke clouds, loose dust, disconnected outline bits, or stray pixels.
 - Do not draw wave marks, motion arcs, speed lines, action streaks, afterimages, blur, smears, halos, glows, auras, floor patches, cast shadows, contact shadows, drop shadows, oval floor shadows, landing marks, or impact bursts.
 - Do not include text, labels, frame numbers, visible grids, guide marks, speech bubbles, thought bubbles, UI panels, code snippets, scenery, checkerboard transparency, white backgrounds, or black backgrounds.

@@ -112,6 +112,91 @@ describe("slots", () => {
   });
 });
 
+describe("shove", () => {
+  /**
+   * 아무 일도 안 하는 패턴. `dummy`의 방어 1이 섞이면 자리가 아니라 방어를 재게 된다 —
+   * `createCombat`은 패턴을 안 읽으므로 판은 `dummy`로 세우고 사전만 갈아 끼운다
+   */
+  const idle = (...ids: string[]) => new Map(ids.map((id) => [id, { id, hp: 30, pattern: [{}] } as EnemyDefinition]));
+  const ids = (combat: CombatState) => combat.enemies.map(({ id }) => id);
+
+  it("sends the displaced enemy one slot back and swaps whoever stands there", () => {
+    const combat = createCombat(1, [], [dummy("a"), dummy("b"), dummy("c")]);
+    combat.enemies[0].tokens.displace = 1;
+    endTurn(wrap(combat), idle("a", "b", "c"));
+    expect(ids(combat)).toEqual(["b", "a", "c", "empty_3"]);
+    // 밀린 적은 그 턴을 쉰다 — 패턴도 안 넘어간다. 옆의 둘은 넘어간다
+    expect(combat.enemies.map(({ patternIndex }) => patternIndex)).toEqual([1, 0, 1, 0]);
+    expect(combat.enemies[1].tokens.displace).toBeUndefined();
+  });
+
+  it("swaps into the hole instead of moving into it", () => {
+    const combat = endsBoard();
+    combat.enemies[0].tokens.displace = 1;
+    endTurn(wrap(combat), idle("front", "back"));
+    // 뒤가 비어 있어도 맞바꿈이다. 칸 0이 비는 것은 이동도 마찬가지다 — 다른 것은 아래 시체다
+    expect(ids(combat)).toEqual(["empty_1", "front", "empty_2", "back"]);
+    expect(combat.enemies.filter(({ hp }) => hp <= 0)).toHaveLength(2);
+  });
+
+  /** 맞바꿈이 사는 값. 시체를 덮어 쓰면 `queueEnemy`가 중복을 못 잡아 방금 죽인 신이 다시 큐에 든다 */
+  it("carries the corpse it swapped past instead of overwriting it", () => {
+    const combat = createCombat(1, [], [dummy("a"), dummy("enemy_god_ares")]);
+    combat.enemies[1].hp = 0;
+    combat.enemies[0].tokens.displace = 1;
+    endTurn(wrap(combat), idle("a", "enemy_god_ares"));
+    expect(ids(combat)).toEqual(["enemy_god_ares", "a", "empty_2", "empty_3"]);
+    queueEnemy(combat, "enemy_god_ares");
+    expect(combat.pending).toEqual([]);
+  });
+
+  it("burns the token for nothing in the back slot", () => {
+    const combat = endsBoard();
+    combat.enemies[3].tokens.displace = 1;
+    endTurn(wrap(combat), idle("front", "back"));
+    expect(ids(combat)).toEqual(["front", "empty_1", "empty_2", "back"]);
+    expect(combat.enemies[3].tokens.displace).toBeUndefined();
+    expect(combat.enemies[3].patternIndex, "쉬는 것은 그대로다").toBe(0);
+  });
+
+  it("never moves one enemy two slots in a turn", () => {
+    const combat = createCombat(1, [], [dummy("a"), dummy("b"), dummy("c"), dummy("d")]);
+    combat.enemies[0].tokens.displace = 1;
+    combat.enemies[1].tokens.displace = 1;
+    endTurn(wrap(combat), idle("a", "b", "c", "d"));
+    // 역순(칸 3 → 0)이라 둘이 한 칸씩 간다. 정순이면 `b`가 칸 0으로 올라가 처리되지 않고 밀림도 안 쓴다
+    expect(ids(combat)).toEqual(["c", "a", "b", "d"]);
+    expect(combat.enemies.every(({ tokens }) => tokens.displace === undefined)).toBe(true);
+  });
+
+  it("rests the shoved enemy for the turn it is shoved", () => {
+    const combat = createCombat(1, [], [dummy("a")]);
+    const state = wrap(combat);
+    combat.enemies[0].tokens.displace = 1;
+    const hitting = new Map([["a", { id: "a", hp: 30, pattern: [{ damage: 5 }] } as EnemyDefinition]]);
+    endTurn(state, hitting);
+    expect([combat.player.hp, ids(combat)[1]]).toEqual([100, "a"]);
+    // 다음 턴에는 같은 패턴을 그대로 낸다
+    endTurn(state, hitting);
+    expect(combat.player.hp).toBe(95);
+  });
+
+  it("opens the reach the guard was closing", () => {
+    const combat = createCombat(1, [], [dummy("a"), dummy("b"), { ...dummy("g"), passives: { guard: 2 } }]);
+    const state = wrap(combat);
+    // 앞 셋 카드는 사거리 안의 지킴이를 지날 수 없다 — 칸 2가 그 안이다
+    executeCard(state, strike("012"), "a");
+    expect(combat.enemies.map(({ hp }) => hp)).toEqual([30, 30, 24, 0]);
+    combat.enemies[2].tokens.displace = 1;
+    endTurn(state, idle("a", "b", "g"));
+    // 밀어내기가 지킴이를 칸 3으로 보낸다 — 사거리 밖이므로 같은 카드가 이제 대상에 닿는다
+    expect(ids(combat)).toEqual(["a", "b", "empty_3", "g"]);
+    executeCard(state, strike("012"), "a");
+    expect(combat.enemies.map(({ hp }) => hp)).toEqual([24, 30, 0, 24]);
+    expect(combat.enemies[3].passives?.guard, "지나간 카드는 스택을 태우지 않는다").toBe(1);
+  });
+});
+
 describe("god admission", () => {
   const gods = JSON.parse(readFileSync("data/gods.json", "utf8")) as FavorGod[];
   const zeus = gods.filter(({ id }) => id === "zeus");

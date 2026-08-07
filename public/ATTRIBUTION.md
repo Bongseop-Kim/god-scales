@@ -1,6 +1,6 @@
 # 사용한 자산
 
-배포본은 그림 91장과 아이콘 시트 한 장(symbol 28개)을 담습니다. 외부 폰트 파일은 없고 운영체제의 시스템 폰트와 Georgia를 씁니다.
+배포본은 그림 91장과 아이콘 시트 한 장(symbol 28개), 폰트 두 벌을 담습니다.
 
 ## 그림 · 스프라이트 — 프로젝트 제작 83장
 
@@ -15,7 +15,7 @@
 | 주인공 일러 | 3 |
 | 카드 프레임 · 지도 마커 | 2 |
 
-이미지 생성 도구로 프로젝트에서 직접 만들었습니다. 프롬프트 정본은 `art/_src/gen-docs.mjs`이고 파일마다 옆에 `.md` 사이드카가 있습니다. 카드 129장은 이 30장이 `{patron}_{tag}`·`card_fused_*`로 덮고, 파일이 없을 때는 CSS placeholder로 동작합니다.
+이미지 생성 도구로 프로젝트에서 직접 만들었습니다. 프롬프트 정본은 `art/_src/gen-docs.mjs`이고 파일마다 옆에 `.md` 사이드카가 있습니다. 카드 149장은 이 30장이 `{patron}_{tag}`·`card_fused_*`로 덮고, 파일이 없을 때는 CSS placeholder로 동작합니다.
 
 ## 커서 · 파티클 — Kenney (CC0) 8장
 
@@ -64,6 +64,11 @@ CC0이라 귀속 의무는 없습니다. 출처를 남기는 것은 예의이자
 | `boss` | [dragon-head](https://game-icons.net/1x1/lorc/dragon-head.html) | Lorc |
 
 패널·버튼·바는 CSS로 만들었습니다.
+
+## 폰트 — Galmuri11 (SIL OFL 1.1) 2벌
+
+Copyright (c) 2019–2025 Lee Minseo (quiple@quiple.dev).
+SIL Open Font License 1.1 — 전문은 배포본에 함께 실린 [`Galmuri11-LICENSE.txt`](Galmuri11-LICENSE.txt)에 있다(OFL 조항 2가 요구하는 자리다) · <https://galmuri.quiple.dev>
 
 ## 사운드
 

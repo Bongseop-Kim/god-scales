@@ -18,8 +18,13 @@ export const favorBoundaries = { devotion: 70, calm: 30, anger: 10, wrath: 0 } a
  *     (상대 신 호의 −18 즉시 · 최대 체력 −8을 조우 2회)를 받고 은혜 하나를 준다
  * v7: 판에 칸이 넷 생겼다(P-35) — 카드 25장에 사거리가 붙고 `guard` 재지정이 사거리를 못 넘으며,
  *     진노가 신을 적으로 큐에 넣어 빈 칸에 세운다
+ * v8: 밀려남이 자리를 옮긴다(P-36) — 밀린 적이 뒤로 한 칸 가며 앞뒤가 맞바뀌고, `slot(target)`
+ *     조건 카드 다섯이 자리를 읽는다. 턴 스킵과 값 표(`displace = 6`)는 그대로다
+ * v9: 값에 계단이 셋 생겼다(P-39) — 밴드가 tier1 `[4, 8)` · tier2 `[8, 10)` · tier3(융합) `[10, 13]`으로
+ *     안 겹치게 갈리고, tier2 카드 15장이 지상부터만 보상에 뜬다(정예·보스는 세 자리 전부).
+ *     융합 여덟 장이 tier3 하한 위로 올라갔다. 배포된 tier1 124장은 한 줄도 안 바뀌었다
  */
-export const globalParamVersion = "v7";
+export const globalParamVersion = "v9";
 
 export type FavorStage = keyof typeof favorBoundaries;
 export type FavorUses = Record<string, number>;

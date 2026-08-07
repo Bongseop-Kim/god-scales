@@ -8,11 +8,11 @@ import { floorsPerRegion } from "../core/map.ts";
 import { enemyOnlyTokens, harmfulTokens, selfTokens } from "../core/rules.ts";
 import { passiveNames, triggers, type Passives } from "../core/state.ts";
 import { reachOk, reachSlots } from "../core/targeting.ts";
-import { expectedValue, graceBand, graceValue, isValueAllowed, mitigationTokens, mitigationValue, slotCards, tokenWeights } from "./value.ts";
+import { cardTier, expectedValue, graceBand, graceValue, isValueAllowed, mitigationTokens, mitigationValue, slotCards, tokenWeights } from "./value.ts";
 
 export type FailureKey = "schema" | "dsl_parse" | "token_scope" | "fusion_scope" | "demand_axis" | "duplicate" | "value_outlier" | "pool_ratio" | "passive_coverage" | "map_layout" | "slot_scope";
 type Item = Record<string, unknown>;
-type Card = Item & { id: string; name: string; patron?: string; patron_pair?: string[]; cost: number; target: string; effects: Effect[]; tags: string[]; trigger?: string; reach?: string };
+type Card = Item & { id: string; name: string; patron?: string; patron_pair?: string[]; cost: number; target: string; effects: Effect[]; tags: string[]; trigger?: string; reach?: string; tier?: number };
 type Effect = { op: string; value?: number; token?: string; stacks?: number; when?: string; god?: string };
 type DemandTier = { text: string; condition: string; cost?: Record<string, number>; reward: { favor?: number; grace?: number } };
 type Demand = Item & { id: string; patron: string; axis: string; polarity: string; min_enemies: number; tiers: DemandTier[] };
@@ -74,6 +74,7 @@ const conditionPatterns = [
   /^hp_pct\(self\) < \d+$/,
   /^deck_count\([a-z_]+\) >= \d+$/,
   /^enemy_count\(\) >= \d+$/,
+  /^slot\(target\) (>=|<) \d+$/,
 ];
 const axes = ["target_spread", "damage_taken", "turn_economy", "token_load"];
 const baselineCards: Card[] = [{
@@ -143,6 +144,8 @@ function schemaFailure(item: Item, kind: string): boolean {
   return Boolean(card.patron) === Boolean(card.patron_pair)
     // 없는 신을 적은 합성 카드는 `vocabularyUsed`가 `gods[god].ops`로 던진다 — 어휘부터 있어야 한다
     || (card.patron_pair !== undefined && (!Array.isArray(card.patron_pair) || card.patron_pair.length !== 2 || card.patron_pair.some((god) => !gods[god])))
+    // tier는 1·2만 적는다. **융합에는 못 적는다** — `patron_pair`가 곧 3이라 두 곳에 적으면 어긋난다
+    || (card.tier !== undefined && (![1, 2].includes(card.tier) || card.patron_pair !== undefined))
     || ![0, 1, 2, 3].includes(card.cost)
     || !["self", "enemy", "all_enemies"].includes(card.target)
     || card.effects.some((effect) => typeof effect?.op !== "string");
@@ -158,6 +161,8 @@ function dslFailure(card: Card): boolean {
     // `target: self` 카드에 적은 사거리는 아무도 읽지 않는다 — 죽은 데이터다
     if (card.target === "self") return true;
   }
+  // 같은 이유로 자리 조건은 적을 가리켜야 한다 — 자기 대상 카드의 대상은 플레이어고 플레이어에게는 칸이 없다
+  if (card.target === "self" && card.effects.some(({ when }) => typeof when === "string" && when.startsWith("slot(target)"))) return true;
   // 한 칸짜리 사거리에서는 연쇄가 닿을 곳이 없다 — `loadCards`가 낼 때 던지는 자리를 여기서 잡는다
   if (card.effects.some(({ op }) => op === "chain") && reachSlots(card.reach).length < 2) return true;
   return card.effects.some((effect) =>
@@ -477,9 +482,14 @@ export const poolRatioMax = 0.3;
 /**
  * R1만 걸면 아테나는 완화를 공격으로 옮겨 통과하면서 **더 강해진다**(실측 0.478, 배포 조합 0.755).
  * 이 상한이 그 출구를 막는다. 하한은 두지 않는다 — 포세이돈이 장당 기대값 최저(4.94)인데 승률 2위라
- * 장당 기대값은 세기를 예측하지 못한다. 5.5는 아테나를 뺀 최고값(아르테미스 5.35) 바로 위다
+ * 장당 기대값은 세기를 예측하지 못한다. 5.5는 아테나를 뺀 최고값(아르테미스 5.35) 바로 위다.
+ *
+ * **tier마다 다른 평균이다** — 값의 계단이 곧 tier이므로 한 평균으로 섞으면 tier2 세 장이 그 신의
+ * 장당 기대값을 통째로 밀어 올린다. tier2 상한 9.0은 밴드 `[8, 10)`의 가운데고, 세 장뿐인 풀의
+ * 평균이므로 상한이 곧 「세 장 다 최고값은 안 된다」다. **완화 비율은 갈리지 않는다**: 완화는 신의
+ * 성격이지 등급이 아니고, 가르면 세 장으로 재는 비율이 되어 잡음만 커진다 (P-39)
  */
-export const poolValueMax = 5.5;
+export const poolValueMax: Record<number, number> = { 1: 5.5, 2: 9 };
 export type PoolStat = { cards: number; value: number; mitigation: number; ratio: number; average: number };
 
 export function poolStat(pool: Card[]): PoolStat {
@@ -498,7 +508,7 @@ const graceRatioTier = 4;
 function poolRejects(cards: Card[], graces: Grace[]): Set<string> {
   const rejects = new Set<string>();
   for (const god of Object.keys(gods)) {
-    // 합성 카드는 밴드가 6~10이고 신이 아니라 조합에 속한다 — 신의 풀에서 뺀다
+    // 합성 카드는 밴드가 tier3이고 신이 아니라 조합에 속한다 — 신의 풀에서 뺀다
     let pool = cards.filter((card) => card.patron === god);
     /**
      * 은혜도 완화 비율에 들어간다 — P-22의 상한(0.30)이 카드 풀에만 걸려 있으면 신이 완화를 은혜로
@@ -511,9 +521,12 @@ function poolRejects(cards: Card[], graces: Grace[]): Set<string> {
     // ponytail: 위반을 만든 카드를 하나씩 걷어낸다. O(n²)지만 신당 30장이다
     while (pool.length > 1) {
       const { ratio } = poolStat([...pool, ...boons]);
-      const { average } = poolStat(pool);
+      // 장당 기대값은 tier마다 잰다 — 상한을 넘긴 칸에서 가장 센 카드를 걷어낸다
+      const heavy = Object.entries(poolValueMax)
+        .map(([tier, cap]) => [pool.filter((card) => cardTier(card) === Number(tier)), cap] as const)
+        .find(([step, cap]) => step.length > 0 && poolStat(step).average > cap)?.[0];
       const worst = ratio > poolRatioMax ? worstBy([...pool, ...boons], mitigationValue)
-        : average > poolValueMax ? worstBy(pool, expectedValue)
+        : heavy ? worstBy(heavy, expectedValue)
         : undefined;
       if (!worst) break;
       rejects.add(worst.id);
@@ -598,10 +611,19 @@ export function validateItems(items: Item[], basePool: Card[] = []): { accepted:
   }
   const graces = mergeById(shippedGraces, accepted.filter((item) => kindOf(item) === "grace") as Grace[]);
   const survivors = [...basePool, ...accepted.filter((item) => kindOf(item) === "card") as Card[]];
-  const pools = Object.fromEntries(Object.keys(gods)
-    .map((god) => [god, survivors.filter((card) => card.patron === god)] as const)
-    .filter(([, pool]) => pool.length > 0)
-    .map(([god, pool]) => [god, poolStat(pool)]));
+  /**
+   * 행이 `신:tier`다 — 장당 기대값 상한이 tier마다 다르므로 한 행으로 섞으면 어느 칸이 상한에 붙었는지
+   * 안 보인다. `ratio`는 tier로 갈리지 않으니 두 행에 같은 값(그 신의 풀 전체)이 든다
+   */
+  const pools = Object.fromEntries(Object.keys(gods).flatMap((god) => {
+    const owned = survivors.filter((card) => card.patron === god);
+    // 비율은 은혜까지 넣어 잰다 — `poolRejects`가 거는 값과 같아야 보고가 `pool_ratio` 반려를 설명한다
+    const { ratio } = poolStat([...owned, ...graces.filter((grace) => grace.patron === god && grace.tier === graceRatioTier).map(graceAsCard)]);
+    return Object.keys(poolValueMax).flatMap((tier) => {
+      const step = owned.filter((card) => cardTier(card) === Number(tier));
+      return step.length > 0 ? [[`${god}:${tier}`, { ...poolStat(step), ratio }] as const] : [];
+    });
+  }));
 
   const fusionItems = items.filter((item) => Array.isArray(item.patron_pair));
   const by_pairing = Object.fromEntries([...new Set(fusionItems.map((item) => (item.patron_pair as string[]).join("+")))].map((pairing) => {

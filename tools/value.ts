@@ -1,5 +1,5 @@
 type Effect = { op: string; value?: number; token?: string; stacks?: number; when?: string };
-type Card = { cost: number; target: string; effects: Effect[]; tags: string[]; patron_pair?: string[] };
+type Card = { cost: number; target: string; effects: Effect[]; tags: string[]; patron_pair?: string[]; tier?: number };
 
 /** 게이트가 카드를 재는 무게다. 봇의 `cardValue`도 같은 표를 쓴다 — 두 번째 진실을 만들지 않는다 */
 export const tokenWeights: Record<string, number> = {
@@ -65,7 +65,11 @@ export const mitigationValue = (card: Card): number => expectedValue(card, 2, 0.
 export const slotCards: Record<string, number> = { attack: 8.8, token: 7.5, defend: 4.9, utility: 4.8 };
 /**
  * 옛 마일스톤 2가 주던 값 — 카드 한 장 강화(`×1.5`)의 기대값 증가. 배포된 119장 실측 평균 3.06
- * (중앙값 3.00 · 최대 6.00)이고, 은혜 밴드의 기준선이다
+ * (중앙값 3.00 · 최대 6.00)이고, 은혜 밴드의 기준선이다.
+ *
+ * **tier1 풀만이다.** P-39의 tier2 15장은 이 모수에 안 든다 — 값 8~10짜리를 섞으면 은혜 45줄의 밴드가
+ * 조용히 인플레된다. 그리고 다시 재지 않는다: `expectedValue` 평균 ×0.5는 전체도 tier1도 3.06이 아니라
+ * 이 숫자가 어떤 계산에서 나왔는지 모르는 채로 재정의하는 셈이 된다
  */
 export const graceBaseline = 3.06;
 /**
@@ -78,8 +82,23 @@ export const graceBand = (tier: number): [number, number] => [graceBaseline * ti
 export const graceValue = (effects: Effect[], cards: number): number =>
   expectedValue({ cost: 1, target: "enemy", effects, tags: [] }) * cards;
 
+/**
+ * 값의 계단. **반개구간이라 경계값이 한쪽에만 든다** — 겹치던 옛 밴드(patron `[4, 8]`, 융합 `[6, 10]`)에서는
+ * 융합 열 장 중 여섯이 patron 밴드 안이라 「융합이 최강」이 거짓이었다. tier1은 배포된 124장이 통과하던
+ * `[4, 8]` 그대로다: 재분류를 안 하는 것이 승률 변화의 원인을 획득 규칙과 융합 상향 둘로 묶는 유일한 길이다
+ */
+const valueBands: [number, number][] = [[4, 8], [8, 10], [10, 13]];
+/**
+ * 융합은 `tier`를 적지 않는다 — `patron_pair`가 곧 tier3이고, 두 곳에 적으면 어긋난다.
+ * 화면(`ui/card.tsx`)도 이 함수를 부르므로 인자는 그 두 칸만 요구한다 — 등급 규칙이 두 벌이면
+ * 「게이트는 tier2인데 화면은 tier1」이 생긴다
+ */
+export const cardTier = (card: Pick<Card, "patron_pair" | "tier">): number => (card.patron_pair ? valueBands.length : card.tier ?? 1);
 export function isValueAllowed(card: Card): boolean {
+  const tier = cardTier(card);
+  const band = valueBands[tier - 1];
+  if (!band) return false;
   const value = expectedValue(card);
-  const [minimum, maximum] = card.patron_pair ? [6, 10] : [4, 8];
-  return value >= minimum && value <= maximum;
+  // 꼭대기 칸만 상한을 포함한다 — 그 위에는 밴드가 없어서다
+  return value >= band[0] && (tier === valueBands.length ? value <= band[1] : value < band[1]);
 }

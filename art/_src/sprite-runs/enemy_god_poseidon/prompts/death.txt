@@ -7,7 +7,7 @@ Style contract: high-detail polished grim dark-fantasy pixel art matching produc
 
 Use this prompt as an authoritative sprite-production spec. Do not expand it into a polished illustration, painterly character image, anime key art, 3D render, vector mascot, glossy app icon, realistic portrait, or marketing artwork.
 
-Animation action: two-frame non-graphic defeat facing left: Poseidon sinks to one knee, then collapses low while still gripping one complete unbroken trident; all three tines and the entire continuous shaft stay attached to his hand in both poses; the water wall lowers as one connected mass behind him; each pose stays centered inside at most 72 percent of its slot with a broad uninterrupted magenta gutter; no broken weapon, floating pieces, droplets, debris, fragments, blood, wounds, or gore.
+Animation action: two-frame non-graphic defeat facing left: Poseidon sinks to one knee, then collapses low while still gripping one complete unbroken trident; all three tines and the entire continuous shaft stay attached to his hand in both poses; the ankle-high water ribbon settles flat while remaining connected to his feet; each pose stays centered inside at most 72 percent of its slot with a broad uninterrupted magenta gutter; no tall water, broken weapon, floating pieces, droplets, debris, fragments, blood, wounds, or gore.
 
 Anchor lock:
 - Accepted idle/direction anchors own character identity, outfit details, colors, face design, asymmetric markings, and side-specific accessories for final action rows.
@@ -24,6 +24,7 @@ Anchor lock:
 Transparency and artifact rules:
 - Prefer pose, expression, and silhouette changes over decorative effects.
 - Effects are allowed only when state-relevant, opaque, hard-edged, sprite-like, fully inside the same frame slot, and physically touching or overlapping the character silhouette.
+- Water may appear only as the approved ankle-high ribbon attached to Poseidon's feet. Never draw a tall wave, standing water wall, water slab, shield, curtain, or water backdrop.
 - Do not draw detached effects: floating stars, loose sparkles, floating punctuation, floating icons, separated smoke clouds, loose dust, disconnected outline bits, or stray pixels.
 - Do not draw wave marks, motion arcs, speed lines, action streaks, afterimages, blur, smears, halos, glows, auras, floor patches, cast shadows, contact shadows, drop shadows, oval floor shadows, landing marks, or impact bursts.
 - Do not include text, labels, frame numbers, visible grids, guide marks, speech bubbles, thought bubbles, UI panels, code snippets, scenery, checkerboard transparency, white backgrounds, or black backgrounds.
