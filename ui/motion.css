@@ -5,6 +5,36 @@
 
 button { transition: transform 120ms var(--ease-out), border-color 160ms ease, background-color 160ms ease; }
 button:active { transform: scale(.97); }
+
+/* 런 시작 컷인. 액자 없이 두 영상을 한 번 벤 대각선으로 맞물린다 */
+.run-opening { position: relative; isolation: isolate; display: flex; min-height: 100vh; align-items: center; justify-content: center; gap: 0; overflow: hidden; background: radial-gradient(circle at 50% 45%, #252b40, #07080c 68%); }
+.run-opening figure { --opening-x: -42px; position: relative; width: min(360px, 40vw); aspect-ratio: 71 / 120; margin: 0; overflow: hidden; clip-path: polygon(0 0, 100% 0, 82% 100%, 0 100%); animation: run-opening-enter 620ms var(--ease-out) both; }
+.run-opening figure:nth-child(2) { --opening-x: 42px; margin-left: max(-65px, -7.2vw); clip-path: polygon(18% 0, 100% 0, 100% 100%, 0 100%); }
+.run-opening video { display: block; width: 100%; height: 100%; object-fit: cover; }
+.run-opening figure::after { content: ""; position: absolute; inset: -20%; z-index: 1; opacity: 0; background: linear-gradient(105deg, transparent 42%, color-mix(in srgb, var(--god-color) 55%, white) 49%, transparent 56%); transform: translateX(-140%); animation: run-opening-sheen 900ms 280ms var(--ease-out) both; pointer-events: none; }
+.opening-story { position: absolute; bottom: 6%; left: 50%; z-index: 4; width: min(620px, 92vw); text-align: center; text-shadow: 0 2px 8px #000; transform: translateX(-50%); animation: run-opening-story 520ms 420ms var(--ease-out) both; pointer-events: none; }
+.opening-story strong { display: flex; align-items: center; justify-content: center; gap: 18px; font-size: clamp(1.4rem, 3vw, 2.2rem); }
+.opening-story b { font-weight: 700; }
+.opening-story i { color: #f4efe5; font-size: .65em; font-style: normal; letter-spacing: .18em; }
+.opening-story p { margin: 8px 0 0; color: #b9bdc9; font-size: .84rem; }
+/* 맞물린 절단면을 한 번 긋는다. 패널 테두리가 아니라 두 영상을 가르는 짧은 섬광이다 */
+.run-opening::after { content: ""; position: absolute; top: 50%; left: 50%; z-index: 3; width: 3px; height: min(720px, 78vh); background: #fff8d8; box-shadow: 0 0 12px #fff, 0 0 30px #c6a969; transform: translate(-50%, -50%) rotate(6deg) scaleY(1); animation: run-opening-slash 760ms var(--ease-out) both; pointer-events: none; }
+
+@keyframes run-opening-enter {
+  from { opacity: 0; transform: translateX(var(--opening-x)) scale(1.04); }
+}
+@keyframes run-opening-sheen {
+  35% { opacity: .7; }
+  to { opacity: 0; transform: translateX(140%); }
+}
+@keyframes run-opening-slash {
+  from { opacity: 0; transform: translate(-50%, -50%) rotate(6deg) scaleY(0); }
+  55% { opacity: 1; }
+  to { opacity: .55; }
+}
+@keyframes run-opening-story {
+  from { opacity: 0; transform: translate(-50%, 12px); }
+}
 /**
  * 토큰 배지의 등장·퇴장·스택 튐은 이제 `motion`이 든다(`ui/tokens.tsx`) — CSS transition을 같이 걸면
  * 라이브러리가 매 프레임 쓰는 값에 200ms 지연이 붙어 뭉개진다. 여기 있던 죽은 규칙을 지웠다
@@ -128,6 +158,7 @@ button:active { transform: scale(.97); }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .run-opening figure, .run-opening figure::after, .run-opening::after, .opening-story { animation: none; }
   .sprite img { animation: none; }
   [data-pose] .sprite img { animation: none; transform: none; }
   /* 컷인 그림은 멈추고 **문장은 남는다** — 문장은 모션이 아니라 정보다(`ui/fx.ts`가 3초 세워 둔다) */

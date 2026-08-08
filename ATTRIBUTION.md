@@ -12,12 +12,12 @@
 
 | 자리 | 팩 | 라이선스 |
 |---|---|---|
-| `art/cursor-pixel/` 220장 | [Cursor Pixel Pack](https://kenney.nl/assets/cursor-pixel-pack) | CC0 1.0 |
+| `art/cursor-pixel/` 3장 | [Cursor Pixel Pack](https://kenney.nl/assets/cursor-pixel-pack) | CC0 1.0 |
 | `art/particle/` 81장 | [Particle Pack](https://kenney.nl/assets/particle-pack) | CC0 1.0 |
 
 CC0이라 귀속 의무는 없습니다. 출처를 남기는 것은 예의이자 재수급 경로를 잃지 않기 위해서입니다.
 
-**두 팩 모두 배포본에는 일부만 들어갑니다** — 커서 4장, 파티클 4장. 나머지는 저장소에만 있습니다.
+**커서 3장은 모두, 파티클은 4장만 배포본에 들어갑니다.** 파티클 나머지는 저장소에만 있습니다.
 
 ## 그림 · 스프라이트
 

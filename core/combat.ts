@@ -78,6 +78,7 @@ export function createCombat(seed: number, deck: string[], lineup: Lineup): Comb
     powers: [],
     pending: [],
     turnPlays: { cards_played: 0, attacks: 0, energy_spent: 0 },
+    guarded: [],
     enemies,
   };
 }
@@ -161,6 +162,8 @@ export function playCard(
   if (card.cost > state.combat.energy) throw new Error(`Not enough energy for: ${cardId}`);
   state.combat.energy -= card.cost;
   state.combat.hand.splice(handIndex, 1);
+  // 재지정 기록은 이 클릭의 것이다 — 새 배열로 갈아 끼운다(관측이 지난 배열을 그대로 들고 있다)
+  state.combat.guarded = [];
   // 세는 것이 실행보다 앞이다 — 조건은 「이 카드까지 세어 몇 장째인가」를 읽는다(`core/state.ts`)
   const plays = state.combat.turnPlays;
   plays.cards_played += 1;

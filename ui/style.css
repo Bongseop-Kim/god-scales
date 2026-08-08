@@ -79,16 +79,16 @@ button, input { font: inherit; }
 button { color: inherit; cursor: pointer; }
 
 /**
- * 커서 넷. **핫스팟이 상태마다 다르다** — 화살표는 촉이 좌상단이라 `0 0`, 손은 검지 끝이라 `5 0`,
- * 조준·금지는 원 중심이라 `8 8`이다. `0 0`으로 통일하면 눌리는 자리와 보이는 자리가 어긋난다.
+ * 커서 넷. **핫스팟이 상태마다 다르다** — 2배 자산이라 화살표는 `0 0`, 손은 `10 0`,
+ * 조준·금지는 원 중심인 `32 32`·`16 16`이다. `0 0`으로 통일하면 눌리는 자리와 보이는 자리가 어긋난다.
  * 폴백 키워드를 반드시 뒤에 붙인다 — PNG를 못 읽는 환경에서 커서가 아예 사라진다
  */
 body { cursor: url(../art/cursor-pixel/tile_0026.png) 0 0, auto; }
-button:not(:disabled) { cursor: url(../art/cursor-pixel/tile_0134.png) 5 0, pointer; }
-button:disabled { cursor: url(../art/cursor-pixel/tile_0015.png) 8 8, not-allowed; }
-/* 적 버튼은 `targeting`일 때만 눌린다 — 케니 크로스헤어(32px, 핫스팟 중앙)가 「지금 대상을 고르는 중」을 말한다 */
-.stage-field.aiming { cursor: url(../art/kenney/crosshair-030-32.png) 16 16, crosshair; }
-.enemy:not(:disabled) { cursor: url(../art/kenney/crosshair-030-32.png) 16 16, crosshair; }
+button:not(:disabled) { cursor: url(../art/cursor-pixel/tile_0134.png) 10 0, pointer; }
+button:disabled { cursor: url(../art/cursor-pixel/tile_0015.png) 16 16, not-allowed; }
+/* 적 버튼은 `targeting`일 때만 눌린다 — 케니 크로스헤어(64px, 핫스팟 중앙)가 「지금 대상을 고르는 중」을 말한다 */
+.stage-field.aiming { cursor: url(../art/kenney/crosshair-030-64.png) 32 32, crosshair; }
+.enemy:not(:disabled) { cursor: url(../art/kenney/crosshair-030-64.png) 32 32, crosshair; }
 
 /**
  * 배경은 화면 뒤 한 장이다. **`.shell` 바깥에 서고 `fixed`다** — 안에 넣으면 `tools/e2e.ts`의
@@ -522,6 +522,13 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .stage-field .enemy:hover .name, .stage-field .enemy:focus-visible .name { opacity: 1; }
 /* 가리킨 대상 위에 케니 크로스헤어 링 — 커서(30번)와 한 세트다 */
 .stage-field .enemy:not(:disabled):hover::before { content: ""; position: absolute; bottom: 34px; left: 50%; width: 188px; height: 188px; margin-left: -94px; background: url(../art/kenney/crosshair-167.png) center / contain no-repeat; opacity: .8; pointer-events: none; }
+/**
+ * 대신 맞은 자국(P-64) — 원래 대상 위에 「보호」 글리프 한 장이 뜬다. 색은 능력 칩(`.enemy .passive`)의
+ * 것이다: 화면에 적힌 「보호 2」와 방금 발동한 그것이 같은 색이어야 한 사건으로 읽힌다.
+ * 이 노드는 이펙트가 붙였다 지운다(`combat.tsx`) — absolute라 배우의 네 행을 안 민다(UI.md)
+ */
+.stage-field .guard-mark { position: absolute; top: 92px; left: 50%; margin-left: -24px; color: #d1b9f0; pointer-events: none; }
+.stage-field .guard-mark .icon { width: 48px; height: 48px; filter: drop-shadow(0 0 6px rgba(9, 11, 17, .95)); }
 /* 체력 바 140×16 발밑 — 채움은 `width`가 아니라 `scaleX`다(GPU로 간다). 글자는 형제라 안 늘어난다 */
 .stage-field .hp { position: relative; display: grid; width: 140px; height: 16px; place-items: center; overflow: hidden; border-radius: 4px; background: #2a3040; font-size: .68rem; }
 .stage-field .hp i { position: absolute; inset: 0 auto 0 0; width: 100%; transform-origin: left; transform: scaleX(var(--fill)); background: #6c3b3b; transition: transform 200ms var(--ease-out); }
@@ -614,7 +621,13 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
  */
 /* 위아래 여백은 기운 카드의 모서리 몫이다 — 없으면 바깥 카드가 「턴 종료」 위에 5px 걸친다 */
 /* width 100%는 겹침 공식의 분모다 — `.combat-bottom`의 `justify-items: center`가 폭을 0으로 만들면 아래 100%가 0이 되어 손패가 한 점에 포개진다 */
-.fan { display: flex; justify-content: center; width: 100%; padding: 14px 0 12px; }
+/**
+ * **손을 다 내도 자리가 남는다**(P-64) — 카드가 사라지며 아래가 당겨 올라오면 안 된다(UI.md 제1규칙).
+ * 206px = 카드 높이 최댓값 180 + 위아래 여백 26. `--card-w`가 고정이라 카드 높이는 두 값뿐이고
+ * (효과문 한 줄 157 · 두 줄 180) 큰 쪽을 박는다 — aside 실측 3판 364프레임에 그 둘만 나온다.
+ * 최댓값이라 손패가 바뀌어도 부채꼴은 언제나 206이다: 0장만이 아니라 「짧은 손 ↔ 긴 손」도 안 흔들린다
+ */
+.fan { display: flex; justify-content: center; width: 100%; min-height: 206px; padding: 14px 0 12px; }
 .fan > * {
   /* **`--n: 1`이면 각이 0이다** — `(1-1)/2 = 0`. 한 장짜리 손패가 기울면 버그로 읽힌다 */
   --a: calc((var(--i) - (var(--n) - 1) / 2) * min(6deg, 34deg / var(--n)));

@@ -33,8 +33,11 @@ const exitPop = { duration: 0.5, ease: [0.23, 1, 0.32, 1] as const, times: [0, 0
 const stageIn = { duration: 0.2, ease: [0.23, 1, 0.32, 1] } as const;
 const damagePop = { duration: 0.4, ease: [0.23, 1, 0.32, 1] } as const;
 
-/** A-2.6 팝 400ms. hitSeq를 key로 써서 같은 피해가 두 번 튀지 않고, 새 피해는 다시 튄다 */
-function DamagePop({ hits, id, seq, still }: { hits: CombatObservation["hits"]; id: string; seq: number; still: boolean }) {
+/**
+ * A-2.6 팝 400ms. hitSeq를 key로 써서 같은 피해가 두 번 튀지 않고, 새 피해는 다시 튄다.
+ * `delay`는 대신 맞기(P-64)의 260ms — 지킴이가 도착하기 전에 숫자가 뜨면 인과가 거꾸로 읽힌다
+ */
+function DamagePop({ hits, id, seq, still, delay = 0 }: { hits: CombatObservation["hits"]; id: string; seq: number; still: boolean; delay?: number }) {
   const amount = hits.find((hit) => hit.id === id)?.amount;
   if (!amount) return null;
   return still
@@ -46,7 +49,7 @@ function DamagePop({ hits, id, seq, still }: { hits: CombatObservation["hits"]; 
         aria-hidden="true"
         initial={{ opacity: 0, scale: 0.7, y: 0 }}
         animate={{ opacity: [0, 1, 1, 0], scale: [0.7, 1.15, 1, 1], y: [0, -10, -16, -22] }}
-        transition={damagePop}
+        transition={{ ...damagePop, delay }}
       >
         -{amount}
       </m.span>
@@ -150,16 +153,25 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
   /** 타겟팅 화살표의 출발점 — 무대 카드가 선 자리 */
   const stageRef = useRef<HTMLDivElement>(null);
 
+  /** 무대에 선 적 하나의 판. `data-enemy`가 그 열쇠다 — 적마다 ref를 다는 대신이다 */
+  const enemyNode = (id: string) => enemySide.current?.querySelector<HTMLElement>(`[data-enemy="${id}"]`);
+
   /** 개입이 때린/붙인 대상의 판. 카드 파티클이 쓰는 두 패널과 같은 자리, 한 칸 더 좁을 뿐이다 */
   const hostsFor = (target: StageEffect["target"]): HTMLElement[] => {
     if (target === "self") return playerSide.current ? [playerSide.current] : [];
     // `targets()`와 같은 규칙 — `enemy`는 앞의 산 적 하나다(`core/favor.ts`)
     const aimed = target === "enemy" ? view.enemies.slice(0, 1) : view.enemies;
     return aimed.flatMap(({ id }) => {
-      const node = enemySide.current?.querySelector<HTMLElement>(`[data-enemy="${id}"]`);
+      const node = enemyNode(id);
       return node ? [node] : [];
     });
   };
+
+  /**
+   * 이번 프레임에 대신 맞은 지킴이(P-64). 재지정이 둘 이상이어도 **한 번 나가서 한 번 버틴다** —
+   * 같은 지킴이가 두 대상 몫을 받는 것이 규칙이고, 화면도 한 동작이면 족하다
+   */
+  const guarded = view.guarded[0];
 
   /**
    * 조우 시작(1턴)과 개입 턴(2·5·8턴, `intervenesOnTurn`)에 컷인이 뜬다. 그 두 자리가 신이 실제로
@@ -291,12 +303,41 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
       posed.add(node);
       timers.push(setTimeout(() => delete node.dataset.pose, duration));
     };
-    for (const { id } of view.hits) {
-      const node = id === "player" ? playerSide.current : enemySide.current?.querySelector<HTMLElement>(`[data-enemy="${id}"]`);
-      pose(node, "hit", 200);
-      node?.animate([{ filter: "brightness(2.2)" }, { filter: "brightness(1)" }], { duration: 120, easing: "ease-out" });
-      node?.animate([{ translate: "-4px 0" }, { translate: "4px 0" }, { translate: "0 0" }], { duration: 200, easing: "ease-in-out" });
+    /**
+     * 대신 맞기(P-64) — 지킴이가 원래 대상 앞으로 나가(260ms) 버티고(240ms) 돌아온다(300ms).
+     * 거리는 칸 차이 × 180px다(`style.css`의 `--slot` 간격) — DOM을 재지 않는다. 목표 칸 **앞**에서
+     * 멈춘다: 겹쳐 서면 누가 대신 맞았는지가 안 보인다. 쓰러진 지킴이는 칸이 없어 안 나선다(퇴장 연출이 든다)
+     */
+    const guardSlot = view.enemies.find(({ id }) => id === guarded?.by)?.slot;
+    const fromSlot = view.enemies.find(({ id }) => id === guarded?.from)?.slot;
+    if (guarded && guardSlot !== undefined && fromSlot !== undefined) {
+      const gap = (fromSlot - guardSlot) * 180;
+      const stop = `${gap - Math.sign(gap) * 40}px 0`;
+      enemyNode(guarded.by)?.animate(
+        [{ translate: "0 0" }, { translate: stop, offset: 0.325 }, { translate: stop, offset: 0.625 }, { translate: "0 0" }],
+        { duration: 800, easing: "ease-in-out" },
+      );
+      // 원래 대상 위에 「보호」 자국 한 장 — 흐름 밖 absolute라 판을 안 민다(UI.md). `playSprite`와 같은 꼴이다
+      const mark = document.createElement("span");
+      mark.className = "guard-mark";
+      mark.innerHTML = `<svg class="icon"><use href="#icon-guard" /></svg>`;
+      enemyNode(guarded.from)?.append(mark);
+      void mark.animate(
+        [{ opacity: 0 }, { opacity: 1, offset: 0.2 }, { opacity: 1, offset: 0.7 }, { opacity: 0 }],
+        { duration: 540, delay: 260, easing: "ease-out" },
+      ).finished.finally(() => mark.remove());
     }
+    // 맞은 쪽은 지킴이가 **도착한 뒤에** 맞는다 — 그래야 인과가 읽힌다. 피해 팝도 같은 260ms다
+    timers.push(setTimeout(() => {
+      for (const { id } of view.hits) {
+        const node = id === "player" ? playerSide.current : enemyNode(id);
+        pose(node, "hit", 200);
+        node?.animate([{ filter: "brightness(2.2)" }, { filter: "brightness(1)" }], { duration: 120, easing: "ease-out" });
+        // 나가 있는 지킴이는 안 흔든다 — 셰이크가 미끄러짐과 같은 `translate` 채널이라 제자리로 튕긴다.
+        // 버팀은 「그 자리에서 흰 플래시」다(실측으로 잡은 자리다)
+        if (id !== guarded?.by) node?.animate([{ translate: "-4px 0" }, { translate: "4px 0" }, { translate: "0 0" }], { duration: 200, easing: "ease-in-out" });
+      }
+    }, guarded ? 260 : 0));
     // 병사가 쳤으면 병사가, 적 턴이면 직전 의도가 공격이던 적들이 나선다(160ms 전진 + 복귀)
     if (view.hitSource === "attack" && view.hits.some(({ id }) => id !== "player")) {
       pose(playerSide.current, "attack", 250);
@@ -304,7 +345,7 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
     }
     if (view.hitSource === "enemy" && view.hits.some(({ id }) => id === "player")) {
       for (const id of attackers) {
-        const node = enemySide.current?.querySelector<HTMLElement>(`[data-enemy="${id}"]`);
+        const node = enemyNode(id);
         pose(node, "attack", 250);
         node?.animate([{ translate: "0 0" }, { translate: "-20px 0", offset: 0.5 }, { translate: "0 0" }], { duration: 320, easing: "ease-out" });
       }
@@ -331,6 +372,9 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
   const fan = view.hand.map((card, index) => ({ card, key: keys[index] })).filter((_, index) => index !== staged);
   /** 낼 수 있는 카드가 남았는가 — 에너지 젬 맥동(P-58)의 조건. 0이면 무채색(P-55) */
   const canPlay = phase === "card" && options.some((option) => option !== endTurnAction);
+  /** 이름이 데이터에서 오므로 조사를 문장에 박을 수 없다 — 받침이 있으면 「이」다 */
+  const guardName = guarded ? enemyInfo.get(guarded.by)?.name ?? guarded.by : "";
+  const guardLine = guardName && `${guardName}${(guardName.charCodeAt(guardName.length - 1) - 0xac00) % 28 ? "이" : "가"} 대신 맞았습니다.`;
 
   return (
     <>
@@ -370,6 +414,8 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
                 slot={slot}
                 hits={view.hits}
                 hitSeq={view.hitSeq}
+                // 지킴이가 나가 있는 동안은 숫자를 참는다(P-64) — 줄인 모션에서는 나가지 않으므로 0이다
+                popDelay={guarded && !reducedMotion ? 0.26 : 0}
                 enabled={targeting && options.includes(enemy.id)}
                 reducedMotion={!!reducedMotion}
                 onSelect={() => onAnswer(enemy.id)}
@@ -395,8 +441,11 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
             <b>{view.draw}</b>
           </span>
         </div>
-        {/* 평소엔 침묵한다 — 카드 단계는 화면이 이미 말한다. 대상 선택만 문장이 필요하다 */}
-        <p className="hint" role="status">{targeting ? "대상을 고르세요" : ""}</p>
+        {/**
+          * 평소엔 침묵한다 — 카드 단계는 화면이 이미 말한다. 대상 선택만 문장이 필요하다.
+          * 대신 맞기는 **글로도 남긴다**(P-64) — 연출을 꺼도 정보가 안 사라진다(UI.md)
+          */}
+        <p className="hint" role="status">{targeting ? "대상을 고르세요" : guardLine}</p>
         {/**
          * 무대. **흐름 밖 오버레이라 서고 사라져도 판이 안 덜컥인다**(UI.md 제1규칙) — 자리는
          * 병사와 적 진영 사이 비무장지대(`.stage`).
@@ -490,11 +539,13 @@ function FanCard({ card, boost, index, transition, disabled, onSelect }: {
  * 렌더의 props를 그대로 들고 있어서, 대상 선택 중에 죽은 적은 퇴장 동안 `disabled`가 아닌 채로 DOM에
  * 남는다. e2e 드라이버(`tools/e2e.ts:52`)는 `!el.disabled`만 보므로 **죽은 적을 고르고** 1초 헛돈다
  */
-function EnemyButton({ enemy, slot, hits, hitSeq, enabled, reducedMotion, onSelect, ref }: {
+function EnemyButton({ enemy, slot, hits, hitSeq, popDelay, enabled, reducedMotion, onSelect, ref }: {
   enemy: CombatObservation["enemies"][number];
   slot: number;
   hits: CombatObservation["hits"];
   hitSeq: number;
+  /** 피해 팝을 늦추는 초 — 대신 맞기(P-64)가 도착할 시간이다 */
+  popDelay: number;
   enabled: boolean;
   reducedMotion: boolean;
   onSelect: () => void;
@@ -551,7 +602,7 @@ function EnemyButton({ enemy, slot, hits, hitSeq, enabled, reducedMotion, onSele
         {passives.map(([id, stacks]) => <em key={id} className="passive"><Icon name={id} />{passiveName(id)} {stacks}</em>)}
         <TokenRow tokens={enemy.tokens} />
       </span>
-      <DamagePop hits={hits} id={enemy.id} seq={hitSeq} still={reducedMotion} />
+      <DamagePop hits={hits} id={enemy.id} seq={hitSeq} still={reducedMotion} delay={popDelay} />
     </m.button>
   );
 }

@@ -1,6 +1,6 @@
 # 사용한 자산
 
-배포본은 그림 91장과 아이콘 시트 한 장(symbol 28개), 폰트 두 벌을 담습니다.
+배포본은 그림 90장과 아이콘 시트 한 장(symbol 28개), 폰트 두 벌을 담습니다.
 
 ## 그림 · 스프라이트 — 프로젝트 제작 83장
 
@@ -17,14 +17,14 @@
 
 이미지 생성 도구로 프로젝트에서 직접 만들었습니다. 프롬프트 정본은 `art/_src/gen-docs.mjs`이고 파일마다 옆에 `.md` 사이드카가 있습니다. 카드 149장은 이 30장이 `{patron}_{tag}`·`card_fused_*`로 덮고, 파일이 없을 때는 CSS placeholder로 동작합니다.
 
-## 커서 · 파티클 — Kenney (CC0) 8장
+## 커서 · 파티클 — Kenney (CC0) 7장
 
 | 자리 | 팩 | 라이선스 |
 |---|---|---|
-| 커서 4장 (`tile_0026`·`tile_0134`·`tile_0044`·`tile_0015`) | [Cursor Pixel Pack](https://kenney.nl/assets/cursor-pixel-pack) | CC0 1.0 |
+| 커서 3장 (`tile_0026`·`tile_0134`·`tile_0015`) | [Cursor Pixel Pack](https://kenney.nl/assets/cursor-pixel-pack) | CC0 1.0 |
 | 파티클 4장 (`slash_01`·`window_01`·`magic_01`·`spark_01`) | [Particle Pack](https://kenney.nl/assets/particle-pack) | CC0 1.0 |
 
-CC0이라 귀속 의무는 없습니다. 출처를 남기는 것은 예의이자 재수급 경로를 잃지 않기 위해서입니다. **두 팩의 나머지(커서 216장 · 파티클 77장)는 저장소에만 있고 배포본에 들어가지 않습니다.**
+CC0이라 귀속 의무는 없습니다. 출처를 남기는 것은 예의이자 재수급 경로를 잃지 않기 위해서입니다. **커서는 쓰는 3장만 남겼고, 파티클 나머지 77장은 저장소에만 있습니다.**
 
 ## 아이콘 — game-icons.net (CC BY 3.0) 28개
 

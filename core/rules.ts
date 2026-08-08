@@ -388,6 +388,15 @@ export function executeCard(state: GameState, card: Card, enemyId?: string, deck
    */
   const conditionTarget = targets[0];
   /**
+   * 지킴이가 대신 받았으면 그 사실을 남긴다 — `guardFor`는 안 바꾼다(반환값 비교로 이미 알 수 있다).
+   * 한 카드가 여러 번 지날 수 있다: `all_enemies`·`chain`은 대상마다 여기를 지난다
+   */
+  const aim = (target: ActorState) => {
+    const guard = guardFor(state.combat, target, card.reach);
+    if (guard !== target) state.combat.guarded.push({ by: guard.id, from: target.id });
+    return guard;
+  };
+  /**
    * 「무방비 피해」는 여기가 자리다 — P-25가 `guard`를 `dealDamage` **호출부**에 둔 것과 같은 줄이고,
    * `dealDamage`는 `GameState`를 모른다. 파워가 낸 피해로는 다시 터지지 않는다(그래야 순환이 없다)
    */
@@ -400,7 +409,7 @@ export function executeCard(state: GameState, card: Card, enemyId?: string, deck
   for (const effect of cardEffects(state, card)) {
     if (effect.when && !(conditionTarget && evaluateCondition(effect.when, { state, card, target: conditionTarget, deckCards }))) continue;
     const value = effect.value ?? 0;
-    if (effect.op === "damage") for (const target of targets) strike(card.target === "enemy" ? guardFor(state.combat, target, card.reach) : target, value);
+    if (effect.op === "damage") for (const target of targets) strike(card.target === "enemy" ? aim(target) : target, value);
     else if (effect.op === "block") state.combat.player.block += value;
     else if (effect.op === "draw") drawCards(state.combat, value, random);
     else if (effect.op === "energy") state.combat.energy += value;

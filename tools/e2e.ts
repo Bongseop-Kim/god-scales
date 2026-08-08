@@ -61,6 +61,11 @@ await tab.bringToFront();
 await tab.waitForSelector("[data-phase='intro']");
 await tab.click(".intro-menu button.primary");
 await tab.waitForSelector("[data-phase='setup']");
+const finishOpening = async () => {
+  await tab.waitForSelector("[data-phase='opening']");
+  await tab.evaluate(() => document.querySelectorAll(".run-opening video").forEach((video) => { video.playbackRate = 16; }));
+  await tab.waitForSelector("[data-phase='path']");
+};
 
 /**
  * 조합은 기본값이 이미 제우스+아테나다 — 껐다 켜야 토글과 「둘 아니면 못 시작」을 실제로 지난다.
@@ -85,7 +90,7 @@ const setup = await tab.evaluate(async () => {
 });
 
 await tab.click("form.setup button.primary");
-await tab.waitForSelector("[data-phase]:not([data-phase='setup'])");
+await finishOpening();
 
 // 한 evaluate에 런 전체를 넣으면 CDP가 30초에 끊는다 — 드라이버를 페이지에 심고 조금씩 돌린다
 await tab.evaluate(() => {
@@ -270,7 +275,7 @@ const editor = await tab.evaluate(async () => {
 });
 
 await tab.click("form.setup button.primary");
-await tab.waitForSelector("[data-phase]:not([data-phase='setup'])");
+await finishOpening();
 await tab.evaluate(() => window.__e2e.restart());
 for (let batch = 0; ; batch += 1) {
   if (batch > 20) throw new Error("free-deck run never reached the result screen");

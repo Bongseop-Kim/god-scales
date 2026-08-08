@@ -167,10 +167,16 @@ describe("enemy passives", () => {
     // 둘이 서로를 지킨다 — 재지정이 순환하면 이 테스트가 끝나지 않는다
     const first = { ...idle, id: "first", hp: 30, passives: { guard: 1 } };
     const second = { ...idle, id: "second", hp: 30, passives: { guard: 1 } };
-    const state = gameState([first, second], [strike.id]);
-    playCard(state, new Map([[strike.id, strike]]), strike.id, "first");
+    const state = gameState([first, second], [strike.id, strike.id]);
+    const cards = new Map([[strike.id, strike]]);
+    playCard(state, cards, strike.id, "first");
     // 판은 언제나 네 칸이다 — 편성이 둘이면 뒤 두 칸이 처음부터 비어 있다
     expect(state.combat.enemies.map(({ hp }) => hp)).toEqual([30, 24, 0, 0]);
+    // 화면이 「누가 대신 맞았나」를 체력바에서 추측하지 않게 재지정을 사실로 남긴다(P-64)
+    expect(state.combat.guarded).toEqual([{ by: "second", from: "first" }]);
+    // 스택을 다 쓴 판에서는 재지정이 없다 — 기록도 그 클릭마다 비어야 한다
+    playCard(state, cards, strike.id, "first");
+    expect(state.combat.guarded).toEqual([]);
   });
 
   it("pours ramp, rally, and spite into frenzy", () => {

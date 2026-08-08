@@ -9,7 +9,7 @@ import type { RunResult } from "../sim/report.ts";
 import type { ReplayAction } from "../sim/replay.ts";
 import { bossLane, generateMap } from "../core/map.ts";
 import { upgraded, type Card } from "../core/rules.ts";
-import { App, patronPair } from "../ui/app.tsx";
+import { App, patronPair, RunOpening } from "../ui/app.tsx";
 import { cardArtCandidates, type CardArtSource } from "../ui/shared/art-keys.ts";
 import { conditionLabel } from "../ui/shared/card.tsx";
 import { BetScreen, DemandScreen, GraceScreen, OracleScreen, RestScreen } from "../ui/screens/choices.tsx";
@@ -129,7 +129,7 @@ describe("browser replay export", () => {
           tokens: { shock: 2 }, passives: { guard: 2 },
           intent: { damage: 9, token: "soaked", stacks: 1 },
         }],
-        hits: [], hitSeq: 0, promises: [],
+        hits: [], hitSeq: 0, guarded: [], promises: [],
       },
     } as never;
     const markup = renderToStaticMarkup(createElement(CombatScreen, { seed: 1, decision, onAnswer: () => {} }));
@@ -180,7 +180,7 @@ describe("browser replay export", () => {
         depth: 3, lane: 1, region: "underworld", floor: 4, hp: 44, maxHp: 92,
         patrons: ["zeus", "athena"], grid: [], favor: { zeus: 50, athena: 50 }, grace: {},
         turn: 5, block: 0, energy: 3, draw: 4, tokens: {}, hand: [], powers: [], enemies: [],
-        hits: [], hitSeq: 0,
+        hits: [], hitSeq: 0, guarded: [],
         promises: [
           { god: "athena", text: "여덟이다.", rule: "이 조우에서 잃은 체력 8 이하", current: 5, target: 8 },
           { god: "zeus", text: "둘은 맞아야 한다.", rule: "한 턴에 맞힌 적 2 이상", current: 2, target: 2, settled: "kept" },
@@ -216,7 +216,7 @@ describe("browser replay export", () => {
         patrons: ["zeus", "athena"], grid: [], favor: { zeus: 50, athena: 50 }, grace: {},
         turn: 2, block: 0, energy: 3, draw: 4, tokens: {}, hand: [], powers: [],
         enemies: [{ id: "enemy_under_boss", slot: 0, span: 2, hp: 100, maxHp: 130, block: 0, tokens: {}, passives: { ward: 2 }, intent: { damage: 6 } }],
-        hits: [], hitSeq: 0, promises: [],
+        hits: [], hitSeq: 0, guarded: [], promises: [],
       },
     } as never;
     const markup = renderToStaticMarkup(createElement(CombatScreen, { seed: 1, decision, onAnswer: () => {} }));
@@ -251,7 +251,7 @@ describe("browser replay export", () => {
         patrons: ["zeus", "athena"], grid: [], favor: { zeus: 40, athena: 40 }, grace: {},
         turn: 5, block: 0, energy: 3, draw: 4, tokens: {}, hand, powers: [],
         enemies: [{ id: "enemy_under_guardian", slot: 0, span: 1, hp: 20, maxHp: 30, block: 0, tokens: {}, passives: {}, intent: { damage: 9 } }],
-        hits: [], hitSeq: 0, promises: [],
+        hits: [], hitSeq: 0, guarded: [], promises: [],
         // 무대에 오른 카드. **`view.card`는 id다** — 그것을 그대로 문장에 넣으면 화면에 영문 id가 뜬다
         card: "card_zeus_19",
       },
@@ -309,7 +309,7 @@ describe("browser replay export", () => {
         turn: 5, block: 0, energy: 3, draw: 4, tokens: { might: 3, frenzy: 1 }, powers: [],
         hand: [{ id: raised.id, name: raised.name, cost: raised.cost, target: raised.target, effects: raised.effects }],
         enemies: [{ id: "enemy_under_guardian", slot: 0, span: 1, hp: 20, maxHp: 30, block: 0, tokens: {}, passives: {}, intent: { damage: 9 } }],
-        hits: [], hitSeq: 0, promises: [],
+        hits: [], hitSeq: 0, guarded: [], promises: [],
       },
     } as never;
     const markup = renderToStaticMarkup(createElement(CombatScreen, { seed: 1, decision, onAnswer: () => {} }));
@@ -395,6 +395,21 @@ describe("browser replay export", () => {
     expect(markup).not.toContain("시작 호의 배분");
     // 편집기는 한 방향 문이 아니다 — 조합을 하나로 줄여 슬롯을 비운 사람이 여기로 돌아온다
     expect(markup).not.toContain("규칙 덱으로");
+  });
+
+  it("shows both selected gods before entering the run", () => {
+    const markup = renderToStaticMarkup(createElement(RunOpening, { patrons: ["zeus", "athena"], onDone: () => {} }));
+
+    expect(markup.match(/<video/g)).toHaveLength(2);
+    expect(markup).toContain("제우스");
+    expect(markup).toContain("아테나");
+    expect(markup).toContain("두 신이 한 인간의 운명을 두고 맞섭니다.");
+    expect(markup.match(/autoplay/gi)).toHaveLength(2);
+    expect(markup.match(/muted/gi)).toHaveLength(2);
+    expect(markup.match(/playsinline/gi)).toHaveLength(2);
+    expect(Object.keys(import.meta.glob("../art/gods/*.mp4")).map((path) => path.replace(/^.*\//, "")).sort()).toEqual([
+      "ares.mp4", "artemis.mp4", "athena.mp4", "poseidon.mp4", "zeus.mp4",
+    ]);
   });
 
   /**

@@ -29,6 +29,7 @@ const state = (): GameState => ({
     powers: [],
     pending: [],
     turnPlays: { cards_played: 2, attacks: 1, energy_spent: 3 },
+    guarded: [],
     enemies: [
       { ...actor("a", 20), patternIndex: 0 },
       { ...actor("b", 20), patternIndex: 0 },

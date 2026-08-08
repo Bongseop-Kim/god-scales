@@ -274,6 +274,11 @@ export type CombatObservation = RunView & {
   /** hits가 새로 생길 때마다 오른다 — UI가 같은 팝을 두 번 재생하지 않게 하는 열쇠 */
   hitSeq: number;
   /**
+   * 이 hits에서 지킴이가 대신 받은 피해. **새 seq를 만들지 않는다** — 재지정은 언제나 피해와 같은
+   * 프레임에 온다. 빈 배열이면 아무 일도 없었다는 뜻이다(`core/state.ts`의 `guarded`)
+   */
+  guarded: { by: string; from: string }[];
+  /**
    * 지금 걸린 내기표. 신 조건 한 줄과 승부 카드 한 줄이 **같은 사실로 판정되므로** 같은 줄에 선다
    * (관망이면 빈 배열이다). 요구를 수락하고도 화면에 흔적이 없던 자리다
    */
@@ -416,6 +421,7 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
   let hits: CombatObservation["hits"] = [];
   let hitSource: CombatObservation["hitSource"];
   let hitSeq = 0;
+  let guarded: CombatObservation["guarded"] = [];
   const facts = { hit_targets_in_turn: 0, damage_taken: 0, tokens_applied: 0, tokens_applied_in_turn: 0, turns: 0, bet_kill: 0 };
   /** 찢긴 카드. 화면이 규칙(「진노인 신의 카드」)을 다시 계산하면 규칙이 갈릴 때 화면만 옛 자리에 남는다 */
   let torn: CombatObservation["torn"];
@@ -437,6 +443,9 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
     }
     if (!damage.length) return;
     hits = damage;
+    // 재지정은 **플레이어 카드에서만** 난다 — 다른 출처의 프레임에 지난 카드의 기록이 남으면 화면이
+    // 적 턴 피해에 지킴이를 내보낸다
+    guarded = source === "attack" || source === "card" ? state.combat.guarded : [];
     hitSource = source;
     hitSeq += 1;
   };
@@ -494,6 +503,7 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
     hits,
     hitSource,
     hitSeq,
+    guarded,
     promises: promiseViews(),
     ...(torn ? { torn } : {}),
   });
