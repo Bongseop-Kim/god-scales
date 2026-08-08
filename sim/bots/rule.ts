@@ -5,7 +5,7 @@ import type { Card } from "../../core/rules.ts";
 import type { CombatState } from "../../core/state.ts";
 import { canReachTarget, livingInReach } from "../../core/targeting.ts";
 import { demandPenalty, type DemandOffer } from "../../core/demands.ts";
-import { favorBoundaries, favorInitial } from "../../core/favor.ts";
+import { favorBoundaries, favorInitial, favorStage, oracleSwing, type FavorStage } from "../../core/favor.ts";
 import { expectedValue, graceValue, powerTurns, tokenWeights } from "../../tools/value.ts";
 
 /**
@@ -202,6 +202,21 @@ export function chooseDemandAnswer(
     ? hp - (cost.maxHp ?? 0) >= maxHp * 0.5
     : (favor[other] ?? favorInitial) + demandPenalty(patron, other).amount >= favorBoundaries.anger;
   return [...offers].reverse().find(affordable)?.action ?? "reject";
+}
+
+/** 단계의 서열. 저울이 어느 쪽으로 기울어야 나은지는 **두 신의 단계 합**이 정한다 */
+const stageRank: Record<FavorStage, number> = { wrath: 0, anger: 1, calm: 2, devotion: 3 };
+
+/**
+ * 신탁 2택. 저울이라 한쪽을 올리면 반대쪽이 내려간다 — **거절할 「거절」이 없다**(`chooseDemandAnswer`와
+ * 갈리는 자리다). 그래서 판정은 「받을까 말까」가 아니라 **어느 쪽으로 기울일까**고, 눈금은 기운
+ * 뒤의 두 단계 합 하나다: 헌신은 개입이 순이득이고 진노는 신이 적으로 서므로 서열이 곧 값이다.
+ * 동점이면 묻는 신 쪽이다 — 결정론이어야 재생이 선다
+ */
+export function chooseOracle(favor: Record<string, number>, god: string, other: string): string {
+  const worth = (tilt: number) =>
+    stageRank[favorStage((favor[god] ?? favorInitial) + tilt)] + stageRank[favorStage((favor[other] ?? favorInitial) - tilt)];
+  return worth(oracleSwing) >= worth(-oracleSwing) ? "obey" : "refuse";
 }
 
 export function chooseCard(

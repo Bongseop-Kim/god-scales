@@ -29,6 +29,14 @@
   --boon: #e8c377;
   --bane: #6ea8d8;
   /**
+   * 우호도 단계 넷. **그림은 모양(무슨 일이 벌어지는가)이고 색은 출처(누가)다** — 신 5 × 단계 4 =
+   * 20장을 그리지 않는 것이 이 네 줄이다. 미터·컷인 문장·배분 슬라이더가 같은 자리에서 읽는다
+   */
+  --stage-devotion: #f0d79a;
+  --stage-calm: #9de0c7;
+  --stage-anger: #efb98a;
+  --stage-wrath: #eb887d;
+  /**
    * 카드 폭은 **고정이다.** 열 폭에 따라 늘었다 줄었다 하면 같은 카드가 보상 화면과 전투 화면에서
    * 다른 크기로 뜨고, 무엇보다 **부채꼴이 겹침을 역산할 수 없다**(`.fan`) — 겹치려면 폭을 알아야 한다
    */
@@ -125,6 +133,24 @@ h2 { font-weight: 500; }
 .god-legend button[aria-pressed="true"] { border-color: var(--god-color); opacity: 1; }
 .god-legend i { width: 9px; height: 9px; border-radius: 50%; background: var(--god-color); box-shadow: 0 0 12px var(--god-color); }
 .seed-field { display: grid; gap: 8px; margin-bottom: 14px; color: #b9bdc9; font-size: .8rem; }
+/**
+ * 배분 슬라이더. **저울이므로 라벨이 양 끝이고 트랙이 그 사이다** — 한 숫자가 둘을 정한다는 것이
+ * 그림으로 서야 한다. 눈금 셋(70·30·10)은 React가 `favorBoundaries`에서 넣는다
+ */
+.split-field { display: grid; justify-self: stretch; width: 100%; max-width: 590px; gap: 6px; margin-bottom: 14px; color: #b9bdc9; font-size: .8rem; }
+.split-ends { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.split-ends b { display: flex; align-items: center; gap: 7px; font-size: .8rem; }
+/* 오른쪽 신은 점이 바깥이다 — 두 라벨이 트랙 양 끝을 가리킨다 */
+.split-ends b:last-child { flex-direction: row-reverse; }
+.split-ends i { width: 9px; height: 9px; border-radius: 50%; background: var(--god-color); box-shadow: 0 0 12px var(--god-color); }
+.split-ends .devotion { color: var(--stage-devotion); }
+.split-ends .calm { color: var(--stage-calm); }
+.split-ends .anger { color: var(--stage-anger); }
+.split-ends .wrath { color: var(--stage-wrath); }
+.split-track { position: relative; display: block; }
+/* 아래 `input` 규칙의 폭·테두리·바탕을 끈다 — 범위 입력은 네이티브 컨트롤 그대로 쓴다 */
+.split-track input { width: 100%; padding: 0; border: 0; background: none; }
+.split-track i { position: absolute; top: 50%; width: 1px; height: 11px; margin-top: -6px; background: #6b7185; pointer-events: none; }
 input { width: 220px; padding: 12px 14px; color: #fff; border: 1px solid #41485c; border-radius: 8px; background: #171b25; }
 button { padding: 12px 18px; border: 1px solid #454c5f; border-radius: 8px; background: #1c2130; }
 button:not(:disabled):hover { border-color: #c6a969; }
@@ -185,6 +211,21 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .shell:has(.run-header) { padding: 28px 0; }
 .run-header { align-items: baseline; margin-bottom: 16px; }
 .run-header h1 { margin-bottom: 0; font-size: clamp(1.9rem, 3.4vw, 2.3rem); }
+/**
+ * 약속 줄. **머리글 바로 아래, 판 위다** — 요구를 수락하고 들어온 전투에서 무엇을 약속했는지가
+ * 화면에 하나도 없던 자리라 판보다 먼저 읽혀야 한다. 두 줄까지 온다(`omen`이 걸어 둔 것이 하나 더)
+ */
+.promise-row { display: grid; gap: 6px; margin-bottom: 16px; }
+.run-layout .promise-row { grid-column: 1 / -1; }
+.promise { display: flex; align-items: center; gap: 8px; margin: 0; padding: 8px 14px; border-left: 4px solid var(--god-color); border-radius: 8px; background: rgba(21, 25, 35, .86); color: var(--god-color); font-size: .84rem; }
+.promise .icon { width: 16px; height: 16px; }
+/* 규칙 줄은 신 이름과 다른 무게다 — 이름은 누가 걸었는지고 이 줄은 무엇을 재는지다 */
+.promise span { flex: 1; color: #949aad; }
+.promise em { font-style: normal; font-variant-numeric: tabular-nums; }
+/* 확정된 약속은 색이 신에서 결과로 넘어간다 — 그 뒤로는 값이 안 바뀌므로 현재값도 같이 죽는다 */
+.promise.kept { border-color: #6cc39b; color: #9de0c7; }
+.promise.broken { border-color: #4a5062; color: #757b8b; text-decoration: line-through; }
+.promise.broken span, .promise.kept span { color: inherit; }
 /* 칸 사이는 격자 gap 하나로만 띈다 — 여덟 화면이 같은 간격을 쓰는 자리다 */
 .decision-panel .hint { margin-top: 0; }
 .run-layout { display: grid; grid-template-columns: minmax(260px, .8fr) minmax(320px, 1.2fr); gap: 28px; }
@@ -226,6 +267,15 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .choice > span .icon { width: 24px; height: 24px; }
 .choice b { align-self: end; }
 .choice small { color: #949aad; }
+/**
+ * 요구 조건 한 줄. 신의 문장 **아래**에 따로 선다 — 시적인 문장이 조건을 대신하고 있었고 대신하지
+ * 못했다(「여덟이다」가 무엇의 여덟인지 화면이 말하지 않았다). 합치지 않는 것이 이 줄의 전부다
+ */
+.choice .rule { display: block; margin: 4px 0; color: #c6a969; font-style: normal; font-variant-numeric: tabular-nums; }
+/* 요구 화면의 신. 글자만 있던 화면에 **누가 말하는지**를 세운다 — 일러 다섯은 이미 있다 */
+.god-say { display: grid; grid-template-columns: 84px 1fr; align-items: center; gap: 14px; padding: 12px 16px; border-left: 4px solid var(--god-color); border-radius: 10px; background: rgba(12, 14, 20, .6); }
+.god-say img { width: 84px; border-radius: 8px; }
+.god-say b { color: var(--god-color); font-size: 1.02rem; line-height: 1.5; }
 
 .map-node.current, .map-node.here { border-color: #c6a969; background: rgba(198, 169, 105, .16); color: #f0d79a; }
 
@@ -302,11 +352,12 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .favor .meter i { position: absolute; inset: 0 auto 0 0; width: 100%; transform-origin: left; transform: scaleX(var(--fill)); background: currentColor; transition: transform 200ms var(--ease-out); }
 /* 눈금은 favorBoundaries에서 온다 — 위치를 CSS에 박으면 규칙이 바뀔 때 화면만 옛 자리에 남는다 */
 .favor .meter .tick { position: absolute; top: 0; bottom: 0; width: 1px; background: #11131a; }
-.favor.devotion { color: #f0d79a; border-color: #6b5c33; }
-.favor.calm { color: #9de0c7; }
-.favor.anger { color: #efb98a; border-color: #6b543a; }
+/* 단계 색은 `--stage-*` 한 곳에서만 정한다 — 미터·컷인 문장·배분 슬라이더 셋이 같은 값을 읽는다 */
+.favor.devotion { color: var(--stage-devotion); border-color: #6b5c33; }
+.favor.calm { color: var(--stage-calm); }
+.favor.anger { color: var(--stage-anger); border-color: #6b543a; }
 /* 진노는 경고다 — 그 단계의 개입이 조우 시작에 터지므로 들어서기 전에 읽혀야 한다 */
-.favor.wrath { color: #eb887d; border-color: #eb887d; background: rgba(235, 136, 125, .12); }
+.favor.wrath { color: var(--stage-wrath); border-color: var(--stage-wrath); background: rgba(235, 136, 125, .12); }
 .power-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .power-row em { padding: 2px 8px; border: 1px solid #5c6b8a; border-radius: 999px; background: rgba(92, 107, 138, .16); color: #cbd5ea; font-size: .72rem; font-style: normal; }
 .power-row em b { margin-left: 4px; color: #fff; }

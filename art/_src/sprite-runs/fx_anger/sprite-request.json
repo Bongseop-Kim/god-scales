@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "kind": "sprite-gen-request",
+  "engine": "component-row",
+  "character": {
+    "id": "fx_anger",
+    "description": "",
+    "base_image": "base-source.png"
+  },
+  "cell": {
+    "shape": "rect",
+    "width": 1536,
+    "height": 960,
+    "safe_margin_x": 0,
+    "safe_margin_y": 0
+  },
+  "chroma_key": {
+    "name": "magenta",
+    "hex": "#FF00FF",
+    "rgb": [
+      255,
+      0,
+      255
+    ],
+    "selection": "manual"
+  },
+  "states": {
+    "play": {
+      "frames": 4,
+      "fps": 8,
+      "loop": false,
+      "action": "four-frame one-shot withdrawal: frame 1 the pale light is still present with the first hairline cracks; frames 2 and 3 the light visibly pulls upward and out through the top edge while the cracks widen and sharpen; frame 4 the light is gone and only the jagged cracks remain with their thin dull rim. No downward motion and no impact point in any frame; the lower third and the centre stay completely empty."
+    }
+  },
+  "style": "soft luminous abstract game effect matching the accepted base image exactly; smooth glow and clean edges, no pixel art, no added outline, no palette reduction",
+  "motion_phase_guides": false,
+  "layout": "taxonomy/v1",
+  "fit": {
+    "resample": "lanczos",
+    "align_x": "bbox-center",
+    "align_y": "center",
+    "pixel_unfake": false,
+    "outline": false
+  },
+  "chroma": {
+    "mode": "ycbcr",
+    "unmix_reach": 4,
+    "spill_max_fraction": 0.005
+  }
+}

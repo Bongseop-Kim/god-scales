@@ -14,9 +14,56 @@ button:active { transform: scale(.97); }
 /* 컷인은 화면 전체(개입 오버레이·신 일러), 파티클은 host 가운데 한 장이다 */
 .fx { position: fixed; inset: 0; display: grid; place-items: center; z-index: 3; pointer-events: none; }
 /* 컷인은 480ms 스치는 층이다 — 불투명하면 그 사이 판이 안 보인다 */
-.fx > img { max-width: 100%; max-height: 100%; }
-.fx.cut > img { opacity: .7; }
+.fx-view { position: absolute; inset: 0; display: grid; place-items: center; }
+.fx-view > img { max-width: 100%; max-height: 100%; }
+.fx.cut .fx-view > img { opacity: .7; }
+.fx.strip .fx-view { overflow: hidden; }
+.fx.strip .fx-view > img { position: absolute; top: 50%; left: 0; width: 400%; max-width: none; max-height: none; transform: translateY(-50%); }
 .fx.spark { position: absolute; inset: 50% auto auto 50%; width: 192px; height: 192px; transform: translate(-50%, -50%); }
+/**
+ * 컷인이 든 문장. **그림 위가 아니라 아래다** — 판을 덮으면 무엇이 바뀌었는지 볼 수가 없다.
+ * 색 둘: 왼쪽 띠가 신(`--god-color`), 글자가 단계(`--stage-*`)다
+ */
+.fx > b { position: absolute; bottom: 14%; left: 50%; max-width: min(680px, 84%); padding: 9px 16px; border-left: 4px solid var(--god-color); border-radius: 8px; background: rgba(12, 14, 20, .9); color: currentColor; font-size: .86rem; line-height: 1.5; text-align: center; transform: translateX(-50%); }
+.fx.devotion { color: var(--stage-devotion); }
+.fx.calm { color: var(--stage-calm); }
+.fx.anger { color: var(--stage-anger); }
+.fx.wrath { color: var(--stage-wrath); }
+/**
+ * 단계마다 다른 진입. **그림이 넷뿐이므로 방향이 다섯째 채널이다** — 헌신은 위에서 내려오고,
+ * 평온은 제자리에서 부풀고, 분노는 아래로 물러나며, 진노는 크게 눌러 온다
+ */
+@keyframes cut-devotion { from { transform: translateY(-7%) scale(1.04); } }
+@keyframes cut-calm { from { transform: scale(1.03); } }
+@keyframes cut-anger { from { transform: translateY(4%) scale(.97); } }
+@keyframes cut-wrath { from { transform: translateY(9%) scale(1.12); filter: saturate(2.2) brightness(1.25); } }
+.fx.devotion > .fx-view { animation: cut-devotion 480ms var(--ease-out); }
+.fx.calm > .fx-view { animation: cut-calm 480ms var(--ease-out); }
+.fx.anger > .fx-view { animation: cut-anger 480ms var(--ease-out); }
+/* 진노는 화면을 반쯤 덮는다 — 「신이 적으로 합류」는 판이 뒤집히는 사건이라 스치면 안 된다 */
+.fx.wrath .fx-view > img { opacity: .84; }
+.fx.wrath > .fx-view { animation: cut-wrath 480ms var(--ease-out); }
+/**
+ * 발화 셋. **레벨을 가르는 것은 자리와 무게다** — 판 아래 자막(1) · 화면 중앙(2) · 화면 전체(3).
+ * 컷인(`z-index: 3`) 위에 선다: 그림은 신이 **무엇을 했는지**고 이것은 신이 **무엇을 말하는지**다
+ */
+.voice { position: fixed; z-index: 4; display: grid; cursor: pointer; }
+.voice > b { border-left: 4px solid var(--god-color); background: rgba(12, 14, 20, .92); }
+/* 1 · 속삭임 — 런당 약 49번 뜨는 자리다. 배경을 안 어둡게 하고 판을 안 가린다 */
+.voice.l1 { inset: auto 0 6% 0; place-items: center; pointer-events: none; }
+.voice.l1 > b { max-width: min(680px, 84%); padding: 7px 14px; border-radius: 8px; color: var(--god-color); font-size: .82rem; line-height: 1.4; }
+/* 2 · 말 — 화면 중앙 · 배경 살짝 어둡게 · 신 색 글자 */
+.voice.l2 { inset: 0; place-items: center; background: rgba(6, 7, 11, .34); }
+.voice.l2 > b { max-width: min(720px, 86%); padding: 16px 26px; border-radius: 10px; color: var(--god-color); font-size: 1.15rem; line-height: 1.5; text-align: center; }
+/* 3 · 외침 — 배경 크게 어둡게 + 신 일러 슬라이드인 + 큰 글씨. 런당 0~10번뿐이라 이만큼 쓴다 */
+.voice.l3 { inset: 0; align-content: center; justify-items: center; gap: 12px; background: rgba(6, 7, 11, .72); }
+.voice.l3 > img { max-width: 60%; max-height: 42vh; animation: voice-enter 320ms var(--ease-out); }
+.voice.l3 > b { max-width: min(760px, 88%); padding: 18px 30px; border-radius: 12px; color: var(--god-color); font-size: 1.5rem; line-height: 1.45; text-align: center; }
+
+@keyframes voice-enter {
+  from { opacity: 0; transform: translateX(-40px); }
+}
+
 /* 스프라이트 스트립은 idle 넉 장이다 — 셀 192px(화면 96px × DPR2)이라 한 칸이 -96px씩 민다 */
 .sprite { display: block; width: 96px; height: 96px; overflow: hidden; }
 .sprite img { width: 384px; height: 96px; max-width: none; animation: sprite 1.2s steps(4) infinite; }
@@ -51,6 +98,10 @@ button:active { transform: scale(.97); }
 
 @media (prefers-reduced-motion: reduce) {
   .sprite img { animation: none; }
+  /* 컷인 그림은 멈추고 **문장은 남는다** — 문장은 모션이 아니라 정보다(`ui/fx.ts`가 3초 세워 둔다) */
+  .fx > .fx-view { animation: none; }
+  /* 같은 이유로 신 일러만 멈춘다 — 대사는 `ui/fx.ts`가 페이드 없이 제 시간만큼 세워 둔다 */
+  .voice.l3 > img { animation: none; }
   button, .game-card { transition-property: opacity, border-color, background-color; }
   .enemy .hp i, .favor .meter i { transition: none; }
   .favor.crossed { animation: none; }

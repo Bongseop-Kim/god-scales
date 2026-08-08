@@ -29,12 +29,12 @@ const missingFrom = (have: Set<string>, need: string[]) => need.filter((name) =>
  * 안의 id로 한다 — `<use href="#icon-shock">`가 없는 id를 가리키면 배지가 조용히 빈 원이 된다
  */
 const symbols = new Set([...readFileSync("art/icons.svg", "utf8").matchAll(/id="icon-([\w-]+)"/g)].map(([, id]) => id));
-/** 카드만 대조가 1:1이 아니다 — 149개 id가 30장으로 떨어지는 폴백을 인정해야 한다(R-32) */
+/** P-51부터 카드 아트는 데이터 id와 1:1이다. */
 const unresolved = cards.filter((card) => !cardArtCandidates(card).some((key) => cardArt.has(key)));
 
 const checks = [
   { kind: "sprites", made: 20, found: sprites.size, missing: missingFrom(sprites, [...enemies.map(({ id }) => id), "player"]) },
-  { kind: "cards", made: 30, found: cardArt.size, missing: unresolved.map(({ id }) => id) },
+  { kind: "cards", made: 179, found: cardArt.size, missing: unresolved.map(({ id }) => id) },
   { kind: "gods", made: 5, found: godArt.size, missing: missingFrom(godArt, gods.map(({ id }) => id)) },
   { kind: "bg", made: 6, found: bg.size, missing: missingFrom(bg, regions.flatMap((region) => (["map", "combat", "boss"] as const).map((spot) => backdropName(region, spot)))) },
   // 프롭은 이름을 데이터가 안 부른다 — 배경 위에 지역별로 **둘**을 얹으므로 그 하한이 곧 대조다

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import cardData from "../data/cards.json" with { type: "json" };
 import godData from "../data/gods.json" with { type: "json" };
+import { oracleSwing } from "../core/favor";
 import { endTurnAction, gods, run, runSteps, type Decision } from "../sim/engine";
 import type { ReplayAction } from "../sim/replay";
 
@@ -20,7 +21,7 @@ describe("steppable engine", () => {
       const answer = step.value.phase === "path" ? pickPath(step.value, "rest") : step.value.phase === "rest" ? "remove" : step.value.bot;
       step = steps.next(answer);
     }
-    expect(seen).toEqual(new Set(["path", "card", "target", "rest", "rest_card", "reward", "grace", "demand"]));
+    expect(seen).toEqual(new Set(["path", "card", "target", "rest", "rest_card", "reward", "grace", "demand", "oracle"]));
   });
 
   /**
@@ -42,8 +43,12 @@ describe("steppable engine", () => {
      * 사본이 된다. 지도 관측이 이미 덱을 그대로 실어 오므로 마지막 것을 든다
      */
     let deck: string[] = [];
-    // 시드 5 → 1: P-29의 시련 대가가 호의를 깎아 5가 은혜 앞에서 끝났다. 시련이 은혜를 주는 자리도 여기다
-    const steps = runSteps(1);
+    /**
+     * 시드 5 → 1: P-29의 시련 대가가 호의를 깎아 5가 은혜 앞에서 끝났다. 시련이 은혜를 주는 자리도 여기다.
+     * 1 → 3: 찢기(P-47)가 조우 **중에** 덱을 줄이므로 지도 관측이 그 조우 뒤의 덱을 못 든다 —
+     * 시련 대가(−18)가 상대 신을 진노로 밀면 그 조우의 그 신 카드가 그대로 사라진다
+     */
+    const steps = runSteps(3);
     let step = steps.next();
     while (!step.done && step.value.phase !== "grace") {
       // 보상은 지도 관측 **뒤에** 덱을 늘린다 — 그 사이에 집은 카드를 얹어야 은혜 화면과 같은 덱이다
@@ -100,8 +105,32 @@ describe("steppable engine", () => {
     expect(hit.amount).toBe(Math.round((struck.maxHp - struck.hp) * 10) / 10);
     expect(after.value.observation.hitSeq).toBe(1);
     // 같은 피해가 두 번 튀지 않도록 seq는 새 피해에서만 오른다. 턴을 넘기면 피해 뭉치가 **둘** 생긴다 —
-    // 적의 공격(2)과 2턴 시작의 신 개입(3)이다. 개입을 안 세면 화면이 그 피해를 못 튀긴다 (P-34)
-    expect(steps.next(endTurnAction).value).toMatchObject({ observation: { hitSeq: 3 } });
+    // 적의 공격(2)과 2턴 시작의 신 개입(3)이다. 개입을 안 세면 화면이 그 피해를 못 튀긴다 (P-34).
+    // 신탁이 그 **사이**에 선다(P-46): 개입 앞이라 ±12가 넘긴 단계로 그 턴의 개입이 터진다
+    const oracle = steps.next(endTurnAction);
+    if (oracle.done || oracle.value.phase !== "oracle") throw new Error("expected an oracle decision");
+    expect(oracle.value.observation.hitSeq).toBe(2);
+    expect(steps.next(oracle.value.bot).value).toMatchObject({ observation: { hitSeq: 3 } });
+  });
+
+  /**
+   * 신탁은 **저울이다** — 합이 그대로고 한쪽이 오르면 반대쪽이 그만큼 내려간다. 이 한 줄이 「한쪽만
+   * 올리는 수도꼭지」와 갈라 준다: 그쪽은 봇이 언제나 공짜인 쪽만 눌러 승률이 통째로 올라간다
+   * (실측 0.457 → 0.755, reviews/46-presence.md). 첫 신탁만 본다 — 0·100에 붙으면 `shiftFavor`가 자른다
+   */
+  it("tilts favor by the swing in both directions and keeps the sum", () => {
+    for (const answer of ["obey", "refuse"]) {
+      const steps = runSteps(1);
+      let step = steps.next();
+      while (!step.done && step.value.phase !== "oracle") step = steps.next(step.value.bot);
+      if (step.done || step.value.phase !== "oracle") throw new Error("expected an oracle decision");
+      const { god, other, favor } = step.value.observation;
+      const next = steps.next(answer);
+      if (next.done) throw new Error("expected a decision after the oracle");
+      const after = next.value.observation.favor;
+      expect(after[god] - favor[god], answer).toBe(answer === "obey" ? oracleSwing : -oracleSwing);
+      expect(after[god] + after[other], answer).toBe(favor[god] + favor[other]);
+    }
   });
 
   it("adds the reward pick to the deck and honors a scripted skip", () => {

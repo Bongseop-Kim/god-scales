@@ -1,8 +1,8 @@
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { MAX_SLOTS } from "../core/combat.ts";
-import { tierEnemies } from "../core/demands.ts";
-import { godEnemyId } from "../core/favor.ts";
+import { factName, tierEnemies } from "../core/demands.ts";
+import { favorBoundaries, godEnemyId, lineTriggers, stagedLineTriggers } from "../core/favor.ts";
 import { graceMilestones, graceSlots } from "../core/grace.ts";
 import { floorsPerRegion } from "../core/map.ts";
 import { conditionPatterns, enemyOnlyTokens, harmfulTokens, MAX_UPGRADE, selfTokens } from "../core/rules.ts";
@@ -10,7 +10,7 @@ import { passiveNames, triggers, type Passives } from "../core/state.ts";
 import { fullReach, reachOk, reachSlots } from "../core/targeting.ts";
 import { cardTier, expectedValue, graceBand, graceValue, isValueAllowed, mitigationTokens, mitigationValue, slotCards, tokenWeights } from "./value.ts";
 
-export type FailureKey = "schema" | "dsl_parse" | "token_scope" | "fusion_scope" | "demand_axis" | "duplicate" | "value_outlier" | "pool_ratio" | "passive_coverage" | "map_layout" | "slot_scope";
+export type FailureKey = "schema" | "dsl_parse" | "token_scope" | "fusion_scope" | "demand_axis" | "duplicate" | "value_outlier" | "pool_ratio" | "passive_coverage" | "map_layout" | "slot_scope" | "line_coverage";
 type Item = Record<string, unknown>;
 type Card = Item & { id: string; name: string; patron?: string; patron_pair?: string[]; cost: number; target: string; effects: Effect[]; tags: string[]; trigger?: string; reach?: string; tier?: number; upgrade?: { cost?: number; effects?: unknown[] } };
 type Effect = { op: string; value?: number; token?: string; stacks?: number; when?: string; god?: string };
@@ -38,6 +38,7 @@ const required: Record<string, string[]> = {
   // `region`은 여기 없다 — 신 적은 지역을 갖지 않으므로 아래 `schemaFailure`가 tier와 함께 본다
   enemy: ["id", "name", "tier", "role", "hp", "intent_visible", "pattern", "pattern_mode"],
   demand: ["id", "patron", "tiers", "axis", "polarity", "min_enemies"],
+  // `lines`는 여기 없다 — 아래 `godLineFailure`가 트리거 아홉을 세므로 「없다」도 거기서 걸린다
   god: ["id", "name", "tokens", "ops", "rivals", "demands"],
   map: ["id", "region", "floor", "text", "groups"],
   grace: ["id", "patron", "slot", "tier", "text", "effects"],
@@ -251,6 +252,8 @@ function demandFailure(demand: Demand, demands: DemandAxisOnly[]): boolean {
   const parsed = demand.tiers.map(({ condition }) => condition.match(/^([a-z_]+) (>=|<=|>|==) (\d+)$/));
   if (parsed.some((match) => !match)) return true;
   const [easy, trial] = parsed as RegExpMatchArray[];
+  // 사람 말로 못 옮기는 좌변은 화면에서 **빈 줄**이 된다 — 오타 하나가 여기서 걸린다(`ruleText`)
+  if (![easy, trial].every((match) => match[1] in factName)) return true;
   // 두 단이 다른 사실을 재면 임계 단조가 뜻을 잃는다 — 요구 하나의 축은 하나다
   if (easy[1] !== trial[1]) return true;
   // 1 · 임계 단조: polarity `-`면 내려가고 `+`면 올라간다. 같으면 두 단이 같은 요구다
@@ -339,6 +342,22 @@ const helpsPlayer = ({ op, token }: Effect, target: string): boolean => {
  * 헌신 개입은 **그 자체로** 순이득이어야 한다. 나쁜 결과는 적 능력과 만났을 때만 나와야 하고,
  * 효과에 페널티를 섞으면 「신의 변덕」이 아니라 그냥 비용이 된다 — 플레이어는 계산기를 두드리면 끝이다
  */
+/**
+ * 빈 트리거는 그 자리에서 신이 **침묵한다** — 「조용히 아무 일도 안 하는 것」이 R-30이 갚은 부채이고,
+ * 화면에서 안 보이므로 게이트가 아니면 아무도 못 잡는다. 단계 넷을 다 요구하는 이유도 같다:
+ * 평온이 대부분의 조우인데 평온 줄이 없으면 신은 거의 언제나 말이 없다
+ */
+function godLineFailure(god: Item): boolean {
+  const lines = (god.lines ?? {}) as Record<string, unknown>;
+  const spoken = (held: unknown) => Array.isArray(held) && held.length > 0 && held.every((line) => typeof line === "string" && line.length > 0);
+  return lineTriggers.some((trigger) => {
+    const held = lines[trigger];
+    if (!stagedLineTriggers.includes(trigger)) return !spoken(held);
+    const byStage = (held ?? {}) as Record<string, unknown>;
+    return Object.keys(favorBoundaries).some((stage) => !spoken(byStage[stage]));
+  });
+}
+
 function stageValueFailure(god: Item): boolean {
   const effects = stageEffects(god, "devotion");
   if (!effects.length) return false;
@@ -579,6 +598,7 @@ function failureFor(item: Item, cards: Card[], demands: DemandAxisOnly[], enemie
   if (kind === "demand" && demandFailure(item as Demand, demands)) return "demand_axis";
   if (kind === "god" && stageEffectScopeFailure(item)) return "token_scope";
   if (kind === "god" && stageValueFailure(item)) return "value_outlier";
+  if (kind === "god" && godLineFailure(item)) return "line_coverage";
   if (kind === "enemy" && passiveFailure(item as Enemy)) return "passive_coverage";
   if (kind === "enemy" && slotFailure(item as Enemy, enemies)) return "slot_scope";
   if (kind === "enemy" && encounterThresholdFailure(item as Enemy, enemies)) return "value_outlier";

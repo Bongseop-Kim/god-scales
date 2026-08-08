@@ -1,10 +1,10 @@
 # `strike.webp` — 개입 대상 위 국소 낙하 (4프레임 스트립)
 
-[R-45](../../reviews/45-fx.md) · [원본 규칙](../README.md) · [P-50](../../plans/50-fx-sprites.md) · **상태 스틸 1장 배포 중 — 스트립 미생성 · P-50의 파일럿**
+[R-45](../../reviews/45-fx.md) · [원본 규칙](../README.md) · [R-50](../../reviews/50-fx-sprites.md) · **상태 4프레임 스트립 배포 중 · R-50 파일럿 통과**
 
 **기준 원본** `art/_src/fx/strike.png` 1536×1024 · **run** `art/_src/sprite-runs/fx_strike/` · **배포본** `art/fx/strike.webp` 4프레임 가로 스트립 6144×960, WebP 손실 q90 + `alpha-quality 100`.
 
-**화면** 국소 — 약 100px 폭의 배우 스프라이트 하나 위에 합성된다. 카드 파티클과 달리 위에서 한 대상의 발밑으로 떨어진다. 호출부는 [P-46](../../plans/46-presence.md) §3이 놓는다. `ui/fx.ts`의 `playSprite`가 500ms 원샷 `steps(4)`로 넘긴다 — 재생 코드는 P-50 §3.
+**화면** 국소 — 약 100px 폭의 배우 스프라이트 하나 위에 합성된다. 카드 파티클과 달리 위에서 한 대상의 발밑으로 떨어진다. 호출부는 [R-46](../../reviews/46-presence.md) §3이 놓는다. `ui/fx.ts`의 `playSprite`가 500ms 원샷 `steps(4)`로 넘긴다 — 재생 코드는 R-50.
 
 **생성** `sprite-gen` component-row 파이프라인. `base_image`가 기준 원본이고 아래 프롬프트는 그 원본의 것이다. 셀 `rect 1536×960`, 크로마 마젠타 `#ff00ff`, YCbCr 크로마 제거. **팔레트 고정·아웃라인·`pixel_unfake` 없음** — 픽셀 아트가 아니다.
 

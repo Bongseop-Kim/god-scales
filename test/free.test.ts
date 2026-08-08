@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import cardData from "../data/cards.json" with { type: "json" };
-import { deckOk, deckSize, gods, ruleDeck, run, runSteps, startableCards, type PatronPair } from "../sim/engine";
+import { deckOk, deckSize, favorPool, gods, ruleDeck, run, runSteps, startableCards, type PatronPair } from "../sim/engine";
 import { readReplay, type ReplayFile } from "../sim/replay";
 import { replayPayload } from "../ui/export";
 
@@ -102,5 +102,49 @@ describe("free starting deck", () => {
       const result = run(5, undefined, [], ["zeus", "athena"], fill(power.id));
       expect(result.encounters, power.id).toBeGreaterThan(0);
     }
+  });
+});
+
+/**
+ * 시작 배분은 `deck`과 **같은 자리의 선택 필드**다 — 안 밀면 파일에 안 적히고, 그것이 곧 「배포된
+ * replay가 지금 그대로 재생된다」다. `readWritten`이 그 신뢰 경계를 진짜 파일로 지나므로 여기 둔다
+ */
+describe("starting favor split", () => {
+  it("hands the pool to the two patrons and always sums to the pool", () => {
+    for (const split of [0, 30, 50, 70, favorPool]) {
+      const step = runSteps(1, undefined, ["zeus", "athena"], undefined, split).next();
+      if (step.done) throw new Error("expected a decision");
+      const { favor } = step.value.observation;
+      expect([favor.zeus, favor.athena], `split ${split}`).toEqual([split, favorPool - split]);
+    }
+  });
+
+  it("replays a splitless file at the even split", () => {
+    const actions = run(42).actions.filter(({ type }) => type === "path");
+    const old = readWritten({ seed: 42, actions, replay_mode: "action_log" });
+    expect(old.split).toBeUndefined();
+    // 기본값이 지금 값이다 — 인자를 안 넘긴 런과 50을 넘긴 런이 같은 게임이어야 옛 로그가 그대로 산다
+    expect(run(old.seed, undefined, old.actions, old.patrons, old.deck, old.split).favorCurve)
+      .toEqual(run(42, undefined, actions, undefined, undefined, favorPool / 2).favorCurve);
+  });
+
+  it("carries a pushed split through export and back into the same run", () => {
+    const played = run(11, undefined, [], ["zeus", "athena"], undefined, favorPool);
+    const actions = played.actions.filter(({ type }) => type === "path");
+    const file = readWritten(replayPayload(11, actions, ["zeus", "athena"], undefined, favorPool));
+    expect(file.split).toBe(favorPool);
+    expect(run(file.seed, undefined, file.actions, file.patrons, file.deck, file.split).favorCurve)
+      .toEqual(run(11, undefined, actions, ["zeus", "athena"], undefined, favorPool).favorCurve);
+    // 안 민 슬라이더는 파일에 안 적힌다 — 그 런의 반출물은 옛 replay와 같은 모양이다
+    expect(replayPayload(11, actions, ["zeus", "athena"], undefined, favorPool / 2).split).toBeUndefined();
+    expect(replayPayload(11, actions, ["zeus", "athena"]).split).toBeUndefined();
+  });
+
+  it("rejects a split outside the pool", () => {
+    // 통과시키면 `shiftFavor`가 조용히 잘라 파일과 다른 런이 된다 — 파일은 신뢰 경계다
+    for (const split of [-1, favorPool + 1, 12.5, "50", null]) {
+      expect(() => readWritten({ seed: 1, actions: [], replay_mode: "action_log", split }), String(split)).toThrow(/Invalid split/);
+    }
+    expect(readWritten({ seed: 1, actions: [], replay_mode: "action_log", split: 0 }).split).toBe(0);
   });
 });

@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "kind": "sprite-gen-request",
+  "engine": "component-row",
+  "character": {
+    "id": "fx_strike",
+    "description": "",
+    "base_image": "base-source.png"
+  },
+  "cell": {
+    "shape": "rect",
+    "width": 1536,
+    "height": 960,
+    "safe_margin_x": 0,
+    "safe_margin_y": 0
+  },
+  "chroma_key": {
+    "name": "magenta",
+    "hex": "#FF00FF",
+    "rgb": [
+      255,
+      0,
+      255
+    ],
+    "selection": "manual"
+  },
+  "states": {
+    "play": {
+      "frames": 4,
+      "fps": 8,
+      "loop": false,
+      "action": "four-frame one-shot impact: frame 1 the narrow shaft of pale light appears from the top of the frame, not yet touching the ground; frame 2 it lands at the bottom-centre and flares at the point of impact; frame 3 the tight ring of hard-edged sparks at the impact point reaches its widest; frame 4 the shaft is gone and the last sparks fade at the same point. The impact point stays fixed at the bottom-centre and everything to the left and right stays empty in every frame — the effect must read at 100 pixels wide."
+    }
+  },
+  "style": "soft luminous abstract effect matching the accepted base image exactly; smooth glow, clean hard-edged sparks, no pixel art, no outline, no palette reduction",
+  "motion_phase_guides": false,
+  "layout": "taxonomy/v1",
+  "fit": {
+    "resample": "lanczos",
+    "align_x": "bbox-center",
+    "align_y": "center",
+    "pixel_unfake": false,
+    "outline": false
+  },
+  "chroma": {
+    "mode": "ycbcr",
+    "unmix_reach": 4,
+    "spill_max_fraction": 0.005
+  }
+}

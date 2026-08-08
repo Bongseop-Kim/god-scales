@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 // 하드코딩된 홈 경로는 다른 기계에서 돈다는 보장이 없다 — 스크립트 위치에서 잡는다
 const ROOT = new URL("../", import.meta.url).pathname.replace(/\/$/, "");
@@ -38,7 +38,7 @@ const ONE_HUE = (c) => `exactly one hue of light in the image, ${c}, covering ab
 // **카드만 예외로 축소한다.** 슬롯이 89×67이라 DPR 2에서 178×134이면 되고 512×384가 그것의 2.9배다.
 // 화면을 꽉 채우는 배경·컷인·일러와 달리 89px 썸네일은 화소가 값이 아니다 — 그래서 여기만 `-resize`가 있다
 const CARD_CONVERT = (name) => `magick art/_src/cards/${name}.png -gravity center -crop 1365x1024+0+0 +repage \\
-  -filter Lanczos -resize 512x384! -quality 88 art/cards/${name}.webp`;
+  -filter Lanczos -resize 320x240! -quality 80 art/cards/${name}.webp`;
 
 const SPRITE_CONVERT = (name) =>
   `magick art/_src/${name}.png -alpha on -fuzz 35% -transparent '#00ff00' \\
@@ -724,7 +724,8 @@ const TAGS = {
   },
 };
 
-for (const [god, g] of Object.entries(GODS)) {
+// P-51 이후 태그 폴백 20장은 배포하지 않는다. 아래 규칙은 손 작성 템플릿 문서에만 남긴다.
+for (const [god, g] of []) {
   for (const [tag, t] of Object.entries(TAGS)) {
     const [obj, stone] = t.obj[god];
     const blocked = god === "athena" || god === "artemis";
@@ -747,6 +748,27 @@ for (const [god, g] of Object.entries(GODS)) {
       ],
     });
   }
+}
+
+// ─────────────────────────────────────────── 카드별 아트 169장
+const cardSubjects = JSON.parse(readFileSync(new URL("./cards/subjects.json", import.meta.url), "utf8"));
+const cardData = JSON.parse(readFileSync(new URL("../../data/cards.json", import.meta.url), "utf8"));
+const cardGods = { zeus: { ko: "제우스", hue: "a muted antique gold #d4a017, never bright yellow" }, ...GODS };
+
+for (const card of cardData.filter(({ patron }) => patron)) {
+  const g = cardGods[card.patron];
+  add({
+    path: `cards/${card.id}.md`,
+    title: `\`${card.id}.webp\` — ${card.name} (${g.ko})`,
+    ref: "P-51",
+    status: "완료 · 320×240",
+    spec: "WebP **가로 4:3**, **`320×240` q80.** 화면 약 124×93, DPR 2에서 248×186이다.",
+    gen: "1536×1024 — 원본 PNG는 `art/_src/cards/`에 보존한다",
+    convert: CARD_CONVERT(card.id),
+    convertNote: "원본과 배포본은 다른 경로다. 장당 10KB를 넘으면 품질을 낮추지 않고 밝은 면적을 줄여 재생성한다.",
+    prompt: `${cardSubjects[card.id]}\n\n${CARD_TAIL(ONE_HUE(g.hue))}`,
+    notes: ["같은 신 카드와 89×67로 나란히 축소했을 때 제목 없이 형태로 구분돼야 한다."],
+  });
 }
 
 // ─────────────────────────────────────────── 융합 카드 10장

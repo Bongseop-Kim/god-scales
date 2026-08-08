@@ -13,7 +13,7 @@ const cardArt = import.meta.glob<string>("../art/cards/*.webp", { eager: true, q
 /**
  * 그림·프레임색·파티클·이름·파워는 **값이 아니라 종류**라 `data/cards.json`에서 직접 읽는다 — 엔진의
  * `CardView`는 값만 싣는다(`sim/engine.ts:130`). 적 이름을 `data/enemies.json`에서 읽는 자리와 같다.
- * 149개 id가 그림 30장으로 떨어지는 규칙은 `ui/art-keys.ts`에 있고 `tools/art.ts`가 같은 것을 쓴다
+ * 179개 id와 그림 179장의 이름 규칙은 `ui/art-keys.ts`에 있고 `tools/art.ts`가 같은 것을 쓴다
  */
 const cardFace = new Map((cardDataJson as (CardArtSource & { name: string; tier?: number })[]).map((card) => [card.id, {
   art: cardArtCandidates(card).map((key) => cardArt[`../art/cards/${key}.webp`]).find(Boolean),

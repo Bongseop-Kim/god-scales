@@ -6,12 +6,15 @@ import {
   favorStage,
   finishCombatFavor,
   finishRestFavor,
+  godEnemyId,
   intervenesOnTurn,
   recordCardFavor,
   shiftFavor,
+  wrathReconcileFavor,
   type FavorGod,
 } from "../core/favor";
 import { createCombat } from "../core/combat";
+import { favorPool, runSteps } from "../sim/engine";
 import type { GameState } from "../core/state";
 import { validateItems } from "../tools/validate";
 
@@ -74,6 +77,32 @@ describe("favor", () => {
     game.combat.enemies[0].hp = 0;
     applyFavorStageEffects(game, JSON.parse(readFileSync("data/gods.json", "utf8")).filter(({ id }: FavorGod) => id === "ares"), "on_turn_start");
     expect(game.combat.enemies[0].hp).toBe(0);
+  });
+
+  /**
+   * 100:0으로 시작한 런의 1조우. 진노가 세 가지를 한꺼번에 한다(P-47) — 신이 판에 서고, 그 신의
+   * 카드는 내는 족족 덱에서 사라지고, 꺾으면 호의가 평온 하한으로 돌아온다.
+   *
+   * **화해가 반복을 끊는 자리**라 마지막 줄이 제일 중요하다: 30에서 감쇠 −3이면 다음 조우는 27이고,
+   * 그 신은 다시 서지 않는다. 「한 런에 한 번」 플래그를 안 만든 이유가 이 한 줄이다
+   */
+  it("stands a wrathful god, tears its cards, and reconciles when it falls", () => {
+    const steps = runSteps(1, undefined, ["zeus", "athena"], undefined, favorPool);
+    let step = steps.next();
+    let deckBefore = 0;
+    let stood: { id: string; maxHp: number; passives: Record<string, number> } | undefined;
+    let reward: { deck: number; favor: Record<string, number> } | undefined;
+    while (!step.done && !reward) {
+      if (step.value.phase === "path" && !deckBefore) deckBefore = step.value.observation.deck.length;
+      if (step.value.phase === "card") stood ??= step.value.observation.enemies.find(({ id }) => id.startsWith("enemy_god_"));
+      if (step.value.phase === "reward") reward = step.value.observation;
+      step = steps.next(step.value.bot);
+    }
+    expect(stood?.id).toBe(godEnemyId("athena"));
+    // 찢기 — 아테나 카드 다섯 장으로 시작해 진노인 채로 낸 만큼이 덱에서 빠진다
+    expect(reward!.deck).toBeLessThan(deckBefore);
+    // 화해 — 꺾은 신은 평온 하한에 선다. 감쇠가 이미 지나간 뒤의 값이라 정확히 그 값이다
+    expect(reward!.favor.athena).toBe(wrathReconcileFavor);
   });
 
   it("rejects a persistent token in the per-turn hook", () => {

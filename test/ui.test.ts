@@ -11,7 +11,7 @@ import { bossLane, generateMap } from "../core/map.ts";
 import { App, MapPanel, MapScreen, patronPair } from "../ui/app.tsx";
 import { cardArtCandidates, type CardArtSource } from "../ui/art-keys.ts";
 import { conditionLabel } from "../ui/card.tsx";
-import { DemandScreen, GraceScreen, RestScreen } from "../ui/choices.tsx";
+import { DemandScreen, GraceScreen, OracleScreen, RestScreen } from "../ui/choices.tsx";
 import { CombatScreen } from "../ui/combat.tsx";
 import { replayPayload } from "../ui/export.ts";
 import { RewardScreen } from "../ui/reward.tsx";
@@ -57,6 +57,7 @@ describe("browser replay export", () => {
       reward: (decision) => createElement(RewardScreen, { seed: 4, decision, onAnswer: () => {} }),
       grace: (decision) => createElement(GraceScreen, { seed: 4, decision, onAnswer: () => {} }),
       demand: (decision) => createElement(DemandScreen, { seed: 4, decision, onAnswer: () => {} }),
+      oracle: (decision) => createElement(OracleScreen, { seed: 4, decision, onAnswer: () => {} }),
     };
     const seen = new Set<string>();
     // 배포 조합이 아닌 아레스+아르테미스로 돈다 — 머리글이 상수라면 여기서 "제우스 + 아테나"가 나온다.
@@ -104,7 +105,7 @@ describe("browser replay export", () => {
           tokens: { shock: 2 }, passives: { guard: 2 },
           intent: { damage: 9, token: "soaked", stacks: 1 },
         }],
-        hits: [], hitSeq: 0,
+        hits: [], hitSeq: 0, promises: [],
       },
     } as never;
     const markup = renderToStaticMarkup(createElement(CombatScreen, { seed: 1, decision, onAnswer: () => {} }));
@@ -140,6 +141,41 @@ describe("browser replay export", () => {
   });
 
   /**
+   * 약속이 전투 화면에 산다. 셋을 한꺼번에 잰다 — **무엇을**(사람 말 조건) · **얼마나**(현재값/목표) ·
+   * **지금 어떤지**(미정 · 지킴 · 깨짐). 확정 둘은 `settled`가 색과 취소선을 가른다
+   */
+  it("draws the promise, its progress, and whether it is already settled", () => {
+    const decision = {
+      phase: "card",
+      options: [],
+      bot: endTurnAction,
+      observation: {
+        depth: 3, lane: 1, region: "underworld", floor: 4, hp: 44, maxHp: 92,
+        patrons: ["zeus", "athena"], grid: [], favor: { zeus: 50, athena: 50 }, grace: {},
+        turn: 5, block: 0, energy: 3, draw: 4, tokens: {}, hand: [], powers: [], enemies: [],
+        hits: [], hitSeq: 0,
+        promises: [
+          { god: "athena", text: "여덟이다.", rule: "이 조우에서 잃은 체력 8 이하", current: 5, target: 8 },
+          { god: "zeus", text: "둘은 맞아야 한다.", rule: "한 턴에 맞힌 적 2 이상", current: 2, target: 2, settled: "kept" },
+          { god: "ares", text: "스물여섯.", rule: "이 조우에서 잃은 체력 26 초과", current: 4, target: 26, settled: "broken" },
+        ],
+      },
+    } as never;
+    const markup = renderToStaticMarkup(createElement(CombatScreen, { seed: 1, decision, onAnswer: () => {} }));
+
+    // 조건은 사람 말이고 현재값/목표가 같은 줄에 선다 — DSL이 화면에 남아 있으면 안 된다
+    expect(markup).toContain("이 조우에서 잃은 체력 8 이하");
+    expect(markup).not.toContain("damage_taken");
+    expect(markup).toContain("5 / 8");
+    // 미정·지킴·깨짐 셋이 다른 얼굴이다
+    expect(markup).toContain("class=\"promise\"");
+    expect(markup).toContain("promise kept");
+    expect(markup).toContain("promise broken");
+    // 신의 문장은 사라지지 않는다 — 규칙 줄이 그것을 **대신하지 않는다**
+    expect(markup).toContain("여덟이다.");
+  });
+
+  /**
    * 두 칸을 차지한 보스. 화면이 보는 것은 셋이다 — **한 판만** 뜨는가(엔진이 별칭을 한 번만 내보낸다),
    * 그 판이 두 칸 높이인가, 덮은 칸 1에 빈 칸 자리표시가 안 서는가(서면 판이 다섯 칸이 된다)
    */
@@ -153,7 +189,7 @@ describe("browser replay export", () => {
         patrons: ["zeus", "athena"], grid: [], favor: { zeus: 50, athena: 50 }, grace: {},
         turn: 2, block: 0, energy: 3, draw: 4, tokens: {}, hand: [], powers: [],
         enemies: [{ id: "enemy_under_boss", slot: 0, span: 2, hp: 100, maxHp: 130, block: 0, tokens: {}, passives: { ward: 2 }, intent: { damage: 6 } }],
-        hits: [], hitSeq: 0,
+        hits: [], hitSeq: 0, promises: [],
       },
     } as never;
     const markup = renderToStaticMarkup(createElement(CombatScreen, { seed: 1, decision, onAnswer: () => {} }));
@@ -187,7 +223,7 @@ describe("browser replay export", () => {
         patrons: ["zeus", "athena"], grid: [], favor: { zeus: 40, athena: 40 }, grace: {},
         turn: 5, block: 0, energy: 3, draw: 4, tokens: {}, hand, powers: [],
         enemies: [{ id: "enemy_under_guardian", slot: 0, span: 1, hp: 20, maxHp: 30, block: 0, tokens: {}, passives: {}, intent: { damage: 9 } }],
-        hits: [], hitSeq: 0,
+        hits: [], hitSeq: 0, promises: [],
         // 무대에 오른 카드. **`view.card`는 id다** — 그것을 그대로 문장에 넣으면 화면에 영문 id가 뜬다
         card: "card_zeus_19",
       },
@@ -309,8 +345,8 @@ describe("browser replay export", () => {
     const replay = replayPayload(11, actions, ["zeus", "athena"]);
     const cli = run(replay.seed, undefined, replay.actions, replay.patrons);
 
-    // 반출에 사람이 고른 여덟 종류가 전부 있어야 한다 — 빠지면 재생 때 봇이 대신 채운다
-    for (const type of ["path", "card", "target", "rest", "rest_card", "reward", "grace", "demand"]) {
+    // 반출에 사람이 고른 아홉 종류가 전부 있어야 한다 — 빠지면 재생 때 봇이 대신 채운다
+    for (const type of ["path", "card", "target", "rest", "rest_card", "reward", "grace", "demand", "oracle"]) {
       expect(actions.some((action) => action.type === type), type).toBe(true);
     }
     expect({ won: cli.won, floors: cli.hpCurve.length - 1, favor: cli.favorCurve.at(-1), cards: cli.cardsPlayed }).toEqual({

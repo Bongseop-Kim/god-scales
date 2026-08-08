@@ -2,16 +2,17 @@
 import { AnimatePresence, LazyMotion, domMax, m, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, FormEvent, RefObject } from "react";
+import { favorBoundaries, favorStage } from "../core/favor.ts";
 import { bossLane, floorsPerRegion, laneCount, mapSlot, type MapGrid, type MapNodeType } from "../core/map.ts";
 import type { GodId } from "../core/rules.ts";
-import { deckSize, gods, ruleDeck, runSteps, startableCards, type Decision, type MapDecision, type PatronPair } from "../sim/engine.ts";
+import { deckSize, favorPool, gods, ruleDeck, runSteps, startableCards, type Decision, type MapDecision, type PatronPair } from "../sim/engine.ts";
 import type { ReplayAction } from "../sim/replay.ts";
 import type { RunResult } from "../sim/report.ts";
 import { Backdrop, backdropArt } from "./backdrop.tsx";
 import { CardRow, GameCard } from "./card.tsx";
-import { DemandScreen, GraceScreen, RestScreen } from "./choices.tsx";
+import { DemandScreen, GraceScreen, OracleScreen, RestScreen } from "./choices.tsx";
 import { CombatScreen } from "./combat.tsx";
-import { godName, regionName, RunHeader } from "./header.tsx";
+import { godName, regionName, stageName, RunHeader } from "./header.tsx";
 import { Icon, IconSheet } from "./icon.tsx";
 import { RewardScreen } from "./reward.tsx";
 import { downloadReplay } from "./export.ts";
@@ -69,6 +70,11 @@ export function App() {
    * `patrons`처럼 둘로 나누지 않는다: 편집기는 시작 화면에만 있고 런 중에는 그 화면이 없다
    */
   const [deck, setDeck] = useState<string[]>();
+  /**
+   * `patrons[0]`이 가진 몫. **런 중에 다시 묻지 않으므로** `picked`처럼 둘로 나누지 않는다 —
+   * 시작 화면은 런이 도는 동안 없다(`deck`과 같은 자리, 같은 이유)
+   */
+  const [split, setSplit] = useState(favorPool / 2);
   const [actions, setActions] = useState<ReplayAction[]>([]);
   const [pending, setPending] = useState<Decision>();
   const [result, setResult] = useState<RunResult>();
@@ -110,7 +116,7 @@ export function App() {
     setSeed(nextSeed);
     setPatrons(pair);
     // `deck`을 그대로 넘긴다 — 손대지 않은 `undefined`가 곧 규칙 덱이다
-    steps.current = runSteps(nextSeed, undefined, pair, deck);
+    steps.current = runSteps(nextSeed, undefined, pair, deck, split);
     const step = steps.current.next();
     if (step.done) setResult(step.value);
     else show(step.value);
@@ -170,6 +176,9 @@ export function App() {
               seedInput={seedInput}
               picked={picked}
               deck={startingDeck}
+              pair={pair}
+              split={split}
+              onSplitChange={setSplit}
               soundEnabled={soundEnabled}
               seedField={seedField}
               onSeedChange={(value) => {
@@ -201,8 +210,11 @@ export function App() {
           {pending?.phase === "demand" && (
             <DemandScreen seed={seed} decision={pending} onAnswer={answer} />
           )}
+          {pending?.phase === "oracle" && (
+            <OracleScreen seed={seed} decision={pending} onAnswer={answer} />
+          )}
           {screen === "result" && result && (
-            <ResultScreen seed={seed} patrons={patrons} deck={deck} actions={actions} result={result} onReset={reset} />
+            <ResultScreen seed={seed} patrons={patrons} deck={deck} split={split} actions={actions} result={result} onReset={reset} />
           )}
         </m.section>
       </AnimatePresence>
@@ -304,10 +316,44 @@ function DeckEditor({ deck, picked, onChange, onRestore }: {
   );
 }
 
+/**
+ * 호의 100을 둘에게 나눈다. **슬라이더는 하나다** — 한쪽을 정하면 나머지가 정해진다. 둘을 두면
+ * 합을 100으로 맞추는 일이 플레이어 몫이 되고, 그건 결정이 아니라 산수다.
+ *
+ * 양 끝 라벨이 값과 **단계 이름**을 든다 — 「70 · 헌신」이 미는 동안 실시간으로 바뀌는 것이 이 축을
+ * 가르치는 유일한 문서다. 눈금 셋은 `favorBoundaries`에서 온다: 위치를 CSS에 박으면 규칙이 바뀔 때
+ * 화면만 옛 자리에 남는다. **폼 컨트롤이므로 라이브러리를 안 쓴다**
+ */
+function SplitField({ pair, split, onChange }: { pair: PatronPair; split: number; onChange: (split: number) => void }) {
+  return (
+    <label className="split-field">
+      시작 호의 배분 — 합은 언제나 {favorPool}입니다
+      <span className="split-ends">
+        {pair.map((god, index) => {
+          const value = index === 0 ? split : favorPool - split;
+          return (
+            <b key={god} className={favorStage(value)} style={{ "--god-color": `var(--${god})` } as CSSProperties}>
+              <i />{godName(god)} {value} · {stageName[favorStage(value)]}
+            </b>
+          );
+        })}
+      </span>
+      <span className="split-track">
+        <input type="range" min={0} max={favorPool} value={split} onChange={(event) => onChange(Number(event.target.value))} />
+        {Object.values(favorBoundaries).filter((at) => at > 0).map((at) => <i key={at} style={{ left: `${at}%` }} />)}
+      </span>
+    </label>
+  );
+}
+
 interface SetupScreenProps {
   seedInput: string;
   picked: GodId[];
   deck: string[];
+  /** 정규화된 조합. 둘을 안 골랐으면 없다 — 배분은 신 이름 둘이 있어야 뜻을 갖는다 */
+  pair?: PatronPair;
+  split: number;
+  onSplitChange: (split: number) => void;
   soundEnabled: boolean;
   seedField: RefObject<HTMLInputElement | null>;
   onSeedChange: (value: string) => void;
@@ -322,6 +368,9 @@ function SetupScreen({
   seedInput,
   picked,
   deck,
+  pair,
+  split,
+  onSplitChange,
   soundEnabled,
   seedField,
   onSeedChange,
@@ -362,6 +411,8 @@ function SetupScreen({
         <TokenLegend />
       </div>
       <DeckEditor deck={deck} picked={picked} onChange={onDeckChange} onRestore={onRestoreDeck} />
+      {/* 조합이 둘일 때만 선다 — 신 이름 둘이 없으면 양 끝 라벨이 빈다 */}
+      {pair && <SplitField pair={pair} split={split} onChange={onSplitChange} />}
       <label className="seed-field">
         런 시드
         <input
@@ -537,11 +588,13 @@ function takenLanes(grid: MapGrid, pathChoices: string[], reached: number): (num
   });
 }
 
-function ResultScreen({ seed, patrons, deck, actions, result, onReset }: {
+function ResultScreen({ seed, patrons, deck, split, actions, result, onReset }: {
   seed: number;
   patrons: PatronPair;
   /** 이 런이 짜서 들고 간 덱. 규칙 덱이면 `undefined`이고 반출에도 안 적힌다 */
   deck?: string[];
+  /** 이 런이 시작한 배분. 50이면 반출에 안 적힌다 — 옛 replay와 같은 파일이 된다 */
+  split: number;
   actions: ReplayAction[];
   result: RunResult;
   onReset: () => void;
@@ -581,7 +634,7 @@ function ResultScreen({ seed, patrons, deck, actions, result, onReset }: {
         </div>
       </div>
       <div className="actions">
-        <button className="primary" type="button" onClick={() => downloadReplay(seed, actions, patrons, deck)}>런 JSON 반출</button>
+        <button className="primary" type="button" onClick={() => downloadReplay(seed, actions, patrons, deck, split)}>런 JSON 반출</button>
         <button type="button" onClick={onReset}>다시 시작</button>
       </div>
       </div>

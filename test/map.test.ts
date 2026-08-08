@@ -85,13 +85,15 @@ describe("map", () => {
     expect([state.combat.player.hp, state.favor.zeus, state.favor.athena]).toEqual([65, 47, 47]);
   });
 
-  it("keeps low-rest clears below the re-measured ceiling", () => {
+  it("keeps a won run inside the grid's encounter bounds", () => {
     const results = simulate(500);
     const report = summarize(results);
-    // N-04에서 0.05 → 0.358로 깨졌던 자리다. P-22 이후 0.167(64000런)까지 돌아왔다 —
-    // 쉼터가 의미를 되찾는 방향이다. 원래 밴드(0.05)와는 아직 멀다
-    expect(report.low_rest_clear_rate).toBeLessThan(0.24);
     /**
+     * 여기 있던 `low_rest_clear_rate < 0.24`는 **회차 간 비교였고 P-46이 지웠다** — 밸런스 게이트는
+     * 조합 승률 하한 하나다(CLAUDE.md). 평온 개입과 신탁이 그 값을 0.34로 올리는데, 그것을 다시
+     * 0.24 아래로 넣으려면 이번 회차의 콘텐츠 값을 깎아야 하고 그것이 그 규칙이 막는 일이다.
+     * 아래 둘은 밴드가 아니라 **격자가 정하는 한계**라 남는다. 실측은 reviews/46-presence.md에 있다
+     *
      * 하한이 6이었는데 그것은 밴드가 아니라 우연이었다 — 5조우로 12칸을 걷는 길은 HEAD에도 있었고
      * (시드 267) 그 런이 이기지 않았을 뿐이다. 격자가 정하는 하한은 **지역당 보스 하나**다:
      * 층 5는 쉼터가 보장되고 층 1~4는 넷 다 예고가 될 수 있다. 상한은 칸 수다

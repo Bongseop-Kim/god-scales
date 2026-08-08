@@ -1,10 +1,10 @@
 # `wrath.webp` — 진노 컷인 오버레이 (4프레임 스트립)
 
-[R-45](../../reviews/45-fx.md) · [원본 규칙](../README.md) · [P-50](../../plans/50-fx-sprites.md) · **상태 스틸 1장 배포 중 — 스트립 미생성**
+[R-45](../../reviews/45-fx.md) · [원본 규칙](../README.md) · [R-50](../../reviews/50-fx-sprites.md) · **상태 4프레임 스트립 배포 중 · R-50 완료**
 
 **기준 원본** `art/_src/fx/block.png` 1586×992 — 원본 이름은 생성 기록을 보존하고 배포본만 단계 이름으로 부른다. **run** `art/_src/sprite-runs/fx_wrath/` · **배포본** `art/fx/wrath.webp` 4프레임 가로 스트립 6144×960, WebP 손실 q90 + `alpha-quality 100`.
 
-**화면** 1440×900 CSS 전체를 덮는 컷인. `ui/fx.ts`의 `playSprite`가 500ms 원샷 `steps(4)`로 넘긴다 — 재생 코드는 P-50 §3. 조우 시작의 진노는 신 일러가 뜬다(`ui/combat.tsx:125`) — 이 스트립은 개입 턴 몫이다.
+**화면** 1440×900 CSS 전체를 덮는 컷인. `ui/fx.ts`의 `playSprite`가 500ms 원샷 `steps(4)`로 넘긴다 — 재생 코드는 R-50. 조우 시작의 진노는 신 일러가 뜬다(`ui/combat.tsx:125`) — 이 스트립은 개입 턴 몫이다.
 
 **생성** `sprite-gen` component-row 파이프라인. `base_image`가 기준 원본이고 아래 프롬프트는 그 원본의 것이다. 셀 `rect 1536×960`, 크로마 마젠타 `#ff00ff`, YCbCr 크로마 제거. **팔레트 고정·아웃라인·`pixel_unfake` 없음** — 픽셀 아트가 아니다. 검은 실루엣의 탁한 붉은 테두리(#9b2226 계열)는 마젠타 키의 `-fx` 조건이 안 먹는 색으로 검증된 자리다 — 다른 키로 바꾸지 않는다.
 
