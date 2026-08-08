@@ -2,25 +2,27 @@ import { AnimatePresence, m, useIsPresent, useReducedMotion } from "motion/react
 import { useEffect, useRef } from "react";
 import type { CSSProperties, Ref } from "react";
 import { MAX_SLOTS, type EnemyAction } from "../core/combat.ts";
-import { favorBoundaries, favorInitial, favorStage, intervenesOnTurn, interventionEveryTurns, type FavorStage } from "../core/favor.ts";
+import { favorBoundaries, favorInitial, favorStage, godEnemyId, intervenesOnTurn, interventionEveryTurns, type FavorStage, type StageEffect } from "../core/favor.ts";
 import { floorsPerRegion } from "../core/map.ts";
 import type { PassiveName, Trigger } from "../core/state.ts";
 import enemyDataJson from "../data/enemies.json" with { type: "json" };
-import { endTurnAction, type CardView, type CombatDecision, type CombatObservation } from "../sim/engine.ts";
+import { endTurnAction, type CardView, type CombatDecision, type CombatObservation, type PromiseView } from "../sim/engine.ts";
 import { tagParticle } from "./art-keys.ts";
 import { Backdrop, backdropArt } from "./backdrop.tsx";
 import { cardTagOf, effectText, GameCard } from "./card.tsx";
-import { playSprite } from "./fx.ts";
-import { godName, godStageText, RunHeader } from "./header.tsx";
+import { playSprite, speak } from "./fx.ts";
+import { godArt, godLine, godName, godStageEffects, godStageText, stageName, RunHeader } from "./header.tsx";
 import { Icon, type IconName } from "./icon.tsx";
 import { tokenName, tokenSummary, TokenRow } from "./tokens.tsx";
 
 const spriteArt = import.meta.glob<string>("../art/sprites/*.webp", { eager: true, query: "?url", import: "default" });
 const fxArt = import.meta.glob<string>("../art/fx/*.webp", { eager: true, query: "?url", import: "default" });
-const godArt = import.meta.glob<string>("../art/gods/*.webp", { eager: true, query: "?url", import: "default" });
 const particleArt = import.meta.glob<string>("../art/particle/*.webp", { eager: true, query: "?url", import: "default" });
-/** 개입 컷인. P-46이 단계 이름을 직접 경로로 쓰기 전까지 개명된 파일을 잇는다. */
-const stageCut: Record<FavorStage, string> = { devotion: "devotion", calm: "calm", anger: "anger", wrath: "wrath" };
+/**
+ * 개입 op → 파티클 한 장. **카드가 쓰는 넷과 같은 파일이다**(`tagParticle`) — 개입마다 새로 그리지
+ * 않는다. 카드와 갈리는 것은 그림이 아니라 자리다: 신의 것은 `strike`가 위에서 내려온다
+ */
+const opParticle: Record<string, string> = { damage: "slash_01", block: "window_01", heal: "magic_01", apply_token: "magic_01" };
 
 type EnemyInfo = { id: string; name: string; intent_visible: boolean };
 const enemyInfo = new Map((enemyDataJson as EnemyInfo[]).map((enemy) => [enemy.id, enemy]));
@@ -110,21 +112,72 @@ export function CombatScreen({ seed, decision, onAnswer }: {
   const enemySide = useRef<HTMLDivElement>(null);
   const playerSide = useRef<HTMLDivElement>(null);
 
+  /** 개입이 때린/붙인 대상의 판. 카드 파티클이 쓰는 두 패널과 같은 자리, 한 칸 더 좁을 뿐이다 */
+  const hostsFor = (target: StageEffect["target"]): HTMLElement[] => {
+    if (target === "self") return playerSide.current ? [playerSide.current] : [];
+    // `targets()`와 같은 규칙 — `enemy`는 앞의 산 적 하나다(`core/favor.ts`)
+    const aimed = target === "enemy" ? view.enemies.slice(0, 1) : view.enemies;
+    return aimed.flatMap(({ id }) => {
+      const node = enemySide.current?.querySelector<HTMLElement>(`[data-enemy="${id}"]`);
+      return node ? [node] : [];
+    });
+  };
+
   /**
    * 조우 시작(1턴)과 개입 턴(2·5·8턴, `intervenesOnTurn`)에 컷인이 뜬다. 그 두 자리가 신이 실제로
    * 판을 흔드는 자리다(`core/favor.ts`의 `on_encounter_start`·`on_turn_start`) — 화면에 아무 표시가
-   * 없으면 체력이 왜 깎였는지 플레이어가 모른다
+   * 없으면 체력이 왜 깎였는지 플레이어가 모른다.
+   *
+   * **데이터가 있는 신만 선다.** 「조우 시작에는 극단 둘만」이던 옛 규칙은 평온이 그 자리에서 아무것도
+   * 안 하던 시절의 것이다(P-46 §5가 채웠다) — 빈 문장이 곧 「이 신은 지금 아무 일도 안 한다」다.
+   * 겹침은 큐가 아니라 **순서**로 푼다: 신 하나씩 220ms 어긋난다
    */
   useEffect(() => {
     const start = view.turn === 1;
-    if (reducedMotion || (!start && !intervenesOnTurn(view.turn))) return;
-    for (const god of view.patrons) {
+    if (!start && !intervenesOnTurn(view.turn)) return;
+    const hook = start ? "on_encounter_start" : "on_turn_start";
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    view.patrons.forEach((god, index) => {
       const stage = favorStage(view.favor[god] ?? favorInitial);
-      // 조우 시작에는 극단 둘만 선다 — 평온·분노까지 띄우면 전투마다 컷인이 셋이다
-      if (start && stage !== "devotion" && stage !== "wrath") continue;
-      const source = start && stage === "wrath" ? godArt[`../art/gods/${god}.webp`] : fxArt[`../art/fx/${stageCut[stage]}.webp`];
-      if (source) void playSprite(document.body, source, "cut");
-    }
+      const text = godStageText(god, stage)[start ? "start" : "turn"];
+      timers.push(setTimeout(() => {
+        /**
+         * **말은 판을 안 흔들어도 나온다** — 컷인은 「무엇을 했는가」라 데이터가 없으면 빈 문장이지만,
+         * 아무것도 안 하는 단계에도 신은 말한다. 조우 시작은 말(L2)이고 개입 턴은 자막(L1)이다:
+         * 런당 49회 뜨는 자리를 화면 중앙에 2초씩 세우면 전투가 아니라 낭독이 된다
+         */
+        speak(start ? 2 : 1, god, godLine(god, start ? "encounter" : "intervene", start ? view.depth : view.turn, stage));
+        const effects = godStageEffects(god, stage, hook);
+        // 「신이 적으로 합류」는 판이 뒤집히는 사건이라 480ms 페이드로 지나가면 안 된다 — 신 일러가 선다
+        const joinEffect = effects.find(({ op }) => op === "join");
+        const source = joinEffect ? godArt[`../art/gods/${god}.webp`] : fxArt[`../art/fx/${stage}.webp`];
+        if (text && source) void playSprite(document.body, source, "cut", { god, stage, text: `${godName(god)} · ${stageName[stage]} — ${text}` });
+        /**
+         * 합류는 외침(L3)이다. **컷인이 끝난 뒤**에 낸다 — 같이 내면 L3의 어두운 배경이 「무엇을
+         * 했는가」를 덮어 버린다. 신을 버려 놓고 그 신이 판 건너편에 서는 순간이라 스치면 안 된다
+         */
+        if (joinEffect) {
+          const joined = joinEffect.god ?? god;
+          // 이 타이머도 `timers`에 든다 — 안 걷으면 화면·조우가 바뀐 뒤 묵은 외침이 선다
+          timers.push(setTimeout(() => speak(3, joined, godLine(joined, "join", view.depth), godArt[`../art/gods/${joined}.webp`]), 480));
+        }
+        if (reducedMotion) return;
+        // 피해 개입은 화면이 흔들린다. 진노만 크게 — `.fx`와 같은 WAAPI라 새 의존이 없다
+        if (effects.some(({ op }) => op === "damage")) {
+          const shift = stage === "wrath" ? 10 : 4;
+          document.body.animate([{ transform: `translateX(-${shift}px)` }, { transform: `translateX(${shift}px)` }, { transform: "none" }], { duration: 200, easing: "ease-in-out" });
+        }
+        for (const effect of effects) {
+          const sprite = particleArt[`../art/particle/${opParticle[effect.op]}.webp`];
+          for (const host of hostsFor(effect.target)) {
+            // 카드 파티클은 제자리에서 터지고 신의 것은 위에서 내려온다 — 한눈에 갈린다
+            if (effect.op === "damage" || effect.op === "block") void playSprite(host, fxArt["../art/fx/strike.webp"], "spark");
+            if (sprite) void playSprite(host, sprite, "spark");
+          }
+        }
+      }, index * 220));
+    });
+    return () => { for (const timer of timers) clearTimeout(timer); };
   }, [view.turn]);
 
   /**
@@ -147,6 +200,43 @@ export function CombatScreen({ seed, decision, onAnswer }: {
     if (source && host && !reducedMotion) void playSprite(host, source, "spark");
   }, [decision]);
 
+  /**
+   * 확정·찢기·화해 셋은 **한 번만** 말한다. 셋 다 관측이 실어 온 사실을 보고 갈리므로 화면이 규칙을
+   * 다시 계산하지 않는다 — 본 것을 `useRef` 한 벌에 적어 두고 새것만 낸다. 키에 `depth`가 든 이유는
+   * 조우가 바뀌면 같은 약속·같은 seq가 다시 서기 때문이다
+   */
+  const spoken = useRef(new Set<string>());
+  const godsOnBoard = useRef<string[]>([]);
+  useEffect(() => {
+    const once = (key: string, say: () => void) => {
+      if (spoken.current.has(key)) return;
+      spoken.current.add(key);
+      say();
+    };
+    // 확정은 `settled`가 처음 생기는 프레임이 그 자리고, 그 뒤로는 값이 안 바뀐다(사실이 단조다)
+    for (const { god, rule, settled } of view.promises) {
+      if (!settled) continue;
+      once(`${view.depth}:kept:${god}:${rule}`, () =>
+        speak(2, god, godLine(god, settled === "kept" ? "demand_kept" : "demand_broken", view.turn)));
+    }
+    // 찢기는 이 게임에서 가장 말이 필요한 자리다 — 신을 버려 놓고 그 신의 번개를 쓴 순간이다
+    if (view.torn) {
+      const { god, seq } = view.torn;
+      once(`${view.depth}:torn:${seq}`, () => speak(3, god, godLine(god, "tear", seq), godArt[`../art/gods/${god}.webp`]));
+    }
+    /**
+     * 화해 — 진노로 합류한 신이 판에서 사라지는 순간이다. 호의를 평온 하한으로 돌리는 것은 조우가
+     * **이긴 채로** 끝난 뒤라(`sim/engine.ts`의 `felled`) 여기서 말하는 것이 엔진보다 조금 이르다:
+     * 이 뒤에 지면 화해는 없다. 그래도 사람이 보는 사건은 신이 쓰러지는 이 프레임이다
+     */
+    const onBoard = view.enemies.map(({ id }) => id).filter((id) => view.patrons.some((god) => godEnemyId(god) === id));
+    for (const gone of godsOnBoard.current.filter((id) => !onBoard.includes(id))) {
+      const god = view.patrons.find((patron) => godEnemyId(patron) === gone)!;
+      once(`${view.depth}:felled:${god}`, () => speak(3, god, godLine(god, "reconcile", view.depth), godArt[`../art/gods/${god}.webp`]));
+    }
+    godsOnBoard.current = onBoard;
+  }, [decision]);
+
   // 무대에 선 카드는 손패에서 빠진다 — 엔진은 target을 받은 뒤에 카드를 버리므로 아직 `hand`에 있다
   const staged = targeting ? view.hand.findIndex(({ id }) => id === view.card) : -1;
   const keys = handKeys(view.hand);
@@ -157,6 +247,7 @@ export function CombatScreen({ seed, decision, onAnswer }: {
       <Backdrop src={backdropArt(view.region, view.floor === floorsPerRegion ? "boss" : "combat")} region={view.region} seed={seed + view.depth} />
       <div className="shell run-layout combat-layout">
       <RunHeader seed={seed} view={view} title="전투" badge={`${view.turn}턴`} />
+      <PromiseRow promises={view.promises} />
 
       <div className="enemy-panel" ref={enemySide}>
         <h2>적</h2>
@@ -298,6 +389,8 @@ function EnemyButton({ enemy, slot, hits, hitSeq, enabled, reducedMotion, onSele
       transition={reducedMotion ? { duration: 0 } : pop}
       exit={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.92, transition: exitPop }}
       className={enemy.span > 1 ? "enemy wide" : "enemy"}
+      // 개입 파티클이 맞은 판을 여기서 찾는다 — 적마다 ref를 하나 더 다는 대신이다(`popLayout`이 ref를 이미 쓴다)
+      data-enemy={enemy.id}
       // 두 칸을 차지한 적은 두 칸 높이로 선다 — 인라인인 이유는 폭이 데이터라서다(`EnemyView.span`)
       style={enemy.span > 1 ? { gridRow: `span ${enemy.span}` } : undefined}
       type="button"
@@ -327,7 +420,34 @@ function EnemyButton({ enemy, slot, hits, hitSeq, enabled, reducedMotion, onSele
   );
 }
 
-const stageName: Record<FavorStage, string> = { devotion: "헌신", calm: "평온", anger: "분노", wrath: "진노" };
+/**
+ * 지금 걸린 약속. 요구를 수락하고 전투에 들어가면 화면에 흔적이 하나도 없던 자리다 — 무엇을
+ * 약속했는지, 지금 지키고 있는지, 이미 깨졌는지 셋 다 볼 방법이 없었다.
+ *
+ * `omen`이 걸어 둔 약속도 같은 줄에 선다(둘까지 온다). 값은 전부 관측에서 오고 **여기서 다시 재는
+ * 것이 없다** — `settled`가 있으면 그 조우 안에서는 다시 안 바뀐다(사실이 단조다)
+ */
+function PromiseRow({ promises }: { promises: PromiseView[] }) {
+  if (!promises.length) return null;
+  return (
+    <div className="promise-row">
+      {promises.map(({ god, text, rule, current, target, settled }) => (
+        <p
+          key={`${god}:${rule}`}
+          className={`promise${settled ? ` ${settled}` : ""}`}
+          style={{ "--god-color": `var(--${god})` } as CSSProperties}
+          title={text}
+        >
+          <Icon name="favor" />
+          <b>{godName(god)}</b>
+          <span>{rule}</span>
+          <em>{current} / {target}</em>
+        </p>
+      ))}
+    </div>
+  );
+}
+
 /** 파워가 걸리는 훅 넷. 표가 `Trigger`를 다 덮으므로 훅을 새로 만들면 여기서 컴파일이 막힌다 */
 const triggerLabels: Record<Trigger, string> = {
   turn_start: "턴 시작", turn_end: "턴 끝", on_play: "카드 낼 때", on_unblocked: "막히지 않은 피해",
@@ -377,7 +497,11 @@ function FavorMeter({ god, value, grace }: { god: string; value: number; grace: 
    */
   const seen = useRef(stage);
   const crossed = seen.current !== stage;
-  useEffect(() => { seen.current = stage; });
+  useEffect(() => {
+    // 미터가 펄스하는 그 프레임에 신이 말한다 — 단계가 바뀌면 그 신이 다음에 할 일이 통째로 바뀐다
+    if (crossed) speak(2, god, godLine(god, "cross", value, stage));
+    seen.current = stage;
+  });
   const { start, turn } = godStageText(god, stage);
   const stageText = [stageName[stage], start && `조우 시작에 ${start}`, turn && `${interventionEveryTurns}턴마다 ${turn}`].filter(Boolean).join(" · ");
   return (

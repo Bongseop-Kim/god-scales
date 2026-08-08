@@ -1,0 +1,49 @@
+{
+  "ok": true,
+  "engine": "component-row",
+  "kind": "sprite-gen-inspect-report",
+  "run_dir": "/Users/gimbongseob/git/god-scales/art/_src/sprite-runs/fx_anger",
+  "states": [
+    "play"
+  ],
+  "thresholds": {
+    "histogram_min": 0.0,
+    "dhash_min": 0.55,
+    "motion_min": 0.01
+  },
+  "rows": [
+    {
+      "state": "play",
+      "source": "frames",
+      "expected_frames": 4,
+      "found_frames": 4,
+      "natural_pose_count": 4,
+      "frame_files": [
+        "frames/play/frame-0.png",
+        "frames/play/frame-1.png",
+        "frames/play/frame-2.png",
+        "frames/play/frame-3.png"
+      ],
+      "metrics": {
+        "histogram_intersection": {
+          "min": 0.9147640477885914,
+          "mean": 0.9330764702288723
+        },
+        "dhash_similarity": {
+          "min": 0.90625,
+          "mean": 0.9453125
+        },
+        "motion_presence": 0.020874741498161764,
+        "centroid_sigma": {
+          "x": 1.8231892872442452,
+          "y": 2.7207433603728948
+        }
+      },
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    }
+  ],
+  "errors": [],
+  "warnings": []
+}

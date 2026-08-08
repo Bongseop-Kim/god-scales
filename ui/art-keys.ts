@@ -6,8 +6,7 @@
 export type CardArtSource = { id: string; patron?: string; patron_pair?: string[]; tags?: string[] };
 
 /**
- * 카드 149개를 그림 30장이 덮는다. **id로 맞는 건 융합 10장뿐이다** — 파일명이 곧 카드 id다.
- * 나머지 139장은 `{patron}_{tag}` 20장으로 떨어진다.
+ * 카드 179장은 id와 같은 파일명을 쓴다. `{patron}_{tag}` 후보는 이전 번들 호환용 규칙으로만 남는다.
  *
  * P-37이 「융합 파일명의 신 순서가 데이터와 반대다」를 함정으로 적었는데, 실제로 반대인 것은
  * `patron_pair`(9/10이 파일과 순서가 다르다)고 **id는 파일과 정확히 같다.** 그래서 순서를 뒤집어

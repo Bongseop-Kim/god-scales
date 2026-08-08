@@ -1,9 +1,11 @@
+import type { CSSProperties } from "react";
 import type { DemandCost, DemandReward } from "../core/demands.ts";
+import { favorInitial, favorStage, oracleSwing } from "../core/favor.ts";
 import { restHealing } from "../core/map.ts";
-import type { DemandDecision, GraceDecision, MapDecision, RunView } from "../sim/engine.ts";
+import { favorPool, type DemandDecision, type GraceDecision, type MapDecision, type OracleDecision, type RunView } from "../sim/engine.ts";
 import { Backdrop, backdropArt } from "./backdrop.tsx";
 import { CardRow, effectText } from "./card.tsx";
-import { godName, RunHeader } from "./header.tsx";
+import { godArt, godLine, godName, stageName, RunHeader } from "./header.tsx";
 
 /** 휴식·은혜·요구 셋 다 지도 위의 한 칸짜리 결정이다 — 지도 패널 없이 한 단짜리로 그린다 */
 function Screen({ seed, view, title, badge, children }: {
@@ -25,7 +27,8 @@ function Screen({ seed, view, title, badge, children }: {
   );
 }
 
-function Choice({ mark, label, detail, onChoose }: { mark: string; label: string; detail: string; onChoose: () => void }) {
+/** `detail`이 노드인 이유는 요구 하나뿐이다 — 거기서만 조건 줄이 문장 **아래에** 한 겹 더 선다 */
+function Choice({ mark, label, detail, onChoose }: { mark: string; label: string; detail: React.ReactNode; onChoose: () => void }) {
   return (
     <button className="choice" type="button" onClick={onChoose}>
       <span>{mark}</span><b>{label}</b><small>{detail}</small>
@@ -130,8 +133,17 @@ export function DemandScreen({ seed, decision, onAnswer }: {
 }) {
   const view = decision.observation;
   const penalty = view.penalty ? ` · ${godName(view.other)} 호의 −${Math.abs(view.penalty)}` : "";
+  const portrait = godArt[`../art/gods/${view.patron}.webp`];
   return (
     <Screen seed={seed} view={view} title={`${godName(view.patron)}의 요구`}>
+      {/**
+       * 요구 화면은 글자만 있었다 — 신이 직접 말을 거는 자리인데 누가 말하는지가 화면에 없었다.
+       * 일러 다섯은 이미 있고(`art/gods`) 이 계획은 에셋을 새로 만들지 않는다
+       */}
+      <div className="god-say" style={{ "--god-color": `var(--${view.patron})` } as CSSProperties}>
+        {portrait && <img src={portrait} alt="" />}
+        <b>{godLine(view.patron, "demand_offer", view.depth)}</b>
+      </div>
       {view.tiers.map((tier) => {
         const [mark, name] = tierName[tier.action] ?? ["요", tier.action];
         return (
@@ -140,12 +152,61 @@ export function DemandScreen({ seed, decision, onAnswer }: {
             mark={mark}
             label={`${name} · 대가 ${costText(view.other, tier.cost)}`}
             // 보상은 다음 전투에서 조건을 지켰을 때만 들어간다 — 고르는 것만으로 주지 않는다
-            detail={`${tier.text} — 지키면 ${rewardText(view.patron, tier.reward)}${penalty}`}
+            detail={
+              <>
+                {tier.text}
+                {/* 문장은 신의 목소리고 이 줄은 규칙이다 — 합치면 신이 숫자를 읽는 소리가 된다 */}
+                <em className="rule">{tier.rule}</em>
+                지키면 {rewardText(view.patron, tier.reward)}{penalty}
+              </>
+            }
             onChoose={() => decision.options.includes(tier.action) && onAnswer(tier.action)}
           />
         );
       })}
       <Choice mark="거" label="거절 · 대가 없음" detail="어느 호의도 움직이지 않습니다. 거절에도, 지키지 못해도 벌금은 없습니다." onChoose={() => onAnswer("reject")} />
+    </Screen>
+  );
+}
+
+/**
+ * 신탁 2택. 요구와 같은 꼴이지만 **거절할 「거절」이 없다** — 저울이라 한쪽을 올리면 반대쪽이
+ * 내려가고, 「아무것도 안 움직인다」는 답이 이 화면에 없다. 전투 한가운데라 배지가 턴을 든다.
+ *
+ * 두 줄이 **기운 뒤의 값과 단계를 두 신 다** 적는다 — 「62 → 74 · 평온 → 헌신」과 그 대가가 같은
+ * 줄에 서야 결정이 계산이 된다(요구 화면의 「대가가 앞에 선다」와 같은 규칙, R-26)
+ */
+export function OracleScreen({ seed, decision, onAnswer }: {
+  seed: number;
+  decision: OracleDecision;
+  onAnswer: (choice: string) => void;
+}) {
+  const view = decision.observation;
+  const moved = (god: string, amount: number) => {
+    const now = view.favor[god] ?? favorInitial;
+    // 엔진의 `shiftFavor`와 같은 자리에서 자른다 — 화면이 100을 넘는 값을 약속하면 거짓말이 된다
+    const next = Math.max(0, Math.min(favorPool, now + amount));
+    const crossed = favorStage(next) !== favorStage(now);
+    return `${godName(god)} ${now} → ${next} · ${crossed ? `${stageName[favorStage(now)]} → ${stageName[favorStage(next)]}` : stageName[favorStage(next)]}`;
+  };
+  const tilt = (toward: string, away: string, amount: number) => `${moved(toward, amount)} — ${moved(away, -amount)}`;
+  return (
+    <Screen seed={seed} view={view} title={`${godName(view.god)}의 신탁`} badge={`${view.turn}턴`}>
+      <p className="hint" role="status">
+        저울은 한 조우에 한 번 기웁니다. 합은 그대로고 한쪽이 오르면 반대쪽이 그만큼 내려갑니다 — 거절할 「거절」은 없습니다.
+      </p>
+      <Choice
+        mark="따"
+        label={`${godName(view.god)}에게 기운다 · +${oracleSwing}`}
+        detail={tilt(view.god, view.other, oracleSwing)}
+        onChoose={() => onAnswer("obey")}
+      />
+      <Choice
+        mark="손"
+        label={`${godName(view.other)}에게 기운다 · +${oracleSwing}`}
+        detail={tilt(view.other, view.god, oracleSwing)}
+        onChoose={() => onAnswer("refuse")}
+      />
     </Screen>
   );
 }

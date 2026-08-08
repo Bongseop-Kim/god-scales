@@ -22,16 +22,17 @@ const freeCard = "card_athena_retry_02";
 const freeDeck = Array.from({ length: deckSize }, () => freeCard);
 if (!deckOk(freeDeck)) throw new Error(`${freeCard} is no longer a startable tier1 card`);
 /**
- * 아래 클릭 정책으로 **12층을 완주하면서** 여덟 결정 phase를 전부 지나는 가장 짧은 시드다(330 결정).
- * 800개를 훑어 다섯 개뿐이다(56·106·241·371·400) — 정책이나 콘텐츠가 바뀌면 다시 찾아야 한다.
+ * 아래 클릭 정책으로 **12층을 완주하면서** 아홉 결정 phase를 전부 지나는 가장 짧은 시드다(232 결정).
+ * 정책이나 콘텐츠가 바뀌면 다시 찾아야 한다 — 800개를 훑는 자리다.
  * P-27에서 141 → 170: 갈래가 격자에서 오면서 옛 시드의 완주가 끊겼다. P-28의 은혜를 지나도 170은 살았다.
  * 427 → 428: 사후 수정이 예고 칸의 빈 방문을 없애면서 요구 하나가 늘었다(R-27 §사후 수정).
  * P-36에서 170 → 589: 밀림이 자리를 옮기고 카드 다섯이 붙자 170이 헌신에 못 닿아 `grace` 화면을 안 지난다.
  * P-39에서 589 → 371: 정예·보스가 tier2 세 자리를 주자 589의 덱이 바뀌어 저승을 지나고 6조우에서 죽는다.
- * 옛 다섯 중 56·241은 이번에도 완주한다 — 371이 안 되는 날의 다음 후보다
+ * P-46에서 371 → 727: 신탁이 결정을 하나 더 끼우고 평온 개입이 조우를 바꾸자 371이 `grace`에 못 닿는다.
+ * 이번엔 800개 중 220개가 완주한다(게임이 쉬워졌다) — 784·627·575가 727 다음 후보다
  */
-const seed = 371;
-const phases = ["path", "card", "target", "rest", "rest_card", "reward", "grace", "demand"];
+const seed = 727;
+const phases = ["path", "card", "target", "rest", "rest_card", "reward", "grace", "demand", "oracle"];
 
 /**
  * 정책은 화면에 적힌 것만 쓴다 — 봇 추천은 DOM에 없고, 있어서도 안 된다. 룰 봇을 브라우저로 옮겨 심지도
@@ -40,6 +41,7 @@ const phases = ["path", "card", "target", "rest", "rest_card", "reward", "grace"
  * - 갈림길: 열린 갈래에 쉼터가 있으면 쉼터, 없으면 첫 칸
  * - 휴식: 첫 번째는 카드 제거(그래야 `rest_card`를 지난다), 두 번째는 강화, 이후는 회복
  * - 요구: 수락
+ * - 신탁: 첫 칸(묻는 신 쪽으로 기운다) — 요구와 같은 `button.choice`고 둘 다 값이 붙어 있다(P-46)
  * - 은혜: 첫 후보 — 3택1이 카드가 아니라 `button.choice` 셋이 됐다(P-28). 빈 슬롯이 먼저 서므로 첫 칸이다
  * - 표적: 체력이 가장 낮은 적 — 동점이면 화면 순서
  * - 카드·보상·제거: 캡션에 적힌 비용이 가장 높은 것, 동점이면 표시된 피해, 그래도 같으면 카드 id
@@ -165,7 +167,7 @@ await tab.evaluate(() => {
         // 제거 → 강화 → 회복 순. 백틱은 이 스크립트가 템플릿 문자열이라 못 쓴다.
         // 강화 칸이 안 서는 덱이면 회복으로 떨어진다 — 화면이 실은 답만 누른다
         ? [enabled("button.choice")[[1, 2][driver.rests++] ?? 0] ?? enabled("button.choice")[0]]
-        : phase === "demand" || phase === "grace"
+        : phase === "demand" || phase === "grace" || phase === "oracle"
         ? [enabled("button.choice")[0]]
         : phase === "target"
         ? enabled("button.enemy").sort((left, right) => enemyHp(left) - enemyHp(right))

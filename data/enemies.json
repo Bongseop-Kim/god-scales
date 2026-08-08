@@ -478,10 +478,11 @@
     "name": "진노한 제우스",
     "tier": "god",
     "role": "god",
-    "hp": 60,
+    "hp": 100,
     "intent_visible": true,
     "passives": {
-      "ramp": 1
+      "ramp": 1,
+      "ward": 2
     },
     "pattern": [
       {
@@ -510,10 +511,11 @@
     "name": "진노한 포세이돈",
     "tier": "god",
     "role": "god",
-    "hp": 60,
+    "hp": 100,
     "intent_visible": true,
     "passives": {
-      "ward": 2
+      "ward": 2,
+      "angry": 1
     },
     "pattern": [
       {
@@ -542,10 +544,11 @@
     "name": "진노한 아테나",
     "tier": "god",
     "role": "god",
-    "hp": 60,
+    "hp": 100,
     "intent_visible": true,
     "passives": {
-      "guard": 2
+      "guard": 2,
+      "ward": 2
     },
     "pattern": [
       {
@@ -576,10 +579,11 @@
     "name": "진노한 아레스",
     "tier": "god",
     "role": "god",
-    "hp": 60,
+    "hp": 100,
     "intent_visible": true,
     "passives": {
-      "spite": 1
+      "spite": 1,
+      "ward": 2
     },
     "pattern": [
       {
@@ -609,10 +613,11 @@
     "name": "진노한 아르테미스",
     "tier": "god",
     "role": "god",
-    "hp": 60,
+    "hp": 100,
     "intent_visible": true,
     "passives": {
-      "shell": 8
+      "shell": 8,
+      "ward": 2
     },
     "pattern": [
       {

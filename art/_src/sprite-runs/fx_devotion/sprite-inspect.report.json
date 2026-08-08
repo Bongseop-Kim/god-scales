@@ -1,0 +1,49 @@
+{
+  "ok": true,
+  "engine": "component-row",
+  "kind": "sprite-gen-inspect-report",
+  "run_dir": "/Users/gimbongseob/git/god-scales/art/_src/sprite-runs/fx_devotion",
+  "states": [
+    "play"
+  ],
+  "thresholds": {
+    "histogram_min": 0.0,
+    "dhash_min": 0.55,
+    "motion_min": 0.01
+  },
+  "rows": [
+    {
+      "state": "play",
+      "source": "frames",
+      "expected_frames": 4,
+      "found_frames": 4,
+      "natural_pose_count": 4,
+      "frame_files": [
+        "frames/play/frame-0.png",
+        "frames/play/frame-1.png",
+        "frames/play/frame-2.png",
+        "frames/play/frame-3.png"
+      ],
+      "metrics": {
+        "histogram_intersection": {
+          "min": 0.9469579575564141,
+          "mean": 0.9711386693892525
+        },
+        "dhash_similarity": {
+          "min": 0.875,
+          "mean": 0.9322916666666666
+        },
+        "motion_presence": 0.028989305683210783,
+        "centroid_sigma": {
+          "x": 0.1918269561378846,
+          "y": 8.46998097291764
+        }
+      },
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    }
+  ],
+  "errors": [],
+  "warnings": []
+}

@@ -12,7 +12,7 @@
 
 ```
 magick art/_src/cards/card_fused_zeus_artemis.png -gravity center -crop 1365x1024+0+0 +repage \
-  -filter Lanczos -resize 512x384! -quality 88 art/cards/card_fused_zeus_artemis.webp
+  -filter Lanczos -resize 320x240! -quality 80 art/cards/card_fused_zeus_artemis.webp
 ```
 
 용량은 22~31KB에 떨어진다(R-21 기준) — 실측 30장 평균 17KB, 최대 29KB로 맞았다.

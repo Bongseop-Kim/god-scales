@@ -1,0 +1,109 @@
+{
+  "ok": true,
+  "engine": "component-row",
+  "engine_revision": "9d4ecaf5ab56",
+  "extract_args": {
+    "chroma_mode": "rgb",
+    "segmentation": "projection"
+  },
+  "run_dir": "/Users/gimbongseob/git/god-scales/art/_src/sprite-runs/fx_anger",
+  "cell": {
+    "shape": "rect",
+    "width": 1536,
+    "height": 960,
+    "safe_margin_x": 0,
+    "safe_margin_y": 0
+  },
+  "chroma_key": {
+    "name": "magenta",
+    "hex": "#FF00FF",
+    "rgb": [
+      255,
+      0,
+      255
+    ],
+    "selection": "fallback",
+    "background": {
+      "mode": "flat",
+      "hex": "#EC14DB",
+      "rgb": [
+        236,
+        20,
+        219
+      ],
+      "opaque_border_fraction": 1.0,
+      "border_coverage": 0.996,
+      "enclosed_background_pixels": 0,
+      "enclosed_material_pixels": 0,
+      "subject_pixels": 0
+    },
+    "selection_reason": "the base reference yielded no subject pixels once its background was excluded"
+  },
+  "rows": [
+    {
+      "state": "play",
+      "frames": 4,
+      "method": "components",
+      "files": [
+        "frames/play/frame-0.png",
+        "frames/play/frame-1.png",
+        "frames/play/frame-2.png",
+        "frames/play/frame-3.png"
+      ],
+      "frame_records": [
+        {
+          "index": 0,
+          "nontransparent_pixels": 22306,
+          "bbox": [
+            553,
+            320,
+            983,
+            639
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 12
+        },
+        {
+          "index": 1,
+          "nontransparent_pixels": 37434,
+          "bbox": [
+            548,
+            291,
+            988,
+            669
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 61
+        },
+        {
+          "index": 2,
+          "nontransparent_pixels": 48567,
+          "bbox": [
+            542,
+            284,
+            993,
+            675
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 43
+        },
+        {
+          "index": 3,
+          "nontransparent_pixels": 54190,
+          "bbox": [
+            544,
+            264,
+            991,
+            695
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 11
+        }
+      ],
+      "ok": true,
+      "engine_revision": "9d4ecaf5ab56"
+    }
+  ],
+  "errors": [],
+  "warnings": []
+}

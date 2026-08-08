@@ -280,9 +280,19 @@ describe("god admission", () => {
   });
 
   it("wires every wrath to a shipped god enemy", () => {
-    const enemies = JSON.parse(readFileSync("data/enemies.json", "utf8")) as { id: string; tier: string }[];
+    const enemies = JSON.parse(readFileSync("data/enemies.json", "utf8")) as { id: string; tier: string; hp: number; passives?: Record<string, number> }[];
     const joined = gods.map(({ id }) => id);
     expect(joined.filter((god) => enemies.some(({ id, tier }) => tier === "god" && id === godEnemyId(god)))).toEqual(joined);
+    /**
+     * 신은 잡졸이 아니다 — 가장 센 잡졸보다 체력이 크고 패시브가 **둘**이다(P-47 §2). 숫자를 여기
+     * 박지 않는다: 배포된 잡졸 최대와 비교하므로 편성이 바뀌어도 뜻이 그대로다. 「지역 보스(130)
+     * 위」는 조합 승률 하한이 되돌렸다 — 측정한 곡선은 reviews/47-wrath.md에 있다
+     */
+    const mob = Math.max(...enemies.filter(({ tier }) => tier === "normal").map(({ hp }) => hp));
+    for (const { id, hp, passives } of enemies.filter(({ tier }) => tier === "god")) {
+      expect(hp, id).toBeGreaterThan(mob);
+      expect(Object.keys(passives ?? {}), id).toHaveLength(2);
+    }
     for (const god of gods) {
       expect(god.stage_effects.wrath?.on_encounter_start?.some(({ op }) => op === "join"), god.id).toBe(true);
     }

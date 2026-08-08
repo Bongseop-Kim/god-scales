@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "kind": "sprite-gen-request",
+  "engine": "component-row",
+  "character": {
+    "id": "fx_strike",
+    "description": "",
+    "base_image": "base-source.png"
+  },
+  "cell": {
+    "shape": "rect",
+    "width": 1536,
+    "height": 960,
+    "safe_margin_x": 0,
+    "safe_margin_y": 0
+  },
+  "chroma_key": {
+    "name": "green",
+    "hex": "#00FF00",
+    "rgb": [
+      0,
+      255,
+      0
+    ],
+    "selection": "auto",
+    "score": 333.49,
+    "min_subject_distance": 333.49,
+    "background": {
+      "mode": "flat",
+      "hex": "#FB05F8",
+      "rgb": [
+        251,
+        5,
+        248
+      ],
+      "opaque_border_fraction": 1.0,
+      "border_coverage": 1.0,
+      "enclosed_background_pixels": 0,
+      "enclosed_material_pixels": 0,
+      "subject_pixels": 131
+    },
+    "candidates": [
+      {
+        "name": "magenta",
+        "hex": "#FF00FF",
+        "score": 239.29,
+        "min_subject_distance": 239.29,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "green",
+        "hex": "#00FF00",
+        "score": 333.49,
+        "min_subject_distance": 333.49,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "cyan",
+        "hex": "#00FFFF",
+        "score": 238.45,
+        "min_subject_distance": 238.38,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "blue",
+        "hex": "#004DFF",
+        "score": 287.28,
+        "min_subject_distance": 287.21,
+        "clears_erase_radius": true
+      }
+    ],
+    "selection_reason": "highest 1st-percentile subject distance among the 4 candidate(s) clearing the 96 erase radius"
+  },
+  "states": {
+    "play": {
+      "frames": 4,
+      "fps": 8,
+      "loop": false,
+      "action": "four-frame one-shot impact, designed to remain unmistakable when the 1536-pixel cell is displayed only 100 pixels wide over a #10131c game screen: frame 1 is a fully opaque warm-white shaft 48-72 pixels wide descending from the top; frame 2 connects it to a 220-pixel-wide impact flare at bottom-centre; frame 3 keeps the shaft and expands a connected hard-edged spark crown to 320 pixels; frame 4 removes the shaft but retains a bright connected 160-pixel ember crown. No needle-thin beam, tiny residual flecks, faint haze, or translucent-only light. The impact point stays fixed and the sides stay empty."
+    }
+  },
+  "style": "bold high-contrast impact effect matching the accepted base image; thick fully opaque warm-white shaft and connected hard-edged sparks with crisp clean edges, restrained fringe only, no pixel art, no dark outline, no palette reduction",
+  "motion_phase_guides": false,
+  "layout": "taxonomy/v1",
+  "fit": {
+    "resample": "lanczos",
+    "align_x": "bbox-center",
+    "align_y": "center",
+    "pixel_unfake": false,
+    "outline": false
+  },
+  "chroma": {
+    "mode": "rgb",
+    "unmix_reach": 4,
+    "spill_max_fraction": 0.005
+  }
+}

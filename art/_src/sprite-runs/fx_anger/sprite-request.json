@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "kind": "sprite-gen-request",
+  "engine": "component-row",
+  "character": {
+    "id": "fx_anger",
+    "description": "",
+    "base_image": "base-source.png"
+  },
+  "cell": {
+    "shape": "rect",
+    "width": 1536,
+    "height": 960,
+    "safe_margin_x": 0,
+    "safe_margin_y": 0
+  },
+  "chroma_key": {
+    "name": "magenta",
+    "hex": "#FF00FF",
+    "rgb": [
+      255,
+      0,
+      255
+    ],
+    "selection": "fallback",
+    "background": {
+      "mode": "flat",
+      "hex": "#EC14DB",
+      "rgb": [
+        236,
+        20,
+        219
+      ],
+      "opaque_border_fraction": 1.0,
+      "border_coverage": 0.996,
+      "enclosed_background_pixels": 0,
+      "enclosed_material_pixels": 0,
+      "subject_pixels": 0
+    },
+    "selection_reason": "the base reference yielded no subject pixels once its background was excluded"
+  },
+  "states": {
+    "play": {
+      "frames": 4,
+      "fps": 8,
+      "loop": false,
+      "action": "four-frame one-shot withdrawal, designed for immediate readability over a #10131c game screen: frame 1 shows a connected branching crack network across the upper 55% of the frame; frames 2 and 3 spread it wider and pull its pale light upward; frame 4 leaves a broad jagged network spanning at least 70% of the width. Main branches have fully opaque ivory-orange cores 18-36 pixels thick and secondary branches 10-18 pixels thick, with a crisp dark-red rim. No hairlines, isolated tiny cracks, faint gray marks, or translucent-only light. Keep the lower 35% and a clear central play area empty."
+    }
+  },
+  "style": "bold high-contrast branching crack effect matching the accepted base image; thick fully opaque ivory-orange cores with a crisp dark-red rim, clean hard edges, no pixel art, no palette reduction",
+  "motion_phase_guides": false,
+  "layout": "taxonomy/v1",
+  "fit": {
+    "resample": "lanczos",
+    "align_x": "bbox-center",
+    "align_y": "center",
+    "pixel_unfake": false,
+    "outline": false
+  },
+  "chroma": {
+    "mode": "rgb",
+    "unmix_reach": 4,
+    "spill_max_fraction": 0.005
+  }
+}

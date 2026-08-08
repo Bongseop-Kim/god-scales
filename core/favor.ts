@@ -55,12 +55,35 @@ export type StageHook = "on_encounter_start" | "on_turn_start";
  */
 export const interventionEveryTurns = 3;
 export const intervenesOnTurn = (turn: number): boolean => turn % interventionEveryTurns === 2;
+/**
+ * 신탁이 미는 크기. **경계 12 이내에서 시작했을 때만 단계를 넘긴다** — 50:50에서 시작한 런은 신탁
+ * 하나로 62나 38에 서서 아무 경계도 못 넘고, 65나 40처럼 경계 근처에서 출발해야 그 조우의 개입 얼굴이
+ * 바뀐다. 배분(`favorPool`)이 출발점을 정하고 신탁이 런 중에 미는 것이 축을 나눠 갖는 방식이다.
+ * 조우당 한 번이라 한 조우 안 왕복도 없다
+ */
+export const oracleSwing = 12;
 export type FavorGod = { id: string; stage_effects: Partial<Record<FavorStage, Partial<Record<StageHook, StageEffect[]>>>> };
+/**
+ * 신이 말하는 자리 아홉(`data/gods.json`의 `lines`). 셋은 단계로 갈리고 여섯은 한 벌이다 —
+ * 갈리는 셋이 조우마다 뜨는 것들이고(조우 시작 · 개입 턴 · 단계 경계) 나머지는 사건이라 그 자리에
+ * 단계가 없다. 게이트(`tools/validate.ts`)와 화면(`ui/header.tsx`)이 같은 이 한 벌을 읽는다
+ */
+export const lineTriggers = ["encounter", "intervene", "cross", "demand_offer", "demand_kept", "demand_broken", "tear", "join", "reconcile"] as const;
+export type LineTrigger = (typeof lineTriggers)[number];
+export const stagedLineTriggers: readonly LineTrigger[] = ["encounter", "intervene", "cross"];
 /**
  * 진노가 부르는 신 적의 id. 스프라이트도 같은 이름을 쓴다(`art/sprites/enemy_god_zeus.webp`) —
  * 게이트가 `join`마다 이 id의 `tier: "god"` 적이 배포됐는지 본다
  */
 export const godEnemyId = (god: string): string => `enemy_god_${god}`;
+/**
+ * 진노한 신을 판 위에서 꺾으면 호의가 여기로 돌아온다 — 다음 조우에는 다시 서지 않는다.
+ * **반복을 끊는 상태를 따로 만들지 않는다**: 반복의 원인이 호의였으므로 호의를 올리는 것이 곧
+ * 반복을 끊는 것이다. 플래그를 두면 replay·화면·게이트가 그 플래그를 다 알아야 한다.
+ *
+ * 50이 아니라 평온의 **하한**이다 — 감쇠 −3이 열 조우 만에 다시 진노로 데려간다. 화해는 휴전이다
+ */
+export const wrathReconcileFavor: number = favorBoundaries.calm;
 
 export function favorStage(value: number): FavorStage {
   if (value >= favorBoundaries.devotion) return "devotion";

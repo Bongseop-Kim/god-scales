@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "kind": "sprite-gen-request",
+  "engine": "component-row",
+  "character": {
+    "id": "fx_devotion",
+    "description": "",
+    "base_image": "base-source.png"
+  },
+  "cell": {
+    "shape": "rect",
+    "width": 1536,
+    "height": 960,
+    "safe_margin_x": 0,
+    "safe_margin_y": 0
+  },
+  "chroma_key": {
+    "name": "green",
+    "hex": "#00FF00",
+    "rgb": [
+      0,
+      255,
+      0
+    ],
+    "selection": "auto",
+    "score": 305.0,
+    "min_subject_distance": 296.75,
+    "background": {
+      "mode": "flat",
+      "hex": "#F80BF1",
+      "rgb": [
+        248,
+        11,
+        241
+      ],
+      "opaque_border_fraction": 1.0,
+      "border_coverage": 0.85,
+      "enclosed_background_pixels": 0,
+      "enclosed_material_pixels": 0,
+      "subject_pixels": 3493
+    },
+    "candidates": [
+      {
+        "name": "magenta",
+        "hex": "#FF00FF",
+        "score": 75.4,
+        "min_subject_distance": 66.16,
+        "clears_erase_radius": false
+      },
+      {
+        "name": "green",
+        "hex": "#00FF00",
+        "score": 305.0,
+        "min_subject_distance": 296.75,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "cyan",
+        "hex": "#00FFFF",
+        "score": 255.51,
+        "min_subject_distance": 253.4,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "blue",
+        "hex": "#004DFF",
+        "score": 253.18,
+        "min_subject_distance": 251.71,
+        "clears_erase_radius": true
+      }
+    ],
+    "selection_reason": "highest 1st-percentile subject distance among the 3 candidate(s) clearing the 96 erase radius"
+  },
+  "states": {
+    "play": {
+      "frames": 4,
+      "fps": 8,
+      "loop": false,
+      "action": "four-frame one-shot descent, immediately readable over #10131c. In every 1536x960 slot draw one fully connected golden-white canopy: a solid opaque horizontal light bar from x=100 to x=1436 at y=25, 60-90 pixels thick, physically joined to five shafts centered near x=170, 470, 768, 1066, and 1366. The bar and all five shafts must be one unbroken connected component in each frame; no detached beams or motes. Frame 1 has short shafts, frames 2 and 3 extend and widen them, frame 4 reaches the upper 45% height. Every shaft has a fully opaque warm-white core 50-90 pixels thick with crisp edges. Keep the bottom half empty."
+    }
+  },
+  "style": "bold high-contrast abstract game effect matching the accepted base image; thick fully opaque golden-white light cores with crisp clean edges, restrained soft fringe only outside the opaque cores, no pixel art, no dark outline, no palette reduction",
+  "motion_phase_guides": false,
+  "layout": "taxonomy/v1",
+  "fit": {
+    "resample": "lanczos",
+    "align_x": "bbox-center",
+    "align_y": "center",
+    "pixel_unfake": false,
+    "outline": false
+  },
+  "chroma": {
+    "mode": "ycbcr",
+    "unmix_reach": 4,
+    "spill_max_fraction": 0.005
+  }
+}

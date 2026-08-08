@@ -46,24 +46,33 @@ describe("tier2 reward slots", () => {
   /**
    * 일반 전투는 두 지역 다 tier1뿐이고 정예·보스만 세 자리다(자리 수를 정한 실측은 `tier2Slots`의
    * 표에 있다). 갈래 종류는 관측의 격자에서 읽고, **갈래는 봇에게 안 맡긴다** — `choosePath`는 체력을
-   * 보고 고르므로 30시드를 돌려도 정예를 한 번도 안 밟는다
+   * 보고 고르므로 30시드를 돌려도 정예를 한 번도 안 밟는다.
+   *
+   * **신을 꺾은 조우는 갈래와 무관하게 셋이다**(P-47) — 판 위에서 실제로 정예였다. 그래서 판에 신이
+   * 섰던 조우는 갈래가 아니라 `god` 칸으로 센다: 안 가르면 「일반 전투는 0」이 진노를 만난 자리에서
+   * 흔들려 규칙이 둘 다 안 서게 된다
    */
   it("gives normal combat none and elite and boss all three", () => {
     const counts = new Map<string, Set<number>>();
     for (let seed = 1; seed <= 30; seed += 1) {
       const steps = runSteps(seed);
       let step = steps.next();
+      let sawGod = false;
       while (!step.done) {
+        if (step.value.phase === "card") sawGod ||= step.value.observation.enemies.some(({ id }) => id.startsWith("enemy_god_"));
         if (step.value.phase === "reward") {
           const { depth, lane, grid, region } = step.value.observation;
-          const key = `${region}:${grid[depth][lane]}`;
+          const key = sawGod ? "god" : `${region}:${grid[depth][lane]}`;
           const tier2 = step.value.options.filter((id) => tierOf.get(id) === 2).length;
           counts.set(key, (counts.get(key) ?? new Set()).add(tier2));
+          sawGod = false;
         }
         const elite = step.value.phase === "path" ? step.value.options.find((option) => option.endsWith(":elite")) : undefined;
         step = steps.next(elite ?? step.value.bot);
       }
     }
+    // 진노 신을 꺾은 조우는 정예 대우다 — 30시드가 그 자리를 실제로 밟는다
+    expect(counts.get("god")).toEqual(new Set([3]));
     expect(counts.get("underworld:combat")).toEqual(new Set([0]));
     expect(counts.get("surface:combat")).toEqual(new Set([0]));
     expect(counts.get("surface:elite")).toEqual(new Set([3]));

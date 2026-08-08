@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import demandData from "../data/demands.json" with { type: "json" };
 import godData from "../data/gods.json" with { type: "json" };
-import { demandPenalty, demandSatisfied, pairKey, payDemandCost, resolveDemand, rivals, tierEnemies, type Demand } from "../core/demands";
+import { demandPenalty, demandSatisfied, demandSettled, pairKey, payDemandCost, resolveDemand, rivals, ruleText, tierEnemies, type Demand } from "../core/demands";
+import { godLine } from "../ui/header";
 import { createCombat } from "../core/combat";
 import type { GameState } from "../core/state";
 import { run, runSteps, simulateStratified } from "../sim/engine";
@@ -197,6 +198,57 @@ describe("demands", () => {
       expect(validateItems([broken as unknown as Record<string, unknown>]).rejected).toEqual([{ id: athena.id, failure: "demand_axis" }]);
     }
     expect(validateItems(demands as unknown as Record<string, unknown>[]).rejected).toEqual([]);
+  });
+
+  /**
+   * 열 줄의 조건이 **다 사람 말로 떨어진다.** 게이트가 `factName`에 없는 좌변을 반려하므로 이 줄이
+   * 깨지는 길은 하나뿐이다 — 표에 없는 사실을 새로 쓰는 것이고, 그러면 게이트가 먼저 막는다
+   */
+  it("적는다 — 열 줄의 조건이 전부 한글 한 줄이 된다", () => {
+    const rules = demands.flatMap(({ tiers }) => tiers.map(({ condition }) => ruleText(condition)));
+    expect(rules).toHaveLength(10);
+    for (const rule of rules) expect(rule).toMatch(/^[가-힣 ]+ \d+ (이상|이하|초과|같음)$/);
+    expect(ruleText(athena.tiers[1].condition)).toBe("이 조우에서 잃은 체력 8 이하");
+  });
+
+  /**
+   * **확정은 비교 연산자가 가른다.** 사실 넷이 단조 비감소라(`sim/engine.ts`) 달성형은 처음 넘는
+   * 순간 성공이 굳고 유지형은 처음 넘는 순간 실패가 굳는다 — 이 한 줄 위에 진행 막대와 알림이 선다
+   */
+  it("굳는다 — 달성형은 성공으로, 유지형은 실패로 확정된다", () => {
+    const safe = athena.tiers[1]; // damage_taken <= 8
+    const hurt = demands.find(({ id }) => id === "demand_ares_hurt")!.tiers[1]; // damage_taken > 26
+    expect(demandSettled(safe, { damage_taken: 8 })).toBeUndefined();
+    expect(demandSettled(safe, { damage_taken: 9 })).toBe("broken");
+    expect(demandSettled(hurt, { damage_taken: 26 })).toBeUndefined();
+    expect(demandSettled(hurt, { damage_taken: 27 })).toBe("kept");
+    // 확정이 사실과 어긋나면 화면이 「지켰다」고 적은 뒤에 호의가 다르게 움직인다
+    for (const tier of demands.flatMap(({ tiers }) => tiers)) {
+      for (const value of [0, 1, 2, 3, 5, 8, 14, 20, 27]) {
+        const facts = { hit_targets_in_turn: value, damage_taken: value, tokens_applied: value, tokens_applied_in_turn: value };
+        const settled = demandSettled(tier, facts);
+        if (settled) expect(demandSatisfied(tier, facts)).toBe(settled === "kept");
+      }
+    }
+  });
+
+  /**
+   * 트리거 아홉에 신 다섯이 다 줄을 갖는다. **게이트가 이미 반려하지만** 화면이 읽는 경로(`godLine`)와
+   * 게이트가 세는 경로가 갈릴 수 있다 — 여기서 그 둘을 같은 자리에 세운다. 고르는 것은 나머지 연산이다
+   */
+  it("말한다 — 트리거 아홉 × 단계 넷이 다 줄을 갖고 난수를 안 당긴다", () => {
+    for (const { id } of godData) {
+      for (const trigger of ["demand_offer", "demand_kept", "demand_broken", "tear", "join", "reconcile"] as const) {
+        expect(godLine(id, trigger, 0).trim(), `${id}:${trigger}`).not.toBe("");
+      }
+      for (const trigger of ["encounter", "intervene", "cross"] as const) {
+        for (const stage of ["devotion", "calm", "anger", "wrath"] as const) {
+          expect(godLine(id, trigger, 0, stage).trim(), `${id}:${trigger}:${stage}`).not.toBe("");
+          // 같은 `n`이면 같은 줄이다 — 새 RNG 스트림이 끼면 대사를 켜는 것만으로 replay가 어긋난다
+          expect(godLine(id, trigger, 7, stage)).toBe(godLine(id, trigger, 7, stage));
+        }
+      }
+    }
   });
 
   it("stratifies all ten pairings into the required penalty class", () => {

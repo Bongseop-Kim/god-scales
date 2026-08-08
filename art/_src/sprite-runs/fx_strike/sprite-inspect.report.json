@@ -1,0 +1,49 @@
+{
+  "ok": true,
+  "engine": "component-row",
+  "kind": "sprite-gen-inspect-report",
+  "run_dir": "/Users/gimbongseob/git/god-scales/art/_src/sprite-runs/fx_strike",
+  "states": [
+    "play"
+  ],
+  "thresholds": {
+    "histogram_min": 0.0,
+    "dhash_min": 0.55,
+    "motion_min": 0.01
+  },
+  "rows": [
+    {
+      "state": "play",
+      "source": "frames",
+      "expected_frames": 4,
+      "found_frames": 4,
+      "natural_pose_count": 4,
+      "frame_files": [
+        "frames/play/frame-0.png",
+        "frames/play/frame-1.png",
+        "frames/play/frame-2.png",
+        "frames/play/frame-3.png"
+      ],
+      "metrics": {
+        "histogram_intersection": {
+          "min": 0.9972512829706799,
+          "mean": 0.9984276719822601
+        },
+        "dhash_similarity": {
+          "min": 0.96875,
+          "mean": 0.9765625
+        },
+        "motion_presence": 0.03643854677287582,
+        "centroid_sigma": {
+          "x": 1.7790497163522307,
+          "y": 68.5555276255305
+        }
+      },
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    }
+  ],
+  "errors": [],
+  "warnings": []
+}

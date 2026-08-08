@@ -1,16 +1,23 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { policies, setPolicy, type Policy } from "./bots/rule.ts";
 import { resumeAgentRun, startAgentRun } from "./bots/llm.ts";
-import { gods, run, setDevotionAura, simulate, simulateStratified } from "./engine.ts";
+import { favorPool, gods, run, setDevotionAura, simulate, simulateStratified } from "./engine.ts";
 import type { GodId } from "../core/rules.ts";
 import { readReplay } from "./replay.ts";
 import { renderReport, summarize } from "./report.ts";
 import type { Scenario } from "./engine.ts";
 
-function parseRuns(args: string[]): { runs: number; log: boolean; stratified: boolean; scenario?: Scenario; replays: string[]; policy?: Policy } {
+function parseRuns(args: string[]): { runs: number; log: boolean; stratified: boolean; scenario?: Scenario; replays: string[]; policy?: Policy; split?: number } {
   const index = args.indexOf("--runs");
   const runs = index < 0 ? 200 : Number(args[index + 1]);
   if (!Number.isInteger(runs) || runs < 1) throw new Error("--runs must be a positive integer");
+  /**
+   * 시작 호의 배분. **게이트가 아니다** — `tools/tune.ts`는 이 플래그를 안 쓰고 조합 승률 하한
+   * 하나로만 판정한다(CLAUDE.md). 극단이 어떤 모양인지 손으로 한 번 재는 자리다
+   */
+  const splitIndex = args.indexOf("--split");
+  const split = splitIndex < 0 ? undefined : Number(args[splitIndex + 1]);
+  if (split !== undefined && !(Number.isInteger(split) && split >= 0 && split <= favorPool)) throw new Error(`--split must be an integer in [0, ${favorPool}]`);
   const scenarioIndex = args.indexOf("--scenario");
   const scenario = scenarioIndex < 0 ? undefined : args[scenarioIndex + 1];
   if (scenario !== undefined && scenario !== "grace_4" && scenario !== "grace_6" && scenario !== "fused_deck") throw new Error("--scenario must be grace_4, grace_6, or fused_deck");
@@ -19,7 +26,7 @@ function parseRuns(args: string[]): { runs: number; log: boolean; stratified: bo
   const policyIndex = args.indexOf("--policy");
   const policy = policyIndex < 0 ? undefined : args[policyIndex + 1];
   if (policy !== undefined && !policies.includes(policy as Policy)) throw new Error(`--policy must be one of ${policies.join(", ")}`);
-  return { runs, log: args.includes("--log"), stratified: args.includes("--stratified"), scenario, replays, policy: policy as Policy | undefined };
+  return { runs, log: args.includes("--log"), stratified: args.includes("--stratified"), scenario, replays, policy: policy as Policy | undefined, split };
 }
 
 /**
@@ -167,7 +174,7 @@ if (process.argv[1]?.endsWith("runner.ts")) {
     else {
       const replays = options.replays.map(readReplay);
       setPolicy(options.policy);
-      const results = replays.length ? replays.map((replay) => run(replay.seed, undefined, replay.actions, replay.patrons, replay.deck)) : options.stratified ? simulateStratified(options.runs) : simulate(options.runs, options.scenario);
+      const results = replays.length ? replays.map((replay) => run(replay.seed, undefined, replay.actions, replay.patrons, replay.deck, replay.split)) : options.stratified ? simulateStratified(options.runs, options.split) : simulate(options.runs, options.scenario, options.split);
       setPolicy(undefined);
       if (options.log) console.log(results[0].log.join("\n"));
       console.log(renderReport(summarize(results)));

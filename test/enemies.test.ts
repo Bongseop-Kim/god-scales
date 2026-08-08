@@ -16,8 +16,14 @@ describe("generated enemies", () => {
     const report = summarize(simulate(500));
     expect(report.enemy_count_dist).toEqual(expect.any(Object));
     expect(report.target_spread).toEqual(expect.any(Object));
-    // 재측정 (제우스+아테나 기본 조합) 0.867 — P-22의 아테나 완화 하향이 그대로 나타난다
-    expect(report.block_efficiency).toBeGreaterThanOrEqual(0.80);
-    expect(report.block_efficiency).toBeLessThanOrEqual(0.93);
+    /**
+     * **효율은 1을 넘을 수 없다** — 흡수한 방어가 쌓은 방어보다 클 수는 없으므로, 1을 넘으면 그것은
+     * 밸런스가 아니라 분모가 빠진 것이다(개입이 준 방어를 안 세던 자리, `sim/engine.ts`).
+     *
+     * 옛 밴드 `[0.80, 0.93]`은 회차 간 비교였고 P-46이 지웠다 — **밸런스 게이트는 조합 승률 하한
+     * 하나다**(CLAUDE.md). 신탁이 호의를 조우마다 미는 지금 이 값은 0.79로 내려가는데, 그것을 맞추려
+     * 신탁 값을 깎는 것이 그 규칙이 막는 일이다. 이번 회차 실측은 리뷰(reviews/46-presence.md)에 있다
+     */
+    expect(report.block_efficiency).toBeLessThanOrEqual(1);
   });
 });

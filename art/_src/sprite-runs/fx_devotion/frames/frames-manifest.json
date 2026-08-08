@@ -1,0 +1,141 @@
+{
+  "ok": true,
+  "engine": "component-row",
+  "engine_revision": "9d4ecaf5ab56",
+  "extract_args": {
+    "chroma_mode": "ycbcr",
+    "segmentation": "projection"
+  },
+  "run_dir": "/Users/gimbongseob/git/god-scales/art/_src/sprite-runs/fx_devotion",
+  "cell": {
+    "shape": "rect",
+    "width": 1536,
+    "height": 960,
+    "safe_margin_x": 0,
+    "safe_margin_y": 0
+  },
+  "chroma_key": {
+    "name": "green",
+    "hex": "#00FF00",
+    "rgb": [
+      0,
+      255,
+      0
+    ],
+    "selection": "auto",
+    "score": 305.0,
+    "min_subject_distance": 296.75,
+    "background": {
+      "mode": "flat",
+      "hex": "#F80BF1",
+      "rgb": [
+        248,
+        11,
+        241
+      ],
+      "opaque_border_fraction": 1.0,
+      "border_coverage": 0.85,
+      "enclosed_background_pixels": 0,
+      "enclosed_material_pixels": 0,
+      "subject_pixels": 3493
+    },
+    "candidates": [
+      {
+        "name": "magenta",
+        "hex": "#FF00FF",
+        "score": 75.4,
+        "min_subject_distance": 66.16,
+        "clears_erase_radius": false
+      },
+      {
+        "name": "green",
+        "hex": "#00FF00",
+        "score": 305.0,
+        "min_subject_distance": 296.75,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "cyan",
+        "hex": "#00FFFF",
+        "score": 255.51,
+        "min_subject_distance": 253.4,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "blue",
+        "hex": "#004DFF",
+        "score": 253.18,
+        "min_subject_distance": 251.71,
+        "clears_erase_radius": true
+      }
+    ],
+    "selection_reason": "highest 1st-percentile subject distance among the 3 candidate(s) clearing the 96 erase radius"
+  },
+  "rows": [
+    {
+      "state": "play",
+      "frames": 4,
+      "method": "components",
+      "files": [
+        "frames/play/frame-0.png",
+        "frames/play/frame-1.png",
+        "frames/play/frame-2.png",
+        "frames/play/frame-3.png"
+      ],
+      "frame_records": [
+        {
+          "index": 0,
+          "nontransparent_pixels": 38059,
+          "bbox": [
+            579,
+            399,
+            957,
+            561
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 0
+        },
+        {
+          "index": 1,
+          "nontransparent_pixels": 57963,
+          "bbox": [
+            577,
+            357,
+            958,
+            603
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 0
+        },
+        {
+          "index": 2,
+          "nontransparent_pixels": 87413,
+          "bbox": [
+            577,
+            299,
+            959,
+            660
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 0
+        },
+        {
+          "index": 3,
+          "nontransparent_pixels": 133804,
+          "bbox": [
+            576,
+            210,
+            960,
+            749
+          ],
+          "edge_pixels": 0,
+          "chroma_adjacent_pixels": 0
+        }
+      ],
+      "ok": true,
+      "engine_revision": "9d4ecaf5ab56"
+    }
+  ],
+  "errors": [],
+  "warnings": []
+}
