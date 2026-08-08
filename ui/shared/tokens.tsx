@@ -1,8 +1,14 @@
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import type { CSSProperties } from "react";
-import { harmfulTokens } from "../core/rules.ts";
-import type { TokenName, Tokens } from "../core/state.ts";
-import { Icon } from "./icon.tsx";
+import { harmfulTokens } from "../../core/rules.ts";
+import type { TokenName, Tokens } from "../../core/state.ts";
+
+/**
+ * 전용 픽셀 아이콘 13종(P-57). 흰색 + 알파 원본을 `mask`로 쓰고 색은 `--token-color`가 칠한다 —
+ * `<img>`는 틴트가 안 되므로 카드 프레임(`.game-card::before`)과 같은 수법이다. 13장이 번들에
+ * 실리므로 「안 뜰 때가 곧 앱이 안 뜰 때」 — 폴백을 만들지 않는다(R-33과 같은 판단)
+ */
+const tokenArt = import.meta.glob<string>("../../art/tokens/*.webp", { eager: true, query: "?url", import: "default" });
 
 /**
  * 지속은 셋뿐이고 근거는 코드다 — `shock`은 `core/combat.ts`의 `endTurn` 맨 끝에서 지워지고,
@@ -20,10 +26,10 @@ const durationText: Record<Duration, string> = { turn: "이번 턴", next: "다�
  */
 const tokenStyle: Record<TokenName, { name: string; color: string; duration: Duration; text: string }> = {
   shock: { name: "감전", color: "var(--zeus)", duration: "turn", text: "이 대상이 받는 피해 +스택" },
-  displace: { name: "밀려남", color: "var(--poseidon)", duration: "consume", text: "다음 행동을 건너뛰고 뒤로 한 칸 밀린다" },
+  displace: { name: "밀려남", color: "var(--poseidon)", duration: "consume", text: "다음 행동을 건너뛰고 뒤로 한 칸 밀림" },
   soaked: { name: "침수", color: "var(--poseidon)", duration: "consume", text: "다음 공격 피해 −1, 광란과 상쇄" },
   bulwark: { name: "방벽", color: "var(--athena)", duration: "consume", text: "방어 뒤 스택만큼 피해를 흡수" },
-  deflect: { name: "반사", color: "var(--athena)", duration: "consume", text: "다음 공격을 통째로 되돌린다" },
+  deflect: { name: "반사", color: "var(--athena)", duration: "consume", text: "다음 공격을 막고 그대로 되돌림" },
   thorns: { name: "가시", color: "var(--athena)", duration: "combat", text: "맞을 때마다 스택만큼 반격" },
   // 제우스·포세이돈이 나눠 든다 — 색은 앞선 신 쪽이다. 소모되지 않는 유일한 공격 버프다
   might: { name: "위력", color: "var(--zeus)", duration: "combat", text: "주는 피해 +스택" },
@@ -71,12 +77,10 @@ function TokenBadge({ token, stacks = 1, still }: { token: TokenName; stacks?: n
       title={`${style.name} — ${style.text} · ${durationText[style.duration]}`}
     >
       {/**
-        * **한 글자 한글이 여기 있었다.** 계획은 그것을 아이콘 폴백으로 남기라고 했지만, 시트가 `?raw`로
-        * JS 번들에 실리므로 「아이콘이 안 뜰 때」가 곧 「앱이 안 뜰 때」다 — 폴백이 지킬 실패가 없다.
-        * 흰 글자를 위에 겹치면 20px 아이콘의 가운데를 덮어 형태가 안 읽힌다(R-33). 이름은 `title`과
-        * `tokenSummary`의 `aria-label`이 든다
+        * 전용 아이콘(P-57) — `icons.svg`의 범용 글리프가 카드 효과 줄·의도로 물러나고 배지는
+        * 토큰마다 제 그림을 든다. 이름은 `title`과 `tokenSummary`의 `aria-label`이 든다
         */}
-      <Icon name={token} />
+      <i className="token-icon" style={{ "--token-icon": `url("${tokenArt[`../../art/tokens/${token}.webp`]}")` } as CSSProperties} />
       {still
         ? <small>{stacks}</small>
         : <m.small key={stacks} initial={{ scale: 1.25 }} animate={{ scale: 1 }} transition={bump}>{stacks}</m.small>}
@@ -101,7 +105,21 @@ export function TokenRow({ tokens, limit = 4 }: { tokens: Tokens; limit?: number
   );
 }
 
-export function TokenLegend() {
-  const reducedMotion = useReducedMotion();
-  return (Object.keys(tokenStyle) as TokenName[]).map((token) => <TokenBadge key={token} token={token} still={!!reducedMotion} />);
+/**
+ * 토큰 사전(P-53) — 13종을 한눈에. **데이터는 `tokenStyle` 하나에서** 만든다: 사전용 사본을 만들면
+ * 같은 사실에 두 경로다. 진영(외곽/채움)·지속 테두리는 배지가 이미 들고 있으므로 여기서 다시 말하지 않는다
+ */
+export function TokenDictionary() {
+  return (
+    <ul className="token-dict">
+      {(Object.entries(tokenStyle) as [TokenName, (typeof tokenStyle)[TokenName]][]).map(([token, style]) => (
+        <li key={token}>
+          <TokenBadge token={token} still />
+          <b>{style.name}</b>
+          <em>{durationText[style.duration]}</em>
+          <span>{style.text}</span>
+        </li>
+      ))}
+    </ul>
+  );
 }

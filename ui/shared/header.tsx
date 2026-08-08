@@ -1,14 +1,17 @@
-import type { FavorGod, FavorStage, LineTrigger, StageEffect, StageHook } from "../core/favor.ts";
-import godDataJson from "../data/gods.json" with { type: "json" };
-import type { RunView } from "../sim/engine.ts";
+import { useEffect, useRef } from "react";
+import type { CSSProperties } from "react";
+import { favorBoundaries, favorInitial, favorStage, interventionEveryTurns, type FavorGod, type FavorStage, type LineTrigger, type StageEffect, type StageHook } from "../../core/favor.ts";
+import godDataJson from "../../data/gods.json" with { type: "json" };
+import type { RunView } from "../../sim/engine.ts";
 import { effectText } from "./card.tsx";
+import { speak } from "./fx.ts";
 
 /** 트리거 아홉은 `core/favor.ts`의 한 벌이다 — 게이트(`tools/validate.ts`)가 같은 것을 센다 */
 type GodLines = Partial<Record<LineTrigger, string[] | Partial<Record<FavorStage, string[]>>>>;
 const gods = godDataJson as (FavorGod & { name: string; lines: GodLines })[];
 const godNames = new Map(gods.map(({ id, name }) => [id, name]));
 /** 신 일러 다섯. 요구·컷인·발화가 같은 다섯 장을 쓴다 — 이름과 같은 자리에서 나눠 준다 */
-export const godArt = import.meta.glob<string>("../art/gods/*.webp", { eager: true, query: "?url", import: "default" });
+export const godArt = import.meta.glob<string>("../../art/gods/*.webp", { eager: true, query: "?url", import: "default" });
 const godLines = new Map(gods.map(({ id, lines }) => [id, lines]));
 
 /**
@@ -58,24 +61,78 @@ export const regionName = (region: string) => (region === "underworld" ? "지하
 export const placeName = ({ region, floor }: Pick<RunView, "region" | "floor">) => `${regionName(region)} ${floor}층`;
 
 /**
- * 여덟 화면이 같은 머리글을 쓴다. 조합 이름은 관측에서 온다 — 상수로 박으면 제우스+아테나 말고는
- * 못 그린다. `run-header`가 그 여덟의 눈금이다: 제목은 장식이고 값은 eyebrow와 badge가 든다
+ * 단계 경계는 `favorBoundaries`에서 읽는다 — 눈금을 UI에 다시 박으면 규칙이 바뀔 때 화면만 옛 자리에
+ * 남는다. 진노는 경고색이다: 그 단계의 개입이 조우 시작과 **전투 중**에 터지므로 플레이어가 그 전에 알아야 한다.
+ * 전투 화면의 `PlayerActor`에 살다가 상태 바(P-54)로 왔다 — 상태 바는 App에 살아 화면 전환에 안 죽으므로
+ * 경계 펄스의 `useRef`가 런 내내 이어진다
  */
-export function RunHeader({ seed, view, title, badge }: {
-  seed: number;
+export function FavorMeter({ god, value, grace }: { god: string; value: number; grace: number }) {
+  const stage = favorStage(value);
+  /**
+   * 경계를 넘는 순간에만 한 번 펄스한다 — **그 순간 신의 행동이 바뀐다**(조우 시작 개입과 전투 중
+   * 개입이 둘 다 달라진다). 직전 단계를 `useRef`에 드는 이유는 `useEffect`로 걸면 첫 렌더에
+   * 미터 둘이 번쩍이기 때문이다
+   */
+  const seen = useRef(stage);
+  const crossed = seen.current !== stage;
+  useEffect(() => {
+    // 미터가 펄스하는 그 프레임에 신이 말한다 — 단계가 바뀌면 그 신이 다음에 할 일이 통째로 바뀐다
+    if (crossed) speak(2, god, godLine(god, "cross", value, stage));
+    seen.current = stage;
+  });
+  const { start, turn } = godStageText(god, stage);
+  const stageText = [stageName[stage], start && `조우 시작에 ${start}`, turn && `${interventionEveryTurns}턴마다 ${turn}`].filter(Boolean).join(" · ");
+  return (
+    <div
+      className={`favor ${stage}${crossed ? " crossed" : ""}`}
+      role="img"
+      aria-label={`${godName(god)} 호의 ${value} ${stageText}${grace ? ` 은총 ${grace}` : ""}`}
+      title={`${stageText} — 헌신 ${favorBoundaries.devotion} / 평온 ${favorBoundaries.calm} / 분노 ${favorBoundaries.anger}`}
+    >
+      <small>{godName(god)}</small>
+      <b>{value} · {stageName[stage]}</b>
+      {/* 은총은 슬롯 표시와 다른 사실이다 — 받은 **수**(다음 은혜의 tier·합성 전제)고 슬롯은 걸린 것이다 */}
+      {grace > 0 && <em>은총 {grace}</em>}
+      <span className="meter">
+        <i style={{ "--fill": value / 100 } as CSSProperties} />
+        {Object.values(favorBoundaries).filter((at) => at > 0).map((at) => (
+          <span key={at} className="tick" style={{ left: `${at}%` }} />
+        ))}
+      </span>
+    </div>
+  );
+}
+
+/**
+ * 상단 상태 바(P-54) — `RunHeader`(제목 + 「시드 N」 eyebrow)를 대체한다. 어떤 화면인지는 내용이
+ * 이미 말하므로 제목이 없고, 시드는 반출 JSON에만 남는다. **App에 산다** — 화면 전환 밖이라
+ * 런당 ~36번 다시 서지 않고, 경계 펄스·덱·약속 버튼이 여덟 런 화면 어디에나 같은 자리다
+ */
+export function StatusBar({ view, turn, block, onOverlay }: {
   view: RunView;
-  title: string;
-  badge?: string;
+  /** 전투에서만 온다 — 없으면 그 자리는 덱 장수가 든다 */
+  turn?: number;
+  block?: number;
+  onOverlay: (kind: "deck" | "journal") => void;
 }) {
   return (
-    <header className="run-header">
+    <header className="status-bar">
       <div>
-        <p className="eyebrow">
-          시드 {seed} · {placeName(view)} · {view.patrons.map(godName).join(" + ")} · 체력 {view.hp}/{view.maxHp}
-        </p>
-        <h1>{title}</h1>
+        <span className="vitals">
+          체력 <b>{view.hp} / {view.maxHp}</b>
+          방어 <b>{block ?? 0}</b>
+        </span>
+        <div className="favor-row">
+          {view.patrons.map((god) => (
+            <FavorMeter key={god} god={god} value={view.favor[god] ?? favorInitial} grace={view.grace[god] ?? 0} />
+          ))}
+        </div>
+        <span className="whereabouts">
+          {placeName(view)}{turn !== undefined && ` · ${turn}턴`}
+          <button type="button" onClick={() => onOverlay("deck")}>덱 {view.deck.length}</button>
+          <button type="button" onClick={() => onOverlay("journal")}>약속</button>
+        </span>
       </div>
-      {badge && <strong>{badge}</strong>}
     </header>
   );
 }

@@ -50,10 +50,13 @@ const phases = ["path", "card", "target", "rest", "rest_card", "reward", "grace"
  * 결과 화면과 반출을 지나지 못하므로 B-0 4번을 증명하지 못한다.
  */
 const browserScript = `
-const tab = await openTab("http://localhost:${port}/");
+// 시드 입력이 화면에서 사라졌다(P-56) — 재현은 URL 쿼리가 든다. 자유 덱 2회차도 같은 시드로 돈다
+const tab = await openTab("http://localhost:${port}/?seed=${seed}");
 await tab.bringToFront();
+// 타이틀 화면은 페이지당 한 번이다 — 아래 「다시 시작」 체크포인트는 setup으로 곧장 돌아온다
+await tab.waitForSelector("[data-phase='intro']");
+await tab.click(".intro-menu button.primary");
 await tab.waitForSelector("[data-phase='setup']");
-await tab.fill("input[type=number]", "${seed}");
 
 /**
  * 조합은 기본값이 이미 제우스+아테나다 — 껐다 켜야 토글과 「둘 아니면 못 시작」을 실제로 지난다.
@@ -172,7 +175,8 @@ await tab.evaluate(() => {
         : phase === "target"
         ? enabled("button.enemy").sort((left, right) => enemyHp(left) - enemyHp(right))
         : phase === "card"
-        ? bestCard().concat(enabled(".decision-panel button.primary"))
+        // 「턴 종료」는 무대 우하단의 케니 버튼이다(P-55) — 패널이 사라져 클래스로 집는다
+        ? bestCard().concat(enabled("button.end-turn"))
         : bestCard();
       await advance(step, choices.filter(Boolean));
     }
@@ -335,7 +339,8 @@ try {
   check("filename", browser.filename, `god-scales-run-${seed}.json`);
   // 조합이 반출에 없으면 이 파일은 조용히 제우스+아테나로 재생된다 — 다른 조합에서는 다른 게임이 된다
   check("replay header", { seed: browser.replay.seed, mode: browser.replay.replay_mode, patrons: browser.replay.patrons }, { seed, mode: "action_log", patrons: ["zeus", "athena"] });
-  check("결과 조합", browser.eyebrow, `시드 ${seed} · 제우스 + 아테나 · ${browser.floors}/12층`);
+  // 「시드 N」이 화면에서 사라졌다(P-54) — 시드는 반출 파일명·헤더 대조(위)가 계속 지킨다
+  check("결과 조합", browser.eyebrow, `제우스 + 아테나 · ${browser.floors}/12층`);
   // 반출한 결정이 지금 규칙에서 전부 낼 수 있는 것이어야 한다 — 하나라도 아니면 봇이 대신 답한다
   check("substituted", cli.substituted, 0);
   check("outcome", { won: cli.won, floors: Math.min(12, cli.hpCurve.length - 1) }, { won: browser.won, floors: browser.floors });

@@ -21,8 +21,14 @@ const fit = () => document.documentElement.style.setProperty("--fit", String(Mat
 fit();
 addEventListener("resize", fit);
 
+/**
+ * 개발·e2e용 고정 시드(P-56) — 시드 입력이 화면에서 사라졌으므로 재현이 필요한 쪽은 URL로 넘긴다.
+ * `?seed=727` 없이 열면 App이 런마다 새로 뽑고, 반출 JSON에는 그대로 남는다
+ */
+const urlSeed = Number(new URLSearchParams(location.search).get("seed"));
+
 createRoot(app).render(
   <StrictMode>
-    <App />
+    <App seed={Number.isInteger(urlSeed) && urlSeed > 0 ? urlSeed : undefined} />
   </StrictMode>,
 );

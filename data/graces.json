@@ -4,7 +4,7 @@
     "patron": "zeus",
     "slot": "attack",
     "tier": 2,
-    "text": "네 손끝에서 갈라진다.",
+    "text": "자네 손끝에서도 번개가 갈라지네.",
     "effects": [
       {
         "op": "apply_token",
@@ -18,7 +18,7 @@
     "patron": "zeus",
     "slot": "attack",
     "tier": 4,
-    "text": "네 손끝에서 갈라진다.",
+    "text": "자네 손끝에서도 번개가 갈라지네.",
     "effects": [
       {
         "op": "apply_token",
@@ -32,7 +32,7 @@
     "patron": "zeus",
     "slot": "attack",
     "tier": 6,
-    "text": "네 손끝에서 갈라진다.",
+    "text": "자네 손끝에서도 번개가 갈라지네.",
     "effects": [
       {
         "op": "apply_token",
@@ -52,7 +52,7 @@
     "patron": "zeus",
     "slot": "defend",
     "tier": 2,
-    "text": "천둥이 먼저 오고 벼락이 뒤에 온다. 그 사이가 네 방패다.",
+    "text": "천둥이 먼저, 벼락은 뒤일세. 그 사이가 자네 방패네.",
     "effects": [
       {
         "op": "block",
@@ -65,7 +65,7 @@
     "patron": "zeus",
     "slot": "defend",
     "tier": 4,
-    "text": "천둥이 먼저 오고 벼락이 뒤에 온다. 그 사이가 네 방패다.",
+    "text": "천둥이 먼저, 벼락은 뒤일세. 그 사이가 자네 방패네.",
     "effects": [
       {
         "op": "block",
@@ -78,7 +78,7 @@
     "patron": "zeus",
     "slot": "defend",
     "tier": 6,
-    "text": "천둥이 먼저 오고 벼락이 뒤에 온다. 그 사이가 네 방패다.",
+    "text": "천둥이 먼저, 벼락은 뒤일세. 그 사이가 자네 방패네.",
     "effects": [
       {
         "op": "block",
@@ -96,7 +96,7 @@
     "patron": "zeus",
     "slot": "utility",
     "tier": 2,
-    "text": "하늘은 네가 보기 전에 읽는다.",
+    "text": "하늘은 자네가 보기 전에 읽어 두지.",
     "effects": [
       {
         "op": "draw",
@@ -110,7 +110,7 @@
     "patron": "zeus",
     "slot": "utility",
     "tier": 4,
-    "text": "하늘은 네가 보기 전에 읽는다.",
+    "text": "하늘은 자네가 보기 전에 읽어 두지.",
     "effects": [
       {
         "op": "draw",
@@ -123,7 +123,7 @@
     "patron": "zeus",
     "slot": "utility",
     "tier": 6,
-    "text": "하늘은 네가 보기 전에 읽는다.",
+    "text": "하늘은 자네가 보기 전에 읽어 두지.",
     "effects": [
       {
         "op": "draw",
@@ -141,7 +141,7 @@
     "patron": "poseidon",
     "slot": "attack",
     "tier": 2,
-    "text": "닿은 것은 모두 젖는다.",
+    "text": "닿고도 안 젖을 성싶나?",
     "effects": [
       {
         "op": "apply_token",
@@ -156,7 +156,7 @@
     "patron": "poseidon",
     "slot": "attack",
     "tier": 4,
-    "text": "닿은 것은 모두 젖는다.",
+    "text": "닿고도 안 젖을 성싶나?",
     "effects": [
       {
         "op": "apply_token",
@@ -170,7 +170,7 @@
     "patron": "poseidon",
     "slot": "attack",
     "tier": 6,
-    "text": "닿은 것은 모두 젖는다.",
+    "text": "닿고도 안 젖을 성싶나?",
     "effects": [
       {
         "op": "apply_token",
@@ -190,7 +190,7 @@
     "patron": "poseidon",
     "slot": "defend",
     "tier": 2,
-    "text": "물러서는 자리에서 해류가 보인다.",
+    "text": "물러서 보게. 해류가 보일 걸세.",
     "effects": [
       {
         "op": "draw",
@@ -204,7 +204,7 @@
     "patron": "poseidon",
     "slot": "defend",
     "tier": 4,
-    "text": "물러서는 자리에서 해류가 보인다.",
+    "text": "물러서 보게. 해류가 보일 걸세.",
     "effects": [
       {
         "op": "draw",
@@ -217,7 +217,7 @@
     "patron": "poseidon",
     "slot": "defend",
     "tier": 6,
-    "text": "물러서는 자리에서 해류가 보인다.",
+    "text": "물러서 보게. 해류가 보일 걸세.",
     "effects": [
       {
         "op": "draw",
@@ -235,7 +235,7 @@
     "patron": "poseidon",
     "slot": "token",
     "tier": 2,
-    "text": "밀물은 상처를 씻고 돌아간다.",
+    "text": "밀물이 상처를 씻고 가네.",
     "effects": [
       {
         "op": "heal",
@@ -248,7 +248,7 @@
     "patron": "poseidon",
     "slot": "token",
     "tier": 4,
-    "text": "밀물은 상처를 씻고 돌아간다.",
+    "text": "밀물이 상처를 씻고 가네.",
     "effects": [
       {
         "op": "heal",
@@ -261,7 +261,7 @@
     "patron": "poseidon",
     "slot": "token",
     "tier": 6,
-    "text": "밀물은 상처를 씻고 돌아간다.",
+    "text": "밀물이 상처를 씻고 가네.",
     "effects": [
       {
         "op": "heal",
@@ -279,7 +279,7 @@
     "patron": "athena",
     "slot": "attack",
     "tier": 2,
-    "text": "지혜는 급소를 먼저 안다.",
+    "text": "급소는 제가 먼저 봐 뒀어요.",
     "effects": [
       {
         "op": "damage",
@@ -293,7 +293,7 @@
     "patron": "athena",
     "slot": "attack",
     "tier": 4,
-    "text": "지혜는 급소를 먼저 안다.",
+    "text": "급소는 제가 먼저 봐 뒀어요.",
     "effects": [
       {
         "op": "damage",
@@ -306,7 +306,7 @@
     "patron": "athena",
     "slot": "attack",
     "tier": 6,
-    "text": "지혜는 급소를 먼저 안다.",
+    "text": "급소는 제가 먼저 봐 뒀어요.",
     "effects": [
       {
         "op": "damage",
@@ -324,7 +324,7 @@
     "patron": "athena",
     "slot": "defend",
     "tier": 2,
-    "text": "지혜는 같은 벽을 두 번 쌓지 않는다.",
+    "text": "같은 벽은 두 번 쌓지 않아요.",
     "effects": [
       {
         "op": "apply_token",
@@ -339,7 +339,7 @@
     "patron": "athena",
     "slot": "defend",
     "tier": 4,
-    "text": "지혜는 같은 벽을 두 번 쌓지 않는다.",
+    "text": "같은 벽은 두 번 쌓지 않아요.",
     "effects": [
       {
         "op": "apply_token",
@@ -353,7 +353,7 @@
     "patron": "athena",
     "slot": "defend",
     "tier": 6,
-    "text": "지혜는 같은 벽을 두 번 쌓지 않는다.",
+    "text": "같은 벽은 두 번 쌓지 않아요.",
     "effects": [
       {
         "op": "apply_token",
@@ -373,7 +373,7 @@
     "patron": "athena",
     "slot": "utility",
     "tier": 2,
-    "text": "방패에는 언제나 가장자리가 있다.",
+    "text": "방패의 가장자리도 무기예요.",
     "effects": [
       {
         "op": "apply_token",
@@ -388,7 +388,7 @@
     "patron": "athena",
     "slot": "utility",
     "tier": 4,
-    "text": "방패에는 언제나 가장자리가 있다.",
+    "text": "방패의 가장자리도 무기예요.",
     "effects": [
       {
         "op": "apply_token",
@@ -402,7 +402,7 @@
     "patron": "athena",
     "slot": "utility",
     "tier": 6,
-    "text": "방패에는 언제나 가장자리가 있다.",
+    "text": "방패의 가장자리도 무기예요.",
     "effects": [
       {
         "op": "apply_token",
@@ -422,7 +422,7 @@
     "patron": "ares",
     "slot": "attack",
     "tier": 2,
-    "text": "상처는 네가 떠난 뒤에 일한다.",
+    "text": "상처는 네가 떠난 뒤에도 일해.",
     "effects": [
       {
         "op": "apply_token",
@@ -437,7 +437,7 @@
     "patron": "ares",
     "slot": "attack",
     "tier": 4,
-    "text": "상처는 네가 떠난 뒤에 일한다.",
+    "text": "상처는 네가 떠난 뒤에도 일해.",
     "effects": [
       {
         "op": "apply_token",
@@ -451,7 +451,7 @@
     "patron": "ares",
     "slot": "attack",
     "tier": 6,
-    "text": "상처는 네가 떠난 뒤에 일한다.",
+    "text": "상처는 네가 떠난 뒤에도 일해.",
     "effects": [
       {
         "op": "apply_token",
@@ -471,7 +471,7 @@
     "patron": "ares",
     "slot": "defend",
     "tier": 2,
-    "text": "버틴 만큼 화가 쌓인다.",
+    "text": "버틴 만큼 화가 쌓이는 거야.",
     "effects": [
       {
         "op": "apply_token",
@@ -486,7 +486,7 @@
     "patron": "ares",
     "slot": "defend",
     "tier": 4,
-    "text": "버틴 만큼 화가 쌓인다.",
+    "text": "버틴 만큼 화가 쌓이는 거야.",
     "effects": [
       {
         "op": "apply_token",
@@ -500,7 +500,7 @@
     "patron": "ares",
     "slot": "defend",
     "tier": 6,
-    "text": "버틴 만큼 화가 쌓인다.",
+    "text": "버틴 만큼 화가 쌓이는 거야.",
     "effects": [
       {
         "op": "apply_token",
@@ -520,7 +520,7 @@
     "patron": "ares",
     "slot": "token",
     "tier": 2,
-    "text": "낙인을 새기는 손은 비어 있지 않다.",
+    "text": "낙인 새기는 손이 빈 줄 알아?",
     "effects": [
       {
         "op": "block",
@@ -533,7 +533,7 @@
     "patron": "ares",
     "slot": "token",
     "tier": 4,
-    "text": "낙인을 새기는 손은 비어 있지 않다.",
+    "text": "낙인 새기는 손이 빈 줄 알아?",
     "effects": [
       {
         "op": "block",
@@ -546,7 +546,7 @@
     "patron": "ares",
     "slot": "token",
     "tier": 6,
-    "text": "낙인을 새기는 손은 비어 있지 않다.",
+    "text": "낙인 새기는 손이 빈 줄 알아?",
     "effects": [
       {
         "op": "block",
@@ -564,7 +564,7 @@
     "patron": "artemis",
     "slot": "attack",
     "tier": 2,
-    "text": "겨눈 것은 이미 맞은 것이다.",
+    "text": "겨눴으면 맞은 거야.",
     "effects": [
       {
         "op": "apply_token",
@@ -579,7 +579,7 @@
     "patron": "artemis",
     "slot": "attack",
     "tier": 4,
-    "text": "겨눈 것은 이미 맞은 것이다.",
+    "text": "겨눴으면 맞은 거야.",
     "effects": [
       {
         "op": "apply_token",
@@ -593,7 +593,7 @@
     "patron": "artemis",
     "slot": "attack",
     "tier": 6,
-    "text": "겨눈 것은 이미 맞은 것이다.",
+    "text": "겨눴으면 맞은 거야.",
     "effects": [
       {
         "op": "apply_token",
@@ -612,7 +612,7 @@
     "patron": "artemis",
     "slot": "token",
     "tier": 2,
-    "text": "숲은 사냥꾼을 숨겨 준다.",
+    "text": "숲이 널 숨겨 줄 거야.",
     "effects": [
       {
         "op": "block",
@@ -625,7 +625,7 @@
     "patron": "artemis",
     "slot": "token",
     "tier": 4,
-    "text": "숲은 사냥꾼을 숨겨 준다.",
+    "text": "숲이 널 숨겨 줄 거야.",
     "effects": [
       {
         "op": "block",
@@ -638,7 +638,7 @@
     "patron": "artemis",
     "slot": "token",
     "tier": 6,
-    "text": "숲은 사냥꾼을 숨겨 준다.",
+    "text": "숲이 널 숨겨 줄 거야.",
     "effects": [
       {
         "op": "block",
@@ -656,7 +656,7 @@
     "patron": "artemis",
     "slot": "utility",
     "tier": 2,
-    "text": "사냥은 한 번에 끝난다.",
+    "text": "사냥은 한 방에 끝내자.",
     "effects": [
       {
         "op": "apply_token",
@@ -671,7 +671,7 @@
     "patron": "artemis",
     "slot": "utility",
     "tier": 4,
-    "text": "사냥은 한 번에 끝난다.",
+    "text": "사냥은 한 방에 끝내자.",
     "effects": [
       {
         "op": "apply_token",
@@ -685,7 +685,7 @@
     "patron": "artemis",
     "slot": "utility",
     "tier": 6,
-    "text": "사냥은 한 번에 끝난다.",
+    "text": "사냥은 한 방에 끝내자.",
     "effects": [
       {
         "op": "apply_token",

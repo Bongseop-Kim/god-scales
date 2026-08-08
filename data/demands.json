@@ -7,12 +7,12 @@
     "min_enemies": 2,
     "tiers": [
       {
-        "text": "물러서지 마라. 한 턴에 둘은 맞아야 한다.",
+        "text": "물러서지 말게. 한 턴에 둘은 맞혀야 하네.",
         "condition": "hit_targets_in_turn >= 2",
         "reward": { "favor": 12 }
       },
       {
-        "text": "한 번의 벼락으로 셋을 쳐라. 흩어진 적에게 자비를 두지 마라.",
+        "text": "벼락 한 번에 셋을 치게. 흩어진 놈들에게 자비는 사치일세.",
         "condition": "hit_targets_in_turn >= 3",
         "cost": { "favor": 18, "maxHp": 8, "encounters": 2 },
         "reward": { "grace": 1 }
@@ -27,12 +27,12 @@
     "min_enemies": 1,
     "tiers": [
       {
-        "text": "파도를 둘로 갈라도 좋다. 셋은 안 된다.",
+        "text": "파도를 둘로 가르는 것까진 봐줌세. 셋은 안 되네.",
         "condition": "hit_targets_in_turn <= 2",
         "reward": { "favor": 12 }
       },
       {
-        "text": "한 놈만 노려라. 파도는 갈라지지 않는다.",
+        "text": "한 놈만 노리게. 파도는 갈라지지 않는 법이야.",
         "condition": "hit_targets_in_turn <= 1",
         "cost": { "favor": 18, "maxHp": 8, "encounters": 2 },
         "reward": { "grace": 1 }
@@ -47,12 +47,12 @@
     "min_enemies": 1,
     "tiers": [
       {
-        "text": "스물 넘게 내주지 마라. 방벽은 세우고 나서 자랑하는 것이다.",
+        "text": "스물 넘게 내주지 마세요. 방벽은 세우고 나서 자랑하는 거예요.",
         "condition": "damage_taken <= 20",
         "reward": { "favor": 12 }
       },
       {
-        "text": "여덟이다. 크게 맞고 이기는 것은 승리가 아니다.",
+        "text": "여덟이에요. 크게 맞고 이기는 건 승리가 아니에요.",
         "condition": "damage_taken <= 8",
         "cost": { "favor": 18, "maxHp": 8, "encounters": 2 },
         "reward": { "grace": 1 }
@@ -67,12 +67,12 @@
     "min_enemies": 1,
     "tiers": [
       {
-        "text": "열넷은 흘려라. 대가 없는 승리를 나는 인정하지 않는다.",
+        "text": "열넷은 흘려. 대가 없는 승리 따위 인정 안 해.",
         "condition": "damage_taken > 14",
         "reward": { "favor": 12 }
       },
       {
-        "text": "스물여섯. 그 아래는 상처가 아니라 흠집이다.",
+        "text": "스물여섯. 그 아래는 상처가 아니라 흠집이야.",
         "condition": "damage_taken > 26",
         "cost": { "favor": 18, "maxHp": 8, "encounters": 2 },
         "reward": { "grace": 1 }
@@ -87,12 +87,12 @@
     "min_enemies": 1,
     "tiers": [
       {
-        "text": "한 호흡에 셋을 새겨라. 사냥은 조준에서 시작된다.",
+        "text": "한 호흡에 셋을 새기자. 사냥은 조준에서 시작해.",
         "condition": "tokens_applied_in_turn >= 3",
         "reward": { "favor": 12 }
       },
       {
-        "text": "다섯이다. 표적이 어디로 달아나든 이미 늦었어야 한다.",
+        "text": "다섯이야. 표적이 어디로 달아나든 이미 늦었어야 해.",
         "condition": "tokens_applied_in_turn >= 5",
         "cost": { "favor": 18, "maxHp": 8, "encounters": 2 },
         "reward": { "grace": 1 }

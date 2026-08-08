@@ -1,58 +1,81 @@
 import type { CSSProperties } from "react";
-import type { DemandCost, DemandReward } from "../core/demands.ts";
-import { favorInitial, favorStage, oracleSwing } from "../core/favor.ts";
-import { restHealing } from "../core/map.ts";
-import { favorPool, type DemandDecision, type GraceDecision, type MapDecision, type OracleDecision, type RunView } from "../sim/engine.ts";
-import { Backdrop, backdropArt } from "./backdrop.tsx";
-import { CardRow, effectText } from "./card.tsx";
-import { godArt, godLine, godName, stageName, RunHeader } from "./header.tsx";
+import type { DemandCost, DemandReward } from "../../core/demands.ts";
+import { favorInitial, favorStage, oracleSwing } from "../../core/favor.ts";
+import { restHealing } from "../../core/map.ts";
+import { favorPool, type DemandDecision, type GraceDecision, type MapDecision, type OracleDecision, type RunView } from "../../sim/engine.ts";
+import { Backdrop, backdropArt, Flanks, Prop } from "../shared/backdrop.tsx";
+import { CardRow, effectText } from "../shared/card.tsx";
+import { godArt, godLine, godName, stageName } from "../shared/header.tsx";
 
-/** 휴식·은혜·요구 셋 다 지도 위의 한 칸짜리 결정이다 — 지도 패널 없이 한 단짜리로 그린다 */
-function Screen({ seed, view, title, badge, children }: {
-  seed: number;
+/**
+ * 휴식·은혜·요구 셋 다 지도 위의 한 칸짜리 결정이다 — 지도 패널 없이 한 단짜리로 그린다.
+ * 제목·머리글이 없다(P-54) — 어떤 화면인지는 내용이 말하고, 값은 상단 상태 바가 든다.
+ * 패널은 680 중앙, **쉼터의 카드 고르기만 전폭**이다(덱 전체가 깔리는 자리, `wide`)
+ */
+function Screen({ view, wide, campfire, children }: {
   view: RunView;
-  title: string;
-  badge?: string;
+  wide?: boolean;
+  /** 쉼터만 모닥불 역할 프롭이 패널 아래 중앙에 선다(P-58 §12) */
+  campfire?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <>
       {/* 쉼터·예고·은혜에는 전용 배경이 없다 — 그 지역의 전투 배경을 어둡게 깐다. 새로 그리지 않는다 */}
       <Backdrop src={backdropArt(view.region, "combat")} tone="dim" />
-      <div className="shell">
-        <RunHeader seed={seed} view={view} title={title} badge={badge} />
-        <div className="decision-panel">{children}</div>
+      <div className="shell run">
+        {/* 패널 좌우 바깥 1쌍(P-58) — 배경과 UI 사이 레이어라 판을 안 민다 */}
+        <Flanks region={view.region} depth={view.depth} />
+        {campfire && <Prop name={view.region === "surface" ? "surface_light_shaft" : "under_tartarus_glow"} className="campfire" />}
+        <div className={`decision-panel solo${wide ? " wide" : ""}`}>{children}</div>
       </div>
     </>
   );
 }
 
-/** `detail`이 노드인 이유는 요구 하나뿐이다 — 거기서만 조건 줄이 문장 **아래에** 한 겹 더 선다 */
-function Choice({ mark, label, detail, onChoose }: { mark: string; label: string; detail: React.ReactNode; onChoose: () => void }) {
+/**
+ * 타이틀이 하던 「누구의 무엇」을 요구의 `god-say` 꼴(초상 84 + 신 색 왼 테두리)이 이어받는다.
+ * **새 대사를 쓰지 않는다** — 대사 신설은 WRITING.md 신별 목소리 검수가 필요한 별도 작업이라
+ * 라벨(「아테나의 은혜 · tier 2」)만 세운다
+ */
+function GodSay({ god, children }: { god: string; children: React.ReactNode }) {
+  const portrait = godArt[`../../art/gods/${god}.webp`];
   return (
-    <button className="choice" type="button" onClick={onChoose}>
+    <div className="god-say" style={{ "--god-color": `var(--${god})` } as CSSProperties}>
+      {portrait && <img src={portrait} alt="" />}
+      <b>{children}</b>
+    </div>
+  );
+}
+
+/** `detail`이 노드인 이유는 요구 하나뿐이다 — 거기서만 조건 줄이 문장 **아래에** 한 겹 더 선다 */
+function Choice({ mark, label, detail, disabled, onChoose }: { mark: string; label: string; detail: React.ReactNode; disabled?: boolean; onChoose: () => void }) {
+  return (
+    // 못 고르는 칸은 `disabled`가 말한다 — 핸들러 안에서 조용히 무시하면 멀쩡한 버튼이 고장으로 읽힌다
+    <button className="choice" type="button" disabled={disabled} onClick={onChoose}>
       <span>{mark}</span><b>{label}</b><small>{detail}</small>
     </button>
   );
 }
 
-export function RestScreen({ seed, decision, onAnswer }: {
-  seed: number;
+export function RestScreen({ decision, onAnswer }: {
   decision: MapDecision;
   onAnswer: (choice: string) => void;
 }) {
   const { phase, options, observation: view } = decision;
   return (
-    <Screen seed={seed} view={view} title="쉼터" badge={`덱 ${view.deck.length}장`}>
+    // 카드 고르기(rest_card)만 전폭이다 — 덱 전체가 깔리는 자리, 한 줄 7장(P-54)
+    <Screen view={view} wide={phase === "rest_card"} campfire>
       {phase === "rest"
         ? (
           <>
             <h2>어떻게 쉴까요?</h2>
+            {/* 조언 꼬리(「얇은 덱이…」·「같은 카드 두 장 중…」)는 도움말(P-53)로 갔다 — 결정 정보만 남는다 */}
             <Choice mark="회" label="회복" detail={`체력을 ${restHealing} 회복합니다.`} onChoose={() => onAnswer("heal")} />
-            <Choice mark="제" label="카드 제거" detail="덱에서 한 장을 영구히 뺍니다. 얇은 덱이 핵심 카드를 더 자주 뽑습니다." onChoose={() => onAnswer("remove")} />
+            <Choice mark="제" label="카드 제거" detail="덱에서 한 장을 영구히 뺍니다." onChoose={() => onAnswer("remove")} />
             {/* 강화할 카드가 없으면 관측이 이 답을 안 싣는다 — 서지 않는 칸은 그리지 않는다 */}
             {options.includes("upgrade") && (
-              <Choice mark="강" label="카드 강화" detail="덱의 한 장을 키웁니다. 장수는 그대로고, 같은 카드 두 장 중 한 장만 커집니다." onChoose={() => onAnswer("upgrade")} />
+              <Choice mark="강" label="카드 강화" detail="덱의 한 장을 키웁니다. 장수는 그대로입니다." onChoose={() => onAnswer("upgrade")} />
             )}
           </>
         )
@@ -74,24 +97,23 @@ const slotName: Record<string, string> = { attack: "공격", defend: "방어", u
  * 은혜 3택1. 은혜는 카드가 아니므로 `CardRow`가 아니라 `Choice` 셋이다 — 고르는 것은 「어느 카드에
  * 붙일까」가 아니라 「어느 슬롯을 어느 신에게 줄까」다. 이미 찬 슬롯이면 **무엇을 밀어내는지** 적는다
  */
-export function GraceScreen({ seed, decision, onAnswer }: {
-  seed: number;
+export function GraceScreen({ decision, onAnswer }: {
   decision: GraceDecision;
   onAnswer: (choice: string) => void;
 }) {
   const { options, observation: view } = decision;
   return (
-    <Screen seed={seed} view={view} title={`${godName(view.god)}의 은혜`} badge={`tier ${view.tier}`}>
-      <p className="hint" role="status">
-        은혜는 카드 한 장이 아니라 그 슬롯의 모든 카드에 붙습니다. 슬롯당 하나이고, 바꿔도 tier는 남습니다.
-      </p>
+    <Screen view={view}>
+      {/* 상주 힌트(「은혜는 카드 한 장이 아니라…」)는 도움말(P-53)로 갔다 — 라벨이 타이틀을 대신한다 */}
+      <GodSay god={view.god}>{godName(view.god)}의 은혜 · tier {view.tier}</GodSay>
       {view.offer.map((grace) => (
         <Choice
           key={grace.id}
           mark={slotName[grace.slot] ?? grace.slot}
           label={`${slotName[grace.slot] ?? grace.slot} 슬롯 · tier ${grace.tier} · 덱 ${grace.cards}장`}
           detail={`${effectText({ target: "enemy", effects: grace.effects })} — ${grace.text}${grace.replaces ? ` (지금의 「${grace.replaces}」를 밀어냅니다)` : ""}`}
-          onChoose={() => options.includes(grace.id) && onAnswer(grace.id)}
+          disabled={!options.includes(grace.id)}
+          onChoose={() => onAnswer(grace.id)}
         />
       ))}
     </Screen>
@@ -126,24 +148,19 @@ const rewardText = (patron: string, reward: DemandReward): string =>
  * 요구는 수락·시련·거절 셋이다. 시련은 값을 **선불로** 치르고 은혜를 받는다 — 5층과 적이 모자란
  * 조우에서는 그 칸이 아예 서지 않으므로 관측이 실어 온 단만 그린다
  */
-export function DemandScreen({ seed, decision, onAnswer }: {
-  seed: number;
+export function DemandScreen({ decision, onAnswer }: {
   decision: DemandDecision;
   onAnswer: (choice: string) => void;
 }) {
   const view = decision.observation;
   const penalty = view.penalty ? ` · ${godName(view.other)} 호의 −${Math.abs(view.penalty)}` : "";
-  const portrait = godArt[`../art/gods/${view.patron}.webp`];
   return (
-    <Screen seed={seed} view={view} title={`${godName(view.patron)}의 요구`}>
+    <Screen view={view}>
       {/**
        * 요구 화면은 글자만 있었다 — 신이 직접 말을 거는 자리인데 누가 말하는지가 화면에 없었다.
        * 일러 다섯은 이미 있고(`art/gods`) 이 계획은 에셋을 새로 만들지 않는다
        */}
-      <div className="god-say" style={{ "--god-color": `var(--${view.patron})` } as CSSProperties}>
-        {portrait && <img src={portrait} alt="" />}
-        <b>{godLine(view.patron, "demand_offer", view.depth)}</b>
-      </div>
+      <GodSay god={view.patron}>{godLine(view.patron, "demand_offer", view.depth)}</GodSay>
       {view.tiers.map((tier) => {
         const [mark, name] = tierName[tier.action] ?? ["요", tier.action];
         return (
@@ -160,7 +177,8 @@ export function DemandScreen({ seed, decision, onAnswer }: {
                 지키면 {rewardText(view.patron, tier.reward)}{penalty}
               </>
             }
-            onChoose={() => decision.options.includes(tier.action) && onAnswer(tier.action)}
+            disabled={!decision.options.includes(tier.action)}
+            onChoose={() => onAnswer(tier.action)}
           />
         );
       })}
@@ -176,8 +194,7 @@ export function DemandScreen({ seed, decision, onAnswer }: {
  * 두 줄이 **기운 뒤의 값과 단계를 두 신 다** 적는다 — 「62 → 74 · 평온 → 헌신」과 그 대가가 같은
  * 줄에 서야 결정이 계산이 된다(요구 화면의 「대가가 앞에 선다」와 같은 규칙, R-26)
  */
-export function OracleScreen({ seed, decision, onAnswer }: {
-  seed: number;
+export function OracleScreen({ decision, onAnswer }: {
   decision: OracleDecision;
   onAnswer: (choice: string) => void;
 }) {
@@ -191,10 +208,9 @@ export function OracleScreen({ seed, decision, onAnswer }: {
   };
   const tilt = (toward: string, away: string, amount: number) => `${moved(toward, amount)} — ${moved(away, -amount)}`;
   return (
-    <Screen seed={seed} view={view} title={`${godName(view.god)}의 신탁`} badge={`${view.turn}턴`}>
-      <p className="hint" role="status">
-        저울은 한 조우에 한 번 기웁니다. 합은 그대로고 한쪽이 오르면 반대쪽이 그만큼 내려갑니다 — 거절할 「거절」은 없습니다.
-      </p>
+    <Screen view={view}>
+      {/* 상주 힌트(「저울은 한 조우에 한 번…」)는 도움말(P-53)로 갔다 */}
+      <GodSay god={view.god}>{godName(view.god)}의 신탁</GodSay>
       <Choice
         mark="따"
         label={`${godName(view.god)}에게 기운다 · +${oracleSwing}`}

@@ -14,7 +14,7 @@ import { executeCard, loadCards, type Card } from "../core/rules";
 import type { CombatState, GameState } from "../core/state";
 import { canReachTarget, livingInReach, reachOk, reachSlots } from "../core/targeting";
 import { validateItems } from "../tools/validate";
-import { reachText } from "../ui/card";
+import { reachText } from "../ui/shared/card";
 
 const wrap = (combat: CombatState): GameState => ({ seed: 1, combat, favor: {}, grace: {}, graceSlots: {}, map: { depth: 0, lane: 1, grid: [], completed: [] } });
 const dummy = (id: string, hp = 30): EnemyDefinition => ({ id, hp, pattern: [{ block: 1 }] });

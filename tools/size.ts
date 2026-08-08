@@ -10,8 +10,10 @@ import { readdirSync, statSync } from "node:fs";
 import { extname, join } from "node:path";
 
 const bundled: { directory: string; extension: string; only?: string[] }[] = [
-  ...["sprites", "cards", "bg", "props", "gods", "fx", "hero", "ui", "particle"].map((kind) => ({ directory: `art/${kind}`, extension: ".webp" })),
+  ...["sprites", "cards", "bg", "props", "gods", "fx", "hero", "ui", "particle", "tokens"].map((kind) => ({ directory: `art/${kind}`, extension: ".webp" })),
   { directory: "art/ui", extension: ".png" },
+  // 케니 UI 조각(9-slice·크로스헤어)도 CSS `url()`로 번들에 실린다(P-54·P-55)
+  { directory: "art/kenney", extension: ".png", only: ["panel-border-007-bronze.png", "panel-border-010-bronze.png", "crosshair-030-32.png", "crosshair-167.png"] },
   // 아이콘 시트는 `?raw`로 JS 번들 안에 실린다 — 별도 파일로 안 나가도 바이트는 나간다
   { directory: "art", extension: ".svg" },
   // 커서는 **쓰는 넷만** 들어간다 — 팩에 220장이 있다. 파티클도 81장 중 넷이지만 그 넷만 webp다

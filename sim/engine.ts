@@ -239,19 +239,21 @@ const upgradable = (deck: readonly string[], cardMap: ReadonlyMap<string, Card>)
     const { base, level } = cardLevel(id);
     return level < MAX_UPGRADE && !cardMap.get(base)?.patronPair;
   });
-const runView = (state: GameState, patrons: PatronPair): RunView => {
+const runView = (state: GameState, patrons: PatronPair, deck: readonly string[], cardMap: ReadonlyMap<string, Card>): RunView => {
   const { region, floor } = mapSlot(state.map.depth);
-  return { depth: state.map.depth, lane: state.map.lane, region, floor, hp: state.combat.player.hp, maxHp: state.combat.player.maxHp, patrons, grid: state.map.grid, favor: { ...state.favor }, grace: { ...state.grace } };
+  return { depth: state.map.depth, lane: state.map.lane, region, floor, hp: state.combat.player.hp, maxHp: state.combat.player.maxHp, patrons, grid: state.map.grid, favor: { ...state.favor }, grace: { ...state.grace }, deck: deck.map((id) => cardView(cardMap.get(id)!)) };
 };
 /**
  * 모든 관측이 공유한다. `patrons`는 런 내내 고정이고, 화면 머리글이 조합 이름을 여기서 읽는다.
  * 위치도 격자도 여기 있다 — UI가 시드로 `generateMap`을 다시 풀면 같은 사실에 두 경로가 생긴다.
- * `favor`·`grace`는 조합 둘의 것만 든다 — 나머지 셋은 아무것도 움직이지 않으므로 칸이 아예 없다(R-26)
+ * `favor`·`grace`는 조합 둘의 것만 든다 — 나머지 셋은 아무것도 움직이지 않으므로 칸이 아예 없다(R-26).
+ * `deck`은 P-53의 덱 오버레이가 어느 phase에서나 읽는다 — 규칙·값 불변, 관측 확장이다
  */
 export type RunView = {
   depth: number; lane: number; region: string; floor: number; hp: number; maxHp: number; patrons: PatronPair; grid: MapGrid;
   favor: Record<string, number>;
   grace: Record<string, number>;
+  deck: CardView[];
 };
 /** 등록된 파워 하나. 카드를 그대로 실어 화면이 효과문을 손패와 같은 `effectText`로 그린다 */
 type PowerView = { trigger: Trigger; card: CardView };
@@ -290,8 +292,8 @@ export type PromiseView = { god: string; text: string; rule: string; current: nu
  */
 type DemandPromise = { demand: Demand; patron: GodId; other: GodId; choice: string; tier?: DemandTier };
 /** `text`는 그 층의 문장이다 — 지도 화면이 지금 어디 서 있는지 한 줄로 읽는다 */
-type MapObservation = RunView & { deck: CardView[]; text: string };
-type RewardObservation = RunView & { deck: number; cards: CardView[] };
+type MapObservation = RunView & { text: string };
+type RewardObservation = RunView & { cards: CardView[] };
 /**
  * 은혜 후보 하나. `cards`는 지금 덱에 있는 그 슬롯의 카드 수 — 은혜가 몇 장에 붙는지가 결정의 근거다.
  * `replaces`는 그 슬롯이 이미 든 은혜의 문장으로, **무엇을 밀어내는지** 화면에 서야 한다
@@ -406,7 +408,7 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
     return [{ god: patron, text: tier.text, rule: ruleText(tier.condition), current: facts[fact as keyof typeof facts] ?? 0, target, settled: demandSettled(tier, facts) }];
   });
   const observation = (): CombatObservation => ({
-    ...runView(state, patrons),
+    ...runView(state, patrons, deck, cardMap),
     turn: state.combat.turn,
     block: state.combat.player.block,
     tokens: { ...state.combat.player.tokens },
@@ -627,7 +629,7 @@ export function* runSteps(
    * **남은 기간**을 든다 — 조우가 지나면 줄고 0에서 여유를 되돌려 준다(카오스의 저주가 걷히는 자리)
    */
   let trial: { maxHp: number; encounters: number } | undefined;
-  const view = () => runView(state, patrons);
+  const view = () => runView(state, patrons, deck, cardMap);
 
   /** 지금 덱의 슬롯별 카드 수. 은혜 값은 이 장수만큼 곱해져 들어가므로 봇도 화면도 이것을 읽는다 */
   const deckSlotCards = (): Record<string, number> => Object.fromEntries(graceSlots
@@ -748,7 +750,7 @@ export function* runSteps(
       phase: "reward",
       options: [...offer, skipReward],
       bot: chooseReward(offer, cardMap, noise),
-      observation: { ...view(), deck: deck.length, cards: offer.map((id) => cardView(cardMap.get(id)!)) },
+      observation: { ...view(), cards: offer.map((id) => cardView(cardMap.get(id)!)) },
     };
     if (picked !== skipReward && !offer.includes(picked)) throw new Error(`Invalid reward action: ${picked}`);
     if (picked) deck.push(picked);
@@ -771,7 +773,7 @@ export function* runSteps(
     const { region, floor } = mapSlot(state.map.depth);
     const row = state.map.grid[state.map.depth];
     const options = reachableLanes(state.map.depth, state.map.lane).map((lane) => `${lane}:${row[lane]}`);
-    const mapObservation: MapObservation = { ...view(), deck: deck.map((id) => cardView(cardMap.get(id)!)), text: mapSlots.get(`${region}:${floor}`)!.text };
+    const mapObservation: MapObservation = { ...view(), text: mapSlots.get(`${region}:${floor}`)!.text };
     // 갈래가 하나뿐인 자리는 보스 층뿐이다 — 물을 것이 없으면 묻지 않는다
     if (options.length > 1) {
       const choice = yield {

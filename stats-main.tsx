@@ -1,7 +1,7 @@
 import { StrictMode, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import type { StatsPayload } from "./sim/stats.ts";
-import { StatsPage } from "./ui/stats.tsx";
+import { StatsPage } from "./ui/screens/stats.tsx";
 import "./ui/style.css";
 import "./ui/stats.css";
 

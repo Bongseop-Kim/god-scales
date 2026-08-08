@@ -1,6 +1,6 @@
-import type { MapNodeType } from "../core/map.ts";
-import type { PassiveName, TokenName } from "../core/state.ts";
-import sheet from "../art/icons.svg?raw";
+import type { MapNodeType } from "../../core/map.ts";
+import type { PassiveName, TokenName } from "../../core/state.ts";
+import sheet from "../../art/icons.svg?raw";
 
 /**
  * 이름이 유니온인 이유는 **오타가 조용히 빈 자리로 뜨기 때문이다.** 시트에 없는 id를 `<use>`가 가리키면

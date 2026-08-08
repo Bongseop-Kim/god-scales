@@ -8,13 +8,15 @@ import { run } from "../sim/engine.ts";
 import type { RunResult } from "../sim/report.ts";
 import type { ReplayAction } from "../sim/replay.ts";
 import { bossLane, generateMap } from "../core/map.ts";
-import { App, MapPanel, MapScreen, patronPair } from "../ui/app.tsx";
-import { cardArtCandidates, type CardArtSource } from "../ui/art-keys.ts";
-import { conditionLabel } from "../ui/card.tsx";
-import { DemandScreen, GraceScreen, OracleScreen, RestScreen } from "../ui/choices.tsx";
-import { CombatScreen } from "../ui/combat.tsx";
-import { replayPayload } from "../ui/export.ts";
-import { RewardScreen } from "../ui/reward.tsx";
+import { App, patronPair } from "../ui/app.tsx";
+import { cardArtCandidates, type CardArtSource } from "../ui/shared/art-keys.ts";
+import { conditionLabel } from "../ui/shared/card.tsx";
+import { DemandScreen, GraceScreen, OracleScreen, RestScreen } from "../ui/screens/choices.tsx";
+import { CombatScreen } from "../ui/screens/combat.tsx";
+import { replayPayload } from "../ui/shared/export.ts";
+import { StatusBar } from "../ui/shared/header.tsx";
+import { MapPanel, MapScreen } from "../ui/screens/map.tsx";
+import { RewardScreen } from "../ui/screens/reward.tsx";
 
 /**
  * 시트에 없는 id를 `<use>`가 가리키면 **아무 일도 안 일어난다** — 경고도, 빈 그림도 없이 자리만 빈다.
@@ -47,20 +49,20 @@ function playByHand(seed: number, pick: (decision: Decision) => string): { resul
  */
 describe("browser replay export", () => {
   it("renders every decision screen from its observation alone", () => {
-    // 머리글이 조합·위치·체력을 관측에서 읽는지 본다 — 상수로 박혀 있으면 다른 조합에서 거짓말을 한다
+    // 상태 바(P-54)가 조합·위치·체력을 관측에서 읽는지 본다 — 상수로 박혀 있으면 다른 조합에서 거짓말을 한다
     const screens: Record<string, (decision: never) => ReactElement> = {
-      path: (decision) => createElement(MapScreen, { seed: 4, decision, onChoosePath: () => {} }),
+      path: (decision) => createElement(MapScreen, { decision, onChoosePath: () => {} }),
       card: (decision) => createElement(CombatScreen, { seed: 4, decision, onAnswer: () => {} }),
       target: (decision) => createElement(CombatScreen, { seed: 4, decision, onAnswer: () => {} }),
-      rest: (decision) => createElement(RestScreen, { seed: 4, decision, onAnswer: () => {} }),
-      rest_card: (decision) => createElement(RestScreen, { seed: 4, decision, onAnswer: () => {} }),
-      reward: (decision) => createElement(RewardScreen, { seed: 4, decision, onAnswer: () => {} }),
-      grace: (decision) => createElement(GraceScreen, { seed: 4, decision, onAnswer: () => {} }),
-      demand: (decision) => createElement(DemandScreen, { seed: 4, decision, onAnswer: () => {} }),
-      oracle: (decision) => createElement(OracleScreen, { seed: 4, decision, onAnswer: () => {} }),
+      rest: (decision) => createElement(RestScreen, { decision, onAnswer: () => {} }),
+      rest_card: (decision) => createElement(RestScreen, { decision, onAnswer: () => {} }),
+      reward: (decision) => createElement(RewardScreen, { decision, onAnswer: () => {} }),
+      grace: (decision) => createElement(GraceScreen, { decision, onAnswer: () => {} }),
+      demand: (decision) => createElement(DemandScreen, { decision, onAnswer: () => {} }),
+      oracle: (decision) => createElement(OracleScreen, { decision, onAnswer: () => {} }),
     };
     const seen = new Set<string>();
-    // 배포 조합이 아닌 아레스+아르테미스로 돈다 — 머리글이 상수라면 여기서 "제우스 + 아테나"가 나온다.
+    // 배포 조합이 아닌 아레스+아르테미스로 돈다 — 상태 바가 상수라면 여기서 "제우스"가 나온다.
     // 시드 4 → 5: 여덟 화면을 다 지나는 시드다 (P-31의 파워로 시드 4가 갈림길 전에 끝났다)
     const steps = runSteps(5, undefined, ["ares", "artemis"]);
     let step = steps.next();
@@ -68,9 +70,15 @@ describe("browser replay export", () => {
       const { phase, bot } = step.value;
       if (!seen.has(phase)) {
         const markup = renderToStaticMarkup(screens[phase](step.value as never));
-        expect(markup, phase).toContain("아레스 + 아르테미스");
-        expect(markup, phase).toContain(`체력 ${step.value.observation.hp}/${step.value.observation.maxHp}`);
         expect(unresolvedIcons(markup), phase).toEqual([]);
+        // 화면에 h1 제목·「시드」가 없다(P-54) — 값은 전부 상태 바가 든다
+        expect(markup, phase).not.toContain("<h1");
+        expect(markup, phase).not.toContain("시드");
+        const bar = renderToStaticMarkup(createElement(StatusBar, { view: step.value.observation, onOverlay: () => {} } as never));
+        expect(bar, phase).toContain("아레스");
+        expect(bar, phase).toContain("아르테미스");
+        expect(bar, phase).toContain(`<b>${step.value.observation.hp} / ${step.value.observation.maxHp}</b>`);
+        expect(bar, phase).toContain(`덱 ${step.value.observation.deck.length}`);
         seen.add(phase);
       }
       step = steps.next(phase === "path" ? pickPath(step.value, "rest") : phase === "rest" ? "remove" : bot);
@@ -80,7 +88,8 @@ describe("browser replay export", () => {
 
   /**
    * HUD가 그리는 넷을 한 번에 잡는다 — 진영색(채움/외곽), 지속, 파워 스택, 우호도 단계.
-   * 관측을 손으로 짜는 이유는 토큰 셋·파워 둘·진노가 같이 선 턴이 실제 런에서는 드물어서다
+   * 관측을 손으로 짜는 이유는 토큰 셋·파워 둘·진노가 같이 선 턴이 실제 런에서는 드물어서다.
+   * 우호도 미터는 상태 바(P-54)로 갔으므로 같은 관측을 `StatusBar`에도 넣어 같이 잰다
    */
   it("draws token faction, duration, powers, and favor stages on the combat screen", () => {
     const decision = {
@@ -89,7 +98,7 @@ describe("browser replay export", () => {
       bot: "card_zeus_bolt",
       observation: {
         depth: 3, lane: 1, region: "underworld", floor: 4, hp: 44, maxHp: 92,
-        patrons: ["zeus", "athena"], grid: [],
+        patrons: ["zeus", "athena"], grid: [], deck: [],
         // 제우스는 진노(0), 아테나는 헌신(70) — 경계는 core/favor.ts의 favorBoundaries가 정한다
         favor: { zeus: 4, athena: 72 }, grace: { athena: 3 },
         turn: 5, block: 6, energy: 3, draw: 4,
@@ -129,15 +138,18 @@ describe("browser replay export", () => {
     expect(markup).toContain("칸 0 앞");
     expect(markup).toContain("칸 3 뒤");
     expect(markup).toContain("aria-label=\"칸 1 스파르토이 방패병");
-    // 우호도 둘 상시 + 진노 경고 + 그 단계의 개입, 경계는 favorBoundaries에서
-    expect(markup).toContain("favor wrath");
-    expect(markup).toContain("favor devotion");
-    // 단계 펄스는 **경계를 넘는 순간에만** 돈다 — 첫 렌더에 붙으면 전투마다 미터 둘이 번쩍인다
-    expect(markup).not.toContain("crossed");
+
+    // 우호도 둘 상시 + 진노 경고 + 그 단계의 개입 — 상태 바(P-54)가 든다. 전투 화면에는 중복이 없다
+    expect(markup).not.toContain("favor wrath");
+    const bar = renderToStaticMarkup(createElement(StatusBar, { view: (decision as { observation: unknown }).observation, onOverlay: () => {} } as never));
+    expect(bar).toContain("favor wrath");
+    expect(bar).toContain("favor devotion");
+    // 단계 펄스는 **경계를 넘는 순간에만** 돈다 — 첫 렌더에 붙으면 미터 둘이 번쩍인다
+    expect(bar).not.toContain("crossed");
     // 진노는 이제 신을 적으로 부른다 — `join`이 「나에게 join 0」으로 읽히면 화면이 거짓말을 한다
-    expect(markup).toContain("진노 · 조우 시작에 나에게 감전 2 · 제우스가 적으로 합류");
-    expect(markup).toContain("헌신 70 / 평온 30 / 분노 10");
-    expect(markup).toContain("은총 3");
+    expect(bar).toContain("진노 · 조우 시작에 나에게 감전 2 · 제우스가 적으로 합류");
+    expect(bar).toContain("헌신 70 / 평온 30 / 분노 10");
+    expect(bar).toContain("은총 3");
   });
 
   /**
@@ -194,8 +206,9 @@ describe("browser replay export", () => {
     } as never;
     const markup = renderToStaticMarkup(createElement(CombatScreen, { seed: 1, decision, onAnswer: () => {} }));
 
-    expect([...markup.matchAll(/<b>케르베로스<\/b>/g)], "같은 보스가 두 판에 겹쳐 뜨면 안 된다").toHaveLength(1);
-    expect(markup).toContain("grid-row:span 2");
+    expect([...markup.matchAll(/>케르베로스</g)], "같은 보스가 두 판에 겹쳐 뜨면 안 된다").toHaveLength(1);
+    // 두 칸을 차지한 적은 중심이 반 칸 옮는다(P-55) — `--span`이 그 사실을 든다
+    expect(markup).toContain("--slot:0;--span:2");
     expect(markup).toContain('aria-label="칸 0~1 앞 케르베로스');
     // 칸 1은 보스가 덮었다. 남는 자리표시는 칸 2·3 둘뿐이다
     expect([...markup.matchAll(/class="enemy empty"/g)]).toHaveLength(2);
@@ -263,18 +276,38 @@ describe("browser replay export", () => {
     expect(markup).not.toContain("card_zeus_19 ·");
   });
 
-  it("renders the setup screen through React", () => {
+  // 첫 화면은 타이틀이다 — 메뉴 셋(시작·통계 링크·전체화면)이 서고, setup의 폼은 아직 없다
+  it("renders the intro screen first", () => {
     const markup = renderToStaticMarkup(createElement(App));
 
     expect(markup).toContain("신들의 저울");
+    expect(markup).toContain("게임 시작");
+    // 시뮬 통계는 시작 화면에서 인트로로 이사했다(P-56) — 페이지 이동이라 버튼이 아니라 링크다
+    expect(markup.match(/<nav class="intro-menu">.*?<\/nav>/s)?.[0]).toContain("stats.html");
+    expect(markup.match(/<nav class="intro-menu">.*?<\/nav>/s)?.[0].match(/<button/g)).toHaveLength(2);
+    // 「결정론적 덱빌딩 프로토타입」은 이제 사실도 아니다
+    expect(markup).not.toContain("프로토타입");
+    expect(markup).not.toContain("런 시작");
+  });
+
+  it("renders the setup screen through React", () => {
+    const markup = renderToStaticMarkup(createElement(App, { intro: false }));
+
+    expect(markup).toContain("후원할 신 둘 · 2/2");
     expect(markup).toContain("런 시작");
-    expect(markup).toContain("aria-label=\"상태 토큰\"");
-    // 다섯이 다 눌리는 버튼이고 기본으로 눌린 것은 둘이다 — 아무것도 안 고르고 시작하던 사람이 같은 런을 얻는다
-    const legend = markup.match(/<div class="god-legend".*?<\/div>/s)?.[0] ?? "";
-    expect(legend.match(/aria-pressed/g)).toHaveLength(5);
-    expect(legend.match(/aria-pressed="true"/g)).toHaveLength(2);
-    // 둘이므로 「런 시작」이 눌린다 — 이 화면에서 `disabled`가 붙는 자리는 그것 하나뿐이다
-    expect(markup).not.toContain("disabled");
+    // 시드 입력이 없다(P-56) — 재현은 `?seed=` URL과 반출 JSON이 든다
+    expect(markup).not.toContain("런 시드");
+    expect(markup).not.toContain('type="number"');
+    // 다섯이 다 눌리는 초상 버튼이고 기본으로 눌린 것은 둘이다 — 안 고르고 시작하던 사람이 같은 런을 얻는다
+    const select = markup.match(/<div class="god-select".*?<\/div>/s)?.[0] ?? "";
+    expect(select.match(/aria-pressed/g)).toHaveLength(5);
+    expect(select.match(/aria-pressed="true"/g)).toHaveLength(2);
+    // 「선택 N」 배지는 data-pick + CSS content다 — DOM 텍스트에 섞으면 e2e가 이름으로 버튼을 못 집는다
+    expect(select.match(/data-pick="1"/g)).toHaveLength(1);
+    expect(select.match(/data-pick="2"/g)).toHaveLength(1);
+    // 둘이므로 「런 시작」이 눌린다 — 폼 안에서 `disabled`가 붙는 자리는 그것 하나뿐이다.
+    // 전역 아이콘의 덱·약속(P-53)은 런 밖이라 죽어 있다 — 지우지 않고 `disabled`가 정답이다(UI.md)
+    expect(markup.match(/<form[\s\S]*<\/form>/)?.[0] ?? "").not.toContain("disabled");
     // 편집기는 한 방향 문이 아니다 — 조합을 하나로 줄여 슬롯을 비운 사람이 여기로 돌아온다
     expect(markup).toContain("규칙 덱으로");
   });
@@ -284,7 +317,7 @@ describe("browser replay export", () => {
    * `<button>`의 기본값이 submit이라, 폼 안으로 옮기는 사람이 이 버튼으로 런을 시작시킨다
    */
   it("stands the fullscreen button outside the setup form", () => {
-    const markup = renderToStaticMarkup(createElement(App));
+    const markup = renderToStaticMarkup(createElement(App, { intro: false }));
 
     expect(markup).toContain('<button type="button" class="fullscreen">전체화면</button>');
     expect(markup.match(/<form[\s\S]*<\/form>/)?.[0] ?? "").not.toContain("fullscreen");

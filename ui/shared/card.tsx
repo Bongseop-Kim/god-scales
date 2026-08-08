@@ -1,22 +1,22 @@
 import { useState } from "react";
-import { MAX_SLOTS } from "../core/combat.ts";
-import { cardLevel } from "../core/rules.ts";
-import { fullReach, reachSlots } from "../core/targeting.ts";
-import cardDataJson from "../data/cards.json" with { type: "json" };
-import type { CardView } from "../sim/engine.ts";
-import { cardTier } from "../tools/value.ts";
+import { MAX_SLOTS } from "../../core/combat.ts";
+import { cardLevel } from "../../core/rules.ts";
+import { fullReach, reachSlots } from "../../core/targeting.ts";
+import cardDataJson from "../../data/cards.json" with { type: "json" };
+import type { CardView } from "../../sim/engine.ts";
+import { cardTier } from "../../tools/value.ts";
 import { cardArtCandidates, cardGod, cardTag, type CardArtSource } from "./art-keys.ts";
 import { Icon, type IconName } from "./icon.tsx";
 import { tokenName } from "./tokens.tsx";
 
-const cardArt = import.meta.glob<string>("../art/cards/*.webp", { eager: true, query: "?url", import: "default" });
+const cardArt = import.meta.glob<string>("../../art/cards/*.webp", { eager: true, query: "?url", import: "default" });
 /**
  * 그림·프레임색·파티클·이름·파워는 **값이 아니라 종류**라 `data/cards.json`에서 직접 읽는다 — 엔진의
  * `CardView`는 값만 싣는다(`sim/engine.ts:130`). 적 이름을 `data/enemies.json`에서 읽는 자리와 같다.
  * 179개 id와 그림 179장의 이름 규칙은 `ui/art-keys.ts`에 있고 `tools/art.ts`가 같은 것을 쓴다
  */
 const cardFace = new Map((cardDataJson as (CardArtSource & { name: string; tier?: number })[]).map((card) => [card.id, {
-  art: cardArtCandidates(card).map((key) => cardArt[`../art/cards/${key}.webp`]).find(Boolean),
+  art: cardArtCandidates(card).map((key) => cardArt[`../../art/cards/${key}.webp`]).find(Boolean),
   god: cardGod(card),
   tag: cardTag(card),
   name: card.name,

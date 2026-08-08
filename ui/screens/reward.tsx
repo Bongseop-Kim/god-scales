@@ -1,11 +1,9 @@
-import { skipReward, type RewardDecision } from "../sim/engine.ts";
-import { Backdrop, backdropArt } from "./backdrop.tsx";
-import { CardRow } from "./card.tsx";
-import { RunHeader } from "./header.tsx";
+import { skipReward, type RewardDecision } from "../../sim/engine.ts";
+import { Backdrop, backdropArt, Flanks } from "../shared/backdrop.tsx";
+import { CardRow } from "../shared/card.tsx";
 
 /** 손패와 같은 컴포넌트로 그린다. 상태는 없다 — 그린 것은 전부 마지막 yield의 observation이다 */
-export function RewardScreen({ seed, decision, onAnswer }: {
-  seed: number;
+export function RewardScreen({ decision, onAnswer }: {
   decision: RewardDecision;
   onAnswer: (choice: string) => void;
 }) {
@@ -15,11 +13,10 @@ export function RewardScreen({ seed, decision, onAnswer }: {
     // 패널이 하나뿐이라 `run-layout`(2열)을 쓰면 오른쪽 607px가 빈 채로 남는다 — 휴식·요구·은혜와 같은 1열이다
     <>
       <Backdrop src={backdropArt(view.region, "combat")} tone="dim" />
-      <div className="shell">
-        <RunHeader seed={seed} view={view} title="전투 보상" badge={`덱 ${view.deck}장`} />
-
-        <div className="decision-panel">
-          <p className="hint" role="status">카드를 한 장 덱에 넣습니다. 덱을 얇게 두려면 건너뛰세요.</p>
+      <div className="shell run">
+        <Flanks region={view.region} depth={view.depth} />
+        {/* 제목도 힌트(「카드를 한 장 덱에…」→ 도움말)도 없다(P-54) — 3택1 자체가 화면을 말한다 */}
+        <div className="decision-panel solo">
           <CardRow cards={view.cards} options={options} onSelect={onAnswer} />
           <button type="button" onClick={() => onAnswer(skipReward)}>건너뛰기</button>
         </div>

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import demandData from "../data/demands.json" with { type: "json" };
 import godData from "../data/gods.json" with { type: "json" };
 import { demandPenalty, demandSatisfied, demandSettled, pairKey, payDemandCost, resolveDemand, rivals, ruleText, tierEnemies, type Demand } from "../core/demands";
-import { godLine } from "../ui/header";
+import { godLine } from "../ui/shared/header";
 import { createCombat } from "../core/combat";
 import type { GameState } from "../core/state";
 import { run, runSteps, simulateStratified } from "../sim/engine";
