@@ -7,14 +7,14 @@ import godDataJson from "../data/gods.json" with { type: "json" };
 import graceDataJson from "../data/graces.json" with { type: "json" };
 import mapDataJson from "../data/map.json" with { type: "json" };
 import { applyFavorStageEffects, awardGrace, favorInitial, favorStage, finishCombatFavor, godEnemyId, intervenesOnTurn, oracleSwing, recordCardFavor, shiftFavor, wrathReconcileFavor, type FavorGod, type FavorUses } from "../core/favor.ts";
-import { demandPenalty, demandSatisfied, demandSettled, parseCondition, payDemandCost, resolveDemand, ruleText, tierEnemies, type Demand, type DemandOffer, type DemandTier } from "../core/demands.ts";
+import { betDeposit, demandEnemies, demandPenalty, demandSatisfied, demandSettled, parseCondition, payDeposit, resolveDemand, ruleText, takeSide, type Demand, type DemandOffer } from "../core/demands.ts";
 import { graceOffer, graceSlots, graceTier, takeGrace, type Grace, type GraceSlot } from "../core/grace.ts";
 import { advanceMap, bossLane, enemyDamageScale, enterNode, floorsPerRegion, generateMap, laneCount, mapDepth, mapSlot, reachableLanes, takeRest, type MapGrid, type MapNodeType } from "../core/map.ts";
 import { canFuse } from "../core/fusion.ts";
 import { cardEffects, cardLevel, MAX_UPGRADE, upgradeId, upgraded, type Card, type GodId } from "../core/rules.ts";
 import { canReachTarget, livingInReach } from "../core/targeting.ts";
-import type { GameState, Passives, Tokens, Trigger } from "../core/state.ts";
-import { chooseCard, chooseDemandAnswer, chooseGrace, chooseOracle, choosePath, chooseRest, chooseRestCard, chooseReward, chooseTarget } from "./bots/rule.ts";
+import type { CombatOutcome, GameState, Passives, Tokens, Trigger } from "../core/state.ts";
+import { chooseBetCard, chooseCard, chooseDemandAnswer, chooseGrace, chooseOracle, choosePath, chooseRest, chooseRestCard, chooseReward, chooseTarget } from "./bots/rule.ts";
 import { renderPlay } from "./log.ts";
 import type { RunResult } from "./report.ts";
 import type { ReplayAction, RestChoice } from "./replay.ts";
@@ -272,8 +272,8 @@ export type CombatObservation = RunView & {
   /** hits가 새로 생길 때마다 오른다 — UI가 같은 팝을 두 번 재생하지 않게 하는 열쇠 */
   hitSeq: number;
   /**
-   * 지금 걸린 약속. 전투 앞에서 받은 것과 `omen`이 걸어 둔 것이 **같은 사실로 판정되므로**
-   * 같은 줄에 선다(둘 다 없으면 빈 배열이다). 요구를 수락하고도 화면에 흔적이 없던 자리다
+   * 지금 걸린 내기표. 신 조건 한 줄과 승부 카드 한 줄이 **같은 사실로 판정되므로** 같은 줄에 선다
+   * (관망이면 빈 배열이다). 요구를 수락하고도 화면에 흔적이 없던 자리다
    */
   promises: PromiseView[];
   /** 방금 찢긴 카드(진노인 신의 카드). `seq`는 `hitSeq`와 같은 이유로 있다 — 한 번만 외친다 */
@@ -282,18 +282,26 @@ export type CombatObservation = RunView & {
   card?: string;
 };
 /**
- * 약속 한 줄. `current`·`settled`는 `facts`와 조건에서 **계산된다** — 상태를 따로 들면 그것이
- * 사실과 어긋날 자리가 생기고, `facts`는 이미 단조라 계산이 언제나 맞다(`core/demands.ts`)
+ * 내기표 한 줄. `current`·`settled`는 `facts`와 조건에서 **계산된다** — 상태를 따로 들면 그것이
+ * 사실과 어긋날 자리가 생기고, `facts`는 이미 단조라 계산이 언제나 맞다(`core/demands.ts`).
+ * `deposit`은 승부 카드 줄에만 선다 — 예치한 최대 체력이 그 줄의 판돈이다
  */
-export type PromiseView = { god: string; text: string; rule: string; current: number; target: number; settled?: "kept" | "broken" };
+export type PromiseView = { god: string; text: string; rule: string; current: number; target: number; settled?: "kept" | "broken"; deposit?: number };
+/** 승부 카드 한 장. 덱 인덱스가 아니라 **id**를 든다 — 찢기·제거로 인덱스가 밀려도 첫 인스턴스를 다시 찾는다 */
+type BetCard = { id: string; name: string };
 /**
- * 받은 약속 하나. `tier`가 없으면 거절이다 — 판정은 조우가 끝난 뒤 `demandSatisfied`가 한다.
- * 모듈 자리에 있는 이유는 `playEncounter`가 이것을 받아 관측에 실어야 해서다
+ * 확정된 내기표 하나. `card`가 없으면 단일 내기고, 표가 통째로 없으면 관망이다 — 판정은 조우가
+ * 끝난 뒤 `demandSatisfied`가 한다. 모듈 자리에 있는 이유는 `playEncounter`가 이것을 받아 관측에 실어야 해서다
  */
-type DemandPromise = { demand: Demand; patron: GodId; other: GodId; choice: string; tier?: DemandTier };
+type Bet = { demand: Demand; patron: GodId; other: GodId; card?: BetCard; deposit: number };
 /** `text`는 그 층의 문장이다 — 지도 화면이 지금 어디 서 있는지 한 줄로 읽는다 */
 type MapObservation = RunView & { text: string };
-type RewardObservation = RunView & { cards: CardView[] };
+/**
+ * 승부 정산 한 장. **연출용 관측이지 결정이 아니다** — 확인 버튼도 새 phase도 없다(P-59 §4).
+ * 성공한 조우의 카드 보상 화면에 한 번 실려 오고, 실패한 내기는 카드 보상 화면 자체가 서지 않는다
+ */
+type BetSettlement = { before: CardView; after: CardView };
+type RewardObservation = RunView & { cards: CardView[]; settled?: BetSettlement };
 /**
  * 은혜 후보 하나. `cards`는 지금 덱에 있는 그 슬롯의 카드 수 — 은혜가 몇 장에 붙는지가 결정의 근거다.
  * `replaces`는 그 슬롯이 이미 든 은혜의 문장으로, **무엇을 밀어내는지** 화면에 서야 한다
@@ -301,10 +309,16 @@ type RewardObservation = RunView & { cards: CardView[] };
 type GraceOffer = { id: string; slot: GraceSlot; tier: number; text: string; effects: Card["effects"]; cards: number; replaces?: string };
 type GraceObservation = RunView & { god: string; tier: number; offer: GraceOffer[] };
 /**
- * 요구 하나. `tiers`에는 **지금 제안되는 단만** 들어간다 — 5층과 적이 모자란 조우에서 시련이 빠지므로
- * 화면이 두 칸짜리가 된다. `penalty`는 지켰을 때 상대 신이 잃는 관계 벌금이고 선불 대가와 별개다
+ * 내기표의 윗칸. `offers`에는 **지금 설 수 있는 제안만** 들어간다 — 적이 모자란 조우에서 포세이돈이
+ * 빠지므로 화면이 한 칸짜리가 된다. `reserved`는 퀘스트에서 미리 잠근 승부 카드다(없으면 조건을
+ * 고른 뒤 `bet_card`가 따로 묻는다)
  */
-type DemandObservation = RunView & { patron: string; other: string; penalty: number; tiers: DemandOffer[] };
+type DemandObservation = RunView & { offers: DemandOffer[]; deposit: number; reserved?: CardView };
+/**
+ * 내기표의 아랫칸. 후보는 **덱 인덱스**로 답한다 — 같은 id가 여러 장이어도 한 장만 걸린다.
+ * `promise`는 방금 고른 신 조건이고, 퀘스트(`omen`)에서는 아직 없으므로 비어 있다
+ */
+type BetObservation = RunView & { deposit: number; promise?: PromiseView };
 /**
  * 신탁 하나. **전투 관측을 통째로 든다** — 판 한가운데서 묻는 결정이라 지금 판이 어떤지가 근거다.
  * 미는 크기는 안 싣는다 — 상수라 화면이 `oracleSwing`을 import하는 것이 곧 단일 출처다(`favorPool`과 같다)
@@ -317,8 +331,12 @@ export type MapDecision = { phase: "path" | "rest" | "rest_card"; options: strin
 export type RewardDecision = { phase: "reward"; options: string[]; bot: string; observation: RewardObservation };
 export type GraceDecision = { phase: "grace"; options: string[]; bot: string; observation: GraceObservation };
 export type DemandDecision = { phase: "demand"; options: string[]; bot: string; observation: DemandObservation };
-export type Decision = CombatDecision | OracleDecision | MapDecision | RewardDecision | GraceDecision | DemandDecision;
+export type BetDecision = { phase: "bet_card"; options: string[]; bot: string; observation: BetObservation };
+export type Decision = CombatDecision | OracleDecision | MapDecision | RewardDecision | GraceDecision | DemandDecision | BetDecision;
 export const endTurnAction = "end_turn";
+/** 내기표의 두 「없음」. 조건을 안 받는 것과 카드를 안 거는 것은 다른 답이라 값도 둘이다 */
+export const watchDemand = "reject";
+export const singleBet = "single";
 /** 신탁의 두 답. **거절할 「거절」이 없다** — 양쪽 다 값이 붙은 저울이다 */
 export const oracleActions = ["obey", "refuse"];
 
@@ -328,11 +346,21 @@ type EncounterResult = {
   blockAbsorbed: number;
   targetSpread: ("single" | "multi")[];
   cardsPlayed: string[];
-  /** `demandSatisfied`가 읽는 이름들이다 — 요구 조건 DSL의 좌변과 같은 키여야 한다 */
+  /**
+   * `demandSatisfied`가 읽는 이름들이다 — 요구 조건 DSL의 좌변과 같은 키여야 한다.
+   * `bet_kill`만 DSL 밖이다: 카드 조건은 데이터가 아니라 **이 카드로 마지막 적을 처치했는가** 하나뿐이라
+   * 좌변을 열면 아무도 안 쓰는 문법이 된다 (P-59 §1)
+   */
   facts: Record<string, number>;
   /** 이 조우에서 꺾은 진노 신들. 화해(호의 회복)와 정예 대우 보상이 이 한 줄을 읽는다 */
   felled: string[];
 };
+
+/**
+ * 승부 카드 조건 한 줄. 조건 DSL이 아니라 문장 하나다 — 카드 조건이 하나뿐이라 좌변을 열면
+ * 아무도 안 쓰는 문법이 되고, 화면이 raw 조건을 보는 자리도 생기지 않는다 (P-59 §7)
+ */
+export const betCardRule = (name: string): string => `「${name}」으로 마지막 적 처치`;
 
 /** 카드 한 장을 목록에서 뺀다. 없으면 아무 일도 없다 — `splice(-1)`이 엉뚱한 장을 지우는 자리다 */
 const drop = (cards: string[], id: string): void => {
@@ -340,7 +368,7 @@ const drop = (cards: string[], id: string): void => {
   if (at >= 0) cards.splice(at, 1);
 };
 
-function* playEncounter(state: GameState, seed: number, deck: string[], cardMap: Map<string, Card>, lineup: Lineup, log: string[], patrons: PatronPair, noise: () => number, promised: DemandPromise[] = []): Generator<Decision, EncounterResult, string> {
+function* playEncounter(state: GameState, seed: number, deck: string[], cardMap: Map<string, Card>, lineup: Lineup, log: string[], patrons: PatronPair, noise: () => number, bet?: Bet): Generator<Decision, EncounterResult, string> {
   /** **판과 사전을 갈라 둔다** — 사전에는 신 적 다섯이 미리 들어 있고 판에는 편성만 선다 */
   const enemyMap = new Map([...lineup, ...godEnemies].map((enemy) => [enemy.id, enemy]));
   const random = createRng(seed);
@@ -356,6 +384,15 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
   state.combat = createCombat(seed, deck, lineup);
   state.combat.player.hp = hp;
   state.combat.player.maxHp = maxHp;
+  /**
+   * 승부 카드는 **첫 손패에 반드시 든다.** 뽑기 운으로 내기가 무효가 되면 그건 도박이 아니라 추첨이고,
+   * 걸 카드를 고른 결정이 판 위에서 한 번도 서지 않는다. 셔플 뒤 맨 앞으로 옮기는 한 줄이면 된다 —
+   * `drawCards`가 `shift()`로 뽑으므로 뽑기 규칙은 그대로다
+   */
+  if (bet?.card) {
+    const at = state.combat.drawPile.indexOf(bet.card.id);
+    if (at > 0) state.combat.drawPile.unshift(...state.combat.drawPile.splice(at, 1));
+  }
   /**
    * **후원 둘만** 개입한다. 전에는 단계 필터가 대신 걸러줬다 — 조합 밖의 신은 호의가 없어 평온으로
    * 읽히고 평온에는 데이터가 없었다. 평온이 개입하는 지금(P-34) 그 필터는 사라졌으므로 여기서 거른다
@@ -377,12 +414,14 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
   const cardsPlayed: string[] = [];
   let hits: CombatObservation["hits"] = [];
   let hitSeq = 0;
-  const facts = { hit_targets_in_turn: 0, damage_taken: 0, tokens_applied: 0, tokens_applied_in_turn: 0 };
+  const facts = { hit_targets_in_turn: 0, damage_taken: 0, tokens_applied: 0, tokens_applied_in_turn: 0, turns: 0, bet_kill: 0 };
   /** 찢긴 카드. 화면이 규칙(「진노인 신의 카드」)을 다시 계산하면 규칙이 갈릴 때 화면만 옛 자리에 남는다 */
   let torn: CombatObservation["torn"];
   let turnTargets = new Set<string>();
   let turnTokens = 0;
   const healthBar = () => [["player", state.combat.player.hp] as const, ...state.combat.enemies.map(({ id, hp: enemyHp }) => [id, enemyHp] as const)];
+  /** 함수 한 겹이 있어야 한다 — 안쪽 `while`이 `outcome`을 `"ongoing"`으로 좁혀 두고 `playCard`가 그 뒤에 바꾼다 */
+  const won = () => state.combat.outcome === "victory";
   /** `byCard`일 때만 맞은 적을 센다 — 출혈 도트는 이번 턴에 "친" 것이 아니다 */
   const recordHits = (before: (readonly [string, number])[], byCard = false) => {
     const now = new Map(healthBar());
@@ -402,11 +441,25 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
    * 약속을 지금 사실로 다시 푼다. 상태가 아니라 **파생값**이라 조우가 끝난 뒤 도는 `demandSatisfied`와
    * 같은 조건·같은 `facts`를 읽는다 — 화면이 「지켰다」고 적은 뒤에 호의가 다르게 움직일 자리가 없다
    */
-  const promiseViews = (): PromiseView[] => promised.flatMap(({ patron, tier }) => {
-    if (!tier) return [];
-    const { fact, target } = parseCondition(tier.condition);
-    return [{ god: patron, text: tier.text, rule: ruleText(tier.condition), current: facts[fact as keyof typeof facts] ?? 0, target, settled: demandSettled(tier, facts) }];
-  });
+  const promiseViews = (): PromiseView[] => {
+    if (!bet) return [];
+    const { demand, patron, card, deposit } = bet;
+    const { fact, target } = parseCondition(demand.condition);
+    const rows: PromiseView[] = [{ god: patron, text: demand.text, rule: ruleText(demand.condition), current: facts[fact as keyof typeof facts] ?? 0, target, settled: demandSettled(demand.condition, facts) }];
+    // 카드 조건은 굳는 방향이 하나다 — 마무리 일격은 넣으면 성공이 굳고, 판이 끝날 때까지 없으면 실패다
+    if (card) {
+      rows.push({
+        god: patron,
+        text: card.name,
+        rule: betCardRule(card.name),
+        current: facts.bet_kill,
+        target: 1,
+        deposit,
+        settled: facts.bet_kill > 0 ? "kept" : state.combat.outcome === "ongoing" ? undefined : "broken",
+      });
+    }
+    return rows;
+  };
   const observation = (): CombatObservation => ({
     ...runView(state, patrons, deck, cardMap),
     turn: state.combat.turn,
@@ -439,6 +492,8 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
 
   while (state.combat.outcome === "ongoing") {
     startTurn(state, random);
+    // 제우스의 축. 다른 넷과 같이 단조 비감소라 `demandSettled`가 그대로 돈다 — 한 턴 더 쓰면 굳는다
+    facts.turns = state.combat.turn;
     // 전투 중 개입. `startTurn` **뒤**여야 방어 리셋(`core/combat.ts:73`) 뒤에 아테나의 방어가 살아남고,
     // 파워·뽑은 손패와 같은 화면에 선다. 죽인 적은 `updateOutcome`이 거둔다 — 안 거두면 `rally`가 안 돌고
     // 마지막 적을 개입이 죽인 조우가 시간 초과까지 간다
@@ -508,8 +563,14 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
       blockBuilt += played.reduce((sum, effect) => sum + (effect.op === "block" && !effect.when ? effect.value ?? 0 : 0), 0);
       targetSpread.push(card.target === "all_enemies" || played.some(({ op }) => op === "chain") ? "multi" : "single");
       const beforeCard = healthBar();
-      playCard(state, cardMap, cardId, target);
+      playCard(state, cardMap, cardId, target, random);
       recordHits(beforeCard, true);
+      /**
+       * 카드 조건. **이 카드가 판을 끝냈는가** 하나뿐이다 — `playCard`가 이미 `updateOutcome`을 지났으므로
+       * 여기서 승리면 방금 낸 이 카드가 마지막 적을 눕힌 것이다. 같은 id가 여러 장이면 어느 장인지
+       * 판 위에서는 구별할 수 없다(덱이 `string[]`이다) — 그래서 조건은 **그 카드로**지 그 인스턴스로가 아니다
+       */
+      if (bet?.card?.id === cardId && won()) facts.bet_kill = 1;
       // 조건 없는 토큰만 센다 — `when`이 걸린 효과는 붙었는지 여기서 알 수 없으므로 세지 않는다
       const applied = played.reduce((sum, effect) => sum + (effect.op === "apply_token" && !effect.when ? effect.stacks ?? 1 : 0), 0);
       facts.tokens_applied += applied;
@@ -537,7 +598,7 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
     if (state.combat.outcome === "ongoing") {
       const block = state.combat.player.block;
       const beforeTurn = healthBar();
-      endTurn(state, enemyMap);
+      endTurn(state, enemyMap, random);
       recordHits(beforeTurn);
       blockAbsorbed += Math.max(0, block - state.combat.player.block);
     }
@@ -594,20 +655,6 @@ export function* runSteps(
   /** `"1:elite"` 꼴. 갈래와 종류를 같이 들어야 옛 로그가 어느 갈래였는지 못 갖는 것이 드러난다 */
   const pathChoices: string[] = [];
   const restChoices: RestChoice[] = [];
-  /**
-   * 지킨 요구가 주는 강화. **고르는 자리가 아니다** — 새 결정 phase는 replay·화면·e2e가 통째로
-   * 딸려오고, 고르는 자리는 이미 휴식처다. 규칙은 `chooseReward`와 같은 표를 쓴다: 지금 덱에서
-   * 기대값이 가장 큰 강화 가능한 카드 한 장
-   */
-  const grantUpgrade = (count: number): void => {
-    for (let given = 0; given < count; given += 1) {
-      const raisable = upgradable(deck, cardMap);
-      if (!raisable.length) return;
-      const best = chooseReward(raisable, cardMap);
-      deck[deck.indexOf(best)] = upgradeId(best);
-      syncUpgrades(cardMap, deck);
-    }
-  };
   const regionsCleared: string[] = [];
   let encounters = 0;
   let restCount = 0;
@@ -625,10 +672,10 @@ export function* runSteps(
   const demandSides: string[] = [];
   const demandOutcomes: Record<string, [number, number]> = {};
   /**
-   * 지금 붙어 있는 시련의 선불 대가. `maxHp`는 `state.combat.player`에 이미 들어가 있고 이 칸은
-   * **남은 기간**을 든다 — 조우가 지나면 줄고 0에서 여유를 되돌려 준다(카오스의 저주가 걷히는 자리)
+   * 퀘스트(`omen`)가 잠근 승부 카드. **하나만** 든다 — 둘을 걸면 같은 전투 하나가 판돈 둘을 판정하고,
+   * 그건 내기가 아니라 수도꼭지다. 조건은 다음 조우에서 붙고 관망을 고르면 예약이 풀린다
    */
-  let trial: { maxHp: number; encounters: number } | undefined;
+  let carriedBet: BetCard | undefined;
   const view = () => runView(state, patrons, deck, cardMap);
 
   /** 지금 덱의 슬롯별 카드 수. 은혜 값은 이 장수만큼 곱해져 들어가므로 봇도 화면도 이것을 읽는다 */
@@ -672,85 +719,106 @@ export function* runSteps(
   }
 
   /**
-   * 요구는 전투 **전에** 묻는다. 화면에 "셋을 쳐라"라고 띄웠으면 그 전투에서 정말 셋을 쳤는지로
-   * 판정해야 한다 — 고른 단은 약속이고, 보상은 지켰을 때만 들어간다. `tier`가 없으면 거절이다
+   * 지금 덱에서 걸 수 있는 승부 카드. **셋을 뺀다** — 상한(`+2`)에 닿은 카드와 융합은 강화 경로가
+   * 없고(`upgradable`이 이미 그 둘을 건다), 피해를 못 주는 카드는 마무리 일격 자체를 낼 수 없다.
+   * 같은 id가 여러 장이면 덱의 **첫 인스턴스**다 — `upgradable`이 첫 등장 순서로 돌려준다
    */
-  function* askDemand(enemyCount: number, nodeSeed: number, mustAsk = false): Generator<Decision, DemandPromise | undefined, string> {
+  const betCandidates = (): { index: number; id: string }[] =>
+    upgradable(deck, cardMap)
+      .filter((id) => cardMap.get(id)?.effects.some(({ op }) => op === "damage" || op === "chain"))
+      .map((id) => ({ index: deck.indexOf(id), id }));
+
+  /**
+   * 승부 카드를 지정한다. 조우에서는 신 조건을 고른 **뒤**, 퀘스트(`omen`)에서는 다음 조우를 위해
+   * **미리** — 둘 다 같은 결정 한 자리다(P-59 §4). 답은 덱 인덱스고 `single`이면 안 건다
+   */
+  function* askBetCard(promise?: PromiseView): Generator<Decision, BetCard | undefined, string> {
+    const candidates = betCandidates();
+    const options = [...candidates.map(({ index }) => String(index)), singleBet];
+    const choice = yield {
+      phase: "bet_card",
+      options,
+      bot: chooseBetCard(candidates, cardMap, state.combat.player.hp, state.combat.player.maxHp),
+      observation: { ...view(), deposit: betDeposit, ...(promise ? { promise } : {}) },
+    };
+    if (!options.includes(choice)) throw new Error(`Invalid bet_card action: ${choice}`);
+    actions.push({ type: "bet_card", choice });
+    if (choice === singleBet) return undefined;
+    const id = deck[Number(choice)];
+    return { id, name: cardMap.get(id)!.name };
+  }
+
+  /**
+   * 내기표를 조립한다. 전투 **전에** 묻는다 — 화면에 "둘은 쓸어라"라고 띄웠으면 그 전투에서 정말
+   * 둘을 쳤는지로 판정해야 한다. 경쟁하는 두 신이 조건을 하나씩 내고 플레이어가 하나를 고른다
+   */
+  function* askBet(enemyCount: number, nodeSeed: number): Generator<Decision, Bet | undefined, string> {
     /**
-     * 요구는 **모든 조우 앞에** 선다. 전에는 `(seed + nodeSeed) % 5 >= 3`으로 60%만 물었다 —
+     * 내기표는 **모든 조우 앞에** 선다. 전에는 `(seed + nodeSeed) % 5 >= 3`으로 60%만 물었다 —
      * 진노는 라이벌 요구 −18로만 닿을 수 있고 조합당 두세 번으로는 문턱을 넘지 못했다.
-     * 빈도는 결정의 횟수지 세기가 아니다: 승률은 0.400 → 0.397로 안 움직이고 은총은 같이 올랐다
+     * 빈도는 결정의 횟수지 세기가 아니다: 승률은 0.400 → 0.397로 안 움직이고 은총은 같이 올랐다.
+     *
+     * 적이 하나뿐인 전투에 "둘은 쓸어라"를 띄우면 지킬 수 없는 약속이다 — 그 신의 칸이 빠지고
+     * 화면은 한 칸짜리가 된다. 둘 다 못 서면 그 조우에는 내기표가 없다
      */
+    const offers: DemandOffer[] = patrons.flatMap((god, index) => {
+      const demand = demandData.find(({ patron }) => patron === god);
+      if (!demand || demandEnemies(demand.condition, demand.min_enemies) > enemyCount) return [];
+      const other = patrons[1 - index];
+      // 조건은 문장 **아래에** 붙는다 — 화면이 `condition`을 다시 파싱하면 규칙이 두 곳에 산다
+      return [{ action: god, god, other, text: demand.text, rule: ruleText(demand.condition), reward: demand.reward, penalty: demandPenalty(god, other).amount }];
+    });
+    if (!offers.length) {
+      carriedBet = undefined;
+      return undefined;
+    }
     /**
-     * 첫 신이 은혜를 하나 받은 뒤부터 요구를 두 신에 **번갈아** 건다. 늘 `patrons[0]`만 올리면 상대는
-     * 헌신에 닿지 못하고 은혜도 합성도 한 신으로만 간다 — 요구는 patron을 올리고 상대를 내린다.
-     * 처음부터 번갈아 걸면 반대로 나빠진다(합성률 0.245 → 0.134): 호의가 갈려 **아무도** 헌신에 못
-     * 서고 은총 2 도달이 0.715 → 0.667로 떨어진다. 한 신을 먼저 올려 사다리를 열고 그다음 상대를 올린다.
-     * 옛 판은 `artemis`를 이름으로 박아 두고 은혜 6을 기다리는 예외 하나였다
+     * 봇이 **먼저 보는** 신. 첫 신이 은혜를 하나 받은 뒤부터 두 신에 번갈아 건다: 늘 `patrons[0]`만
+     * 올리면 상대는 헌신에 닿지 못하고 은혜도 합성도 한 신으로만 간다. 처음부터 번갈아 걸면 반대로
+     * 나빠진다(합성률 0.245 → 0.134) — 호의가 갈려 **아무도** 헌신에 못 선다. 한 신을 먼저 올려
+     * 사다리를 열고 그다음 상대를 올린다. **사람에게는 둘 다 열려 있다** — 이 줄은 봇의 기본값이다
      */
     const seekFusion = (state.grace[patrons[0]] ?? 0) >= 1;
-    const demandIndex = seekFusion ? (seed + nodeSeed) % 2 : 0;
-    // 적이 둘뿐인 전투에 "셋을 쳐라"를 띄우면 지킬 수 없는 약속이다
-    const askable = (god: GodId) => demandData.filter(({ patron, min_enemies }) => patron === god && min_enemies <= enemyCount);
-    /**
-     * `omen`에서만 상대 신으로 넘긴다. 제우스의 요구는 둘 다 적 둘 이상을 요구하는데 `omen`은 다음
-     * 조우의 크기를 모르므로 1로 묻는다 — 넘기지 않으면 제우스가 걸린 `omen` 칸이 조용히 아무 일도
-     * 안 한다(omen 방문의 43.7%였다). 칸 하나가 통째로 그 질문이라 물을 것이 없으면 칸이 없다.
-     *
-     * 전투 칸은 넘기지 않는다: 거기서 안 묻는 것은 「지킬 수 있는 요구가 없다」는 맞는 답이고,
-     * 넘기면 조합마다 요구 수가 달라져 원장의 P-28 줄이 다른 규칙판의 숫자가 된다
-     */
-    const index = !mustAsk || askable(patrons[demandIndex]).length ? demandIndex : 1 - demandIndex;
-    const patron = patrons[index];
-    const other = patrons[1 - index];
-    const asked = askable(patron);
-    const demand = asked[(seed + nodeSeed) % asked.length];
-    if (!demand) return undefined;
-    /**
-     * 시련이 서지 않는 자리 셋. 빠지면 화면이 두 칸이 되고 `options`가 그것을 그대로 싣는다.
-     *
-     * - **이미 시련을 지고 있으면 안 제안한다.** 겹치면 대가가 쌓여 최대 체력이 바닥으로 내려가는데,
-     *   그건 결정이 아니라 나선이다. 이 한 줄이 대가를 **기간 있는 것**으로 만든다(카오스도 저주가
-     *   붙은 동안에는 그 문이 닫혀 있다) — 그리고 시련 중에는 수락·거절이 실제 선택지가 된다
-     * - **5층에는 안 제안한다.** 하데스가 보스 앞에서 저주를 못 걷히게 막는 것과 같은 보호고, 대가가
-     *   조우 둘을 사므로 5층을 막으면 6층 보스는 선불 없이 싸운다. 6층 **자체**는 막지 않았다 —
-     *   그러면 시련 중 사망이 0.174 → 0.045로 내려가지만 합성률이 0.239 → 0.184로 빠진다(R-29)
-     * - 그 단이 요구하는 적이 이 조우에 없으면 지킬 수 없는 약속이다(`omen`은 조우 크기를 모르니 1로 묻는다)
-     */
-    const offers: DemandOffer[] = demand.tiers.flatMap((tier, index) => {
-      if (index > 0 && (trial || mapSlot(state.map.depth).floor === floorsPerRegion - 1 || tierEnemies(tier.condition, demand.min_enemies) > enemyCount)) return [];
-      // 조건은 문장 **아래에** 붙는다 — 화면이 `condition`을 다시 파싱하면 규칙이 두 곳에 산다
-      return [{ action: `tier${index + 1}`, text: tier.text, rule: ruleText(tier.condition), cost: tier.cost, reward: tier.reward }];
-    });
-    const options = [...offers.map(({ action }) => action), "reject"];
+    const preferred = patrons[seekFusion ? (seed + nodeSeed) % 2 : 0];
+    const options = [...offers.map(({ action }) => action), watchDemand];
+    // 퀘스트가 잠근 카드는 조건을 고르기 **전에** 보인다 — 무엇을 걸고 있는지 모르고 조건을 고를 수 없다
+    const reserved = carriedBet && deck.includes(carriedBet.id) ? cardMap.get(carriedBet.id) : undefined;
     const choice = yield {
       phase: "demand",
       options,
-      bot: chooseDemandAnswer(offers, state.favor, patron, other, state.combat.player.hp, state.combat.player.maxHp),
-      observation: { ...view(), patron, other, penalty: demandPenalty(patron, other).amount, tiers: offers },
+      bot: chooseDemandAnswer(offers, state.favor, preferred),
+      observation: { ...view(), offers, deposit: betDeposit, ...(reserved ? { reserved: cardView(reserved) } : {}) },
     };
     if (!options.includes(choice)) throw new Error(`Invalid demand action: ${choice}`);
-    // `options`가 셋 중 하나임을 바로 위에서 잰다 — `ui/app.tsx`의 반출도 같은 자리에서 같은 단언을 쓴다
-    actions.push({ type: "demand", choice } as ReplayAction);
-    const tier = choice === "reject" ? undefined : demand.tiers[Number(choice.slice(4)) - 1];
-    if (tier?.cost) {
-      // 데이터가 적은 값이 아니라 **실제로 깎인 값**을 든다 — 그래야 기간 만료의 되돌림이 대칭이다
-      const roof = state.combat.player.maxHp;
-      payDemandCost(state, other, tier.cost);
-      // 겹치지 않는다 — 시련 중에는 시련이 안 서므로 카운터는 언제나 하나다
-      if (tier.cost.maxHp) trial = { maxHp: roof - state.combat.player.maxHp, encounters: tier.cost.encounters ?? 1 };
+    // `options`가 위에서 이미 잰 목록이다 — `ui/app.tsx`의 반출도 같은 자리에서 같은 단언을 쓴다
+    actions.push({ type: "demand", choice });
+    // 관망은 예약도 푼다 — 판돈 없는 판에 카드만 잠겨 있으면 그건 내기가 아니다
+    if (choice === watchDemand) {
+      carriedBet = undefined;
+      return undefined;
     }
-    return { demand, patron, other, choice, tier };
+    const patron = choice as GodId;
+    const other = patrons[0] === patron ? patrons[1] : patrons[0];
+    const demand = demandData.find(({ patron: god }) => god === patron)!;
+    const promise: PromiseView = { god: patron, text: demand.text, rule: ruleText(demand.condition), current: 0, target: parseCondition(demand.condition).target };
+    // 퀘스트가 잠근 카드가 있으면 그것이 곧 아랫칸이다 — 같은 것을 두 번 묻지 않는다
+    const held = reserved ? carriedBet : undefined;
+    carriedBet = undefined;
+    // 편을 든 대가는 **지금** 나간다 — 지키든 못 지키든 상대는 이미 기분이 상했다
+    takeSide(state.favor, patron, other);
+    const card = held ?? (yield* askBetCard(promise));
+    // 판돈은 확정하는 순간 실제로 내려간다. 바닥이 1이라 **빠진 양**을 든다 — 되돌림이 그래야 대칭이다
+    return { demand, patron, other, card, deposit: card ? payDeposit(state, betDeposit) : 0 };
   }
 
-  function* offerReward(nodeSeed: number, path: MapNodeType, felledGod = false): Generator<Decision, void, string> {
+  function* offerReward(nodeSeed: number, path: MapNodeType, felledGod = false, settled?: BetSettlement): Generator<Decision, void, string> {
     // 전투/셔플과 겹치지 않는 새 스트림이다. 겹치면 기존 replay 재생이 깨진다
     const offer = rewardOffer(createRng(seed * 1000 + nodeSeed), patrons, tier2Slots(path, felledGod));
     const picked = yield {
       phase: "reward",
       options: [...offer, skipReward],
       bot: chooseReward(offer, cardMap, noise),
-      observation: { ...view(), cards: offer.map((id) => cardView(cardMap.get(id)!)) },
+      observation: { ...view(), cards: offer.map((id) => cardView(cardMap.get(id)!)), ...(settled ? { settled } : {}) },
     };
     if (picked !== skipReward && !offer.includes(picked)) throw new Error(`Invalid reward action: ${picked}`);
     if (picked) deck.push(picked);
@@ -762,12 +830,6 @@ export function* runSteps(
     state.grace[patrons[0]] = earned;
     yield* grantGrace(patrons[0]);
   }
-
-  /**
-   * `omen`에서 걸어 둔 약속. 판정은 다음 조우의 사실이 하므로 **하나만** 든다 — 둘을 걸면 같은
-   * 전투 하나로 호의가 두 번 들어오고, 그건 요구가 아니라 수도꼭지다
-   */
-  let carried: DemandPromise | undefined;
 
   while (state.map.depth < mapDepth && state.combat.player.hp > 0) {
     const { region, floor } = mapSlot(state.map.depth);
@@ -791,9 +853,12 @@ export function* runSteps(
     /** 조우·보상·요구가 같은 갈래에서 같은 값을 읽는다. 갈래가 빠지면 세 갈래가 같은 적을 뱉는다 */
     const nodeSeed = state.map.depth * laneCount + state.map.lane;
     if (path === "omen") {
-      // 두 번째 `omen`은 걸어 둔 약속을 **교체한다**. 삼키면 그 칸이 아무 일도 안 하고, 둘 다 들면
-      // 같은 전투 하나로 호의가 두 번 들어온다 — 교체는 둘 다 아니다
-      carried = (yield* askDemand(1, nodeSeed, true)) ?? carried;
+      /**
+       * 퀘스트는 **승부 카드부터** 고르는 예약 내기다(P-59 §2) — 다음 조우의 적 구성을 모르므로
+       * 신 조건은 여기서 안 붙인다. 두 번째 `omen`은 잠근 카드를 **교체한다**: 삼키면 그 칸이 아무
+       * 일도 안 하고(옛 판에서 방문의 43.7%였다), 둘 다 들면 전투 하나가 판돈 둘을 판정한다
+       */
+      carriedBet = (yield* askBetCard()) ?? carriedBet;
       advanceMap(state);
     } else if (path === "rest") {
       // 강화할 카드가 없으면 그 칸은 서지 않는다 — 융합만 남은 덱은 실제로 그 자리다
@@ -830,10 +895,10 @@ export function* runSteps(
       /** 이 조우가 무엇을 요구했는지. `--aura-matrix`가 개입의 부호를 여기서 갈라 읽는다 */
       const passives = [...new Set(members.flatMap(({ passives: own }) => Object.keys(own ?? {})))].sort();
       const devoted = patrons.filter((god) => favorStage(state.favor[god] ?? favorInitial) === "devotion");
-      const promise = yield* askDemand(members.length, nodeSeed);
+      const bet = yield* askBet(members.length, nodeSeed);
       const hpBefore = state.combat.player.hp;
-      // 전투 앞의 요구와 `omen`이 걸어 둔 약속을 **같이** 실어 보낸다 — 아래 판정이 읽는 목록과 같다
-      const result = yield* playEncounter(state, seed * 100 + nodeSeed, deck, cardMap, lineup, log, patrons, noise, [promise, carried].filter((held) => held !== undefined));
+      // 확정된 내기표를 그대로 실어 보낸다 — 아래 판정이 읽는 것과 같은 한 벌이다
+      const result = yield* playEncounter(state, seed * 100 + nodeSeed, deck, cardMap, lineup, log, patrons, noise, bet);
       /**
        * 꺾으면 화해한다 — 호의가 평온 하한으로 돌아가므로 그 신은 다음 조우에 다시 서지 않는다.
        * 개입이 진노(적 회복·신 합류)에서 평온(작은 도움)으로 바뀌는 것이 이 조우의 가장 큰 보상이다.
@@ -848,46 +913,52 @@ export function* runSteps(
       enemyCounts.push(members.length);
       encounters += 1;
       // 편성 이름이 아니라 **자리**로 센다 — 층별 정책이 갈리는지 보려면 열이 층이어야 한다
-      /** 이 조우를 선불 대가를 지고 들어섰는가. 「시련 중 사망」의 분자는 패배 맥락이고 분모가 이 줄이다 */
-      const underTrial = Boolean(trial);
+      /** 이 조우를 판돈을 걸고 들어섰는가. 「판돈을 지고 죽음」의 분자는 패배 맥락이고 분모가 이 줄이다 */
+      const underTrial = Boolean(bet?.card);
       encounterOutcomes.push({ key: `${region}:${floor}:${path}`, cleared: state.combat.outcome === "victory", passives, devoted, hpLost: hpBefore - state.combat.player.hp, trial: underTrial });
-      // 기간이 끝나면 여유를 되돌린다. 체력은 안 돌려준다 — 치른 것은 치른 것이다
-      if (trial) {
-        if (trial.encounters > 1) trial = { maxHp: trial.maxHp, encounters: trial.encounters - 1 };
-        else {
-          state.combat.player.maxHp += trial.maxHp;
-          trial = undefined;
-        }
-      }
       if (state.combat.outcome !== "victory") {
+        // 패배는 내기 실패다 — 예치한 최대 체력은 이미 나갔고 돌아오지 않는다
         defeatContext = { region, floor, enemies: members.map(({ id }) => id), passives, trial: underTrial };
         favorCurve.push({ ...state.favor });
         hpCurve.push(state.combat.player.hp);
         break;
       }
-      // 전투 앞의 요구와 `omen`에서 걸어 둔 약속을 같은 사실로 판정한다
-      for (const promised of [promise, carried]) {
-        if (!promised) continue;
-        const { demand, patron, other, choice, tier } = promised;
-        // 지키지 못한 약속은 아무것도 움직이지 않는다 — 실패 벌금은 만들지 않는다. 선불 대가는 이미 나갔다
-        const held = tier ? demandSatisfied(tier, result.facts) : false;
-        resolveDemand(state.favor, patron, other, held ? tier : undefined);
-        if (held && tier?.reward.upgrade) grantUpgrade(tier.reward.upgrade);
-        // 시련의 보상은 그 신의 은혜 하나다 — `awardGrace`와 같은 상한(6)을 쓰고 3택1을 그 자리에서 띄운다
-        if (held && tier?.reward.grace) {
-          state.grace[patron] = Math.min(6, (state.grace[patron] ?? 0) + tier.reward.grace);
-          yield* grantGrace(patron);
+      /**
+       * 정산. **호의와 판돈은 다른 저울이다** — 호의는 신 조건 하나가 정하고(못 지켜도 벌금은 없다,
+       * R-5), 판돈(카드 보상 · 예치한 최대 체력)은 신 조건과 카드 조건을 **둘 다** 지켜야 돌아온다
+       */
+      let settled: BetSettlement | undefined;
+      let betWon = true;
+      if (bet) {
+        const { demand, patron, other, card, deposit } = bet;
+        const godKept = demandSatisfied(demand.condition, result.facts);
+        betWon = godKept && (!card || result.facts.bet_kill > 0);
+        resolveDemand(state.favor, patron, godKept ? demand.reward : undefined);
+        // 관망도 편을 든다 — 상대 신을 벌금에서 지켜 준 것이므로 그쪽이다
+        demandSides.push(godKept ? patron : other);
+        const [asked, heldCount] = demandOutcomes[demand.id] ?? [0, 0];
+        demandOutcomes[demand.id] = [asked + 1, heldCount + (godKept ? 1 : 0)];
+        // 상한만 돌려준다 — 체력은 안 채운다. 되돌아오는 것은 여유뿐이고 치른 것은 치른 것이다
+        if (betWon && deposit) state.combat.player.maxHp += deposit;
+        /**
+         * 성공한 승부 카드 한 장이 **확정적으로** 한 단 오른다. 후보가 `+1`까지라 결과는 최대 `+2`이고
+         * 휴식처와 같은 `upgradeId`·덱 교체 경로다 — 지우는 것이 아니라 갈아 끼우므로 덱 길이가 그대로다.
+         * 자리는 **id로 다시 찾는다**: 찢기(P-47)가 조우 중에 덱을 줄이면 인덱스가 밀리고, 걸었던 그
+         * 카드가 통째로 사라졌으면 올릴 것이 없다
+         */
+        if (betWon && card) {
+          const at = deck.indexOf(card.id);
+          if (at >= 0) {
+            const before = cardView(cardMap.get(card.id)!);
+            deck[at] = upgradeId(card.id);
+            syncUpgrades(cardMap, deck);
+            settled = { before, after: cardView(cardMap.get(deck[at])!) };
+          }
         }
-        // 거절도 편을 든다 — 상대 신을 벌금에서 지켜 준 것이므로 그쪽이다
-        demandSides.push(held ? patron : other);
-        // 단이 키에 들어간다 — 단별 지킴률을 리포트가 따로 세지 않고 그대로 읽는다. 거절은 세지 않는다
-        if (!tier) continue;
-        const [asked, heldCount] = demandOutcomes[`${demand.id}:${choice}`] ?? [0, 0];
-        demandOutcomes[`${demand.id}:${choice}`] = [asked + 1, heldCount + (held ? 1 : 0)];
       }
-      carried = undefined;
-      // 신을 꺾은 조우는 정예 대우다 — 은혜는 안 준다(그쪽은 헌신의 문이다, `awardGrace`)
-      yield* offerReward(nodeSeed, path, result.felled.length > 0);
+      // 신을 꺾은 조우는 정예 대우다 — 은혜는 안 준다(그쪽은 헌신의 문이다, `awardGrace`).
+      // 판돈을 잃은 조우에는 카드 보상 화면 자체가 서지 않는다 — 그것이 「카드 보상 없음」이다
+      if (betWon) yield* offerReward(nodeSeed, path, result.felled.length > 0, settled);
       // 은혜를 먼저 준다 — 합성 전제가 은혜 보유이므로 이 순서라야 마지막 은혜가 그 자리에서 합성을 연다
       for (const god of awardGrace(state.favor, state.grace, [...patrons])) yield* grantGrace(god);
       if (!fused && canFuse(state.grace, patrons)) {

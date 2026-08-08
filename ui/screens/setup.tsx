@@ -1,11 +1,11 @@
 import { Fragment, useEffect, useState } from "react";
 import type { CSSProperties, FormEvent } from "react";
-import { favorBoundaries, favorStage } from "../../core/favor.ts";
+import { favorBoundaries, favorStage, interventionEveryTurns } from "../../core/favor.ts";
 import type { GodId } from "../../core/rules.ts";
 import { deckSize, favorPool, gods, startableCards, type PatronPair } from "../../sim/engine.ts";
 import { Backdrop, hero, Prop } from "../shared/backdrop.tsx";
 import { CardRow, GameCard } from "../shared/card.tsx";
-import { godArt, godName, stageName } from "../shared/header.tsx";
+import { godArt, godName, godStageText, stageName } from "../shared/header.tsx";
 
 /**
  * id → 그 카드의 신과 면. 시작 화면에는 관측이 없으므로 **값은 엔진이 내보낸 `startableCards`에서**
@@ -217,13 +217,16 @@ export function SetupScreen({
         DOM 텍스트에 섞으면 e2e가 이름으로 버튼을 못 집는다
       */}
       <div className="god-select" role="group" aria-labelledby="patron-pick">
-        {gods.map((god, index) => (
-          <Fragment key={god}>
+        {gods.map((god, index) => {
+          const { start, turn } = godStageText(god, "devotion");
+          return <Fragment key={god}>
             {index > 0 && <i className="god-divider" aria-hidden="true" />}
             <button
               type="button"
               className="god-portrait"
               aria-pressed={picked.includes(god)}
+              aria-labelledby={`${god}-name`}
+              aria-describedby={picked.includes(god) ? `${god}-ability` : undefined}
               data-pick={picked.includes(god) ? picked.indexOf(god) + 1 : undefined}
               style={{ "--god-color": `var(--${god})` } as CSSProperties}
               onClick={() => onToggleGod(god)}
@@ -231,10 +234,17 @@ export function SetupScreen({
               <img src={godArt[`../../art/gods/${god}.webp`]} alt="" />
               {/* 선택된 초상 위 신 테마 프롭 — absolute라 자리를 안 민다(UI.md 제1규칙) */}
               {picked.includes(god) && <Prop name={godTheme[god]} className="god-theme" />}
-              <b className="nameplate">{godName(god)}</b>
+              <span className="nameplate">
+                <b id={`${god}-name`}>{godName(god)}</b>
+                {picked.includes(god) && (
+                  <small className="god-ability" id={`${god}-ability`}>
+                    헌신 능력 · 시작 {start} · {interventionEveryTurns}턴마다 {turn}
+                  </small>
+                )}
+              </span>
             </button>
-          </Fragment>
-        ))}
+          </Fragment>;
+        })}
       </div>
       {/* 하단 한 줄 — 배분 슬라이더(둘 골라야 등장, 자리는 지킨다) · 덱 편집기(접힘) · 런 시작 */}
       <div className="setup-row">

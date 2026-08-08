@@ -66,6 +66,19 @@ describe("combat", () => {
     expect(combat.drawPile).toEqual(["kept"]);
   });
 
+  it("reshuffles used cards when a card effect draws from an empty pile", () => {
+    const draw = { ...strike, id: "draw", target: "self", effects: [{ op: "draw", value: 1 }] } as Card;
+    const combat = createCombat(1, [], [trainingEnemy]);
+    combat.hand = [draw.id];
+    combat.discardPile = [strike.id];
+    combat.energy = 1;
+
+    playCard(wrap(combat), new Map([[draw.id, draw]]), draw.id, undefined, createRng(1));
+
+    expect(combat.hand).toEqual([strike.id]);
+    expect(combat.discardPile).toEqual([draw.id]);
+  });
+
   it("removes exhausted cards for the rest of combat", () => {
     const exhaust = { ...strike, id: "exhaust", tags: ["attack", "exhaust"] as Card["tags"] };
     const result = runCombat(2, ["exhaust", ...Array(9).fill("strike")], [strike, exhaust], [trainingEnemy]);

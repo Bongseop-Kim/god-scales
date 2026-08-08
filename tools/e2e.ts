@@ -29,10 +29,12 @@ if (!deckOk(freeDeck)) throw new Error(`${freeCard} is no longer a startable tie
  * P-36에서 170 → 589: 밀림이 자리를 옮기고 카드 다섯이 붙자 170이 헌신에 못 닿아 `grace` 화면을 안 지난다.
  * P-39에서 589 → 371: 정예·보스가 tier2 세 자리를 주자 589의 덱이 바뀌어 저승을 지나고 6조우에서 죽는다.
  * P-46에서 371 → 727: 신탁이 결정을 하나 더 끼우고 평온 개입이 조우를 바꾸자 371이 `grace`에 못 닿는다.
- * 이번엔 800개 중 220개가 완주한다(게임이 쉬워졌다) — 784·627·575가 727 다음 후보다
+ * 이번엔 800개 중 220개가 완주한다(게임이 쉬워졌다) — 784·627·575가 727 다음 후보다.
+ * P-59에서 727 → 218: 카드 보상이 판돈이 되고 `bet_card` 결정이 하나 더 끼자 727이 6층에서 죽는다.
+ * 900개 중 **18개**가 완주하며 열 phase를 다 지난다 — 218이 가장 짧고(246결정) 559·81·129가 다음이다
  */
-const seed = 727;
-const phases = ["path", "card", "target", "rest", "rest_card", "reward", "grace", "demand", "oracle"];
+const seed = 218;
+const phases = ["path", "card", "target", "rest", "rest_card", "reward", "grace", "demand", "bet_card", "oracle"];
 
 /**
  * 정책은 화면에 적힌 것만 쓴다 — 봇 추천은 DOM에 없고, 있어서도 안 된다. 룰 봇을 브라우저로 옮겨 심지도
@@ -66,7 +68,8 @@ const setup = await tab.evaluate(async () => {
   const wait = () => new Promise((resolve) => setTimeout(resolve, 60));
   // 덱 편집기의 신 탭이 같은 버튼 줄(.god-legend)을 쓴다 — 접근 이름으로 조합 쪽만 집는다
   const picker = "[aria-labelledby='patron-pick'] button";
-  const god = (name) => [...document.querySelectorAll(picker)].find((el) => el.textContent.trim() === name);
+  // 이름표만 읽는다 — 고른 초상에는 헌신 능력 줄이 따라붙어 버튼 전체 텍스트가 이름이 아니다
+  const god = (name) => [...document.querySelectorAll(picker)].find((el) => el.querySelector(".nameplate b")?.textContent.trim() === name);
   const submit = () => document.querySelector("form.setup button.primary");
   god("제우스").click();
   await wait();
@@ -74,7 +77,7 @@ const setup = await tab.evaluate(async () => {
   god("제우스").click();
   await wait();
   return { gods: [...document.querySelectorAll(picker)].length, blocked, ready: !submit().disabled,
-    picked: [...document.querySelectorAll(picker + "[aria-pressed='true']")].map((el) => el.textContent.trim()),
+    picked: [...document.querySelectorAll(picker + "[aria-pressed='true']")].map((el) => el.querySelector(".nameplate b").textContent.trim()),
     // 덱 편집기가 접혀 있으므로 시작 화면은 아직 한 눈금이다. 펼친 뒤는 스크롤을 허용한다
     tall: document.documentElement.scrollHeight > window.innerHeight };
 });
@@ -172,6 +175,9 @@ await tab.evaluate(() => {
         ? [enabled("button.choice")[[1, 2][driver.rests++] ?? 0] ?? enabled("button.choice")[0]]
         : phase === "demand" || phase === "grace" || phase === "oracle"
         ? [enabled("button.choice")[0]]
+        // 승부 카드는 덱이 깔린 화면이다 — 걸 수 있는 카드가 있으면 걸고, 없으면 「이대로 건다」로 떨어진다
+        : phase === "bet_card"
+        ? bestCard().concat(enabled("button.choice"))
         : phase === "target"
         ? enabled("button.enemy").sort((left, right) => enemyHp(left) - enemyHp(right))
         : phase === "card"

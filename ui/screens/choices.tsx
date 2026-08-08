@@ -1,11 +1,10 @@
 import type { CSSProperties } from "react";
-import type { DemandCost, DemandReward } from "../../core/demands.ts";
 import { favorInitial, favorStage, oracleSwing } from "../../core/favor.ts";
 import { restHealing } from "../../core/map.ts";
-import { favorPool, type DemandDecision, type GraceDecision, type MapDecision, type OracleDecision, type RunView } from "../../sim/engine.ts";
+import { favorPool, singleBet, watchDemand, type BetDecision, type CardView, type DemandDecision, type GraceDecision, type MapDecision, type OracleDecision, type RunView } from "../../sim/engine.ts";
 import { Backdrop, backdropArt, Flanks, Prop } from "../shared/backdrop.tsx";
 import { CardRow, effectText } from "../shared/card.tsx";
-import { godArt, godLine, godName, stageName } from "../shared/header.tsx";
+import { godArt, godName, stageName } from "../shared/header.tsx";
 
 /**
  * 휴식·은혜·요구 셋 다 지도 위의 한 칸짜리 결정이다 — 지도 패널 없이 한 단짜리로 그린다.
@@ -120,69 +119,99 @@ export function GraceScreen({ decision, onAnswer }: {
   );
 }
 
-/** 단 이름. 답(`tier1`·`tier2`)이 아니라 값이 있는지로 갈린다 — 대가 없는 단이 수락이다 */
-const tierName: Record<string, [string, string]> = { tier1: ["수", "수락"], tier2: ["시", "시련"] };
-
 /**
- * 대가는 **지금** 나가는 값이다. 그래서 보상이 아니라 단 이름과 같은 줄에 선다 — 값이 앞에 서지 않으면
- * 결정이 계산이 되지 않는다(마감은 P-26)
+ * 내기표. 다섯 자리(**조건 · 승부 카드 · 판돈 · 성공 · 실패**)를 언제나 유지한다 — 미선택 값도
+ * 빈 자리로 남아야 고르는 동안 이웃이 안 밀린다(UI.md 제1규칙). 채워진 칸만 220ms 한 번 들어온다
  */
-const costText = (other: string, cost?: DemandCost): string => {
-  if (!cost) return "없음";
-  return [
-    cost.maxHp ? `최대 체력 −${cost.maxHp} (조우 ${cost.encounters ?? 1}회)` : "",
-    // 「즉시」가 아래 `지키면`과 갈라 준다 — 시련은 지금 한 번 치르고, 지키면 관계 벌금을 한 번 더 낸다
-    cost.favor ? `${godName(other)} 호의 −${cost.favor} 즉시` : "",
-  ].filter(Boolean).join(" · ");
-};
-
-/** 서열이 곧 문장 순서다 — 은혜 > 업그레이드 > 호의(`tools/validate.ts`의 `rewardRises`) */
-const rewardText = (patron: string, reward: DemandReward): string =>
-  [
-    reward.grace ? `${godName(patron)}의 은혜 ${reward.grace}개` : "",
-    reward.upgrade ? `카드 강화 ${reward.upgrade}장` : "",
-    reward.favor ? `${godName(patron)} 호의 +${reward.favor}` : "",
-  ].filter(Boolean).join(" · ") || `${godName(patron)} 호의 +0`;
+function BetSheet({ deposit, rule, card }: { deposit: number; rule?: string; card?: CardView }) {
+  const rows: [string, string | undefined][] = [
+    ["조건", rule],
+    ["승부 카드", card && card.name],
+    ["판돈", card ? `이번 전투 카드 보상 · 최대 체력 ${deposit}` : "이번 전투 카드 보상"],
+    ["성공", card ? `카드 보상 · 호의 · 최대 체력 반환 · 「${card.name}」 강화` : "카드 보상 · 호의"],
+    ["실패", card ? `카드 보상 없음 · 최대 체력 ${deposit} 영구 손실` : "카드 보상 없음"],
+  ];
+  return (
+    <dl className="bet-sheet">
+      {rows.map(([label, value]) => (
+        <div key={label}>
+          <dt>{label}</dt>
+          {/* 빈 자리도 글자 하나를 세운다 — 컨테이너 높이가 선택에 따라 바뀌면 그것이 흔들림이다 */}
+          <dd className={value ? "filled" : undefined}>{value ?? "—"}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
 
 /**
- * 요구는 수락·시련·거절 셋이다. 시련은 값을 **선불로** 치르고 은혜를 받는다 — 5층과 적이 모자란
- * 조우에서는 그 칸이 아예 서지 않으므로 관측이 실어 온 단만 그린다
+ * 내기표의 윗칸 — 경쟁하는 두 신이 조건을 하나씩 낸다. 답은 **신의 이름**이고 관망이 셋째다.
+ * 적이 모자란 조우에서는 한 신의 칸이 아예 서지 않으므로 관측이 실어 온 제안만 그린다 (P-59)
  */
 export function DemandScreen({ decision, onAnswer }: {
   decision: DemandDecision;
   onAnswer: (choice: string) => void;
 }) {
   const view = decision.observation;
-  const penalty = view.penalty ? ` · ${godName(view.other)} 호의 −${Math.abs(view.penalty)}` : "";
   return (
     <Screen view={view}>
-      {/**
-       * 요구 화면은 글자만 있었다 — 신이 직접 말을 거는 자리인데 누가 말하는지가 화면에 없었다.
-       * 일러 다섯은 이미 있고(`art/gods`) 이 계획은 에셋을 새로 만들지 않는다
-       */}
-      <GodSay god={view.patron}>{godLine(view.patron, "demand_offer", view.depth)}</GodSay>
-      {view.tiers.map((tier) => {
-        const [mark, name] = tierName[tier.action] ?? ["요", tier.action];
-        return (
-          <Choice
-            key={tier.action}
-            mark={mark}
-            label={`${name} · 대가 ${costText(view.other, tier.cost)}`}
-            // 보상은 다음 전투에서 조건을 지켰을 때만 들어간다 — 고르는 것만으로 주지 않는다
-            detail={
-              <>
-                {tier.text}
-                {/* 문장은 신의 목소리고 이 줄은 규칙이다 — 합치면 신이 숫자를 읽는 소리가 된다 */}
-                <em className="rule">{tier.rule}</em>
-                지키면 {rewardText(view.patron, tier.reward)}{penalty}
-              </>
-            }
-            disabled={!decision.options.includes(tier.action)}
-            onChoose={() => onAnswer(tier.action)}
-          />
-        );
-      })}
-      <Choice mark="거" label="거절 · 대가 없음" detail="어느 호의도 움직이지 않습니다. 거절에도, 지키지 못해도 벌금은 없습니다." onChoose={() => onAnswer("reject")} />
+      {view.offers.map((offer) => (
+        <Choice
+          key={offer.action}
+          /**
+           * 신이 직접 말을 거는 자리인데 누가 말하는지가 화면에 없었다 — 이름 한 글자가 표식이고
+           * 일러 다섯은 이미 있다(`art/gods`). 이 계획은 에셋을 새로 만들지 않는다
+           */
+          mark={godName(offer.god).slice(0, 1)}
+          /**
+           * 벌금은 **지금** 나가는 값이라 보상이 아니라 신 이름과 같은 줄에 선다 — 값이 앞에 서지
+           * 않으면 결정이 계산이 되지 않는다(마감은 P-26). 보상은 그 아래 「지키면」이 든다
+           */
+          label={`${godName(offer.god)} · 대가 ${offer.penalty ? `${godName(offer.other)} 호의 −${Math.abs(offer.penalty)}` : "없음"}`}
+          // 보상은 이 전투에서 조건을 지켰을 때만 들어간다 — 고르는 것만으로 주지 않는다
+          detail={
+            <>
+              {offer.text}
+              {/* 문장은 신의 목소리고 이 줄은 규칙이다 — 합치면 신이 숫자를 읽는 소리가 된다 */}
+              <em className="rule">{offer.rule}</em>
+              지키면 {godName(offer.god)} 호의 +{offer.reward.favor}
+            </>
+          }
+          disabled={!decision.options.includes(offer.action)}
+          onChoose={() => onAnswer(offer.action)}
+        />
+      ))}
+      <Choice mark="관" label="관망 · 판돈 없음" detail="어느 신에게도 걸지 않습니다. 카드 보상은 그대로 받습니다." onChoose={() => onAnswer(watchDemand)} />
+      {/* 퀘스트에서 잠근 카드가 있으면 조건을 고르기 **전에** 보인다 — 무엇을 걸고 있는지 모르고 고를 수 없다 */}
+      <BetSheet deposit={view.deposit} card={view.reserved} />
+    </Screen>
+  );
+}
+
+/**
+ * 내기표의 아랫칸 — 덱에서 승부 카드 한 장을 건다. 조우에서는 조건을 고른 **뒤**, 퀘스트에서는
+ * 다음 조우를 위해 **미리** 묻는다. 후보가 덱 전체가 아니다: 상한에 닿은 카드·융합·피해를 못 주는
+ * 카드는 「이 카드로 마지막 적 처치」가 성립하지 않아 죽어 있다(`sim/engine.ts`의 `betCandidates`)
+ */
+export function BetScreen({ decision, onAnswer }: {
+  decision: BetDecision;
+  onAnswer: (choice: string) => void;
+}) {
+  const view = decision.observation;
+  const promise = view.promise;
+  return (
+    <Screen view={view} wide>
+      {promise
+        ? <GodSay god={promise.god}>{promise.text}</GodSay>
+        : <h2>다음 싸움에 무엇을 걸까요?</h2>}
+      <BetSheet deposit={view.deposit} rule={promise?.rule} />
+      <CardRow cards={view.deck} options={decision.options} onSelect={onAnswer} value={(_, index) => String(index)} />
+      <Choice
+        mark="단"
+        label={promise ? "이대로 건다 · 판돈 없음" : "지나친다 · 판돈 없음"}
+        detail={promise ? "승부 카드를 걸지 않습니다. 최대 체력도 내려가지 않습니다." : "카드를 잠그지 않고 지나갑니다."}
+        onChoose={() => onAnswer(singleBet)}
+      />
     </Screen>
   );
 }

@@ -83,7 +83,7 @@
       }
     },
     "demands": [
-      "demand_zeus_multi"
+      "demand_zeus_swift"
     ],
     "lines": {
       "encounter": {
@@ -241,7 +241,7 @@
       }
     },
     "demands": [
-      "demand_poseidon_solo"
+      "demand_poseidon_wave"
     ],
     "lines": {
       "encounter": {

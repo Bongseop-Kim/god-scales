@@ -1,7 +1,8 @@
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import type { CSSProperties } from "react";
 import { harmfulTokens } from "../../core/rules.ts";
-import type { TokenName, Tokens } from "../../core/state.ts";
+import type { PassiveName, TokenName, Tokens } from "../../core/state.ts";
+import { Icon } from "./icon.tsx";
 
 /**
  * 전용 픽셀 아이콘 13종(P-57). 흰색 + 알파 원본을 `mask`로 쓰고 색은 `--token-color`가 칠한다 —
@@ -42,7 +43,20 @@ const tokenStyle: Record<TokenName, { name: string; color: string; duration: Dur
   fog: { name: "안개", color: "var(--bane)", duration: "next", text: "다음 턴 뽑기 −스택" },
 };
 
+/** 적 발밑의 보라색 능력 칩과 사전이 함께 읽는다 — 이름·효과가 두 화면에서 갈리지 않게 한 표만 둔다 */
+const passiveStyle: Record<PassiveName, { name: string; text: string }> = {
+  guard: { name: "보호", text: "스택마다 사거리 안 아군의 단일 대상 피해를 대신 받음" },
+  shell: { name: "경화", text: "한 턴에 잃는 체력을 스택 이하로 제한" },
+  ward: { name: "결계", text: "해로운 토큰을 스택만큼 막음" },
+  curl: { name: "웅크림", text: "처음 체력을 잃으면 방어 +스택" },
+  angry: { name: "분노", text: "체력을 잃을 때마다 광란 +스택" },
+  rally: { name: "규합", text: "다른 적이 쓰러지면 광란 +스택" },
+  ramp: { name: "고조", text: "행동할 때마다 광란 +스택" },
+  spite: { name: "앙심", text: "공격이 아닌 카드를 내면 광란 +스택" },
+};
+
 export const tokenName = (token: TokenName) => tokenStyle[token].name;
+export const passiveName = (passive: PassiveName) => passiveStyle[passive].name;
 
 /**
  * 배지 하나를 읽는 문장. 배지마다 읽히면 적 하나가 문장 여섯이 되므로 컨테이너가 이것을 모아 한 번
@@ -111,15 +125,28 @@ export function TokenRow({ tokens, limit = 4 }: { tokens: Tokens; limit?: number
  */
 export function TokenDictionary() {
   return (
-    <ul className="token-dict">
-      {(Object.entries(tokenStyle) as [TokenName, (typeof tokenStyle)[TokenName]][]).map(([token, style]) => (
-        <li key={token}>
-          <TokenBadge token={token} still />
-          <b>{style.name}</b>
-          <em>{durationText[style.duration]}</em>
-          <span>{style.text}</span>
-        </li>
-      ))}
-    </ul>
+    <div className="token-dictionaries">
+      <ul className="token-dict">
+        {(Object.entries(tokenStyle) as [TokenName, (typeof tokenStyle)[TokenName]][]).map(([token, style]) => (
+          <li key={token}>
+            <TokenBadge token={token} still />
+            <b>{style.name}</b>
+            <em>{durationText[style.duration]}</em>
+            <span>{style.text}</span>
+          </li>
+        ))}
+      </ul>
+      <h3>적 능력</h3>
+      <ul className="token-dict">
+        {(Object.entries(passiveStyle) as [PassiveName, (typeof passiveStyle)[PassiveName]][]).map(([passive, style]) => (
+          <li key={passive}>
+            <i className="passive-icon"><Icon name={passive} /></i>
+            <b>{style.name}</b>
+            <em>패시브</em>
+            <span>{style.text}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

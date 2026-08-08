@@ -6,7 +6,7 @@ import type { GodId } from "../core/rules.ts";
 import { deckSize, endTurnAction, favorPool, gods, ruleDeck, runSteps, type Decision, type PatronPair } from "../sim/engine.ts";
 import type { ReplayAction } from "../sim/replay.ts";
 import type { RunResult } from "../sim/report.ts";
-import { DemandScreen, GraceScreen, OracleScreen, RestScreen } from "./screens/choices.tsx";
+import { BetScreen, DemandScreen, GraceScreen, OracleScreen, RestScreen } from "./screens/choices.tsx";
 import { CombatScreen } from "./screens/combat.tsx";
 import { IconSheet } from "./shared/icon.tsx";
 import { MapScreen } from "./screens/map.tsx";
@@ -265,6 +265,9 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
           )}
           {pending?.phase === "demand" && (
             <DemandScreen decision={pending} onAnswer={answer} />
+          )}
+          {pending?.phase === "bet_card" && (
+            <BetScreen decision={pending} onAnswer={answer} />
           )}
           {pending?.phase === "oracle" && (
             <OracleScreen decision={pending} onAnswer={answer} />

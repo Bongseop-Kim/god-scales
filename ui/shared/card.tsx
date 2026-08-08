@@ -116,10 +116,12 @@ const cardDamage = (card: CardView) =>
   card.effects.reduce((sum, { op, value }) => sum + (op === "damage" || op === "chain" ? value ?? 0 : 0), 0);
 
 /** 보상과 카드 제거가 같은 격자를 쓴다. 손패만 부채꼴이라 따로 그린다 — 은혜는 카드가 아니라 `Choice`다 */
-export function CardRow({ cards, options, onSelect }: {
+export function CardRow({ cards, options, onSelect, value = ({ id }) => id }: {
   cards: CardView[];
   options: string[];
-  onSelect: (cardId: string) => void;
+  onSelect: (choice: string) => void;
+  /** 답이 카드 id가 아닌 자리 하나 — 승부 카드는 **덱 인덱스**로 답한다(같은 id 두 장을 갈라야 한다) */
+  value?: (card: CardView, index: number) => string;
 }) {
   return (
     <div className="hand">
@@ -128,8 +130,8 @@ export function CardRow({ cards, options, onSelect }: {
           key={`${card.id}-${index}`}
           cardId={card.id}
           card={card}
-          disabled={!options.includes(card.id)}
-          onSelect={() => onSelect(card.id)}
+          disabled={!options.includes(value(card, index))}
+          onSelect={() => onSelect(value(card, index))}
         />
       ))}
     </div>

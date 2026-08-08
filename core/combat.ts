@@ -1,5 +1,6 @@
 import { bossLane } from "./map.ts";
 import { createRng } from "./rng.ts";
+import { drawCards, shuffle } from "./deck.ts";
 import { addToken, dealDamage, executeCard, firePowers, shoveDisplaced, tickBleed, type Card } from "./rules.ts";
 import type { ActorState, CombatState, EnemyState, GameState, Passives, TokenName } from "./state.ts";
 import { canReachTarget, livingInReach } from "./targeting.ts";
@@ -7,7 +8,7 @@ import { canReachTarget, livingInReach } from "./targeting.ts";
 export const MAX_HP = 100;
 export const ENERGY_PER_TURN = 3;
 export const DRAW_PER_TURN = 5;
-export const HAND_LIMIT = 10;
+export { drawCards, HAND_LIMIT, shuffle } from "./deck.ts";
 export const TURN_LIMIT = 50;
 /**
  * 칸 수. **0이 앞**(플레이어와 가까운 쪽)이고 3이 뒤다 — `laneCount`가 3을 박아 둔 것과 같은 자리다.
@@ -30,15 +31,6 @@ export type EnemyAction = {
 export type EnemyDefinition = { id: string; hp: number; pattern: EnemyAction[]; bulwark?: number; passives?: Passives; size?: number };
 /** 편성 한 줄. **칸 0부터 붙여 채운다** — 순서가 곧 칸이고 빈 칸을 사이에 둘 방법이 없다 */
 export type Lineup = EnemyDefinition[];
-
-export function shuffle<T>(items: T[], random: () => number): T[] {
-  const result = [...items];
-  for (let index = result.length - 1; index > 0; index -= 1) {
-    const other = Math.floor(random() * (index + 1));
-    [result[index], result[other]] = [result[other], result[index]];
-  }
-  return result;
-}
 
 // 패시브는 전투마다 복사한다 — `ward`·`guard`는 소모되므로 정의를 그대로 들면 다음 전투가 빈손이다
 const enemyState = ({ id, hp, bulwark, passives }: EnemyDefinition): EnemyState => ({
@@ -130,18 +122,6 @@ export function admitPending(combat: CombatState, definitions: ReadonlyMap<strin
   }
 }
 
-export function drawCards(combat: CombatState, count: number, random: () => number): void {
-  for (let drawn = 0; drawn < count && combat.hand.length < HAND_LIMIT; drawn += 1) {
-    if (combat.drawPile.length === 0 && combat.discardPile.length > 0) {
-      combat.drawPile = shuffle(combat.discardPile, random);
-      combat.discardPile = [];
-    }
-    const card = combat.drawPile.shift();
-    if (!card) return;
-    combat.hand.push(card);
-  }
-}
-
 export function startTurn(state: GameState, random: () => number): void {
   const combat = state.combat;
   combat.turn += 1;
@@ -164,7 +144,7 @@ export function startTurn(state: GameState, random: () => number): void {
   combat.energy = Math.max(0, ENERGY_PER_TURN - drain);
   drawCards(combat, Math.max(0, DRAW_PER_TURN - fog), random);
   // 뽑은 뒤에 터뜨린다 — 파워가 준 토큰이 이번 턴 손패와 같은 화면에 서야 한다
-  firePowers(state, "turn_start");
+  firePowers(state, "turn_start", undefined, random);
   updateOutcome(combat);
 }
 
@@ -173,6 +153,7 @@ export function playCard(
   cards: ReadonlyMap<string, Card>,
   cardId: string,
   enemyId?: string,
+  random: () => number = () => 0,
 ): void {
   const handIndex = state.combat.hand.indexOf(cardId);
   const card = cards.get(cardId);
@@ -189,9 +170,9 @@ export function playCard(
   if (card.tags.includes("power")) {
     if (!card.trigger) throw new Error(`${card.id}: power requires a trigger`);
     state.combat.powers.push({ trigger: card.trigger, card });
-  } else executeCard(state, card, enemyId, [...cards.values()]);
+  } else executeCard(state, card, enemyId, [...cards.values()], random);
   // 파워를 내는 것도 카드를 내는 것이다(StS와 같다) — 등록한 그 턴부터 on_play가 센다
-  firePowers(state, "on_play", enemyId);
+  firePowers(state, "on_play", enemyId, random);
   // spite는 비공격 카드를 처벌한다 — 방어만 쌓는 판을 시간이 흐를수록 비싸게 만든다
   if (!card.tags.includes("attack")) {
     for (const enemy of actors(state.combat)) if (enemy.hp > 0 && enemy.passives?.spite) addToken(enemy, "frenzy", enemy.passives.spite);
@@ -214,12 +195,12 @@ function actionTargets(combat: CombatState, enemy: EnemyState, target: EnemyActi
   return target === "all_allies" ? allies : allies.slice(0, 1);
 }
 
-export function endTurn(state: GameState, definitions: ReadonlyMap<string, EnemyDefinition>): void {
+export function endTurn(state: GameState, definitions: ReadonlyMap<string, EnemyDefinition>, random: () => number = () => 0): void {
   const combat = state.combat;
   combat.discardPile.push(...combat.hand);
   combat.hand = [];
   // 적이 행동하기 **전에** 터뜨린다 — 턴 끝 방벽이 이번 턴의 공격을 못 받으면 아무 값도 없다
-  firePowers(state, "turn_end");
+  firePowers(state, "turn_end", undefined, random);
 
   /**
    * 밀림은 적 행동 **앞에서 한 번** 돈다 — 밀린 적은 자리를 뒤로 내주고 그 턴을 쉰다.
@@ -309,10 +290,10 @@ export function runCombat(
     let playable = nextPlayable();
     while (playable && state.combat.outcome === "ongoing") {
       const target = livingInReach(state.combat, cards.get(playable)!.reach)[0]?.id;
-      playCard(state, cards, playable, target);
+      playCard(state, cards, playable, target, random);
       playable = nextPlayable();
     }
-    if (state.combat.outcome === "ongoing") endTurn(state, definitions);
+    if (state.combat.outcome === "ongoing") endTurn(state, definitions, random);
     snapshots.push(JSON.stringify(state.combat));
   }
   return { state, snapshots };

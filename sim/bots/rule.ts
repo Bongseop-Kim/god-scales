@@ -179,29 +179,31 @@ export function chooseGrace(offer: Grace[], held: GraceHeld, slotCards: Record<s
 }
 
 /**
- * 답이 셋이다. 선불 대가가 붙은 뒤로 문제가 「받을까 말까」가 아니라 **값을 치를까**로 바뀌었다.
+ * 두 신이 조건을 하나씩 낸다(P-59). 벌금이 **편을 드는 순간** 나가므로 눈금도 하나다 — 상대 신을
+ * 분노 아래로 미는가. 라이벌 −18을 무릅쓸 값이 조건 하나에는 없다: 문턱을 걷고 재면 라이벌 조합
+ * 둘이 0으로 떨어진다(두 신이 함께 진노로 내려가면 판에 신 둘이 서고 화해가 따라오지 못한다).
  *
- * - **대가가 붙은 단(시련)은 체력만 본다.** 보상이 은혜고, P-28 실측으로 은혜는 호의 어떤 값보다 크다
- *   (은혜 효과만 끄면 승률 0.563 → 0.294). 그래서 상대 신이 진노로 떨어지는 것을 **감수한다** —
- *   R-30이 「봇이 분노 문턱에서 구조적으로 거절한다」고 적은 그 규칙은 보상이 +12뿐일 때 옳았다.
- *   문턱은 `choosePath`·`chooseRest`와 같은 「반피」다: 다치면 살아남는 것에 취향이 없다
- * - **대가가 없는 단(수락)에는 옛 규칙이 그대로 남는다.** 거기 보상은 여전히 호의뿐이라 벌금 −18을
- *   무릅쓸 이유가 없다
- *
- * 통과한 가장 비싼 단을 고르고, 없으면 거절이다 — 거절에는 여전히 벌금이 없다
+ * `preferred`는 엔진이 넘기는 기본 취향이다(한 신을 먼저 올려 은혜 사다리를 열고 그다음 상대를
+ * 올린다) — 봇이 그 순서를 다시 계산하면 두 번째 진실이 된다. 둘 다 못 서면 관망이다
  */
-export function chooseDemandAnswer(
-  offers: DemandOffer[],
-  favor: Record<string, number>,
-  patron: string,
-  other: string,
-  hp: number,
-  maxHp: number,
-): string {
-  const affordable = ({ cost }: DemandOffer) => cost
-    ? hp - (cost.maxHp ?? 0) >= maxHp * 0.5
-    : (favor[other] ?? favorInitial) + demandPenalty(patron, other).amount >= favorBoundaries.anger;
-  return [...offers].reverse().find(affordable)?.action ?? "reject";
+export function chooseDemandAnswer(offers: DemandOffer[], favor: Record<string, number>, preferred: string): string {
+  const affordable = ({ god, other }: DemandOffer) =>
+    (favor[other] ?? favorInitial) + demandPenalty(god, other).amount >= favorBoundaries.anger;
+  const safe = offers.filter(affordable);
+  return (safe.find(({ god }) => god === preferred) ?? safe[0])?.action ?? "reject";
+}
+
+/**
+ * 승부 카드 한 장. **기대값이 가장 큰 후보**다 — 보상 3택1과 같은 표를 쓴다(`chooseReward`): 확정
+ * 강화 한 단은 그 덱에서 제일 자주 도는 카드에 붙는 것이 언제나 맞다.
+ *
+ * 걸지 말지의 문턱은 `choosePath`·`chooseRest`와 같은 「반피」다 — 예치를 내고도 반피가 남아야 건다.
+ * 문턱이 없으면 봇이 조우마다 최대 체력을 8씩 내려놓고 카드 보상까지 잃어 나선이 된다
+ */
+export function chooseBetCard(candidates: { index: number; id: string }[], cards: ReadonlyMap<string, Card>, hp: number, maxHp: number, deposit = 8): string {
+  if (!candidates.length || hp - deposit < maxHp * 0.5) return "single";
+  const best = chooseReward(candidates.map(({ id }) => id), cards);
+  return String(candidates.find(({ id }) => id === best)!.index);
 }
 
 /** 단계의 서열. 저울이 어느 쪽으로 기울어야 나은지는 **두 신의 단계 합**이 정한다 */

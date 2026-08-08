@@ -1,4 +1,5 @@
 import type { GraceSlot } from "./grace.ts";
+import { drawCards } from "./deck.ts";
 import { tokenNames, type ActorState, type CombatState, type GameState, type TokenName, type Trigger } from "./state.ts";
 import { livingInReach, reachSlots, resolveChainTargets, resolveTargets, type Target } from "./targeting.ts";
 
@@ -334,7 +335,7 @@ function guardFor(combat: CombatState, target: ActorState, reach?: string): Acto
  * 등록된 파워를 훅 하나만큼 발동한다. **새 실행 경로를 만들지 않는다** — 카드가 낼 때 타는 그
  * `executeCard`를 그대로 탄다. 대상 하나를 요구하는 파워는 지정이 없으면 살아 있는 첫 적에게 간다
  */
-export function firePowers(state: GameState, trigger: Trigger, enemyId?: string): void {
+export function firePowers(state: GameState, trigger: Trigger, enemyId?: string, random: () => number = () => 0): void {
   // 발동 중에 등록이 늘어날 수 있으므로 사본을 돈다
   for (const power of [...state.combat.powers]) {
     if (power.trigger !== trigger) continue;
@@ -345,7 +346,7 @@ export function firePowers(state: GameState, trigger: Trigger, enemyId?: string)
     const reachable = livingInReach(state.combat, power.card.reach);
     const target = reachable.find(({ id }) => id === enemyId) ?? reachable[0];
     if (power.card.target === "enemy" && !target) continue;
-    executeCard(state, power.card, target?.id);
+    executeCard(state, power.card, target?.id, undefined, random);
   }
 }
 
@@ -361,7 +362,7 @@ export function cardEffects(state: GameState, card: Card): Effect[] {
   return graced.length ? [...card.effects, ...graced] : card.effects;
 }
 
-export function executeCard(state: GameState, card: Card, enemyId?: string, deckCards?: Card[]): void {
+export function executeCard(state: GameState, card: Card, enemyId?: string, deckCards?: Card[], random: () => number = () => 0): void {
   loadCards([card]);
   const targets = resolveTargets(state.combat, card.target, enemyId, card.reach);
   const chainTargets = card.target === "enemy" ? resolveChainTargets(state.combat, targets[0].id, card.reach) : [];
@@ -377,7 +378,7 @@ export function executeCard(state: GameState, card: Card, enemyId?: string, deck
   const strike = (target: ActorState, value: number) => {
     const dealt = dealDamage(state.combat.player, target, value);
     // 마무리 일격은 세지 않는다 — 시체에 토큰을 붙일 자리가 없다
-    if (dealt > 0 && target.hp > 0 && !card.tags.includes("power")) firePowers(state, "on_unblocked", target.id);
+    if (dealt > 0 && target.hp > 0 && !card.tags.includes("power")) firePowers(state, "on_unblocked", target.id, random);
   };
 
   for (const effect of cardEffects(state, card)) {
@@ -385,7 +386,7 @@ export function executeCard(state: GameState, card: Card, enemyId?: string, deck
     const value = effect.value ?? 0;
     if (effect.op === "damage") for (const target of targets) strike(card.target === "enemy" ? guardFor(state.combat, target, card.reach) : target, value);
     else if (effect.op === "block") state.combat.player.block += value;
-    else if (effect.op === "draw") for (let count = 0; count < value && state.combat.drawPile.length > 0; count += 1) state.combat.hand.push(state.combat.drawPile.shift()!);
+    else if (effect.op === "draw") drawCards(state.combat, value, random);
     else if (effect.op === "energy") state.combat.energy += value;
     else if (effect.op === "heal") state.combat.player.hp = Math.min(state.combat.player.maxHp, state.combat.player.hp + value);
     else if (effect.op === "self_damage") state.combat.player.hp = Math.max(0, state.combat.player.hp - value);

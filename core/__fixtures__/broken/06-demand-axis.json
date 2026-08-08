@@ -1,20 +1,10 @@
 {
   "id": "demand_broken_ares_axis",
   "patron": "ares",
-  "axis": "turn_economy",
+  "axis": "damage_taken",
   "polarity": "+",
   "min_enemies": 1,
-  "tiers": [
-    {
-      "text": "네 턴은 끌어라.",
-      "condition": "turns >= 4",
-      "reward": { "favor": 12 }
-    },
-    {
-      "text": "여덟 턴이다.",
-      "condition": "turns >= 8",
-      "cost": { "favor": 18, "maxHp": 8, "encounters": 2 },
-      "reward": { "grace": 1 }
-    }
-  ]
+  "text": "피를 넉넉히 흘려. 그 아래는 상처가 아니야.",
+  "condition": "blood_spilled > 14",
+  "reward": { "favor": 12 }
 }

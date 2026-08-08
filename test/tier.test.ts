@@ -54,7 +54,8 @@ describe("tier2 reward slots", () => {
    */
   it("gives normal combat none and elite and boss all three", () => {
     const counts = new Map<string, Set<number>>();
-    for (let seed = 1; seed <= 30; seed += 1) {
+    // 30 → 65: 카드 보상이 판돈이 된 뒤로(P-59) 정예만 밟는 이 드라이버가 지상 보스까지 못 간다 — 65시드가 여섯 자리를 다 밟는다
+    for (let seed = 1; seed <= 65; seed += 1) {
       const steps = runSteps(seed);
       let step = steps.next();
       let sawGod = false;
@@ -71,7 +72,7 @@ describe("tier2 reward slots", () => {
         step = steps.next(elite ?? step.value.bot);
       }
     }
-    // 진노 신을 꺾은 조우는 정예 대우다 — 30시드가 그 자리를 실제로 밟는다
+    // 진노 신을 꺾은 조우는 정예 대우다 — 65시드가 그 자리를 실제로 밟는다
     expect(counts.get("god")).toEqual(new Set([3]));
     expect(counts.get("underworld:combat")).toEqual(new Set([0]));
     expect(counts.get("surface:combat")).toEqual(new Set([0]));

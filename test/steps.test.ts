@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import cardData from "../data/cards.json" with { type: "json" };
 import godData from "../data/gods.json" with { type: "json" };
 import { oracleSwing } from "../core/favor";
+import { cardLevel } from "../core/rules";
 import { endTurnAction, gods, run, runSteps, type Decision } from "../sim/engine";
 import type { ReplayAction } from "../sim/replay";
 
@@ -10,9 +11,9 @@ const pickPath = (decision: Decision, type: string) => decision.options.find((op
 
 describe("steppable engine", () => {
   it("stops at every decision phase", () => {
-    // 시드 5 → 11 → 1: 여덟 종류를 전부 지나는 시드다. 갈래가 격자에서 오면서 5가 은총 전에 끝났고,
-    // P-44의 카드 30장이 보상 3택1을 바꾸자 11이 헌신에 못 닿는다(400시드 중 첫 자리가 1이다)
-    const steps = runSteps(1);
+    // 시드 5 → 11 → 1 → **3**: 열 종류를 전부 지나는 시드다. P-59가 `bet_card`를 더하고 카드 보상을
+    // 판돈으로 걸면서 1이 `reward` 화면에 못 닿는다(60시드 중 첫 자리가 3이다)
+    const steps = runSteps(3);
     const seen = new Set<string>();
     let step = steps.next();
     while (!step.done) {
@@ -21,7 +22,7 @@ describe("steppable engine", () => {
       const answer = step.value.phase === "path" ? pickPath(step.value, "rest") : step.value.phase === "rest" ? "remove" : step.value.bot;
       step = steps.next(answer);
     }
-    expect(seen).toEqual(new Set(["path", "card", "target", "rest", "rest_card", "reward", "grace", "demand", "oracle"]));
+    expect(seen).toEqual(new Set(["path", "card", "target", "rest", "rest_card", "reward", "grace", "demand", "bet_card", "oracle"]));
   });
 
   /**
@@ -77,7 +78,8 @@ describe("steppable engine", () => {
       expect(grace.id.startsWith(`grace_${god}_`), grace.id).toBe(true);
       expect(grace.effects.length).toBeGreaterThan(0);
       // 「덱 N장」은 지금 덱의 그 태그 카드 수다 — 은혜가 몇 장에 붙는지가 결정의 근거다
-      expect(grace.cards).toBe(deck.filter((id) => cardData.find((card) => card.id === id)?.tags.includes(grace.slot)).length);
+      // 덱에는 `+N` 붙은 id가 섞여 있다 — base로 되돌리지 않으면 강화된 카드가 태그 없이 세어진다
+      expect(grace.cards).toBe(deck.filter((id) => cardData.find((card) => card.id === cardLevel(id).base)?.tags.includes(grace.slot)).length);
     }
   });
 

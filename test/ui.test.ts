@@ -11,12 +11,13 @@ import { bossLane, generateMap } from "../core/map.ts";
 import { App, patronPair } from "../ui/app.tsx";
 import { cardArtCandidates, type CardArtSource } from "../ui/shared/art-keys.ts";
 import { conditionLabel } from "../ui/shared/card.tsx";
-import { DemandScreen, GraceScreen, OracleScreen, RestScreen } from "../ui/screens/choices.tsx";
+import { BetScreen, DemandScreen, GraceScreen, OracleScreen, RestScreen } from "../ui/screens/choices.tsx";
 import { CombatScreen } from "../ui/screens/combat.tsx";
 import { replayPayload } from "../ui/shared/export.ts";
 import { StatusBar } from "../ui/shared/header.tsx";
 import { MapPanel, MapScreen } from "../ui/screens/map.tsx";
 import { RewardScreen } from "../ui/screens/reward.tsx";
+import { TokenDictionary } from "../ui/shared/tokens.tsx";
 
 /**
  * 시트에 없는 id를 `<use>`가 가리키면 **아무 일도 안 일어난다** — 경고도, 빈 그림도 없이 자리만 빈다.
@@ -48,6 +49,16 @@ function playByHand(seed: number, pick: (decision: Decision) => string): { resul
  * dev 서버와 Aside 브라우저가 필요해 vitest에 들어가지 않는다
  */
 describe("browser replay export", () => {
+  it("explains every enemy passive icon in the token dictionary", () => {
+    const markup = renderToStaticMarkup(createElement(TokenDictionary));
+    expect(unresolvedIcons(markup)).toEqual([]);
+    for (const name of ["보호", "경화", "결계", "웅크림", "분노", "규합", "고조", "앙심"]) {
+      expect(markup).toContain(`<b>${name}</b>`);
+    }
+    expect(markup).toContain("스택마다 사거리 안 아군의 단일 대상 피해를 대신 받음");
+    expect(markup).toContain("공격이 아닌 카드를 내면 광란 +스택");
+  });
+
   it("renders every decision screen from its observation alone", () => {
     // 상태 바(P-54)가 조합·위치·체력을 관측에서 읽는지 본다 — 상수로 박혀 있으면 다른 조합에서 거짓말을 한다
     const screens: Record<string, (decision: never) => ReactElement> = {
@@ -59,6 +70,7 @@ describe("browser replay export", () => {
       reward: (decision) => createElement(RewardScreen, { decision, onAnswer: () => {} }),
       grace: (decision) => createElement(GraceScreen, { decision, onAnswer: () => {} }),
       demand: (decision) => createElement(DemandScreen, { decision, onAnswer: () => {} }),
+      bet_card: (decision) => createElement(BetScreen, { decision, onAnswer: () => {} }),
       oracle: (decision) => createElement(OracleScreen, { decision, onAnswer: () => {} }),
     };
     const seen = new Set<string>();
@@ -305,6 +317,10 @@ describe("browser replay export", () => {
     // 「선택 N」 배지는 data-pick + CSS content다 — DOM 텍스트에 섞으면 e2e가 이름으로 버튼을 못 집는다
     expect(select.match(/data-pick="1"/g)).toHaveLength(1);
     expect(select.match(/data-pick="2"/g)).toHaveLength(1);
+    // 선택한 둘만 헌신 능력을 짧게 보여 준다. 문장은 전투 상태 바와 같은 실제 효과 데이터에서 온다
+    expect(select.match(/class="god-ability"/g)).toHaveLength(2);
+    expect(select).toContain("헌신 능력 · 시작 적 하나에게 피해 8 · 3턴마다 적 하나에게 감전 1");
+    expect(select).toContain("헌신 능력 · 시작 나에게 반사 1 · 3턴마다 나에게 방어 3");
     // 둘이므로 「런 시작」이 눌린다 — 폼 안에서 `disabled`가 붙는 자리는 그것 하나뿐이다.
     // 전역 아이콘의 덱·약속(P-53)은 런 밖이라 죽어 있다 — 지우지 않고 `disabled`가 정답이다(UI.md)
     expect(markup.match(/<form[\s\S]*<\/form>/)?.[0] ?? "").not.toContain("disabled");
@@ -363,23 +379,25 @@ describe("browser replay export", () => {
     // 갈림길은 쉼터로, 휴식은 제거로, 요구는 수락으로 고정하고 첫 카드 한 장만 봇과 다르게 낸다.
     // 전투를 내내 봇 반대로 고르면 은총 마일스톤에 닿기 전에 죽는다 — 요구가 조건 판정을 받게 된 뒤로는
     // 호의가 천천히 올라서 300개 시드 안에 그런 런이 없다.
-    // 시드 4 → 14 → 5 → 11: 갈래가 격자에서 오면서 5가 은총 전에 끝났다. 단언은 그대로다
+    // 시드 4 → 14 → 5 → 11 → **3**: 카드 보상이 판돈이 된 뒤로(P-59) 11이 `reward` 화면에 못 닿는다.
+    // 200개 시드 중 열 종류를 다 지나는 첫 자리가 3이다. 단언은 그대로다
     let diverged = false;
-    const { result: browser, actions } = playByHand(11, (decision) => {
+    const { result: browser, actions } = playByHand(3, (decision) => {
       const { phase, options, bot } = decision;
       if (phase === "path") return pickPath(decision, "rest");
       if (phase === "rest") return "remove";
-      if (phase === "demand") return "tier1";
+      // 답이 신의 이름이다(P-59) — 첫 제안을 고르고 승부 카드는 봇에게 맡긴다
+      if (phase === "demand") return options[0];
       if (phase !== "card" || diverged) return bot;
       const other = options.find((option) => option !== bot && option !== endTurnAction);
       diverged = Boolean(other);
       return other ?? bot;
     });
-    const replay = replayPayload(11, actions, ["zeus", "athena"]);
+    const replay = replayPayload(3, actions, ["zeus", "athena"]);
     const cli = run(replay.seed, undefined, replay.actions, replay.patrons);
 
     // 반출에 사람이 고른 아홉 종류가 전부 있어야 한다 — 빠지면 재생 때 봇이 대신 채운다
-    for (const type of ["path", "card", "target", "rest", "rest_card", "reward", "grace", "demand", "oracle"]) {
+    for (const type of ["path", "card", "target", "rest", "rest_card", "reward", "grace", "demand", "bet_card", "oracle"]) {
       expect(actions.some((action) => action.type === type), type).toBe(true);
     }
     expect({ won: cli.won, floors: cli.hpCurve.length - 1, favor: cli.favorCurve.at(-1), cards: cli.cardsPlayed }).toEqual({

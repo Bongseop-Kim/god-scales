@@ -13,7 +13,7 @@ import { cardTagOf, effectText, GameCard } from "../shared/card.tsx";
 import { playSprite, speak } from "../shared/fx.ts";
 import { godArt, godLine, godName, godStageEffects, godStageText, stageName } from "../shared/header.tsx";
 import { Icon, type IconName } from "../shared/icon.tsx";
-import { tokenName, tokenSummary, TokenRow } from "../shared/tokens.tsx";
+import { passiveName, tokenName, tokenSummary, TokenRow } from "../shared/tokens.tsx";
 
 const spriteArt = import.meta.glob<string>("../../art/sprites/*.webp", { eager: true, query: "?url", import: "default" });
 const fxArt = import.meta.glob<string>("../../art/fx/*.webp", { eager: true, query: "?url", import: "default" });
@@ -26,11 +26,6 @@ const opParticle: Record<string, string> = { damage: "slash_01", block: "window_
 
 type EnemyInfo = { id: string; name: string; intent_visible: boolean };
 const enemyInfo = new Map((enemyDataJson as EnemyInfo[]).map((enemy) => [enemy.id, enemy]));
-/** 배지에 그대로 나가는 이름. 표가 `PassiveName`을 다 덮으므로 패시브를 새로 만들면 여기서 컴파일이 막힌다 */
-const passiveLabels: Record<PassiveName, string> = {
-  guard: "보호", shell: "경화", ward: "결계", curl: "웅크림",
-  angry: "분노", rally: "규합", ramp: "고조", spite: "앙심",
-};
 const pop = { duration: 0.16, ease: [0.23, 1, 0.32, 1] } as const;
 /** 적이 사라지는 180ms. 셋이 둘이 되는 순간에 화면이 덜컥 올라오면 고장으로 읽힌다 */
 const exitPop = { duration: 0.18, ease: [0.23, 1, 0.32, 1] } as const;
@@ -337,7 +332,7 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
       </div>
 
       {/**
-        * 무대 지면. 패널 상자가 없다 — 병사(192)는 왼쪽, 적(160)은 오른쪽 칸 0→3이 같은
+        * 무대 지면. 패널 상자가 없다 — 병사(224)는 왼쪽, 적(224)은 오른쪽 칸 0→3이 같은
         * 지면선에 선다. 칸 넷을 언제나 그린다: **빈 칸도 자리를 지킨다**(사거리의 근거).
         * `popLayout`이 퇴장 중인 적을 흐름에서 뺀다. ref는 개입 파티클의 `hostsFor`가 쓴다
         */}
@@ -388,11 +383,11 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
             <b>{view.draw}</b>
           </span>
         </div>
-        {/* 무대가 어느 카드인지 말하므로 힌트는 무엇을 할지만 말한다 — `view.card`는 id라 문장에 못 넣는다 */}
-        <p className="hint" role="status">{targeting ? "대상을 고르세요" : "낼 카드를 고르세요"}</p>
+        {/* 평소엔 침묵한다 — 카드 단계는 화면이 이미 말한다. 대상 선택만 문장이 필요하다 */}
+        <p className="hint" role="status">{targeting ? "대상을 고르세요" : ""}</p>
         {/**
-         * 무대. **컨테이너는 언제나 서서 자리를 지킨다** — 카드가 설 때마다 부채꼴과 「턴 종료」가
-         * 내려갔다 올라오면 런당 수십 번 화면이 덜컥인다(UI.md 제1규칙). 높이는 `.stage`의 min-height다.
+         * 무대. **흐름 밖 오버레이라 서고 사라져도 판이 안 덜컥인다**(UI.md 제1규칙) — 자리는
+         * 병사와 적 진영 사이 비무장지대(`.stage`).
          * **맥동·발광 루프를 넣지 않는다** — 사람이 적을 고르는 내내 시야에서 움직인다.
          * 정지가 「너를 기다린다」다. 줄인 모션에서는 자리만 남고 들어오는 이동이 없다
          */}
@@ -427,9 +422,9 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
             ))}
           </AnimatePresence>
         </div>
-        {/* 우하단 케니 버튼 160×46 — `.primary`가 P-54의 스킨을 이미 든다. 적 턴 배너는 여기서 낸다 */}
+        {/* 우하단 160×46 — 일부러 기본 버튼이다. 매 턴 누르는 자리라 청동 스킨으로 소리치면 피곤하다 */}
         <button
-          className="primary end-turn"
+          className="end-turn"
           type="button"
           disabled={targeting}
           onClick={() => {
@@ -503,7 +498,8 @@ function EnemyButton({ enemy, slot, hits, hitSeq, enabled, reducedMotion, onSele
   return (
     <m.button
       ref={ref}
-      layout={!reducedMotion}
+      // 칩 행의 높이는 애니메이션하지 않는다 — 적의 칸 이동만 보간해야 스프라이트가 상태 변화에 안 흔들린다
+      layout={reducedMotion ? false : "position"}
       transition={reducedMotion ? { duration: 0 } : pop}
       exit={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.92, transition: exitPop }}
       className={enemy.span > 1 ? "enemy wide" : "enemy"}
@@ -515,7 +511,7 @@ function EnemyButton({ enemy, slot, hits, hitSeq, enabled, reducedMotion, onSele
       disabled={!enabled || !present}
       onClick={onSelect}
       // 문장형 의도는 여기와 title로 물러났다(P-55) — 배지마다 읽히면 적 하나가 문장 여섯이 된다
-      aria-label={`${slotLabel(slot, enemy.span)} ${name} 체력 ${enemy.hp} ${intent} ${passives.map(([id, stacks]) => `${passiveLabels[id]} ${stacks}`).join(" ")} ${tokenSummary(enemy.tokens)}`}
+      aria-label={`${slotLabel(slot, enemy.span)} ${name} 체력 ${enemy.hp} ${intent} ${passives.map(([id, stacks]) => `${passiveName(id)} ${stacks}`).join(" ")} ${tokenSummary(enemy.tokens)}`}
       title={`${name} — ${intent}`}
     >
       {/* 머리 위 의도 — 아이콘 16 + 숫자만. 문장은 `aria-label`·hover 툴팁이 든다 */}
@@ -535,7 +531,7 @@ function EnemyButton({ enemy, slot, hits, hitSeq, enabled, reducedMotion, onSele
       {/* 발밑 칩 한 줄 — 방어·패시브·토큰. 자리를 예약해 첫 토큰에 이웃이 안 밀린다(UI.md) */}
       <span className="chips">
         {enemy.block > 0 && <em className="shield">방어 {enemy.block}</em>}
-        {passives.map(([id, stacks]) => <em key={id} className="passive"><Icon name={id} />{passiveLabels[id]} {stacks}</em>)}
+        {passives.map(([id, stacks]) => <em key={id} className="passive"><Icon name={id} />{passiveName(id)} {stacks}</em>)}
         <TokenRow tokens={enemy.tokens} />
       </span>
       <DamagePop hits={hits} id={enemy.id} seq={hitSeq} still={reducedMotion} />
@@ -554,7 +550,7 @@ function PromiseRow({ promises, onOpen }: { promises: PromiseView[]; onOpen?: ()
   if (!promises.length) return null;
   return (
     <div className="promise-row">
-      {promises.map(({ god, text, rule, current, target, settled }) => (
+      {promises.map(({ god, text, rule, current, target, settled, deposit }) => (
         // 칩이 버튼이다(P-55) — 누르면 약속 저널(P-53)이 열린다
         <button
           type="button"
@@ -567,6 +563,8 @@ function PromiseRow({ promises, onOpen }: { promises: PromiseView[]; onOpen?: ()
           <Icon name="favor" />
           <b>{godName(god)}</b>
           <span>{rule}</span>
+          {/* 예치한 최대 체력은 승부 카드 줄에만 선다 — 그 줄의 판돈이 그것이다 (P-59 §5) */}
+          {deposit ? <i className="stake">최대 체력 {deposit}</i> : null}
           <em>{current} / {target}</em>
         </button>
       ))}
@@ -580,14 +578,13 @@ const triggerLabels: Record<Trigger, string> = {
 };
 
 /**
- * 병사 — 적과 같은 눈금이다(P-55): 머리 위 토큰, 발밑 체력 바 140×16, 그 아래 방어 칩.
+ * 병사 — 적과 같은 눈금이다(P-55): 고정된 스프라이트, 발밑 체력 바 140×16, 그 아래 상태 칩.
  * 우호도 미터는 상태 바(P-54)가, 파워 칩은 좌상단 `board-chips`가, 에너지·뽑을 카드는
  * 좌하단 젬·더미가 든다 — 중복 표시 금지
  */
 function PlayerActor({ view, reducedMotion, ref }: { view: CombatObservation; reducedMotion: boolean; ref?: Ref<HTMLDivElement> }) {
   return (
     <div className="player-actor" ref={ref} role="img" aria-label={`병사 체력 ${view.hp} / ${view.maxHp} 방어 ${view.block}`}>
-      <TokenRow tokens={view.tokens} />
       {/* 병사는 오른쪽을 보고 적은 왼쪽을 본다(P-32 §1) — 좌우 반전을 넣지 않는다 */}
       <span className="sprite"><img src={spriteArt["../../art/sprites/player.webp"]} alt="" /></span>
       <span className="hp">
@@ -596,6 +593,7 @@ function PlayerActor({ view, reducedMotion, ref }: { view: CombatObservation; re
       </span>
       <span className="chips">
         {view.block > 0 && <em className="shield">방어 {view.block}</em>}
+        <TokenRow tokens={view.tokens} />
       </span>
       <DamagePop hits={view.hits} id="player" seq={view.hitSeq} still={reducedMotion} />
     </div>
