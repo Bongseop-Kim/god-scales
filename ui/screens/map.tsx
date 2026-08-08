@@ -115,7 +115,6 @@ export function MapPanel({ grid, region, open, here, taken = [], onEnter }: {
           const row = grid[depth] ?? [];
           return (
             <li key={depth}>
-              <small>{mapSlot(depth).floor}층</small>
               {Array.from({ length: laneCount }, (_, lane) => {
                 const type = row[lane];
                 const option = open?.depth === depth ? open.options.find((choice) => choice.startsWith(`${lane}:`)) : undefined;

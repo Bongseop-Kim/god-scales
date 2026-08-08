@@ -3,10 +3,9 @@
   "engine": "component-row",
   "engine_revision": "9d4ecaf5ab56",
   "extract_args": {
-    "chroma_mode": "rgb",
     "segmentation": "projection"
   },
-  "run_dir": "/Users/gimbongseob/git/god-scales/art/_src/sprite-runs/fx_burst",
+  "run_dir": "/Users/gimbongseob/git/god-scales/art/_src/sprite-runs/.regen-fx/fx_burst",
   "cell": {
     "shape": "rect",
     "width": 1536,
@@ -25,11 +24,11 @@
     "selection": "fallback",
     "background": {
       "mode": "flat",
-      "hex": "#F519CE",
+      "hex": "#F613E8",
       "rgb": [
-        245,
-        25,
-        206
+        246,
+        19,
+        232
       ],
       "opaque_border_fraction": 1.0,
       "border_coverage": 1.0,
@@ -53,48 +52,48 @@
       "frame_records": [
         {
           "index": 0,
-          "nontransparent_pixels": 30518,
+          "nontransparent_pixels": 1617,
           "bbox": [
-            636,
-            346,
-            899,
-            614
+            700,
+            422,
+            835,
+            537
           ],
           "edge_pixels": 0,
           "chroma_adjacent_pixels": 0
         },
         {
           "index": 1,
-          "nontransparent_pixels": 50553,
+          "nontransparent_pixels": 2123,
           "bbox": [
-            591,
-            299,
-            945,
-            661
+            666,
+            410,
+            870,
+            549
           ],
           "edge_pixels": 0,
           "chroma_adjacent_pixels": 0
         },
         {
           "index": 2,
-          "nontransparent_pixels": 69148,
+          "nontransparent_pixels": 2927,
           "bbox": [
-            545,
-            245,
-            991,
-            715
+            607,
+            411,
+            928,
+            548
           ],
           "edge_pixels": 0,
           "chroma_adjacent_pixels": 0
         },
         {
           "index": 3,
-          "nontransparent_pixels": 67341,
+          "nontransparent_pixels": 3481,
           "bbox": [
-            498,
-            209,
-            1038,
-            751
+            539,
+            410,
+            996,
+            549
           ],
           "edge_pixels": 0,
           "chroma_adjacent_pixels": 0

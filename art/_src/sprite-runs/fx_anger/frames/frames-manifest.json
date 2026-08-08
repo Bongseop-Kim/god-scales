@@ -3,10 +3,9 @@
   "engine": "component-row",
   "engine_revision": "9d4ecaf5ab56",
   "extract_args": {
-    "chroma_mode": "rgb",
     "segmentation": "projection"
   },
-  "run_dir": "/Users/gimbongseob/git/god-scales/art/_src/sprite-runs/fx_anger",
+  "run_dir": "/Users/gimbongseob/git/god-scales/art/_src/sprite-runs/.regen-fx/fx_anger",
   "cell": {
     "shape": "rect",
     "width": 1536,
@@ -15,29 +14,61 @@
     "safe_margin_y": 0
   },
   "chroma_key": {
-    "name": "magenta",
-    "hex": "#FF00FF",
+    "name": "green",
+    "hex": "#00FF00",
     "rgb": [
-      255,
       0,
-      255
+      255,
+      0
     ],
-    "selection": "fallback",
+    "selection": "auto",
+    "score": 331.28,
+    "min_subject_distance": 330.78,
     "background": {
       "mode": "flat",
-      "hex": "#EC14DB",
+      "hex": "#FA04EE",
       "rgb": [
-        236,
-        20,
-        219
+        250,
+        4,
+        238
       ],
       "opaque_border_fraction": 1.0,
-      "border_coverage": 0.996,
+      "border_coverage": 1.0,
       "enclosed_background_pixels": 0,
       "enclosed_material_pixels": 0,
-      "subject_pixels": 0
+      "subject_pixels": 104
     },
-    "selection_reason": "the base reference yielded no subject pixels once its background was excluded"
+    "candidates": [
+      {
+        "name": "magenta",
+        "hex": "#FF00FF",
+        "score": 222.79,
+        "min_subject_distance": 221.32,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "green",
+        "hex": "#00FF00",
+        "score": 331.28,
+        "min_subject_distance": 330.78,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "cyan",
+        "hex": "#00FFFF",
+        "score": 253.21,
+        "min_subject_distance": 252.97,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "blue",
+        "hex": "#004DFF",
+        "score": 291.85,
+        "min_subject_distance": 290.39,
+        "clears_erase_radius": true
+      }
+    ],
+    "selection_reason": "highest 1st-percentile subject distance among the 4 candidate(s) clearing the 96 erase radius"
   },
   "rows": [
     {
@@ -53,51 +84,51 @@
       "frame_records": [
         {
           "index": 0,
-          "nontransparent_pixels": 22306,
+          "nontransparent_pixels": 4809,
           "bbox": [
-            553,
-            320,
-            983,
-            639
+            549,
+            459,
+            987,
+            501
           ],
           "edge_pixels": 0,
-          "chroma_adjacent_pixels": 12
+          "chroma_adjacent_pixels": 0
         },
         {
           "index": 1,
-          "nontransparent_pixels": 37434,
+          "nontransparent_pixels": 3130,
           "bbox": [
-            548,
-            291,
-            988,
-            669
+            566,
+            466,
+            969,
+            494
           ],
           "edge_pixels": 0,
-          "chroma_adjacent_pixels": 61
+          "chroma_adjacent_pixels": 0
         },
         {
           "index": 2,
-          "nontransparent_pixels": 48567,
+          "nontransparent_pixels": 2169,
           "bbox": [
-            542,
-            284,
-            993,
-            675
+            575,
+            470,
+            961,
+            490
           ],
           "edge_pixels": 0,
-          "chroma_adjacent_pixels": 43
+          "chroma_adjacent_pixels": 0
         },
         {
           "index": 3,
-          "nontransparent_pixels": 54190,
+          "nontransparent_pixels": 1108,
           "bbox": [
-            544,
-            264,
-            991,
-            695
+            584,
+            474,
+            952,
+            486
           ],
           "edge_pixels": 0,
-          "chroma_adjacent_pixels": 11
+          "chroma_adjacent_pixels": 0
         }
       ],
       "ok": true,

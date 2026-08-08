@@ -60,6 +60,7 @@ export function RunOpening({ patrons, onDone }: { patrons: PatronPair; onDone: (
         </strong>
         <p>두 신이 한 인간의 운명을 두고 맞섭니다.</p>
       </div>
+      <button className="opening-skip" type="button" aria-label="영상 건너뛰기" onClick={onDone} />
     </div>
   );
 }
@@ -302,9 +303,8 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
       {overlay === "restart" && (
         <Overlay title="다시 시작" onClose={() => setOverlay(undefined)}>
           <p>진행 중인 런을 버립니다. 처음부터 시작할까요?</p>
-          <div className="actions">
+          <div className="actions restart-actions">
             <button className="primary" type="button" onClick={() => { setOverlay(undefined); reset(); }}>다시 시작</button>
-            <button type="button" onClick={() => setOverlay(undefined)}>취소</button>
           </div>
         </Overlay>
       )}

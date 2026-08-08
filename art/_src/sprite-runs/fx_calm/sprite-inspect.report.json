@@ -26,24 +26,28 @@
       ],
       "metrics": {
         "histogram_intersection": {
-          "min": 0.9255582007018149,
-          "mean": 0.9557809407081728
+          "min": 0.8260583507923331,
+          "mean": 0.886198720343766
         },
         "dhash_similarity": {
-          "min": 0.953125,
-          "mean": 0.96875
+          "min": 0.96875,
+          "mean": 0.9791666666666666
         },
-        "motion_presence": 0.010750963796977124,
+        "motion_presence": 0.0011253606260212417,
         "centroid_sigma": {
-          "x": 0.6059888122609697,
-          "y": 2.1029288324524376
+          "x": 0.4790580641318042,
+          "y": 0.5103449349897033
         }
       },
       "ok": true,
       "errors": [],
-      "warnings": []
+      "warnings": [
+        "play: motion presence is too low (0.0011 < 0.0100)"
+      ]
     }
   ],
   "errors": [],
-  "warnings": []
+  "warnings": [
+    "play: motion presence is too low (0.0011 < 0.0100)"
+  ]
 }

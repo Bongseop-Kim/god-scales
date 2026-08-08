@@ -63,7 +63,7 @@ await tab.click(".intro-menu button.primary");
 await tab.waitForSelector("[data-phase='setup']");
 const finishOpening = async () => {
   await tab.waitForSelector("[data-phase='opening']");
-  await tab.evaluate(() => document.querySelectorAll(".run-opening video").forEach((video) => { video.playbackRate = 16; }));
+  await tab.click(".opening-skip");
   await tab.waitForSelector("[data-phase='path']");
 };
 

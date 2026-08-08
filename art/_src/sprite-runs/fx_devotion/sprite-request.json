@@ -23,49 +23,49 @@
       0
     ],
     "selection": "auto",
-    "score": 305.0,
-    "min_subject_distance": 296.75,
+    "score": 340.43,
+    "min_subject_distance": 338.62,
     "background": {
       "mode": "flat",
-      "hex": "#F80BF1",
+      "hex": "#FA04F4",
       "rgb": [
-        248,
-        11,
-        241
+        250,
+        4,
+        244
       ],
       "opaque_border_fraction": 1.0,
-      "border_coverage": 0.85,
+      "border_coverage": 0.94,
       "enclosed_background_pixels": 0,
       "enclosed_material_pixels": 0,
-      "subject_pixels": 3493
+      "subject_pixels": 3759
     },
     "candidates": [
       {
         "name": "magenta",
         "hex": "#FF00FF",
-        "score": 75.4,
-        "min_subject_distance": 66.16,
+        "score": 64.75,
+        "min_subject_distance": 60.14,
         "clears_erase_radius": false
       },
       {
         "name": "green",
         "hex": "#00FF00",
-        "score": 305.0,
-        "min_subject_distance": 296.75,
+        "score": 340.43,
+        "min_subject_distance": 338.62,
         "clears_erase_radius": true
       },
       {
         "name": "cyan",
         "hex": "#00FFFF",
-        "score": 255.51,
-        "min_subject_distance": 253.4,
+        "score": 254.14,
+        "min_subject_distance": 253.37,
         "clears_erase_radius": true
       },
       {
         "name": "blue",
         "hex": "#004DFF",
-        "score": 253.18,
-        "min_subject_distance": 251.71,
+        "score": 250.57,
+        "min_subject_distance": 248.57,
         "clears_erase_radius": true
       }
     ],
@@ -76,10 +76,10 @@
       "frames": 4,
       "fps": 8,
       "loop": false,
-      "action": "four-frame one-shot descent, immediately readable over #10131c. In every 1536x960 slot draw one fully connected golden-white canopy: a solid opaque horizontal light bar from x=100 to x=1436 at y=25, 60-90 pixels thick, physically joined to five shafts centered near x=170, 470, 768, 1066, and 1366. The bar and all five shafts must be one unbroken connected component in each frame; no detached beams or motes. Frame 1 has short shafts, frames 2 and 3 extend and widen them, frame 4 reaches the upper 45% height. Every shaft has a fully opaque warm-white core 50-90 pixels thick with crisp edges. Keep the bottom half empty."
+      "action": "four-frame one-shot descent. Three broad shafts emerge from one small top source, fan apart, extend downward, and brighten slightly while the centre and lower half remain empty."
     }
   },
-  "style": "bold high-contrast abstract game effect matching the accepted base image; thick fully opaque golden-white light cores with crisp clean edges, restrained soft fringe only outside the opaque cores, no pixel art, no dark outline, no palette reduction",
+  "style": "minimal abstract divine-light effect matching the accepted base image; exactly three broad muted ivory-white shafts with clean separable outer edges, restrained soft inner light, no pixel art, no dark outline, no palette reduction",
   "motion_phase_guides": false,
   "layout": "taxonomy/v1",
   "fit": {

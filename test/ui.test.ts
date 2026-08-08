@@ -442,6 +442,7 @@ describe("browser replay export", () => {
     expect(markup.match(/autoplay/gi)).toHaveLength(2);
     expect(markup.match(/muted/gi)).toHaveLength(2);
     expect(markup.match(/playsinline/gi)).toHaveLength(2);
+    expect(markup).toContain('<button class="opening-skip" type="button" aria-label="영상 건너뛰기"></button>');
     expect(Object.keys(import.meta.glob("../art/gods/*.mp4")).map((path) => path.replace(/^.*\//, "")).sort()).toEqual([
       "ares.mp4", "artemis.mp4", "athena.mp4", "poseidon.mp4", "zeus.mp4",
     ]);

@@ -3,7 +3,7 @@
   "engine": "component-row",
   "game_input": "sprite-sheet-alpha.png",
   "degraded_static_fallback": false,
-  "curation_applied": true,
+  "curation_applied": false,
   "frame_variant": "pixel",
   "sprite_sheet_alpha": "sprite-sheet-alpha.png",
   "sprite_sheet_alpha_report": "sprite-sheet-alpha.report.json",
@@ -26,11 +26,11 @@
     "selection": "fallback",
     "background": {
       "mode": "flat",
-      "hex": "#F519CE",
+      "hex": "#F613E8",
       "rgb": [
-        245,
-        25,
-        206
+        246,
+        19,
+        232
       ],
       "opaque_border_fraction": 1.0,
       "border_coverage": 1.0,

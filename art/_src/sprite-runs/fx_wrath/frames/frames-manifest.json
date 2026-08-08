@@ -3,10 +3,9 @@
   "engine": "component-row",
   "engine_revision": "9d4ecaf5ab56",
   "extract_args": {
-    "chroma_mode": "rgb",
     "segmentation": "projection"
   },
-  "run_dir": "/Users/gimbongseob/git/god-scales/art/_src/sprite-runs/fx_wrath",
+  "run_dir": "/Users/gimbongseob/git/god-scales/art/_src/sprite-runs/.regen-fx/fx_wrath",
   "cell": {
     "shape": "rect",
     "width": 1536,
@@ -15,61 +14,61 @@
     "safe_margin_y": 0
   },
   "chroma_key": {
-    "name": "cyan",
-    "hex": "#00FFFF",
+    "name": "magenta",
+    "hex": "#FF00FF",
     "rgb": [
-      0,
       255,
+      0,
       255
     ],
     "selection": "auto",
-    "score": 357.82,
-    "min_subject_distance": 340.87,
+    "score": 350.85,
+    "min_subject_distance": 350.83,
     "background": {
       "mode": "flat",
-      "hex": "#F403F3",
+      "hex": "#FC05F9",
       "rgb": [
-        244,
-        3,
-        243
+        252,
+        5,
+        249
       ],
       "opaque_border_fraction": 1.0,
-      "border_coverage": 0.789,
-      "enclosed_background_pixels": 252,
-      "enclosed_material_pixels": 18,
-      "subject_pixels": 14190
+      "border_coverage": 1.0,
+      "enclosed_background_pixels": 0,
+      "enclosed_material_pixels": 0,
+      "subject_pixels": 125
     },
     "candidates": [
       {
         "name": "magenta",
         "hex": "#FF00FF",
-        "score": 329.71,
-        "min_subject_distance": 19.21,
-        "clears_erase_radius": false
+        "score": 350.85,
+        "min_subject_distance": 350.83,
+        "clears_erase_radius": true
       },
       {
         "name": "green",
         "hex": "#00FF00",
-        "score": 252.13,
-        "min_subject_distance": 246.07,
+        "score": 245.2,
+        "min_subject_distance": 244.22,
         "clears_erase_radius": true
       },
       {
         "name": "cyan",
         "hex": "#00FFFF",
-        "score": 357.82,
-        "min_subject_distance": 340.87,
+        "score": 350.15,
+        "min_subject_distance": 349.45,
         "clears_erase_radius": true
       },
       {
         "name": "blue",
         "hex": "#004DFF",
-        "score": 264.31,
-        "min_subject_distance": 239.45,
+        "score": 258.98,
+        "min_subject_distance": 258.72,
         "clears_erase_radius": true
       }
     ],
-    "selection_reason": "highest 1st-percentile subject distance among the 3 candidate(s) clearing the 96 erase radius"
+    "selection_reason": "highest 1st-percentile subject distance among the 4 candidate(s) clearing the 96 erase radius"
   },
   "rows": [
     {
@@ -85,48 +84,48 @@
       "frame_records": [
         {
           "index": 0,
-          "nontransparent_pixels": 87012,
+          "nontransparent_pixels": 2178,
           "bbox": [
-            542,
-            309,
-            993,
-            650
+            607,
+            471,
+            929,
+            488
           ],
           "edge_pixels": 0,
           "chroma_adjacent_pixels": 0
         },
         {
           "index": 1,
-          "nontransparent_pixels": 96609,
+          "nontransparent_pixels": 2891,
           "bbox": [
-            543,
-            304,
-            992,
-            656
+            608,
+            468,
+            927,
+            491
           ],
           "edge_pixels": 0,
           "chroma_adjacent_pixels": 0
         },
         {
           "index": 2,
-          "nontransparent_pixels": 71967,
+          "nontransparent_pixels": 3555,
           "bbox": [
-            543,
-            342,
-            993,
-            617
+            603,
+            465,
+            932,
+            495
           ],
           "edge_pixels": 0,
           "chroma_adjacent_pixels": 0
         },
         {
           "index": 3,
-          "nontransparent_pixels": 65187,
+          "nontransparent_pixels": 4083,
           "bbox": [
-            542,
-            341,
-            994,
-            619
+            601,
+            462,
+            934,
+            497
           ],
           "edge_pixels": 0,
           "chroma_adjacent_pixels": 0

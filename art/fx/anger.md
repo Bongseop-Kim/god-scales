@@ -6,14 +6,14 @@
 
 **화면** 1440×900 CSS 전체를 덮는 컷인. `ui/fx.ts`의 `playSprite`가 500ms 원샷 `steps(4)`로 넘긴다 — 재생 코드는 R-50.
 
-**생성** `sprite-gen` component-row 파이프라인. `base_image`가 기준 원본이고 아래 프롬프트는 그 원본의 것이다. 셀 `rect 1536×960`, 크로마 마젠타 `#ff00ff`, YCbCr 크로마 제거. **팔레트 고정·아웃라인·`pixel_unfake` 없음** — 픽셀 아트가 아니라 부드러운 빛이다.
+**생성** `sprite-gen` component-row 파이프라인. `base_image`가 기준 원본이고 아래 프롬프트는 그 원본의 것이다. 셀 `rect 1536×960`, 자동 선택된 녹색 크로마, RGB 제거. **팔레트 고정·아웃라인·`pixel_unfake` 없음** — 픽셀 아트가 아니라 부드러운 빛이다.
 
 ## 동작 (sprite-gen states)
 
 ```json
 "play": {
   "frames": 4, "fps": 8, "loop": false,
-  "action": "four-frame one-shot withdrawal: frame 1 the pale light is still present with the first hairline cracks; frames 2 and 3 the light visibly pulls upward and out through the top edge while the cracks widen and sharpen; frame 4 the light is gone and only the jagged cracks remain with their thin dull rim. No downward motion and no impact point in any frame; the lower third and the centre stay completely empty."
+  "action": "four-frame one-shot closing gaze: one shallow pale line with brighter outer arcs gradually flattens and thins without forming a literal eye. The centre and lower 80 percent stay empty."
 }
 ```
 
@@ -29,13 +29,13 @@ magick art/_src/sprite-runs/fx_anger/sprite-sheet-alpha.png \
 ## 프롬프트 (기준 프레임)
 
 ```text
-A full-screen transparent overlay effect: pale neutral light withdrawing UPWARD and OUTWARD out of the frame, leaving behind hard-edged jagged cracks where it has pulled away. The cracks are widest at the top and taper as they descend, and the light is visibly leaving through the top edge rather than entering through it. It reads as a presence turning its back, not as a strike.
+Two separate shallow arcs of pale neutral light near the top edge, suggesting an upper eyelid closing without drawing a literal eye. One arc begins at the upper-left edge and one at the upper-right edge; both gently bow downward toward the centre, taper at their ends and remain disconnected. There is no lower arc, enclosed eye shape, iris, pupil or face.
 
-Hard-edged fractures with a thin dull rim, no interior detail, no impact point, no downward motion anywhere in the frame. The lower third and the centre must be entirely empty of any effect.
+The arcs are thin ivory-white with a faint warm-grey halo immediately around them. All visible effect is confined to the top 18 percent; the centre and the whole lower 80 percent remain completely empty. It reads as divine attention closing off and turning away, not as an attack.
 
 The background behind the effect is a FLAT SOLID MAGENTA #ff00ff fill, completely uniform, covering every part of the frame the effect does not occupy — including the entire centre and bottom. Magenta appears nowhere else in the image and no part of the effect itself is magenta, pink, purple or violet. The magenta is keyed out to transparency afterwards, so the effect must sit on it with clean edges and no magenta glow bleeding into the effect. Orientation: WIDE LANDSCAPE, aspect ratio 16:10, much wider than it is tall, a horizontal banner shape that fills a widescreen display. NOT vertical, NOT portrait, NOT square, NOT a tall panel. The scene is laid out across the WIDTH of the frame; even when the subject itself rises, the frame does not — it stays wide and the climb is read inside a wide frame.
 
-Flat magenta background, abstract light only. No hand, chains, wall, stone, door, window, sun, clouds, architecture, background, scenery, characters, figures, text, watermark, frame, vignette, bloom, or lens flare.
+Flat magenta background, abstract light only. No literal eye, iris, pupil, eyelashes, face, lower eyelid, halo ring, lightning, cracks, hand, chains, wall, architecture, scenery, characters, figures, text, watermark, frame, vignette, bloom, or lens flare.
 ```
 
-분노는 공격이 아니라 철수다 — 움직임의 방향이 위로만 간다. 균열이 아래로 자라면 `strike`와 구별이 사라진다.
+분노는 공격이 아니라 시선을 거두는 단계다 — `calm`에서 지켜보던 빛이 닫히고, 다음 `wrath`에서 비로소 직접 짓누른다.

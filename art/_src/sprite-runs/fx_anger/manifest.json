@@ -3,7 +3,7 @@
   "engine": "component-row",
   "game_input": "sprite-sheet-alpha.png",
   "degraded_static_fallback": false,
-  "curation_applied": true,
+  "curation_applied": false,
   "frame_variant": "pixel",
   "sprite_sheet_alpha": "sprite-sheet-alpha.png",
   "sprite_sheet_alpha_report": "sprite-sheet-alpha.report.json",
@@ -16,29 +16,61 @@
     "safe_margin_y": 0
   },
   "chroma_key": {
-    "name": "magenta",
-    "hex": "#FF00FF",
+    "name": "green",
+    "hex": "#00FF00",
     "rgb": [
-      255,
       0,
-      255
+      255,
+      0
     ],
-    "selection": "fallback",
+    "selection": "auto",
+    "score": 331.28,
+    "min_subject_distance": 330.78,
     "background": {
       "mode": "flat",
-      "hex": "#EC14DB",
+      "hex": "#FA04EE",
       "rgb": [
-        236,
-        20,
-        219
+        250,
+        4,
+        238
       ],
       "opaque_border_fraction": 1.0,
-      "border_coverage": 0.996,
+      "border_coverage": 1.0,
       "enclosed_background_pixels": 0,
       "enclosed_material_pixels": 0,
-      "subject_pixels": 0
+      "subject_pixels": 104
     },
-    "selection_reason": "the base reference yielded no subject pixels once its background was excluded"
+    "candidates": [
+      {
+        "name": "magenta",
+        "hex": "#FF00FF",
+        "score": 222.79,
+        "min_subject_distance": 221.32,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "green",
+        "hex": "#00FF00",
+        "score": 331.28,
+        "min_subject_distance": 330.78,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "cyan",
+        "hex": "#00FFFF",
+        "score": 253.21,
+        "min_subject_distance": 252.97,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "blue",
+        "hex": "#004DFF",
+        "score": 291.85,
+        "min_subject_distance": 290.39,
+        "clears_erase_radius": true
+      }
+    ],
+    "selection_reason": "highest 1st-percentile subject distance among the 4 candidate(s) clearing the 96 erase radius"
   },
   "animation": {
     "cellWidth": 1536,
