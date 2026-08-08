@@ -379,10 +379,9 @@ describe("browser replay export", () => {
     // 갈림길은 쉼터로, 휴식은 제거로, 요구는 수락으로 고정하고 첫 카드 한 장만 봇과 다르게 낸다.
     // 전투를 내내 봇 반대로 고르면 은총 마일스톤에 닿기 전에 죽는다 — 요구가 조건 판정을 받게 된 뒤로는
     // 호의가 천천히 올라서 300개 시드 안에 그런 런이 없다.
-    // 시드 4 → 14 → 5 → 11 → **3**: 카드 보상이 판돈이 된 뒤로(P-59) 11이 `reward` 화면에 못 닿는다.
-    // 200개 시드 중 열 종류를 다 지나는 첫 자리가 3이다. 단언은 그대로다
+    // 예고가 영구 퀘스트가 된 뒤 열 종류를 다 지나는 첫 자리는 2다. 단언은 그대로다
     let diverged = false;
-    const { result: browser, actions } = playByHand(3, (decision) => {
+    const { result: browser, actions } = playByHand(2, (decision) => {
       const { phase, options, bot } = decision;
       if (phase === "path") return pickPath(decision, "rest");
       if (phase === "rest") return "remove";
@@ -393,7 +392,7 @@ describe("browser replay export", () => {
       diverged = Boolean(other);
       return other ?? bot;
     });
-    const replay = replayPayload(3, actions, ["zeus", "athena"]);
+    const replay = replayPayload(2, actions, ["zeus", "athena"]);
     const cli = run(replay.seed, undefined, replay.actions, replay.patrons);
 
     // 반출에 사람이 고른 아홉 종류가 전부 있어야 한다 — 빠지면 재생 때 봇이 대신 채운다

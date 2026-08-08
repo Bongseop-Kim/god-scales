@@ -60,8 +60,9 @@ describe("tier2 reward slots", () => {
       let step = steps.next();
       let sawGod = false;
       while (!step.done) {
+        if (step.value.phase === "path") sawGod = false;
         if (step.value.phase === "card") sawGod ||= step.value.observation.enemies.some(({ id }) => id.startsWith("enemy_god_"));
-        if (step.value.phase === "reward") {
+        if (step.value.phase === "reward" && !step.value.observation.quest) {
           const { depth, lane, grid, region } = step.value.observation;
           const key = sawGod ? "god" : `${region}:${grid[depth][lane]}`;
           const tier2 = step.value.options.filter((id) => tierOf.get(id) === 2).length;

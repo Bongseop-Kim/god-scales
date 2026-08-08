@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { skipReward, type RewardDecision } from "../../sim/engine.ts";
 import { Backdrop, backdropArt, Flanks } from "../shared/backdrop.tsx";
 import { CardRow, GameCard } from "../shared/card.tsx";
@@ -8,6 +9,11 @@ export function RewardScreen({ decision, onAnswer }: {
   onAnswer: (choice: string) => void;
 }) {
   const { options, observation: view } = decision;
+  const [page, setPage] = useState(0);
+  const pageSize = 4;
+  const pages = Math.ceil(view.cards.length / pageSize);
+  useEffect(() => setPage(0), [options]);
+  const shown = view.cards.slice(page * pageSize, (page + 1) * pageSize);
 
   return (
     // 패널이 하나뿐이라 `run-layout`(2열)을 쓰면 오른쪽 607px가 빈 채로 남는다 — 휴식·요구·은혜와 같은 1열이다
@@ -31,8 +37,15 @@ export function RewardScreen({ decision, onAnswer }: {
               </div>
             </div>
           )}
-          <CardRow cards={view.cards} options={options} onSelect={onAnswer} />
-          <button type="button" onClick={() => onAnswer(skipReward)}>건너뛰기</button>
+          <CardRow cards={shown} options={options} onSelect={onAnswer} />
+          {view.quest && (
+            <div className="reward-pages">
+              <button type="button" disabled={page === 0} onClick={() => setPage(page - 1)}>이전</button>
+              <span>{page + 1} / {pages}</span>
+              <button type="button" disabled={page + 1 === pages} onClick={() => setPage(page + 1)}>다음</button>
+            </div>
+          )}
+          {!view.quest && <button type="button" onClick={() => onAnswer(skipReward)}>건너뛰기</button>}
         </div>
       </div>
     </>

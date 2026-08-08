@@ -14,7 +14,7 @@ export type ReplayAction =
   | { type: "grace"; choice: string }
   /** 고른 신의 id 또는 `"reject"`(관망). 두 신이 조건을 하나씩 내므로 답이 곧 이름이다 (P-59) */
   | { type: "demand"; choice: string }
-  /** 승부 카드의 **덱 인덱스** 또는 `"single"`(이대로 건다). 퀘스트의 예약 카드도 같은 자리를 쓴다 */
+  /** 승부 카드의 **덱 인덱스** 또는 `"single"`(이대로 건다) */
   | { type: "bet_card"; choice: string }
   /** `"obey"`(따른다) · `"refuse"`(내 손으로 선다). 옛 로그에는 없다 — 없으면 봇이 대신 답한다 */
   | { type: "oracle"; choice: "obey" | "refuse" }

@@ -11,9 +11,8 @@ const pickPath = (decision: Decision, type: string) => decision.options.find((op
 
 describe("steppable engine", () => {
   it("stops at every decision phase", () => {
-    // 시드 5 → 11 → 1 → **3**: 열 종류를 전부 지나는 시드다. P-59가 `bet_card`를 더하고 카드 보상을
-    // 판돈으로 걸면서 1이 `reward` 화면에 못 닿는다(60시드 중 첫 자리가 3이다)
-    const steps = runSteps(3);
+    // 예고가 영구 퀘스트가 된 뒤 열 종류를 전부 지나는 첫 시드는 2다
+    const steps = runSteps(2);
     const seen = new Set<string>();
     let step = steps.next();
     while (!step.done) {
@@ -54,12 +53,7 @@ describe("steppable engine", () => {
      * 사본이 된다. 지도 관측이 이미 덱을 그대로 실어 오므로 마지막 것을 든다
      */
     let deck: string[] = [];
-    /**
-     * 시드 5 → 1: P-29의 시련 대가가 호의를 깎아 5가 은혜 앞에서 끝났다. 시련이 은혜를 주는 자리도 여기다.
-     * 1 → 3: 찢기(P-47)가 조우 **중에** 덱을 줄이므로 지도 관측이 그 조우 뒤의 덱을 못 든다 —
-     * 시련 대가(−18)가 상대 신을 진노로 밀면 그 조우의 그 신 카드가 그대로 사라진다
-     */
-    const steps = runSteps(3);
+    const steps = runSteps(1);
     let step = steps.next();
     while (!step.done && step.value.phase !== "grace") {
       // 보상은 지도 관측 **뒤에** 덱을 늘린다 — 그 사이에 집은 카드를 얹어야 은혜 화면과 같은 덱이다

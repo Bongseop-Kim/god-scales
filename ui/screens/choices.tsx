@@ -174,7 +174,9 @@ export function DemandScreen({ decision, onAnswer }: {
               {offer.text}
               {/* 문장은 신의 목소리고 이 줄은 규칙이다 — 합치면 신이 숫자를 읽는 소리가 된다 */}
               <em className="rule">{offer.rule}</em>
-              지키면 {godName(offer.god)} 호의 +{offer.reward.favor}
+              {view.quest
+                ? <>달성할 때까지 유지 · 달성하면 {godName(offer.god)} 호의 +{offer.reward.favor} · 원하는 카드 1장</>
+                : <>지키면 {godName(offer.god)} 호의 +{offer.reward.favor}</>}
             </>
           }
           disabled={!decision.options.includes(offer.action)}
@@ -182,15 +184,13 @@ export function DemandScreen({ decision, onAnswer }: {
         />
       ))}
       <Choice mark="관" label="관망 · 판돈 없음" detail="어느 신에게도 걸지 않습니다. 카드 보상은 그대로 받습니다." onChoose={() => onAnswer(watchDemand)} />
-      {/* 퀘스트에서 잠근 카드가 있으면 조건을 고르기 **전에** 보인다 — 무엇을 걸고 있는지 모르고 고를 수 없다 */}
-      <BetSheet deposit={view.deposit} card={view.reserved} />
+      {!view.quest && <BetSheet deposit={view.deposit} />}
     </Screen>
   );
 }
 
 /**
- * 내기표의 아랫칸 — 덱에서 승부 카드 한 장을 건다. 조우에서는 조건을 고른 **뒤**, 퀘스트에서는
- * 다음 조우를 위해 **미리** 묻는다. 후보가 덱 전체가 아니다: 상한에 닿은 카드·융합·피해를 못 주는
+ * 내기표의 아랫칸 — 덱에서 승부 카드 한 장을 건다. 후보가 덱 전체가 아니다: 상한에 닿은 카드·융합·피해를 못 주는
  * 카드는 「이 카드로 마지막 적 처치」가 성립하지 않아 죽어 있다(`sim/engine.ts`의 `betCandidates`)
  */
 export function BetScreen({ decision, onAnswer }: {
@@ -203,7 +203,7 @@ export function BetScreen({ decision, onAnswer }: {
     <Screen view={view} wide>
       {promise
         ? <GodSay god={promise.god}>{promise.text}</GodSay>
-        : <h2>다음 싸움에 무엇을 걸까요?</h2>}
+        : <h2>무엇을 걸까요?</h2>}
       <BetSheet deposit={view.deposit} rule={promise?.rule} />
       <CardRow cards={view.deck} options={decision.options} onSelect={onAnswer} value={(_, index) => String(index)} />
       <Choice

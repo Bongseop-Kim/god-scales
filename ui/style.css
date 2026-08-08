@@ -567,6 +567,8 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 /* 보상·카드 제거가 쓰는 줄. **부채꼴은 손패만이다**(`.fan`) — 3택1은 고르는 격자지 손이 아니다 */
 .hand { display: flex; flex-wrap: wrap; gap: 8px; }
 .hand .game-card:disabled { opacity: .45; }
+.reward-pages { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.reward-pages span { color: #9298aa; font-variant-numeric: tabular-nums; }
 /**
  * 부채꼴. **호를 계산하지 않는다** — `transform-origin`을 카드 아래로 내리면 회전 하나가 호를 만든다.
  * `--i`(인덱스)와 `--n`(손패 수)만 React가 넣고 기하는 전부 여기 있다. 두 겹인 이유는 `ui/motion.css`에 있다

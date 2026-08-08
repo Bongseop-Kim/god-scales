@@ -5,7 +5,7 @@ import { betDeposit, demandEnemies, demandPenalty, demandSatisfied, demandSettle
 import { godLine } from "../ui/shared/header";
 import { createCombat } from "../core/combat";
 import type { GameState } from "../core/state";
-import { run, runSteps, simulateStratified, singleBet, watchDemand } from "../sim/engine";
+import { run, runSteps, simulateStratified, watchDemand } from "../sim/engine";
 import { summarize } from "../sim/report";
 import type { ReplayAction } from "../sim/replay";
 import { validateItems } from "../tools/validate";
@@ -74,32 +74,31 @@ describe("demands", () => {
     expect(game.combat.player.maxHp).toBe(1);
   });
 
-  /**
-   * `omen` 칸은 통째로 「다음 싸움에 걸 카드를 미리 고른다」라 물을 것이 없으면 칸이 없다.
-   * 예약은 `bet_card` 하나뿐이고 `single`(지나친다)이 언제나 답으로 서므로 그 칸은 반드시 묻는다
-   */
-  it("always asks for a bet card on an omen node", () => {
-    const pairs = [["zeus", "athena"], ["zeus", "ares"], ["ares", "artemis"]] as const;
-    let omens = 0;
-    for (const pair of pairs) {
-      for (let seed = 1; seed <= 30; seed += 1) {
-        const steps = runSteps(seed, undefined, pair);
-        let step = steps.next();
-        let afterOmen = false;
-        while (!step.done) {
-          if (afterOmen) {
-            expect(step.value.phase, `${pair.join("+")} seed ${seed}`).toBe("bet_card");
-            expect(step.value.options).toContain(singleBet);
-          }
-          afterOmen = step.value.phase === "path" && step.value.bot.endsWith(":omen");
-          omens += afterOmen ? 1 : 0;
-          step = steps.next(step.value.bot);
-        }
-        // 런이 `omen` 칸에서 끝나는 일은 없다 — 그 칸은 전투가 아니라 예약만 있다
-        expect(afterOmen).toBe(false);
+  it("keeps an omen quest across fights and pays a chosen card when completed", () => {
+    const steps = runSteps(3, undefined, ["zeus", "athena"]);
+    let step = steps.next();
+    let afterOmen = false;
+    const activeDepths = new Set<number>();
+    let questReward = false;
+    while (!step.done && !questReward) {
+      const decision = step.value;
+      if (afterOmen) {
+        expect(decision.phase).toBe("demand");
+        if (decision.phase !== "demand") throw new Error("omen did not offer a quest");
+        expect(decision.observation.quest).toBe(true);
       }
+      afterOmen = decision.phase === "path" && decision.bot.endsWith(":omen");
+      if (decision.phase === "card" && decision.observation.promises.some(({ quest }) => quest)) activeDepths.add(decision.observation.depth);
+      if (decision.phase === "reward" && decision.observation.quest) {
+        questReward = true;
+        expect(decision.options).not.toContain("");
+        expect(decision.options.length).toBeGreaterThan(3);
+        expect(decision.observation.cards.every(({ id }) => id.startsWith("card_zeus_"))).toBe(true);
+      }
+      step = steps.next(decision.bot);
     }
-    expect(omens).toBeGreaterThan(0);
+    expect(activeDepths.size).toBeGreaterThan(1);
+    expect(questReward).toBe(true);
   });
 
   it("pays a demand only when the fight actually satisfied it", () => {

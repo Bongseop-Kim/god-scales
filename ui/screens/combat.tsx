@@ -550,11 +550,11 @@ function PromiseRow({ promises, onOpen }: { promises: PromiseView[]; onOpen?: ()
   if (!promises.length) return null;
   return (
     <div className="promise-row">
-      {promises.map(({ god, text, rule, current, target, settled, deposit }) => (
+      {promises.map(({ god, text, rule, current, target, settled, deposit, quest }) => (
         // 칩이 버튼이다(P-55) — 누르면 약속 저널(P-53)이 열린다
         <button
           type="button"
-          key={`${god}:${rule}`}
+          key={`${quest ? "quest" : "bet"}:${god}:${rule}`}
           className={`promise${settled ? ` ${settled}` : ""}`}
           style={{ "--god-color": `var(--${god})` } as CSSProperties}
           title={text}
@@ -564,7 +564,7 @@ function PromiseRow({ promises, onOpen }: { promises: PromiseView[]; onOpen?: ()
           <b>{godName(god)}</b>
           <span>{rule}</span>
           {/* 예치한 최대 체력은 승부 카드 줄에만 선다 — 그 줄의 판돈이 그것이다 (P-59 §5) */}
-          {deposit ? <i className="stake">최대 체력 {deposit}</i> : null}
+          {quest ? <i className="stake">퀘스트</i> : deposit ? <i className="stake">최대 체력 {deposit}</i> : null}
           <em>{current} / {target}</em>
         </button>
       ))}
