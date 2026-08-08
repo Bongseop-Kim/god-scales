@@ -261,7 +261,7 @@ export function SetupScreen({
                 <b id={`${god}-name`}>{godName(god)}</b>
                 {picked.includes(god) && (
                   <small className="god-ability" id={`${god}-ability`}>
-                    헌신 능력 · 시작 {start} · {interventionEveryTurns}턴마다 {turn}
+                    시작 {start} · {interventionEveryTurns}턴마다 {turn}
                   </small>
                 )}
               </span>

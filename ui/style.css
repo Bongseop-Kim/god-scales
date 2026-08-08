@@ -172,7 +172,7 @@ dialog.overlay::backdrop { background: rgba(9, 11, 17, .68); }
 .token-dict li { display: grid; grid-template-columns: 38px 72px 76px 1fr; align-items: center; gap: 12px; font-size: .84rem; }
 .token-dict em { color: #9298aa; font-style: normal; font-size: .74rem; }
 .token-dict span { color: #b9bdc9; }
-.token-dict .passive-icon { display: grid; width: 38px; height: 38px; place-items: center; border: 4px solid transparent; border-image: url(../art/kenney/token-frame-bronze.png) 16 / 4px round; image-rendering: pixelated; color: #bfa8e0; background: #181c27; }
+.token-dict .passive-icon { display: grid; width: 38px; height: 38px; place-items: center; border: 1px solid #75658c; border-radius: 8px; color: #d1b9f0; background: #211d2c; }
 .token-dict .passive-icon .icon { width: 20px; height: 20px; }
 /**
  * 셋째 목록 — 카드 면의 기호(P-61). 두 칸이다: 기호 하나 + 문구. **그림은 카드가 쓰는 클래스 그대로**라
@@ -212,6 +212,10 @@ dialog.overlay::backdrop { background: rgba(9, 11, 17, .68); }
 .intro header { display: block; }
 .intro-menu { display: grid; gap: 12px; width: 220px; }
 .intro-menu button, .intro-menu a { padding: 14px 22px; font-size: 1.05rem; text-align: center; }
+/* 진입 CTA 둘만 계단형 청동 틀을 쓴다. 3px outset은 모서리를 버튼 경계 밖까지 온전히 펼친다 */
+:is(.intro-menu, .setup-row) .primary { color: #f0d694; border-width: 10px; border-image: url(../art/kenney/panel-transparent-center-022-bronze.png) 16 / 10px / 3px round; background: linear-gradient(#2b2930, #14161d); box-shadow: 0 8px 24px rgba(0, 0, 0, .45), 0 0 16px rgba(198, 169, 105, .12); letter-spacing: .08em; text-shadow: 0 1px #000; transition: transform 120ms ease; }
+:is(.intro-menu, .setup-row) .primary:not(:disabled):hover { transform: translateY(-2px); }
+:is(.intro-menu, .setup-row) .primary:focus-visible { outline: 2px solid #f5dd9a; outline-offset: 7px; }
 /* 시뮬 통계는 페이지 이동이라 `<a>`다 — 메뉴에서는 버튼과 같은 얼굴로 선다 */
 .intro-menu a { border: 1px solid #454c5f; border-radius: 8px; background: #1c2130; color: inherit; text-decoration: none; }
 .eyebrow { margin: 0 0 8px; color: #c6a969; font-size: .78rem; font-weight: 750; letter-spacing: .14em; text-transform: uppercase; }
@@ -242,9 +246,10 @@ h2 { font-weight: 500; }
 /* 디바이더 — 청동 그라데이션이 위→아래로 흐른다(2.6s). 줄인 모션에서는 정지 */
 .god-divider { width: 2px; margin: 16px 7px; background: linear-gradient(180deg, transparent, #c6a969 50%, transparent) 0 0 / 100% 300%; animation: divider-flow 2.6s linear infinite; }
 @keyframes divider-flow { to { background-position: 0 300%; } }
-/* 하단 한 줄 — 시작 덱 설정 · 런 시작 오른쪽 끝 */
-.setup-row { display: flex; align-items: start; gap: 20px; width: 100%; margin-top: 18px; }
-.deck-editor-trigger { flex: 1; text-align: left; }
+/* 하단 한 줄 — 런 시작은 중앙 CTA, 덱 설정은 오른쪽 보조 행동 */
+.setup-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; width: 100%; margin-top: 18px; }
+.setup-row .primary { grid-column: 2; min-width: 180px; padding: 14px 28px; font-size: 1.05rem; }
+.deck-editor-trigger { grid-column: 3; grid-row: 1; justify-self: end; }
 /**
  * 배분 슬라이더. **저울이므로 라벨이 양 끝이고 트랙이 그 사이다** — 한 숫자가 둘을 정한다는 것이
  * 그림으로 서야 한다. 눈금 셋(70·30·10)은 React가 `favorBoundaries`에서 넣는다
@@ -282,20 +287,18 @@ button:not(:disabled):hover { border-color: #c6a969; }
 .deck-slots .alien .game-card { opacity: .72; }
 .deck-slots .alien em { color: #c6a969; font-size: .68rem; font-style: normal; text-align: center; }
 /**
- * 케니 9-slice 틀(P-61) — 오버레이 셸·`.primary`가 쓰는 팩의 셋째 조각이다. **`Transparent center`
- * 갈래**라 가운데가 뚫려 있어 진영 채움이 틀 밑으로 그대로 비친다(`Panel/`은 채움을 덮는다).
- * 채널 넷은 자리만 바뀌고 수는 그대로다 — 진영은 배경 채움, 지속은 밑변 띠, 종류는 아이콘 색, 스택은 겹.
- * 밑 3px은 그 띠의 자리다: 안쪽 26px에 18px 아이콘을 그냥 가운데 두면 띠가 아이콘에 닿는다
+ * 토큰 배지. 38px 크기와 채널 넷은 그대로다 — 진영은 배경 채움·테두리, 지속은 밑변 띠,
+ * 종류는 아이콘 색, 스택은 겹. 얇은 CSS 테두리라 아이콘을 가리지 않고 진영색이 바로 읽힌다
  */
-.token-badge { position: relative; display: grid; width: 38px; height: 38px; padding-bottom: 3px; place-items: center; border: 6px solid transparent; border-image: url(../art/kenney/token-frame-bronze.png) 16 / 6px round; border-radius: 0; image-rendering: pixelated; background: #181c27; }
-/* 색만으로 진영을 말하면 색각 이상에서 사라진다 — 틀이 한 색이 된 뒤로도 해로움은 채움, 이로움은 빈 바탕이다 */
+.token-badge { position: relative; display: grid; width: 38px; height: 38px; padding-bottom: 3px; place-items: center; border: 2px solid currentColor; border-radius: 8px; background: #181c27; }
+/* 색만으로 진영을 말하면 색각 이상에서 사라진다 — 해로움은 채움, 이로움은 빈 바탕이다 */
 .token-badge.boon { color: var(--boon); }
 .token-badge.harmful { color: var(--bane); background: color-mix(in srgb, var(--bane) 30%, #181c27); }
 /**
- * 지속 넷은 **밑변 띠**다 — 테두리를 청동 틀이 가져갔다. 색은 새로 만들지 않고 진영색(`currentColor`)에
+ * 지속 넷은 **밑변 띠**다. 색은 새로 만들지 않고 진영색(`currentColor`)에
  * 패턴만 다르게 준다: 점선·파선·실선·두 줄. `border-style`이 하던 말과 같은 말, 다른 자리다
  */
-.token-badge::after { content: ""; position: absolute; inset: auto 1px 0; border-top: 2px solid currentColor; }
+.token-badge::after { content: ""; position: absolute; inset: auto 4px 3px; border-top: 2px solid currentColor; }
 .token-badge.turn::after { border-top-style: dotted; }
 .token-badge.next::after { border-top-style: dashed; }
 .token-badge.combat::after { border-top-width: 3px; border-top-style: double; }
@@ -314,16 +317,16 @@ button:not(:disabled):hover { border-color: #c6a969; }
 /* 기본은 16px — 의도와 지도 격자가 그대로 쓴다. 벡터지만 이 크기에서는 픽셀 배경과 어긋나지 않는다 */
 .icon { width: 16px; height: 16px; fill: currentColor; }
 /**
- * 38px 배지 안 18px(청동 틀이 6px씩 가져갔다). 전용 픽셀 아이콘(P-57) — 흰 알파 원본을 `mask`로 쓰고
+ * 38px 배지 안 22px. 전용 픽셀 아이콘(P-57) — 흰 알파 원본을 `mask`로 쓰고
  * `--token-color`가 칠한다. **신 색을 그대로 쓰고 흐리지 않는다** — 아이콘이 종류를 말하는 유일한 자리다
  */
-.token-badge .token-icon { width: 18px; height: 18px; background: var(--token-color); mask: var(--token-icon) center / contain no-repeat; }
+.token-badge .token-icon { width: 22px; height: 22px; background: var(--token-color); mask: var(--token-icon) center / contain no-repeat; }
 /**
  * 겹이 우하단으로 자라므로 숫자는 **우상단**이다 — 아래에 두면 스택 2 이상에서 겹과 겹친다.
  * 진영색은 `.boon`·`.harmful`이 다시 적는다: 같은 요소에서 `background: currentColor`는 제 `color`를
  * 가리키므로 어둠 위의 어둠이 되어 **숫자가 안 보였다**(P-61에서 잡았다)
  */
-.token-badge small { position: absolute; right: -3px; top: -3px; display: grid; width: 16px; height: 16px; place-items: center; border-radius: 50%; color: #151821; font-size: .62rem; font-weight: 750; }
+.token-badge small { position: absolute; right: -4px; top: -4px; display: grid; width: 17px; height: 17px; place-items: center; border: 1px solid #11131a; border-radius: 50%; color: #151821; font-size: .62rem; font-weight: 750; font-variant-numeric: tabular-nums; }
 .token-badge.boon small { background: var(--boon); }
 .token-badge.harmful small { background: var(--bane); }
 /* 배우 위 한 줄. 텍스트 줄에 섞이지 않는 것이 이 줄의 존재 이유다 */
@@ -415,14 +418,21 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
  */
 .map-node .marker { position: absolute; top: -7px; right: -7px; width: 16px; height: 16px; background: url(../art/ui/marker.png) 0 0 / 16px 16px no-repeat; }
 .map-node.empty { border-color: transparent; }
-/* 잠긴 칸. 열린 셋만 또렷하고, 이동 중에는 그 셋도 여기 걸린다 */
-.map-node:disabled { opacity: .5; }
+/**
+ * 잠긴 칸. 열린 셋만 또렷하고, 이동 중에는 그 셋도 여기 걸린다.
+ * **금지 커서를 끈다**(P-63) — 여기 걸리는 것의 대부분은 못 가는 곳이 아니라 지금 서 있는 칸과
+ * 방금 지나온 칸이다. 그 위에 「막힘」이 뜨면 화면이 고장난 것처럼 읽힌다
+ */
+.map-node:disabled { opacity: .5; cursor: default; }
 .map-node.rest { border-color: #5c9985; color: #9de0c7; }
 .map-node.combat { border-color: #a4615a; color: #efa198; }
 .map-node.elite { border-color: #b0543f; color: #f2a07a; }
 .map-node.omen { border-color: #6b6198; color: #b6a9e6; }
 .map-node.boss { border-color: #b2495f; color: #f28fa4; }
-.map-node.open { box-shadow: 0 0 0 1px #c6a969 inset; }
+/* 열린 갈래 셋. 청동 2px + 바깥 발광이 「여기가 지금 고를 자리」를 말한다 */
+.map-node.open { box-shadow: 0 0 0 2px #c6a969 inset, 0 0 14px rgba(198, 169, 105, .38); }
+/* hover는 밝기만 — 크기·여백을 바꿔 이웃 칸을 밀지 않는다(UI.md). 테두리 색은 `button:hover`가 든다 */
+.map-node.open:not(:disabled):hover { filter: brightness(1.3); }
 .decision-panel { display: grid; align-content: start; gap: 12px; }
 .choice { display: grid; grid-template-columns: 48px 1fr; gap: 2px 14px; padding: 18px; text-align: left; }
 /* 못 고르는 칸도 서되 죽는다 — 멀쩡해 보이는데 눌러도 조용한 버튼은 고장으로 읽힌다(UI.md) */
@@ -448,19 +458,21 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 /**
  * 경로 화면의 격자는 **누르는 자리다** — 30px는 읽는 그림의 크기였고 최소 터치는 44px이다.
  * 크기를 `.walkable`에만 거는 이유는 **결과 화면이 같은 `MapPanel`을 `0.8fr` 열에 둘 나란히** 세워서다.
- * 폭을 520px로 묶는 것은 오른쪽 패널이 없어져 1040px이 통째로 남기 때문이다
+ * 폭 760px은 오른쪽 패널이 없어져 통째로 남은 1040px을 쓰는 크기다(P-63) — 520px은 반을 배경에
+ * 내주고 있었다. 그릇은 결정 화면 여섯과 같은 케니 청동 9-slice다
  */
-.map-panel.walkable { width: min(520px, 100%); margin: 0 auto; }
+.map-panel.walkable { width: min(760px, 100%); margin: 0 auto; border: 12px solid transparent; border-radius: 0; border-image: url(../art/kenney/panel-border-007-bronze.png) 16 / 12px round; image-rendering: pixelated; }
 /* 「지하에서」 넉 자가 40px에서 접힌다 */
-.map-panel.walkable li { grid-template-columns: 56px repeat(3, 1fr); }
+.map-panel.walkable li { grid-template-columns: 64px repeat(3, 1fr); }
 .map-panel.walkable li small { white-space: nowrap; }
-.map-panel.walkable .map-node { height: 48px; gap: 1px; }
+.map-panel.walkable .map-node { height: 72px; gap: 1px; }
+.map-panel.walkable .map-node .icon { width: 28px; height: 28px; }
 /* 이름이 아이콘 아래 칸 안에 선다 — 갈래 이름은 위치가 말하므로 `aria-label`에만 남는다 */
-.map-panel.walkable .map-node b { font-size: .62rem; font-weight: 600; }
+.map-panel.walkable .map-node b { font-size: .74rem; font-weight: 600; }
+/* 마커 32px은 16×16 원본의 **정수 2배**다 — 그래서 픽셀이 안 뭉갠다(위 `image-rendering: pixelated`) */
+.map-panel.walkable .map-node .marker { top: -14px; right: -14px; width: 32px; height: 32px; background-size: 32px 32px; }
 /* 마커의 집. 종류가 없고 안 눌린다 — 저승 1층과 지상 1층에서만 선다 */
 .map-panel .start .map-node { border-style: dashed; }
-/* 가리킨 칸의 설명 한 줄. 두 줄 자리를 미리 잡아 훑을 때마다 패널 높이가 안 흔들린다 */
-.node-hint { min-height: 2.8em; margin: 16px 0 0; color: #949aad; font-size: .84rem; line-height: 1.4; }
 
 /**
  * ─ 전투 무대(P-55) ─ 패널 상자가 없다. 배경이 무대고 캐릭터가 주인공이다.
@@ -517,11 +529,8 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 /* 발밑 칩 한 줄 — 방어·패시브·토큰. 자리를 예약해 첫 칩에 이웃이 안 밀린다(UI.md) */
 .stage-field .chips { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; min-height: 40px; max-width: 190px; }
 .stage-field .shield { padding: 1px 7px; border: 1px solid #3f5c54; border-radius: 4px; background: rgba(21, 25, 35, .8); color: #9de0c7; font-size: .74rem; font-style: normal; white-space: nowrap; }
-/**
- * 패시브는 소모품이 아니다 — 방어·토큰 배지와 **색을** 나눈다. 틀은 토큰 배지와 같은 조각을 4px로
- * 두르고(P-61), 보라(`#bfa8e0`)가 「토큰이 아니다」를 마저 말한다. 소모되는 ward·guard는 숫자가 줄어든다
- */
-.enemy .passive { display: inline-flex; align-items: center; gap: 3px; padding: 0 3px; border: 4px solid transparent; border-image: url(../art/kenney/token-frame-bronze.png) 16 / 4px round; border-radius: 0; image-rendering: pixelated; background: rgba(21, 25, 35, .8); color: #bfa8e0; font-size: .74rem; font-style: normal; white-space: nowrap; }
+/** 패시브는 소모품이 아니다 — 보라색 알약형 칩으로 방어·사각 토큰 배지와 모양까지 나눈다 */
+.enemy .passive { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border: 1px solid #75658c; border-radius: 999px; background: #211d2c; color: #d1b9f0; font-size: .74rem; font-style: normal; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .enemy .passive .icon { width: 14px; height: 14px; }
 
 /* 피해 팝 — 체력 바 위에서 떠오른다 */
@@ -557,8 +566,9 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 /* 쉼터의 모닥불 — 패널 아래 중앙 96px */
 .prop.campfire { position: absolute; bottom: 5%; left: 50%; margin-left: -48px; opacity: .8; }
 /* 지도 — 보스 층(맨 윗줄) 옆 신호 프롭: 끝이 가까워지는 감각 */
-.map-wrap { position: relative; width: min(520px, 100%); margin: 0 auto; }
-.prop.boss-signal { position: absolute; top: 44px; right: -72px; --sprite: 48px; opacity: .7; }
+.map-wrap { position: relative; width: min(760px, 100%); margin: 0 auto; }
+/* 판이 760px이 되며 좌우 여백이 140px로 줄었다 — `-72px`면 `.prop.flank.right`(셸 끝 36px)와 겹친다 */
+.prop.boss-signal { position: absolute; top: 44px; right: -56px; --sprite: 48px; opacity: .7; }
 /* 인트로 — 메뉴 옆을 떠도는 도깨비불 둘 */
 .prop.intro-wisp { position: absolute; --sprite: 48px; opacity: .6; }
 .prop.intro-wisp.w0 { left: 270px; top: 56%; }
@@ -670,10 +680,27 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
  * 자리를 다투면 하나가 사라진다. 신 색(`--frame`)을 쓰지만 글자가 뜻을 다 들고 있다 — tier1(124장)에는 없다
  */
 .card-tier { margin-right: 4px; padding: 0 4px; border: 1px solid color-mix(in srgb, var(--frame) 70%, transparent); border-radius: 3px; color: var(--frame); font-size: .58rem; font-style: normal; }
+/**
+ * 강화 배지. 등급 칩과 **같은 줄, 다른 슬롯**이다 — 등급은 카드가 태어난 계단이고 강화는 이 런에서
+ * 키운 것이라 직교한다. 프레임색(`--frame`)은 안 쓴다: 그 색은 신의 것이고 이건 이로움(`--boon`)이다
+ */
+.card-up { margin-right: 4px; padding: 0 4px; border: 1px solid color-mix(in srgb, var(--boon) 60%, transparent); border-radius: 3px; color: var(--boon); font-size: .58rem; font-style: normal; }
 /* 카드의 본체. 아이콘은 `art/icons.svg` 28개에서 그대로 꺼낸다 — 적 머리 위 배지와 같은 글리프다 */
 .card-fx { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; }
 .card-fx em { display: inline-flex; align-items: center; gap: 3px; color: #e4e8f2; font-size: .68rem; font-style: normal; }
-.card-fx em b { font-size: 1.05rem; font-weight: 750; }
+/* 위력이 붙었다 떨어지며 매 턴 바뀌는 숫자다 — 폭이 변해 이웃 조각을 밀면 그것이 흔들림이다(UI.md) */
+.card-fx em b { font-size: 1.05rem; font-weight: 750; font-variant-numeric: tabular-nums; }
+/**
+ * 원래 적힌 값. **취소선 자체가 흑백에서도 남는 채널이라** 색은 거드는 쪽이다(R-26) — 오른 값은
+ * 이로움(`--boon`), 내린 값(침수)은 경고색이다. 파랑(`--bane`)은 해로움이라 강조에 못 쓴다.
+ *
+ * **선은 직접 긋는다** — 픽셀 서체(Galmuri11)의 `line-through`는 이 크기에서 아무것도 안 그린다.
+ * 실측으로 확인한 자리고, 그대로 두면 남는 채널이 색 하나뿐이 된다
+ */
+.card-fx em s { position: relative; color: #7f869a; font-size: .72rem; text-decoration: none; }
+.card-fx em s::after { content: ""; position: absolute; inset: 50% -1px auto; height: 1px; background: currentColor; }
+.card-fx em b.up { color: var(--boon); }
+.card-fx em b.down { color: #eb887d; }
 .card-fx .icon { width: 18px; height: 18px; }
 /* 내가 손해 보는 줄이다 */
 .card-fx .harm { color: #eb887d; }

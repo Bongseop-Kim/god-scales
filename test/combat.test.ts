@@ -12,8 +12,8 @@ import {
   type EnemyDefinition,
 } from "../core/combat";
 import { createRng } from "../core/rng";
-import { addToken, dealDamage, type Card } from "../core/rules";
-import type { ActorState, CombatState, GameState } from "../core/state";
+import { addToken, attackPreview, dealDamage, type Card } from "../core/rules";
+import type { ActorState, CombatState, GameState, Tokens } from "../core/state";
 
 /** `startTurn`·`endTurn`이 파워를 발동하려면 `GameState`가 필요하다 — 전투만 있는 테스트는 여기서 감싼다 */
 const wrap = (combat: CombatState): GameState => ({ seed: 1, combat, favor: {}, grace: {}, graceSlots: {}, map: { depth: 0, lane: 1, grid: [], completed: [] } });
@@ -50,6 +50,26 @@ describe("combat", () => {
     const target = { id: "player", hp: 10, maxHp: 10, block: 2, tokens: { bulwark: 3 } };
     dealDamage(attacker, target, 6);
     expect([target.block, target.tokens.bulwark, target.hp]).toEqual([0, undefined, 9]);
+  });
+
+  /**
+   * 카드 면이 부르는 것과 엔진이 도는 것이 **같은 함수**다(P-62). 두 벌이면 화면에 11이 적힌 카드가
+   * 9를 내보내는 자리가 생긴다 — 대상은 방어도 보루도 껍질도 없으므로 `dealDamage`가 돌려주는 값이
+   * 곧 공격자 쪽 보정을 마친 값이다
+   */
+  it("previews the attacker's four modifiers exactly as dealDamage applies them", () => {
+    const combos: Tokens[] = [
+      {}, { might: 3 }, { crit: 1 }, { frenzy: 1 }, { soaked: 1 },
+      { crit: 1, might: 3 }, { might: 2, soaked: 1 }, { crit: 1, might: 3, frenzy: 1, soaked: 1 },
+    ];
+    for (const tokens of combos) {
+      for (const amount of [0, 1, 6, 21]) {
+        const attacker: ActorState = { id: "player", hp: 40, maxHp: 40, block: 0, tokens: { ...tokens } };
+        const target: ActorState = { id: "enemy", hp: 999, maxHp: 999, block: 0, tokens: {} };
+        const dealt = dealDamage(attacker, target, amount);
+        expect(dealt, `${JSON.stringify(tokens)} × ${amount}`).toBe(attackPreview(tokens, amount));
+      }
+    }
   });
 
   it("reshuffles discard, stops on empty piles, and respects the hand limit", () => {

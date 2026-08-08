@@ -4,7 +4,7 @@ import type { CSSProperties, Ref } from "react";
 import { ENERGY_PER_TURN, MAX_SLOTS, type EnemyAction } from "../../core/combat.ts";
 import { favorInitial, favorStage, godEnemyId, intervenesOnTurn, type FavorStage, type StageEffect } from "../../core/favor.ts";
 import { floorsPerRegion } from "../../core/map.ts";
-import type { PassiveName, Trigger } from "../../core/state.ts";
+import type { PassiveName, Tokens, Trigger } from "../../core/state.ts";
 import enemyDataJson from "../../data/enemies.json" with { type: "json" };
 import { endTurnAction, type CardView, type CombatDecision, type CombatObservation, type PromiseView } from "../../sim/engine.ts";
 import { tagParticle } from "../shared/art-keys.ts";
@@ -411,7 +411,8 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={reducedMotion ? { duration: 0 } : stageIn}
             >
-              <GameCard cardId={view.hand[staged].id} card={view.hand[staged]} />
+              {/* 무대 카드도 손패와 같은 얼굴이다 — 대상을 고르는 동안 숫자가 바뀌면 그게 더 나쁘다 */}
+              <GameCard cardId={view.hand[staged].id} card={view.hand[staged]} boost={view.tokens} />
             </m.div>
           )}
         </div>
@@ -426,6 +427,7 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
               <FanCard
                 key={key}
                 card={card}
+                boost={view.tokens}
                 index={index}
                 transition={transition}
                 disabled={targeting || !options.includes(card.id)}
@@ -460,8 +462,10 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
  * 흐려지는 카드를 눌러도 아무 일이 안 일어나고, e2e 드라이버는 그것을 첫 후보로 골라 1초 헛돈다
  * (실측 78회 × 1초). 사라지는 중이면 누를 수 없다 — 적 버튼과 같은 이유, 같은 한 줄이다
  */
-function FanCard({ card, index, transition, disabled, onSelect }: {
+function FanCard({ card, boost, index, transition, disabled, onSelect }: {
   card: CardView;
+  /** 플레이어의 지금 토큰 — 카드 면이 「지금 누르면 나갈 값」을 세운다 */
+  boost: Tokens;
   index: number;
   transition: { duration: number };
   disabled: boolean;
@@ -476,7 +480,7 @@ function FanCard({ card, index, transition, disabled, onSelect }: {
       exit={{ opacity: 0 }}
       transition={transition}
     >
-      <GameCard cardId={card.id} card={card} disabled={disabled || !present} onSelect={onSelect} />
+      <GameCard cardId={card.id} card={card} boost={boost} disabled={disabled || !present} onSelect={onSelect} />
     </m.div>
   );
 }

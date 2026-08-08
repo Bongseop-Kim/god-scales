@@ -263,7 +263,8 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
             <CombatScreen seed={seed} decision={pending} onAnswer={answer} onOpenJournal={() => setOverlay("journal")} />
           )}
           {(pending?.phase === "rest" || pending?.phase === "rest_card") && (
-            <RestScreen decision={pending} onAnswer={answer} />
+            /* 직전 답이 곧 갈래다 — `rest_card`는 그 답 **바로 다음** 결정이고 `heal`은 여기를 안 지난다 */
+            <RestScreen decision={pending} upgrading={actions.at(-1)?.choice === "upgrade"} onAnswer={answer} />
           )}
           {pending?.phase === "reward" && (
             <RewardScreen decision={pending} onAnswer={answer} />

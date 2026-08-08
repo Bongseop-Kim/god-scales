@@ -57,8 +57,13 @@ function Choice({ mark, label, detail, disabled, onChoose }: { mark: string; lab
   );
 }
 
-export function RestScreen({ decision, onAnswer }: {
+export function RestScreen({ decision, upgrading, onAnswer }: {
   decision: MapDecision;
+  /**
+   * 제거인지 강화인지. `rest_card`는 **둘이 같은 화면**이라 관측만으로는 갈 수 없다(후보가 덱 전체일
+   * 수도 있어 길이로도 못 가른다). App이 직전 `rest` 답을 `actions`에 이미 들고 있으므로 새 상태가 아니다
+   */
+  upgrading?: boolean;
   onAnswer: (choice: string) => void;
 }) {
   const { phase, options, observation: view } = decision;
@@ -82,7 +87,8 @@ export function RestScreen({ decision, onAnswer }: {
           <>
             <h2>어느 카드를 고를까요?</h2>
             {/* 후보가 덱 전체가 아닐 수 있다 — 강화는 `+2`에 닿은 카드와 융합을 뺀다(`sim/engine.ts`) */}
-            <CardRow cards={view.deck} options={options} onSelect={onAnswer} />
+            {/* 강화면 후보가 **강화 후** 얼굴로 선다 — 고르기 전과 고른 뒤가 같은 얼굴이다 */}
+            <CardRow cards={view.deck} options={options} upgrade={upgrading} onSelect={onAnswer} />
           </>
         )}
     </Screen>
