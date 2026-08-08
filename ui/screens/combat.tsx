@@ -27,8 +27,8 @@ const opParticle: Record<string, string> = { damage: "slash_01", block: "window_
 type EnemyInfo = { id: string; name: string; intent_visible: boolean };
 const enemyInfo = new Map((enemyDataJson as EnemyInfo[]).map((enemy) => [enemy.id, enemy]));
 const pop = { duration: 0.16, ease: [0.23, 1, 0.32, 1] } as const;
-/** 적이 사라지는 180ms. 셋이 둘이 되는 순간에 화면이 덜컥 올라오면 고장으로 읽힌다 */
-const exitPop = { duration: 0.18, ease: [0.23, 1, 0.32, 1] } as const;
+/** 적이 쓰러지는 두 프레임을 보여 준 뒤 사라지는 500ms. popLayout이라 판은 즉시 닫힌다 */
+const exitPop = { duration: 0.5, ease: [0.23, 1, 0.32, 1] as const, times: [0, 0.6, 1] };
 /** 손 → 무대 200ms. 들어오는 것이라 `--ease-out`과 같은 곡선이다 */
 const stageIn = { duration: 0.2, ease: [0.23, 1, 0.32, 1] } as const;
 const damagePop = { duration: 0.4, ease: [0.23, 1, 0.32, 1] } as const;
@@ -274,30 +274,45 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
 
   /**
    * 피격 연출(P-58) — 맞은 쪽 흰 플래시 120ms + 셰이크 4px, 때린 쪽 20px 전진.
-   * 「누가 때렸나」는 관측에 없으므로(관측은 맞은 쪽만 든다) **직전 렌더의 의도**로 귀속한다 —
-   * 적 턴 피해가 온 프레임에는 의도가 이미 다음 것으로 넘어가 있다. WAAPI의 `translate`·`filter`
-   * 속성은 motion이 쓰는 `transform`과 다른 채널이라 layout 애니메이션과 안 싸운다
+   * 관측의 `hitSource`가 카드·신 개입·적 턴을 가른다. 적 공격자만 직전 렌더의 의도로 찾는다 — 적 턴
+   * 피해가 온 프레임에는 의도가 이미 다음 것으로 넘어가 있다. WAAPI의 `translate`·`filter` 속성은
+   * motion이 쓰는 `transform`과 다른 채널이라 layout 애니메이션과 안 싸운다
    */
   const prevAttackers = useRef<string[]>([]);
   useEffect(() => {
     const attackers = prevAttackers.current;
     prevAttackers.current = view.enemies.filter(({ intent }) => intent?.damage).map(({ id }) => id);
     if (!view.hits.length || reducedMotion) return;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const posed = new Set<HTMLElement>();
+    const pose = (node: HTMLElement | null | undefined, name: "attack" | "hit", duration: number) => {
+      if (!node) return;
+      node.dataset.pose = name;
+      posed.add(node);
+      timers.push(setTimeout(() => delete node.dataset.pose, duration));
+    };
     for (const { id } of view.hits) {
       const node = id === "player" ? playerSide.current : enemySide.current?.querySelector<HTMLElement>(`[data-enemy="${id}"]`);
+      pose(node, "hit", 200);
       node?.animate([{ filter: "brightness(2.2)" }, { filter: "brightness(1)" }], { duration: 120, easing: "ease-out" });
       node?.animate([{ translate: "-4px 0" }, { translate: "4px 0" }, { translate: "0 0" }], { duration: 200, easing: "ease-in-out" });
     }
     // 병사가 쳤으면 병사가, 적 턴이면 직전 의도가 공격이던 적들이 나선다(160ms 전진 + 복귀)
-    if (view.hits.some(({ id }) => id !== "player")) {
+    if (view.hitSource === "attack" && view.hits.some(({ id }) => id !== "player")) {
+      pose(playerSide.current, "attack", 250);
       playerSide.current?.animate([{ translate: "0 0" }, { translate: "20px 0", offset: 0.5 }, { translate: "0 0" }], { duration: 320, easing: "ease-out" });
     }
-    if (view.hits.some(({ id }) => id === "player")) {
+    if (view.hitSource === "enemy" && view.hits.some(({ id }) => id === "player")) {
       for (const id of attackers) {
-        enemySide.current?.querySelector<HTMLElement>(`[data-enemy="${id}"]`)
-          ?.animate([{ translate: "0 0" }, { translate: "-20px 0", offset: 0.5 }, { translate: "0 0" }], { duration: 320, easing: "ease-out" });
+        const node = enemySide.current?.querySelector<HTMLElement>(`[data-enemy="${id}"]`);
+        pose(node, "attack", 250);
+        node?.animate([{ translate: "0 0" }, { translate: "-20px 0", offset: 0.5 }, { translate: "0 0" }], { duration: 320, easing: "ease-out" });
       }
     }
+    return () => {
+      for (const timer of timers) clearTimeout(timer);
+      for (const node of posed) delete node.dataset.pose;
+    };
   }, [view.hitSeq]);
 
   /**
@@ -468,7 +483,7 @@ function FanCard({ card, index, transition, disabled, onSelect }: {
 
 /**
  * 적 하나. **컴포넌트로 나눈 이유는 `useIsPresent()` 하나다** — 퇴장 애니메이션 중인 버튼은 마지막
- * 렌더의 props를 그대로 들고 있어서, 대상 선택 중에 죽은 적은 180ms 동안 `disabled`가 아닌 채로 DOM에
+ * 렌더의 props를 그대로 들고 있어서, 대상 선택 중에 죽은 적은 퇴장 동안 `disabled`가 아닌 채로 DOM에
  * 남는다. e2e 드라이버(`tools/e2e.ts:52`)는 `!el.disabled`만 보므로 **죽은 적을 고르고** 1초 헛돈다
  */
 function EnemyButton({ enemy, slot, hits, hitSeq, enabled, reducedMotion, onSelect, ref }: {
@@ -498,8 +513,9 @@ function EnemyButton({ enemy, slot, hits, hitSeq, enabled, reducedMotion, onSele
       // 칩 행의 높이는 애니메이션하지 않는다 — 적의 칸 이동만 보간해야 스프라이트가 상태 변화에 안 흔들린다
       layout={reducedMotion ? false : "position"}
       transition={reducedMotion ? { duration: 0 } : pop}
-      exit={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.92, transition: exitPop }}
+      exit={reducedMotion ? { opacity: 0 } : { opacity: [1, 1, 0], scale: [1, 1, 0.92], transition: exitPop }}
       className={enemy.span > 1 ? "enemy wide" : "enemy"}
+      data-pose={present ? undefined : "death"}
       // 개입 파티클이 맞은 판을 여기서 찾는다 — 적마다 ref를 하나 더 다는 대신이다(`popLayout`이 ref를 이미 쓴다)
       data-enemy={enemy.id}
       // 칸이 곧 자리다(P-55) — `--slot`이 지면 위 x를 정하고, 두 칸짜리는 `--span`이 중심을 옮긴다

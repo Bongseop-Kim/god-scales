@@ -65,15 +65,28 @@ button:active { transform: scale(.97); }
 }
 
 /**
- * 스프라이트 스트립은 idle 넉 장이다. 크기는 `--sprite` 하나가 정한다(기본 96px) — 무대(P-55)가
- * 병사·적 모두 224로 키우고, 4프레임 steps 루프는 그대로다(keyframes의 var는 요소별로 풀린다)
+ * 스프라이트 스트립의 셀 수는 기본 넷이다. 전투 배우만 아홉 장이고 idle은 앞 넉 칸이라
+ * 기존 4프레임 steps 루프가 그대로 돈다(keyframes의 var는 요소별로 풀린다)
  */
 .sprite { display: block; width: var(--sprite, 96px); height: var(--sprite, 96px); overflow: hidden; }
-.sprite img { width: calc(var(--sprite, 96px) * 4); height: var(--sprite, 96px); max-width: none; animation: sprite 1.2s steps(4) infinite; }
+.sprite img { width: calc(var(--sprite, 96px) * var(--cells, 4)); height: var(--sprite, 96px); max-width: none; animation: sprite 1.2s steps(4) infinite; }
+.player-actor .sprite, .enemy .sprite { --cells: 9; }
 
 @keyframes sprite {
   to { transform: translateX(calc(var(--sprite, 96px) * -4)); }
 }
+
+@keyframes sprite-attack {
+  from { transform: translateX(calc(var(--sprite, 96px) * -4)); }
+  to { transform: translateX(calc(var(--sprite, 96px) * -5)); }
+}
+@keyframes sprite-death {
+  from { transform: translateX(calc(var(--sprite, 96px) * -7)); }
+  to { transform: translateX(calc(var(--sprite, 96px) * -8)); }
+}
+[data-pose="attack"] .sprite img { animation: sprite-attack 250ms steps(2, jump-none) forwards; }
+[data-pose="hit"] .sprite img { animation: none; transform: translateX(calc(var(--sprite, 96px) * -6)); }
+[data-pose="death"] .sprite img { animation: sprite-death 500ms steps(2, jump-none) forwards; }
 
 /**
  * 우호도가 단계 경계를 넘는 순간 **한 번**. 루프가 아니다 — 런당 몇 번뿐인 자리라 여기서만 delight를
@@ -116,6 +129,7 @@ button:active { transform: scale(.97); }
 
 @media (prefers-reduced-motion: reduce) {
   .sprite img { animation: none; }
+  [data-pose] .sprite img { animation: none; transform: none; }
   /* 컷인 그림은 멈추고 **문장은 남는다** — 문장은 모션이 아니라 정보다(`ui/fx.ts`가 3초 세워 둔다) */
   .fx > .fx-view { animation: none; }
   /* 같은 이유로 신 일러만 멈춘다 — 대사는 `ui/fx.ts`가 페이드 없이 제 시간만큼 세워 둔다 */
