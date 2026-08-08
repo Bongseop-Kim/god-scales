@@ -20,10 +20,15 @@ export function cardArtCandidates({ id, patron, tags = [] }: CardArtSource): str
 /** 프레임 색과 파티클이 읽는 신 하나. 융합은 앞의 신을 쓴다 */
 export const cardGod = ({ patron, patron_pair }: CardArtSource): string | undefined => patron ?? patron_pair?.[0];
 
-/** 카드 태그 하나에 파티클 한 장. 색은 CSS가 얹는다 — 태그별로 넉 장을 다시 뽑지 않는다 */
-export const tagParticle: Record<string, string> = { attack: "slash_01", defend: "window_01", token: "magic_01", utility: "spark_01" };
+/** 카드 갈래 × 신 하나에 파티클 한 장. 신은 색이 아니라 그림으로 갈린다 */
+export const particleStrip: Record<string, Record<string, string>> = {
+  attack: { zeus: "spark", poseidon: "circle", athena: "muzzle", ares: "slash", artemis: "trace" },
+  defend: { zeus: "star", poseidon: "twirl", athena: "window", ares: "scorch", artemis: "light" },
+  token: { zeus: "ember", poseidon: "smoke", athena: "sigil", ares: "ash", artemis: "magic" },
+  utility: { zeus: "glint", poseidon: "haze", athena: "flame", ares: "fire", artemis: "rake" },
+};
 /** 그림이 있는 태그. 카드가 여럿을 달면 먼저 걸리는 것을 쓴다 — 목록은 위 표가 곧 정본이다 */
-export const cardTag = ({ tags = [] }: CardArtSource): string | undefined => tags.find((tag) => tag in tagParticle);
+export const cardTag = ({ tags = [] }: CardArtSource): string | undefined => tags.find((tag) => tag in particleStrip);
 
 /** 배경·프롭의 지역 접두사. `core/map.ts`의 지역은 `underworld`인데 파일은 `under_`·`under-`다 */
 export const artRegion = (region: string): string => (region === "underworld" ? "under" : "surface");

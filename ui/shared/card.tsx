@@ -6,7 +6,7 @@ import { fullReach, reachSlots } from "../../core/targeting.ts";
 import cardDataJson from "../../data/cards.json" with { type: "json" };
 import type { CardView } from "../../sim/engine.ts";
 import { cardTier } from "../../tools/value.ts";
-import { cardArtCandidates, cardGod, cardTag, type CardArtSource } from "./art-keys.ts";
+import { cardArtCandidates, cardGod, cardTag, particleStrip, type CardArtSource } from "./art-keys.ts";
 import { Icon, type IconName } from "./icon.tsx";
 import { playSound } from "./sfx.ts";
 import { tokenName } from "./tokens.tsx";
@@ -38,8 +38,12 @@ const cardFace = new Map((cardDataJson as unknown as (Card & CardArtSource)[]).m
  */
 const tierNames: Record<number, string> = { 2: "상급", 3: "융합" };
 
-/** 카드를 낼 때 튀는 파티클의 태그. 전투 화면이 이걸로 `art/particle/`을 고른다 */
-export const cardTagOf = (cardId: string): string | undefined => cardFace.get(cardLevel(cardId).base)?.tag;
+/** 카드를 낼 때 튀는 파티클. 모르는 신은 그 갈래의 첫 그림으로 떨어진다 */
+export const cardParticleOf = (cardId: string): string | undefined => {
+  const face = cardFace.get(cardLevel(cardId).base);
+  const strip = face?.tag && particleStrip[face.tag];
+  return strip && (strip[face?.god ?? ""] ?? Object.values(strip)[0]);
+};
 const opLabels: Record<string, string> = {
   damage: "피해",
   block: "방어",

@@ -10,8 +10,8 @@ import type { ReplayAction } from "../sim/replay.ts";
 import { bossLane, generateMap } from "../core/map.ts";
 import { upgraded, type Card } from "../core/rules.ts";
 import { App, patronPair, RunOpening } from "../ui/app.tsx";
-import { cardArtCandidates, type CardArtSource } from "../ui/shared/art-keys.ts";
-import { conditionLabel } from "../ui/shared/card.tsx";
+import { cardArtCandidates, cardGod, cardTag, particleStrip, type CardArtSource } from "../ui/shared/art-keys.ts";
+import { cardParticleOf, conditionLabel } from "../ui/shared/card.tsx";
 import { BetScreen, DemandScreen, GraceScreen, OracleScreen, RestScreen } from "../ui/screens/choices.tsx";
 import { CombatScreen } from "../ui/screens/combat.tsx";
 import { replayPayload } from "../ui/shared/export.ts";
@@ -53,6 +53,15 @@ function playByHand(seed: number, pick: (decision: Decision) => string): { resul
  * dev 서버와 Aside 브라우저가 필요해 vitest에 들어가지 않는다
  */
 describe("browser replay export", () => {
+  it("gives every card branch and god a distinct particle strip", () => {
+    expect(new Set(Object.values(particleStrip).flatMap(Object.values)).size).toBe(20);
+    for (const card of cards as (Card & CardArtSource)[]) {
+      const tag = cardTag(card);
+      const god = cardGod(card);
+      if (tag && god) expect(cardParticleOf(card.id)).toBe(particleStrip[tag][god]);
+    }
+  });
+
   it("explains every enemy passive icon in the token dictionary", () => {
     const markup = renderToStaticMarkup(createElement(TokenDictionary));
     expect(unresolvedIcons(markup)).toEqual([]);

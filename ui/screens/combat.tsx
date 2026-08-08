@@ -7,9 +7,9 @@ import { floorsPerRegion } from "../../core/map.ts";
 import type { PassiveName, Tokens, Trigger } from "../../core/state.ts";
 import enemyDataJson from "../../data/enemies.json" with { type: "json" };
 import { endTurnAction, type CardView, type CombatDecision, type CombatObservation, type PromiseView } from "../../sim/engine.ts";
-import { tagParticle } from "../shared/art-keys.ts";
+import { particleStrip } from "../shared/art-keys.ts";
 import { Backdrop, backdropArt } from "../shared/backdrop.tsx";
-import { cardTagOf, effectText, GameCard } from "../shared/card.tsx";
+import { cardParticleOf, effectText, GameCard } from "../shared/card.tsx";
 import { playSprite, shake, speak } from "../shared/fx.ts";
 import { godArt, godLine, godName, godStageEffects, godStageText, stageName } from "../shared/header.tsx";
 import { Icon, type IconName } from "../shared/icon.tsx";
@@ -20,10 +20,9 @@ const spriteArt = import.meta.glob<string>("../../art/sprites/*.webp", { eager: 
 const fxArt = import.meta.glob<string>("../../art/fx/*.webp", { eager: true, query: "?url", import: "default" });
 const particleArt = import.meta.glob<string>("../../art/particle/*.webp", { eager: true, query: "?url", import: "default" });
 /**
- * 개입 op → 파티클 한 장. **카드가 쓰는 넷과 같은 파일이다**(`tagParticle`) — 개입마다 새로 그리지
- * 않는다. 카드와 갈리는 것은 그림이 아니라 자리다: 신의 것은 `strike`가 위에서 내려온다
+ * 개입 op → 카드 갈래. **카드와 같은 4×5 표**를 쓰고, 갈리는 것은 자리다: 신의 것은 `strike`가 위에서 내려온다
  */
-const opParticle: Record<string, string> = { damage: "slash_01", block: "window_01", heal: "magic_01", apply_token: "magic_01" };
+const opParticle: Record<string, string> = { damage: "attack", block: "defend", heal: "utility", apply_token: "token" };
 
 type EnemyInfo = { id: string; name: string; intent_visible: boolean };
 const enemyInfo = new Map((enemyDataJson as EnemyInfo[]).map((enemy) => [enemy.id, enemy]));
@@ -157,15 +156,16 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
   /** 무대에 선 적 하나의 판. `data-enemy`가 그 열쇠다 — 적마다 ref를 다는 대신이다 */
   const enemyNode = (id: string) => enemySide.current?.querySelector<HTMLElement>(`[data-enemy="${id}"]`);
 
-  /** 개입이 때린/붙인 대상의 판. 카드 파티클이 쓰는 두 패널과 같은 자리, 한 칸 더 좁을 뿐이다 */
-  const hostsFor = (target: StageEffect["target"]): HTMLElement[] => {
+  /** 개입·카드가 때린/붙인 대상의 판. 퇴장 중인 적도 DOM에는 남아 막타 파티클을 받는다 */
+  const hostsFor = (target: StageEffect["target"], targetId?: string | null): HTMLElement[] => {
     if (target === "self") return playerSide.current ? [playerSide.current] : [];
-    // `targets()`와 같은 규칙 — `enemy`는 앞의 산 적 하나다(`core/favor.ts`)
-    const aimed = target === "enemy" ? view.enemies.slice(0, 1) : view.enemies;
-    return aimed.flatMap(({ id }) => {
-      const node = enemyNode(id);
+    if (target === "enemy" && targetId) {
+      const node = enemyNode(targetId);
       return node ? [node] : [];
-    });
+    }
+    const enemies = [...(enemySide.current?.querySelectorAll<HTMLElement>("[data-enemy]") ?? [])];
+    // `targets()`와 같은 규칙 — 개입의 `enemy`는 앞의 하나다(`core/favor.ts`)
+    return target === "enemy" ? enemies.slice(0, 1) : enemies;
   };
 
   /**
@@ -216,7 +216,7 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
         // 피해 개입은 화면이 흔들린다. 진노만 크게 — `.fx`와 같은 WAAPI라 새 의존이 없다
         if (effects.some(({ op }) => op === "damage")) shake(stage === "wrath" ? 10 : 4, 200);
         for (const effect of effects) {
-          const sprite = particleArt[`../../art/particle/${opParticle[effect.op]}.webp`];
+          const sprite = particleArt[`../../art/particle/${particleStrip[opParticle[effect.op]]?.[god]}.webp`];
           for (const host of hostsFor(effect.target)) {
             // 카드 파티클은 제자리에서 터지고 신의 것은 위에서 내려온다 — 한눈에 갈린다
             if (effect.op === "damage" || effect.op === "block") void playSprite(host, fxArt["../../art/fx/strike.webp"], "spark");
@@ -234,18 +234,19 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
    * 수로만 갈린다). 낸 카드를 들고 있다가 엔진이 target 단계를 지나 보내면 그때가 발동이다
    */
   const played = useRef<CardView>(null);
+  const aimed = useRef<string>(null);
   const play = (choice: string) => {
+    if (targeting) aimed.current = choice;
     played.current = view.hand.find(({ id }) => id === choice) ?? played.current;
     onAnswer(choice);
   };
-  /** 카드가 발동한 자리에 태그 파티클 한 장. 자기 대상이면 내 쪽, 아니면 적 쪽에서 튄다 */
+  /** 카드가 발동한 대상마다 갈래 × 신 파티클 한 장 */
   useEffect(() => {
     const card = played.current;
     if (!card || targeting) return;
     played.current = null;
-    const source = particleArt[`../../art/particle/${tagParticle[cardTagOf(card.id) ?? ""]}.webp`];
-    const host = (card.target === "self" ? playerSide : enemySide).current;
-    if (source && host && !reducedMotion) void playSprite(host, source, "spark");
+    const source = particleArt[`../../art/particle/${cardParticleOf(card.id)}.webp`];
+    if (source && !reducedMotion) for (const host of hostsFor(card.target, aimed.current)) void playSprite(host, source, "spark");
   }, [decision]);
 
   /**
@@ -426,7 +427,7 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
                 popDelay={guarded && !reducedMotion ? 0.26 : 0}
                 enabled={targeting && options.includes(enemy.id)}
                 reducedMotion={!!reducedMotion}
-                onSelect={() => onAnswer(enemy.id)}
+                onSelect={() => play(enemy.id)}
               />
             );
           })}

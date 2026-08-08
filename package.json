@@ -8,6 +8,7 @@
     "art": "node --experimental-strip-types tools/art.ts",
     "cards": "node --experimental-strip-types tools/cards.ts",
     "icons": "node --experimental-strip-types tools/icons.ts --fetch",
+    "particles": "node --experimental-strip-types tools/particles.ts",
     "sim": "node --experimental-strip-types sim/runner.ts",
     "stats": "node --experimental-strip-types tools/stats.ts",
     "play": "node --experimental-strip-types sim/play.ts",
