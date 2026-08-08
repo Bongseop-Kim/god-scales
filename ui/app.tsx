@@ -16,14 +16,14 @@ import { RewardScreen } from "./screens/reward.tsx";
 import { FullscreenButton, IntroScreen, SetupScreen } from "./screens/setup.tsx";
 import { godName, StatusBar } from "./shared/header.tsx";
 import { DeckPanel, HelpPanel, JournalPanel, Overlay, type PromiseRecord } from "./shared/overlay.tsx";
-import { playSound, sound } from "./shared/sfx.ts";
+import { musicForScreen, playSound, sound } from "./shared/sfx.ts";
 import { TokenDictionary } from "./shared/tokens.tsx";
 import "./motion.css";
 import "./style.css";
 
 type Steps = Generator<Decision, RunResult, string>;
-/** 오버레이 넷. 열림 상태는 여기(App)가 든다 — URL·저장에 싣지 않으므로 새로고침하면 닫힌 상태다 */
-type OverlayKind = "tokens" | "help" | "deck" | "journal";
+/** 오버레이 다섯. 열림 상태는 여기(App)가 든다 — URL·저장에 싣지 않으므로 새로고침하면 닫힌 상태다 */
+type OverlayKind = "tokens" | "help" | "deck" | "journal" | "restart";
 
 /** 화면 전환 애니메이션의 key. 여기 없는 phase는 이름 그대로 자기 화면이다 */
 const screens: Partial<Record<Decision["phase"], string>> = { path: "map", rest_card: "rest", card: "combat", target: "combat" };
@@ -109,11 +109,13 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
   const [journal, setJournal] = useState<PromiseRecord[]>([]);
   /** 같은 확정을 두 번 쌓지 않는다 — `settled`는 확정 뒤에도 매 관측에 그대로 실려 온다 */
   const settledSeen = useRef(new Set<string>());
+  const music = useRef<HTMLAudioElement>(null);
   const steps = useRef<Steps>(null);
   // 퇴장 애니메이션 중인 카드의 onClick은 옛 pending을 클로저에 들고 있다. 판정은 언제나 최신 결정으로 한다
   const latest = useRef<Decision>(null);
   const reducedMotion = useReducedMotion();
   const screen = intro ? "intro" : opening ? "opening" : result ? "result" : pending ? screens[pending.phase] ?? pending.phase : "setup";
+  const musicUrl = musicForScreen(screen);
   const pair = picked.length === 2 ? patronPair(picked) : undefined;
   /** 편집기가 그리는 열 장. 손대지 않았으면 규칙이 뽑은 것 그대로다 */
   const startingDeck = deck ?? (pair ? ruleDeck(pair) : []);
@@ -211,6 +213,35 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
     // `answer`·`latest`는 ref와 안정한 setState만 만진다 — 한 번 걸면 된다
   }, []);
 
+  useEffect(() => {
+    const player = music.current;
+    if (!player) return;
+    const play = () => {
+      if (sound.enabled) void player.play().catch(() => {});
+    };
+    if (!musicUrl || !soundEnabled) {
+      player.pause();
+      return;
+    }
+    play();
+    // 첫 클릭은 브라우저의 자동 재생 제한을 푼다. 이미 재생 중이면 play()는 그대로 이어 간다.
+    document.addEventListener("click", play, { once: true });
+    return () => document.removeEventListener("click", play);
+  }, [musicUrl, soundEnabled]);
+
+  /**
+   * 런이 도는 동안에만 새로고침·탭 닫기를 한 번 묻는다(P-65). **문구는 브라우저 것이다** — 앱이 할 수
+   * 있는 것은 「물어보게 만드는 것」까지라 우리 문장을 시도하지 않는다. 결과·시작·타이틀에서는 안 건다:
+   * 거기서는 버릴 것이 없고, `tools/e2e.ts`가 탭을 닫는 것도 결과 화면(= `pending` 없음)이다
+   */
+  const running = Boolean(pending);
+  useEffect(() => {
+    if (!running) return;
+    const ask = (event: BeforeUnloadEvent) => event.preventDefault();
+    addEventListener("beforeunload", ask);
+    return () => removeEventListener("beforeunload", ask);
+  }, [running]);
+
   // 셋째를 누르면 가장 오래된 것이 빠진다 — 「먼저 해제하세요」를 만들지 않는다
   const toggleGod = (god: GodId) =>
     setPicked((now) => (now.includes(god) ? now.filter((id) => id !== god) : [...now, god].slice(-2)));
@@ -231,6 +262,7 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
       {/* 아이콘 시트는 **화면 전환 밖**에 선다 — `AnimatePresence` 안에 넣으면 전환마다 `<use>`가 가리킬
           대상이 사라졌다 다시 생긴다 */}
       <IconSheet />
+      <audio ref={music} src={musicUrl} autoPlay={soundEnabled && !!musicUrl} loop preload="auto" />
       {/* 아이콘 시트와 같은 이유로 전환 밖이다 — 열 화면 어디에나 같은 자리에 서야 한다. 인트로만 예외:
           메뉴에 큰 것이 서므로 구석의 작은 것은 중복이다 */}
       {screen !== "intro" && screen !== "opening" && <FullscreenButton />}
@@ -255,7 +287,21 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
           turn={"turn" in pending.observation ? pending.observation.turn : undefined}
           block={"block" in pending.observation ? pending.observation.block : undefined}
           onOverlay={setOverlay}
+          onRestart={() => setOverlay("restart")}
         />
+      )}
+      {/**
+        * 런을 버리는 확인(P-65). `confirm()`을 안 쓴다 — 커서 넷·픽셀 서체·청동 틀이 전부 죽고
+        * 게임 안에서 유일하게 OS가 말하는 자리가 된다. Esc·바깥 클릭·×는 셸이 이미 취소로 든다
+        */}
+      {overlay === "restart" && (
+        <Overlay title="다시 시작" onClose={() => setOverlay(undefined)}>
+          <p>진행 중인 런을 버립니다. 처음부터 시작할까요?</p>
+          <div className="actions">
+            <button className="primary" type="button" onClick={() => { setOverlay(undefined); reset(); }}>다시 시작</button>
+            <button type="button" onClick={() => setOverlay(undefined)}>취소</button>
+          </div>
+        </Overlay>
       )}
       {/* 제목만 「토큰과 기호」다(P-61) — 전역 버튼 라벨(「토큰」)과 단축키 `T`는 그대로다: 버튼 글자가 길어지면 우상단 줄의 폭이 흔들린다 */}
       {overlay === "tokens" && (

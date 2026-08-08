@@ -16,6 +16,7 @@ import { BetScreen, DemandScreen, GraceScreen, OracleScreen, RestScreen } from "
 import { CombatScreen } from "../ui/screens/combat.tsx";
 import { replayPayload } from "../ui/shared/export.ts";
 import { StatusBar } from "../ui/shared/header.tsx";
+import { musicForScreen } from "../ui/shared/sfx.ts";
 import { MapPanel, MapScreen } from "../ui/screens/map.tsx";
 import { RewardScreen } from "../ui/screens/reward.tsx";
 import { TokenDictionary } from "../ui/shared/tokens.tsx";
@@ -366,6 +367,17 @@ describe("browser replay export", () => {
     // 「결정론적 덱빌딩 프로토타입」은 이제 사실도 아니다
     expect(markup).not.toContain("프로토타입");
     expect(markup).not.toContain("런 시작");
+  });
+
+  it("loops music only on the main and result screens", () => {
+    expect(musicForScreen("intro")).toContain("Beneath_the_Iron_Altar");
+    expect(musicForScreen("setup")).toBe(musicForScreen("intro"));
+    expect(musicForScreen("result")).toContain("Beneath_the_Golden_Banner");
+    for (const screen of ["opening", "map", "combat", "rest", "reward"]) expect(musicForScreen(screen), screen).toBeUndefined();
+
+    const markup = renderToStaticMarkup(createElement(App));
+    expect(markup).toContain("<audio");
+    expect(markup).toContain("loop=\"\"");
   });
 
   it("renders the setup screen through React", () => {

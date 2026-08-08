@@ -67,7 +67,7 @@
 /**
  * 게임 화면은 페이지 스크롤이 없다. FX·컷인이 잠깐 뷰포트를 삐져나가도 스크롤바가 깜빡이면 안 되므로
  * 루트에서 `clip`으로 자른다 — `hidden`과 달리 프로그램 스크롤조차 불가능하다.
- * 스크롤이 필요한 곳(`.overlay-body`, `.combat-log ol`)만 세로 `overflow: auto`를 가진다
+ * 스크롤이 필요한 곳(`.overlay-body`)만 세로 `overflow: auto`를 가진다
  */
 /* 다크 테마 게임인데 스크롤바만 OS 라이트로 뜨면 튄다 — 브라우저 내장 다크 스크롤바(및 폼 컨트롤)를 쓴다 */
 html { overflow: clip; color-scheme: dark; }
@@ -273,6 +273,9 @@ button { padding: 12px 18px; border: 1px solid #454c5f; border-radius: 8px; back
 button:not(:disabled):hover { border-color: #c6a969; }
 /* 주요 버튼의 케니 스킨(P-54 §3). `.kbtn`이 아니라 `.primary`에 건다 — 주요 버튼은 이미 전부 `.primary`다 */
 .primary { color: #18130b; border: 8px solid transparent; border-radius: 0; border-image: url(../art/kenney/panel-border-010-bronze.png) 16 / 8px round; image-rendering: pixelated; background: #c6a969; font-weight: 750; }
+/* 있어야 하지만 눈이 먼저 닿으면 안 되는 행동(반출). `.fullscreen`·`.global-icons`와 같은 40% 물러남이다 */
+.ghost { padding: 6px 12px; border-color: transparent; background: none; font-size: .72rem; opacity: .4; }
+.ghost:not(:disabled):hover { opacity: 1; }
 .hint { margin-top: 14px; color: #777e90; font-size: .8rem; }
 /**
  * 시작 덱 편집기. 네이티브 모달 안에 서므로 시작 화면을 밀지 않는다. 스크롤은 모달 본문 하나가 맡는다
@@ -343,10 +346,10 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .status-bar { position: fixed; top: 0; left: 0; z-index: 2; width: calc(100vw / var(--fit, 1)); height: 40px; background: rgba(9, 11, 17, .78); zoom: var(--fit, 1); }
 /* 내용은 셸과 같은 1040 정렬 — 좌 체력·방어 · 중 호의 미터 둘 · 우 위치·턴/덱과 덱·약속 버튼 */
 .status-bar > div { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; width: 1040px; height: 100%; margin: 0 auto; font-size: .78rem; color: #9298aa; }
-.status-bar .vitals { display: flex; gap: 12px; }
+.status-bar .vitals { display: flex; align-items: center; gap: 12px; white-space: nowrap; }
 .status-bar b { color: #f4efe5; font-variant-numeric: tabular-nums; }
 .status-bar .whereabouts { display: flex; align-items: center; justify-content: end; gap: 10px; white-space: nowrap; }
-.status-bar .whereabouts button { padding: 2px 9px; border-radius: 5px; font-size: .72rem; }
+.status-bar :is(.vitals, .whereabouts) button { padding: 2px 9px; border-radius: 5px; font-size: .72rem; }
 /* 미터 둘은 40px 바 안에 눕는다 — 전투 패널의 타일 꼴(테두리·2행)을 여기서 편다 */
 .status-bar .favor-row { display: flex; gap: 18px; }
 .status-bar .favor { display: flex; align-items: center; gap: 7px; padding: 0; border: 0; background: none; font-size: .74rem; }
@@ -405,7 +408,7 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 /* 칸 사이는 격자 gap 하나로만 띈다 — 여덟 화면이 같은 간격을 쓰는 자리다 */
 .decision-panel .hint { margin-top: 0; }
 /* `position`은 파티클이 쓴다 — `.fx.spark`가 이 칸 가운데에 서려면 여기가 기준이어야 한다 */
-.map-panel, .decision-panel, .combat-log, .summary-grid article { position: relative; padding: 24px; border: 1px solid #303648; border-radius: 14px; background: rgba(21, 25, 35, .86); }
+.map-panel, .decision-panel, .summary-grid article { position: relative; padding: 24px; border: 1px solid #303648; border-radius: 14px; background: rgba(21, 25, 35, .86); }
 .map-panel ol { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .map-panel li { display: grid; grid-template-columns: 40px repeat(3, 1fr); align-items: center; gap: 8px; }
 .map-panel li small { color: #757b8b; font-size: .78rem; }
@@ -457,7 +460,7 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 
 /**
  * 경로 화면의 격자는 **누르는 자리다** — 30px는 읽는 그림의 크기였고 최소 터치는 44px이다.
- * 크기를 `.walkable`에만 거는 이유는 **결과 화면이 같은 `MapPanel`을 `0.8fr` 열에 둘 나란히** 세워서다.
+ * 크기를 `.walkable`에만 거는 이유는 **결과 화면이 같은 `MapPanel`을 반폭에 둘 나란히** 세워서다.
  * 폭 760px은 오른쪽 패널이 없어져 통째로 남은 1040px을 쓰는 크기다(P-63) — 520px은 반을 배경에
  * 내주고 있었다. 그릇은 결정 화면 여섯과 같은 케니 청동 9-slice다
  */
@@ -653,18 +656,18 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
  */
 .combat-bottom > .stage { position: absolute; left: 250px; bottom: calc(100% + 8px); }
 
+/**
+ * 결과 화면은 한 줄기다(P-65) — 승패 → 요약 넷 → 걸어온 길 → 마지막 카드 셋 → 버튼.
+ * 옛 2열(`.result-columns`)의 오른쪽 절반은 개발자 로그였고, 로그와 함께 그 격자도 죽었다
+ */
 .result-layout header h1 { margin-bottom: 0; }
-.outcome { padding: 8px 12px; border: 1px solid currentColor; border-radius: 999px; }
-.outcome.win { color: #8fd6a4; }
-.outcome.loss { color: #eb887d; }
 .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .summary-grid article { display: grid; gap: 8px; }
 .summary-grid small { color: #9298aa; }
 .summary-grid strong { font-size: 2rem; }
-.result-columns { display: grid; grid-template-columns: .8fr 1.2fr; gap: 16px; margin-top: 16px; }
-.combat-log ol { max-height: 300px; margin: 0; padding-left: 22px; overflow: auto; color: #a9afbe; font: .72rem/1.6 ui-monospace, monospace; }
-/* 고정 폭 카드가 `repeat(3, 1fr)` 격자의 120px 칸에 안 들어간다 — 접히게 둔다 */
-.used-cards { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.result-layout .map-columns { margin-top: 16px; }
+/* 고정 폭 카드 셋. 가운데 정렬은 지도 둘의 축과 맞춘다 */
+.used-cards { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 18px; }
 /**
  * 청동 프레임은 **무채색 한 장**이다(`art/ui/card-frame.md`). 신별로 다섯 장을 안 그린 이유가 여기다 —
  * 마스크로 실루엣만 쓰고 색은 진영색 변수가 든다. 카드가 화면에서 약 105px이라 파일도 256px이다
@@ -725,7 +728,9 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .card-art img { position: absolute; width: 100%; height: 100%; object-fit: cover; }
 .card-art > span { color: rgba(255, 255, 255, .28); font-size: 2rem; }
 .card-art.missing img { display: none; }
-.actions { display: flex; gap: 10px; margin-top: 20px; }
+.actions { display: flex; align-items: center; gap: 10px; margin-top: 20px; }
+/* 주요 행동은 왼쪽 끝, 물러난 반출은 오른쪽 끝 — 둘이 붙어 서면 강등이 안 읽힌다 */
+.actions .ghost { margin-left: auto; }
 
 /**
  * 720px 미만의 1열 대비는 **없앴다.** 미디어 쿼리는 뷰포트를 보고 `zoom`은 그 안을 줄이므로 둘이

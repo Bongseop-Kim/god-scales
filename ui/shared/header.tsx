@@ -108,17 +108,21 @@ export function FavorMeter({ god, value, grace }: { god: string; value: number; 
  * 이미 말하므로 제목이 없고, 시드는 반출 JSON에만 남는다. **App에 산다** — 화면 전환 밖이라
  * 런당 ~36번 다시 서지 않고, 경계 펄스·덱·약속 버튼이 여덟 런 화면 어디에나 같은 자리다
  */
-export function StatusBar({ view, turn, block, onOverlay }: {
+export function StatusBar({ view, turn, block, onOverlay, onRestart }: {
   view: RunView;
   /** 전투에서만 온다 — 없으면 그 자리는 덱 장수가 든다 */
   turn?: number;
   block?: number;
   onOverlay: (kind: "deck" | "journal") => void;
+  /** 런을 버리고 시작 화면으로. **확인 창을 여는 것까지가 여기 일이다** — 버리는 것은 App이 한다 */
+  onRestart: () => void;
 }) {
   return (
     <header className="status-bar">
       <div>
         <span className="vitals">
+          {/* 런을 그만두는 유일한 길이 결과 화면뿐이었다(P-65). 상태 바는 런 중에만 서므로 여기가 그 집이다 */}
+          <button type="button" onClick={onRestart}>다시 시작</button>
           체력 <b>{view.hp} / {view.maxHp}</b>
           방어 <b>{block ?? 0}</b>
         </span>

@@ -161,7 +161,9 @@ await tab.evaluate(() => {
       if (!this.download) return anchorClick.call(this);
       filename = this.download;
     };
-    document.querySelector(".result-layout .actions button.primary").click();
+    // 반출은 주요 버튼 자리를 「다시 시작」에 내주고 .ghost로 물러났다(P-65) — 증명은 그대로다.
+    // 백틱은 이 스크립트가 템플릿 문자열이라 못 쓴다
+    document.querySelector(".result-layout .actions button.ghost").click();
     URL.createObjectURL = createObjectURL;
     HTMLAnchorElement.prototype.click = anchorClick;
     if (!blobs.length) throw new Error("export produced no blob");
@@ -227,7 +229,7 @@ const captured = await tab.evaluate(async () => {
  * 자유 모드 체크포인트. 같은 탭에서 「다시 시작」으로 돌아가 **편집기만** 지나간다 — 완주는 위에서
  * 이미 증명했고, 이 열 장은 1층에서 끝나므로 스무 남짓 결정이면 결과 화면과 반출에 닿는다
  */
-await tab.click(".result-layout .actions button:not(.primary)");
+await tab.click(".result-layout .actions button.primary");
 await tab.waitForSelector("[data-phase='setup']");
 
 const editor = await tab.evaluate(async () => {
