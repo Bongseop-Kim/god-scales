@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { simulateStratified } from "../sim/engine.ts";
 import { computeStats } from "../sim/stats.ts";
-import { StatsPage } from "../ui/stats.tsx";
+import { StatsPage } from "../ui/screens/stats.tsx";
 
 /** 조합당 시드 하나 — 페이지가 요구하는 것은 모양이지 표본 크기가 아니다. 2000런은 `npm run stats`가 돈다 */
 const stats = computeStats(simulateStratified(10));

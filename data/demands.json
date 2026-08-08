@@ -1,43 +1,27 @@
 [
   {
-    "id": "demand_zeus_multi",
+    "id": "demand_zeus_swift",
     "patron": "zeus",
+    "axis": "turn_economy",
+    "polarity": "-",
+    "min_enemies": 1,
+    "text": "여섯 안에 재로 만들게. 길게 끄는 싸움은 하늘이 지루해하네.",
+    "condition": "turns <= 6",
+    "reward": {
+      "favor": 12
+    }
+  },
+  {
+    "id": "demand_poseidon_wave",
+    "patron": "poseidon",
     "axis": "target_spread",
     "polarity": "+",
     "min_enemies": 2,
-    "tiers": [
-      {
-        "text": "물러서지 마라. 한 턴에 둘은 맞아야 한다.",
-        "condition": "hit_targets_in_turn >= 2",
-        "reward": { "favor": 12 }
-      },
-      {
-        "text": "한 번의 벼락으로 셋을 쳐라. 흩어진 적에게 자비를 두지 마라.",
-        "condition": "hit_targets_in_turn >= 3",
-        "cost": { "favor": 18, "maxHp": 8, "encounters": 2 },
-        "reward": { "grace": 1 }
-      }
-    ]
-  },
-  {
-    "id": "demand_poseidon_solo",
-    "patron": "poseidon",
-    "axis": "target_spread",
-    "polarity": "-",
-    "min_enemies": 1,
-    "tiers": [
-      {
-        "text": "파도를 둘로 갈라도 좋다. 셋은 안 된다.",
-        "condition": "hit_targets_in_turn <= 2",
-        "reward": { "favor": 12 }
-      },
-      {
-        "text": "한 놈만 노려라. 파도는 갈라지지 않는다.",
-        "condition": "hit_targets_in_turn <= 1",
-        "cost": { "favor": 18, "maxHp": 8, "encounters": 2 },
-        "reward": { "grace": 1 }
-      }
-    ]
+    "text": "한 파도에 둘은 쓸어야 하지 않겠나? 물은 한 놈만 골라 가지 않네.",
+    "condition": "hit_targets_in_turn >= 2",
+    "reward": {
+      "favor": 12
+    }
   },
   {
     "id": "demand_athena_safe",
@@ -45,19 +29,11 @@
     "axis": "damage_taken",
     "polarity": "-",
     "min_enemies": 1,
-    "tiers": [
-      {
-        "text": "스물 넘게 내주지 마라. 방벽은 세우고 나서 자랑하는 것이다.",
-        "condition": "damage_taken <= 20",
-        "reward": { "favor": 12 }
-      },
-      {
-        "text": "여덟이다. 크게 맞고 이기는 것은 승리가 아니다.",
-        "condition": "damage_taken <= 8",
-        "cost": { "favor": 18, "maxHp": 8, "encounters": 2 },
-        "reward": { "grace": 1 }
-      }
-    ]
+    "text": "여덟 넘게 내주지 마세요. 방벽은 세우고 나서 자랑하는 거예요.",
+    "condition": "damage_taken <= 8",
+    "reward": {
+      "favor": 12
+    }
   },
   {
     "id": "demand_ares_hurt",
@@ -65,19 +41,11 @@
     "axis": "damage_taken",
     "polarity": "+",
     "min_enemies": 1,
-    "tiers": [
-      {
-        "text": "열넷은 흘려라. 대가 없는 승리를 나는 인정하지 않는다.",
-        "condition": "damage_taken > 14",
-        "reward": { "favor": 12 }
-      },
-      {
-        "text": "스물여섯. 그 아래는 상처가 아니라 흠집이다.",
-        "condition": "damage_taken > 26",
-        "cost": { "favor": 18, "maxHp": 8, "encounters": 2 },
-        "reward": { "grace": 1 }
-      }
-    ]
+    "text": "여덟은 흘려. 대가 없는 승리 따위 인정 안 해.",
+    "condition": "damage_taken > 8",
+    "reward": {
+      "favor": 12
+    }
   },
   {
     "id": "demand_artemis_mark",
@@ -85,18 +53,10 @@
     "axis": "token_load",
     "polarity": "+",
     "min_enemies": 1,
-    "tiers": [
-      {
-        "text": "한 호흡에 셋을 새겨라. 사냥은 조준에서 시작된다.",
-        "condition": "tokens_applied_in_turn >= 3",
-        "reward": { "favor": 12 }
-      },
-      {
-        "text": "다섯이다. 표적이 어디로 달아나든 이미 늦었어야 한다.",
-        "condition": "tokens_applied_in_turn >= 5",
-        "cost": { "favor": 18, "maxHp": 8, "encounters": 2 },
-        "reward": { "grace": 1 }
-      }
-    ]
+    "text": "한 호흡에 다섯을 새기자. 사냥은 조준에서 시작해.",
+    "condition": "tokens_applied_in_turn >= 5",
+    "reward": {
+      "favor": 12
+    }
   }
 ]

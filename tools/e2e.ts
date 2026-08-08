@@ -29,10 +29,14 @@ if (!deckOk(freeDeck)) throw new Error(`${freeCard} is no longer a startable tie
  * P-36에서 170 → 589: 밀림이 자리를 옮기고 카드 다섯이 붙자 170이 헌신에 못 닿아 `grace` 화면을 안 지난다.
  * P-39에서 589 → 371: 정예·보스가 tier2 세 자리를 주자 589의 덱이 바뀌어 저승을 지나고 6조우에서 죽는다.
  * P-46에서 371 → 727: 신탁이 결정을 하나 더 끼우고 평온 개입이 조우를 바꾸자 371이 `grace`에 못 닿는다.
- * 이번엔 800개 중 220개가 완주한다(게임이 쉬워졌다) — 784·627·575가 727 다음 후보다
+ * 이번엔 800개 중 220개가 완주한다(게임이 쉬워졌다) — 784·627·575가 727 다음 후보다.
+ * P-59에서 727 → 218: 카드 보상이 판돈이 되고 `bet_card` 결정이 하나 더 끼자 727이 6층에서 죽는다.
+ * 900개 중 **18개**가 완주하며 열 phase를 다 지난다 — 218이 가장 짧고(246결정) 559·81·129가 다음이다.
+ * 218 → 32: `askQuest`가 이미 걸린 신을 후보에서 빼자(같은 신의 퀘스트 둘) 218이 12층에서 죽는다.
+ * 900개 중 71개가 완주한다 — 32가 가장 짧고(239결정) 575·369·279가 다음이다
  */
-const seed = 727;
-const phases = ["path", "card", "target", "rest", "rest_card", "reward", "grace", "demand", "oracle"];
+const seed = 32;
+const phases = ["path", "card", "target", "rest", "rest_card", "reward", "grace", "demand", "bet_card", "oracle"];
 
 /**
  * 정책은 화면에 적힌 것만 쓴다 — 봇 추천은 DOM에 없고, 있어서도 안 된다. 룰 봇을 브라우저로 옮겨 심지도
@@ -50,10 +54,13 @@ const phases = ["path", "card", "target", "rest", "rest_card", "reward", "grace"
  * 결과 화면과 반출을 지나지 못하므로 B-0 4번을 증명하지 못한다.
  */
 const browserScript = `
-const tab = await openTab("http://localhost:${port}/");
+// 시드 입력이 화면에서 사라졌다(P-56) — 재현은 URL 쿼리가 든다. 자유 덱 2회차도 같은 시드로 돈다
+const tab = await openTab("http://localhost:${port}/?seed=${seed}");
 await tab.bringToFront();
+// 타이틀 화면은 페이지당 한 번이다 — 아래 「다시 시작」 체크포인트는 setup으로 곧장 돌아온다
+await tab.waitForSelector("[data-phase='intro']");
+await tab.click(".intro-menu button.primary");
 await tab.waitForSelector("[data-phase='setup']");
-await tab.fill("input[type=number]", "${seed}");
 
 /**
  * 조합은 기본값이 이미 제우스+아테나다 — 껐다 켜야 토글과 「둘 아니면 못 시작」을 실제로 지난다.
@@ -63,7 +70,8 @@ const setup = await tab.evaluate(async () => {
   const wait = () => new Promise((resolve) => setTimeout(resolve, 60));
   // 덱 편집기의 신 탭이 같은 버튼 줄(.god-legend)을 쓴다 — 접근 이름으로 조합 쪽만 집는다
   const picker = "[aria-labelledby='patron-pick'] button";
-  const god = (name) => [...document.querySelectorAll(picker)].find((el) => el.textContent.trim() === name);
+  // 이름표만 읽는다 — 고른 초상에는 헌신 능력 줄이 따라붙어 버튼 전체 텍스트가 이름이 아니다
+  const god = (name) => [...document.querySelectorAll(picker)].find((el) => el.querySelector(".nameplate b")?.textContent.trim() === name);
   const submit = () => document.querySelector("form.setup button.primary");
   god("제우스").click();
   await wait();
@@ -71,7 +79,7 @@ const setup = await tab.evaluate(async () => {
   god("제우스").click();
   await wait();
   return { gods: [...document.querySelectorAll(picker)].length, blocked, ready: !submit().disabled,
-    picked: [...document.querySelectorAll(picker + "[aria-pressed='true']")].map((el) => el.textContent.trim()),
+    picked: [...document.querySelectorAll(picker + "[aria-pressed='true']")].map((el) => el.querySelector(".nameplate b").textContent.trim()),
     // 덱 편집기가 접혀 있으므로 시작 화면은 아직 한 눈금이다. 펼친 뒤는 스크롤을 허용한다
     tall: document.documentElement.scrollHeight > window.innerHeight };
 });
@@ -95,7 +103,8 @@ await tab.evaluate(() => {
         if (state().step > from) return;
       }
     }
-    throw new Error("click did not advance the engine");
+    // 어느 화면에서 막혔는지 없으면 실패가 「어딘가에서 안 눌린다」로만 남는다
+    throw new Error("click did not advance the engine at " + state().phase);
   };
 
   /**
@@ -169,10 +178,14 @@ await tab.evaluate(() => {
         ? [enabled("button.choice")[[1, 2][driver.rests++] ?? 0] ?? enabled("button.choice")[0]]
         : phase === "demand" || phase === "grace" || phase === "oracle"
         ? [enabled("button.choice")[0]]
+        // 승부 카드는 덱이 깔린 화면이다 — 걸 수 있는 카드가 있으면 걸고, 없으면 「이대로 건다」로 떨어진다
+        : phase === "bet_card"
+        ? bestCard().concat(enabled("button.choice"))
         : phase === "target"
         ? enabled("button.enemy").sort((left, right) => enemyHp(left) - enemyHp(right))
         : phase === "card"
-        ? bestCard().concat(enabled(".decision-panel button.primary"))
+        // 「턴 종료」는 무대 우하단의 케니 버튼이다(P-55) — 패널이 사라져 클래스로 집는다
+        ? bestCard().concat(enabled("button.end-turn"))
         : bestCard();
       await advance(step, choices.filter(Boolean));
     }
@@ -335,7 +348,8 @@ try {
   check("filename", browser.filename, `god-scales-run-${seed}.json`);
   // 조합이 반출에 없으면 이 파일은 조용히 제우스+아테나로 재생된다 — 다른 조합에서는 다른 게임이 된다
   check("replay header", { seed: browser.replay.seed, mode: browser.replay.replay_mode, patrons: browser.replay.patrons }, { seed, mode: "action_log", patrons: ["zeus", "athena"] });
-  check("결과 조합", browser.eyebrow, `시드 ${seed} · 제우스 + 아테나 · ${browser.floors}/12층`);
+  // 「시드 N」이 화면에서 사라졌다(P-54) — 시드는 반출 파일명·헤더 대조(위)가 계속 지킨다
+  check("결과 조합", browser.eyebrow, `제우스 + 아테나 · ${browser.floors}/12층`);
   // 반출한 결정이 지금 규칙에서 전부 낼 수 있는 것이어야 한다 — 하나라도 아니면 봇이 대신 답한다
   check("substituted", cli.substituted, 0);
   check("outcome", { won: cli.won, floors: Math.min(12, cli.hpCurve.length - 1) }, { won: browser.won, floors: browser.floors });

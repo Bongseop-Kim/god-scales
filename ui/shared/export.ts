@@ -1,5 +1,5 @@
-import { favorPool, ruleDeck, type PatronPair } from "../sim/engine.ts";
-import type { ReplayAction, ReplayFile } from "../sim/replay.ts";
+import { favorPool, ruleDeck, type PatronPair } from "../../sim/engine.ts";
+import type { ReplayAction, ReplayFile } from "../../sim/replay.ts";
 
 /**
  * `deck`은 **규칙 덱과 다를 때만** 실린다 — 편집기를 열었다 닫은 런이 고정 모드로 남고 e2e 기준선이

@@ -1,7 +1,7 @@
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { MAX_SLOTS } from "../core/combat.ts";
-import { factName, tierEnemies } from "../core/demands.ts";
+import { demandEnemies, factName } from "../core/demands.ts";
 import { favorBoundaries, godEnemyId, lineTriggers, stagedLineTriggers } from "../core/favor.ts";
 import { graceMilestones, graceSlots } from "../core/grace.ts";
 import { floorsPerRegion } from "../core/map.ts";
@@ -14,10 +14,7 @@ export type FailureKey = "schema" | "dsl_parse" | "token_scope" | "fusion_scope"
 type Item = Record<string, unknown>;
 type Card = Item & { id: string; name: string; patron?: string; patron_pair?: string[]; cost: number; target: string; effects: Effect[]; tags: string[]; trigger?: string; reach?: string; tier?: number; upgrade?: { cost?: number; effects?: unknown[] } };
 type Effect = { op: string; value?: number; token?: string; stacks?: number; when?: string; god?: string };
-type DemandTier = { text: string; condition: string; cost?: Record<string, number>; reward: { favor?: number; grace?: number; upgrade?: number } };
-type Demand = Item & { id: string; patron: string; axis: string; polarity: string; min_enemies: number; tiers: DemandTier[] };
-/** 라이벌 반대편을 찾는 데 필요한 것만. 후보 하나로도 판정이 서야 하므로 베이스라인은 단을 들지 않는다 */
-type DemandAxisOnly = { id: string; patron: string; axis: string; polarity: string };
+type Demand = Item & { id: string; patron: string; axis: string; polarity: string; min_enemies: number; text: string; condition: string; reward: { favor?: number } };
 type Enemy = Item & {
   id: string;
   /** 신 적에게는 없다 — 조우가 아니라 진노가 부른다 */
@@ -37,7 +34,7 @@ const required: Record<string, string[]> = {
   card: ["id", "name", "cost", "target", "effects", "tags"],
   // `region`은 여기 없다 — 신 적은 지역을 갖지 않으므로 아래 `schemaFailure`가 tier와 함께 본다
   enemy: ["id", "name", "tier", "role", "hp", "intent_visible", "pattern", "pattern_mode"],
-  demand: ["id", "patron", "tiers", "axis", "polarity", "min_enemies"],
+  demand: ["id", "patron", "text", "condition", "reward", "axis", "polarity", "min_enemies"],
   // `lines`는 여기 없다 — 아래 `godLineFailure`가 트리거 아홉을 세므로 「없다」도 거기서 걸린다
   god: ["id", "name", "tokens", "ops", "rivals", "demands"],
   map: ["id", "region", "floor", "text", "groups"],
@@ -78,13 +75,6 @@ const baselineCards: Card[] = [{
   effects: [{ op: "damage", value: 6 }],
   tags: ["attack"],
 }];
-const baselineDemands: DemandAxisOnly[] = [
-  { id: "demand_zeus_multi", patron: "zeus", axis: "target_spread", polarity: "+" },
-  { id: "demand_poseidon_solo", patron: "poseidon", axis: "target_spread", polarity: "-" },
-  { id: "demand_athena_safe", patron: "athena", axis: "damage_taken", polarity: "-" },
-  { id: "demand_ares_hurt", patron: "ares", axis: "damage_taken", polarity: "+" },
-  { id: "demand_artemis_mark", patron: "artemis", axis: "token_load", polarity: "+" },
-];
 
 function kindOf(item: Item): string {
   const id = String(item.id ?? "");
@@ -124,12 +114,16 @@ function schemaFailure(item: Item, kind: string): boolean {
     if (enemy.groups !== undefined && (!Array.isArray(enemy.groups)
       || enemy.groups.some((group) => typeof group?.id !== "string" || !Array.isArray(group?.with)))) return true;
   }
-  // 단은 **둘**이다 — 수락과 시련. 가운데를 끼우는 것은 두 단이 실제로 갈린 뒤의 일이다 (P-29)
+  // 조건은 **하나**다 — 갈림은 한 신의 두 단이 아니라 경쟁하는 두 신이다 (P-59)
   if (kind === "demand") {
     const demand = item as Demand;
-    return !Array.isArray(demand.tiers) || demand.tiers.length !== 2
-      || demand.tiers.some((tier) => typeof tier?.text !== "string" || typeof tier?.condition !== "string"
-        || typeof tier?.reward !== "object" || tier.reward === null);
+    return typeof demand.text !== "string" || typeof demand.condition !== "string"
+      || typeof demand.reward !== "object" || demand.reward === null
+      /**
+       * 값 둘의 **꼴**도 여기서 본다 — `"12"`는 호의에 더해지는 순간 문자열 이어붙이기가 되고,
+       * `"1"`짜리 `min_enemies`는 `demandEnemies`가 그대로 돌려주므로 아래 축 검사를 그냥 지난다
+       */
+      || !Number.isFinite(demand.reward.favor) || !Number.isInteger(demand.min_enemies);
   }
   if (kind !== "card") return false;
   const card = item as Card;
@@ -228,51 +222,22 @@ function fusionFailure(card: Card): boolean {
     || card.patron_pair.some((god) => !vocabularyUsed(card, god));
 }
 
-/** 선불 대가가 쓸 수 있는 것. 새 기제는 안 만든다 — 넷 다 이미 있는 경로다 (P-29 §대가) */
-const costFields = ["favor", "maxHp", "encounters"] as const;
 /**
- * 보상의 서열은 **어휘 하나**다 — 은혜가 호의보다 크다(P-28 실측: 은혜 효과만 끄면 승률 0.563 → 0.294).
- * 두 값을 한 숫자로 섞는 상수를 만들지 않고 (은혜, 호의) 사전식으로 잰다
+ * 조건 하나짜리 요구의 규칙 넷. 임계·보상·대가 단조 셋은 두 단이 없어진 자리에서 같이 사라졌다
+ * (P-59) — 판돈은 데이터가 아니라 내기표가 들고, 「걸 만한가」는 조합 승률 하한이 이미 잡는다
  */
-const rewardRises = (easy: DemandTier["reward"], trial: DemandTier["reward"]): boolean => {
-  for (const key of ["grace", "upgrade", "favor"] as const) {
-    const [low, high] = [easy[key] ?? 0, trial[key] ?? 0];
-    if (high !== low) return high > low;
-  }
-  return false;
-};
-
-/**
- * 2단 요구의 규칙 셋. 전부 **순서**만 잰다 — 호의·최대 체력·은혜를 한 눈금으로 바꾸는 상수가 곧
- * 두 번째 눈금이고(R-28이 `energy`를 어휘에서 뺀 것과 같은 이유), 「시련이 항상 손해인가」는
- * 2000런의 선택 분포가 이미 잡는다
- */
-function demandFailure(demand: Demand, demands: DemandAxisOnly[]): boolean {
+function demandFailure(demand: Demand): boolean {
   if (!axes.includes(demand.axis)) return true;
-  const parsed = demand.tiers.map(({ condition }) => condition.match(/^([a-z_]+) (>=|<=|>|==) (\d+)$/));
-  if (parsed.some((match) => !match)) return true;
-  const [easy, trial] = parsed as RegExpMatchArray[];
+  const parsed = demand.condition.match(/^([a-z_]+) (>=|<=|>|==) (\d+)$/);
+  if (!parsed) return true;
   // 사람 말로 못 옮기는 좌변은 화면에서 **빈 줄**이 된다 — 오타 하나가 여기서 걸린다(`ruleText`)
-  if (![easy, trial].every((match) => match[1] in factName)) return true;
-  // 두 단이 다른 사실을 재면 임계 단조가 뜻을 잃는다 — 요구 하나의 축은 하나다
-  if (easy[1] !== trial[1]) return true;
-  // 1 · 임계 단조: polarity `-`면 내려가고 `+`면 올라간다. 같으면 두 단이 같은 요구다
-  const [low, high] = [Number(easy[3]), Number(trial[3])];
-  if (demand.polarity === "-" ? high >= low : high <= low) return true;
-  // 2 · 보상 단조: 쉬운 단이 더 주면 시련을 아무도 안 고른다
-  if (!rewardRises(demand.tiers[0].reward, demand.tiers[1].reward)) return true;
-  // 3 · 대가 단조: 시련이 더 싸면 시련이 아니다. 필드마다 오르고 어딘가는 실제로 커야 한다
-  const [cheap, dear] = demand.tiers.map(({ cost }) => cost ?? {});
-  if (costFields.some((key) => (dear[key] ?? 0) < (cheap[key] ?? 0))) return true;
-  if (!costFields.some((key) => (dear[key] ?? 0) > (cheap[key] ?? 0))) return true;
-  // 기간 없는 최대 체력 대가는 조우 하나도 못 살고 걷힌다 — 죽은 데이터다
-  if (demand.tiers.some(({ cost }) => cost?.maxHp && !(cost.encounters >= 1))) return true;
-  // 축이 요구하는 적 수. 쉬운 단이 곧 이 요구가 설 수 있는 조우 크기다 — 어려운 단은 `askDemand`가 가린다
-  if (Math.min(...demand.tiers.map(({ condition }) => tierEnemies(condition, demand.min_enemies))) !== demand.min_enemies) return true;
-  const rivals = gods[demand.patron]?.rivals ?? [];
-  return rivals.length > 0 && !demands.some((other) =>
-    rivals.includes(other.patron) && other.axis === demand.axis && other.polarity !== demand.polarity,
-  );
+  if (!(parsed[1] in factName)) return true;
+  // 비교자가 곧 polarity다 — `-`는 유지형(`<=`), `+`는 달성형(`>=`·`>`). 어긋나면 화면과 판정이 갈린다
+  if ((parsed[2] === "<=") !== (demand.polarity === "-")) return true;
+  // 지킬 수 없는 약속을 안 띄우는 눈금. 조우 크기 하한이 조건과 어긋나면 `askBet`이 못 거른다
+  if (demandEnemies(demand.condition, demand.min_enemies) !== demand.min_enemies) return true;
+  // 지켜도 아무것도 안 들어오는 조건은 결정이 아니다
+  return !(demand.reward?.favor ?? 0);
 }
 
 /**
@@ -584,7 +549,7 @@ function passiveFailure(enemy: Enemy): boolean {
     !(passiveNames as readonly string[]).includes(name) || !Number.isInteger(stacks) || (stacks as number) <= 0);
 }
 
-function failureFor(item: Item, cards: Card[], demands: DemandAxisOnly[], enemies: Enemy[]): FailureKey | undefined {
+function failureFor(item: Item, cards: Card[], enemies: Enemy[]): FailureKey | undefined {
   const kind = kindOf(item);
   if (schemaFailure(item, kind)) return "schema";
   if (kind === "card") {
@@ -595,7 +560,7 @@ function failureFor(item: Item, cards: Card[], demands: DemandAxisOnly[], enemie
     if (duplicateFailure(card, cards)) return "duplicate";
     if (!isValueAllowed(card)) return "value_outlier";
   }
-  if (kind === "demand" && demandFailure(item as Demand, demands)) return "demand_axis";
+  if (kind === "demand" && demandFailure(item as Demand)) return "demand_axis";
   if (kind === "god" && stageEffectScopeFailure(item)) return "token_scope";
   if (kind === "god" && stageValueFailure(item)) return "value_outlier";
   if (kind === "god" && godLineFailure(item)) return "line_coverage";
@@ -623,11 +588,10 @@ export function validateItems(items: Item[], basePool: Card[] = []): { accepted:
    * 배포분은 후보가 아니라 비교 대상으로만 들어온다
    */
   const cards = [...baselineCards, ...basePool];
-  const demands = [...baselineDemands, ...items.filter((item) => kindOf(item) === "demand") as Demand[]];
   const enemies = mergeById(shippedEnemies, items.filter((item) => kindOf(item) === "enemy") as Enemy[]);
 
   for (const item of items) {
-    const failure = failureFor(item, cards, demands, enemies);
+    const failure = failureFor(item, cards, enemies);
     if (failure) {
       rejected.push({ id: String(item.id), failure });
       failure_breakdown[failure] = (failure_breakdown[failure] ?? 0) + 1;

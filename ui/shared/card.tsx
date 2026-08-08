@@ -1,22 +1,22 @@
 import { useState } from "react";
-import { MAX_SLOTS } from "../core/combat.ts";
-import { cardLevel } from "../core/rules.ts";
-import { fullReach, reachSlots } from "../core/targeting.ts";
-import cardDataJson from "../data/cards.json" with { type: "json" };
-import type { CardView } from "../sim/engine.ts";
-import { cardTier } from "../tools/value.ts";
+import { MAX_SLOTS } from "../../core/combat.ts";
+import { cardLevel } from "../../core/rules.ts";
+import { fullReach, reachSlots } from "../../core/targeting.ts";
+import cardDataJson from "../../data/cards.json" with { type: "json" };
+import type { CardView } from "../../sim/engine.ts";
+import { cardTier } from "../../tools/value.ts";
 import { cardArtCandidates, cardGod, cardTag, type CardArtSource } from "./art-keys.ts";
 import { Icon, type IconName } from "./icon.tsx";
 import { tokenName } from "./tokens.tsx";
 
-const cardArt = import.meta.glob<string>("../art/cards/*.webp", { eager: true, query: "?url", import: "default" });
+const cardArt = import.meta.glob<string>("../../art/cards/*.webp", { eager: true, query: "?url", import: "default" });
 /**
  * 그림·프레임색·파티클·이름·파워는 **값이 아니라 종류**라 `data/cards.json`에서 직접 읽는다 — 엔진의
  * `CardView`는 값만 싣는다(`sim/engine.ts:130`). 적 이름을 `data/enemies.json`에서 읽는 자리와 같다.
  * 179개 id와 그림 179장의 이름 규칙은 `ui/art-keys.ts`에 있고 `tools/art.ts`가 같은 것을 쓴다
  */
 const cardFace = new Map((cardDataJson as (CardArtSource & { name: string; tier?: number })[]).map((card) => [card.id, {
-  art: cardArtCandidates(card).map((key) => cardArt[`../art/cards/${key}.webp`]).find(Boolean),
+  art: cardArtCandidates(card).map((key) => cardArt[`../../art/cards/${key}.webp`]).find(Boolean),
   god: cardGod(card),
   tag: cardTag(card),
   name: card.name,
@@ -116,10 +116,12 @@ const cardDamage = (card: CardView) =>
   card.effects.reduce((sum, { op, value }) => sum + (op === "damage" || op === "chain" ? value ?? 0 : 0), 0);
 
 /** 보상과 카드 제거가 같은 격자를 쓴다. 손패만 부채꼴이라 따로 그린다 — 은혜는 카드가 아니라 `Choice`다 */
-export function CardRow({ cards, options, onSelect }: {
+export function CardRow({ cards, options, onSelect, value = ({ id }) => id }: {
   cards: CardView[];
   options: string[];
-  onSelect: (cardId: string) => void;
+  onSelect: (choice: string) => void;
+  /** 답이 카드 id가 아닌 자리 하나 — 승부 카드는 **덱 인덱스**로 답한다(같은 id 두 장을 갈라야 한다) */
+  value?: (card: CardView, index: number) => string;
 }) {
   return (
     <div className="hand">
@@ -128,8 +130,8 @@ export function CardRow({ cards, options, onSelect }: {
           key={`${card.id}-${index}`}
           cardId={card.id}
           card={card}
-          disabled={!options.includes(card.id)}
-          onSelect={() => onSelect(card.id)}
+          disabled={!options.includes(value(card, index))}
+          onSelect={() => onSelect(value(card, index))}
         />
       ))}
     </div>

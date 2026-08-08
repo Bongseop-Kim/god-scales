@@ -1,5 +1,5 @@
-import type { StatsPayload } from "../sim/stats.ts";
-import { godName, regionName } from "./header.tsx";
+import type { StatsPayload } from "../../sim/stats.ts";
+import { godName, regionName } from "../shared/header.tsx";
 
 /**
  * 시뮬 통계 페이지. **리포트이지 게이트가 아니다** — 값을 보여줄 뿐 판정하지 않는다(판정은 `npm run tune` 하나).

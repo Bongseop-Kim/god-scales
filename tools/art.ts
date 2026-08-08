@@ -8,8 +8,9 @@
  */
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { regions } from "../core/map.ts";
+import { tokenNames } from "../core/state.ts";
 import { godDecks } from "../sim/engine.ts";
-import { artRegion, backdropName, tagParticle, type CardArtSource } from "../ui/art-keys.ts";
+import { artRegion, backdropName, tagParticle, type CardArtSource } from "../ui/shared/art-keys.ts";
 import { iconIds } from "./icons.ts";
 
 type CardData = CardArtSource & { name: string; effects: { op: string; value?: number; token?: string; stacks?: number }[] };
@@ -20,8 +21,8 @@ const gods = readData<{ id: string }[]>("gods");
 
 const names = (directory: string, extension = ".webp"): Set<string> =>
   new Set(existsSync(`art/${directory}`) ? readdirSync(`art/${directory}`).filter((name) => name.endsWith(extension)).map((name) => name.slice(0, -extension.length)) : []);
-const [sprites, cardArt, godArt, bg, props, fx, hero, frame, marker, particle, cursor] =
-  [["sprites"], ["cards"], ["gods"], ["bg"], ["props"], ["fx"], ["hero"], ["ui"], ["ui", ".png"], ["particle"], ["cursor-pixel", ".png"]]
+const [sprites, cardArt, godArt, bg, props, fx, hero, frame, marker, particle, cursor, tokenArt] =
+  [["sprites"], ["cards"], ["gods"], ["bg"], ["props"], ["fx"], ["hero"], ["ui"], ["ui", ".png"], ["particle"], ["cursor-pixel", ".png"], ["tokens"]]
     .map(([directory, extension]) => names(directory, extension));
 const missingFrom = (have: Set<string>, need: string[]) => need.filter((name) => !have.has(name));
 /**
@@ -39,6 +40,8 @@ const checks = [
   { kind: "bg", made: 6, found: bg.size, missing: missingFrom(bg, regions.flatMap((region) => (["map", "combat", "boss"] as const).map((spot) => backdropName(region, spot)))) },
   // 프롭은 이름을 데이터가 안 부른다 — 배경 위에 지역별로 **둘**을 얹으므로 그 하한이 곧 대조다
   { kind: "props", made: 14, found: props.size, missing: regions.filter((region) => [...props].filter((name) => name.startsWith(`${artRegion(region)}_`)).length < 2) },
+  // 토큰 아이콘은 `tokenNames`가 목록이다(P-57) — 토큰을 새로 만들면 아이콘이 없다고 여기서 막힌다
+  { kind: "tokens", made: 13, found: tokenArt.size, missing: missingFrom(tokenArt, [...tokenNames]) },
   {
     kind: "fixed",
     made: 12,

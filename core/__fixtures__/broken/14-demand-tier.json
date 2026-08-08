@@ -1,20 +1,10 @@
 {
-  "id": "demand_broken_athena_ladder",
+  "id": "demand_broken_athena_reach",
   "patron": "athena",
-  "axis": "damage_taken",
-  "polarity": "-",
+  "axis": "target_spread",
+  "polarity": "+",
   "min_enemies": 1,
-  "tiers": [
-    {
-      "text": "넷 넘게 내주지 마라.",
-      "condition": "damage_taken <= 4",
-      "reward": { "favor": 12 }
-    },
-    {
-      "text": "열넷이다. 크게 맞고 이기는 것은 승리가 아니다.",
-      "condition": "damage_taken <= 14",
-      "cost": { "favor": 9, "maxHp": 8, "encounters": 3 },
-      "reward": { "grace": 1 }
-    }
-  ]
+  "text": "한 수에 셋을 잡으세요. 판은 넓게 보는 거예요.",
+  "condition": "hit_targets_in_turn >= 3",
+  "reward": { "favor": 12 }
 }

@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import cardData from "../data/cards.json" with { type: "json" };
 import { deckOk, deckSize, favorPool, gods, ruleDeck, run, runSteps, startableCards, type PatronPair } from "../sim/engine";
 import { readReplay, type ReplayFile } from "../sim/replay";
-import { replayPayload } from "../ui/export";
+import { replayPayload } from "../ui/shared/export";
 
 const pairs = gods.flatMap((left, index) => gods.slice(index + 1).map((right) => [left, right] as PatronPair));
 const startable = Object.values(startableCards).flat();

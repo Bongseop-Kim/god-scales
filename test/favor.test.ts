@@ -91,18 +91,21 @@ describe("favor", () => {
     let step = steps.next();
     let deckBefore = 0;
     let stood: { id: string; maxHp: number; passives: Record<string, number> } | undefined;
-    let reward: { deck: number; favor: Record<string, number> } | undefined;
-    while (!step.done && !reward) {
-      if (step.value.phase === "path" && !deckBefore) deckBefore = step.value.observation.deck.length;
-      if (step.value.phase === "card") stood ??= step.value.observation.enemies.find(({ id }) => id.startsWith("enemy_god_"));
-      if (step.value.phase === "reward") reward = step.value.observation;
+    let after: { deck: unknown[]; favor: Record<string, number> } | undefined;
+    while (!step.done && !after) {
+      const { phase, observation } = step.value;
+      if (phase === "path" && !deckBefore) deckBefore = observation.deck.length;
+      if (phase === "card") stood ??= observation.enemies.find(({ id }) => id.startsWith("enemy_god_"));
+      // 조우 밖의 첫 결정이 곧 정산 뒤 첫 관측이다. **카드 보상 화면으로 잡지 않는다** — 그것은
+      // 판돈이라 못 지킨 내기 뒤에는 아예 서지 않고(P-59), 그러면 몇 조우 뒤의 값을 읽게 된다
+      else if (stood && phase !== "target" && phase !== "oracle") after = observation;
       step = steps.next(step.value.bot);
     }
     expect(stood?.id).toBe(godEnemyId("athena"));
     // 찢기 — 아테나 카드 다섯 장으로 시작해 진노인 채로 낸 만큼이 덱에서 빠진다
-    expect(reward!.deck).toBeLessThan(deckBefore);
+    expect(after!.deck.length).toBeLessThan(deckBefore);
     // 화해 — 꺾은 신은 평온 하한에 선다. 감쇠가 이미 지나간 뒤의 값이라 정확히 그 값이다
-    expect(reward!.favor.athena).toBe(wrathReconcileFavor);
+    expect(after!.favor.athena).toBe(wrathReconcileFavor);
   });
 
   it("rejects a persistent token in the per-turn hook", () => {
