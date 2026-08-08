@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "kind": "sprite-gen-curation",
+  "states": {
+    "play": {
+      "selected": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "transforms": {
+        "0": {
+          "rotate": 0.0,
+          "scale": 2.1,
+          "dx": 0,
+          "dy": -84,
+          "shx": 0.0,
+          "shy": 0.0,
+          "flipX": 0
+        },
+        "1": {
+          "rotate": 0.0,
+          "scale": 2.1,
+          "dx": 0,
+          "dy": -23,
+          "shx": 0.0,
+          "shy": 0.0,
+          "flipX": 0
+        },
+        "2": {
+          "rotate": 0.0,
+          "scale": 2.1,
+          "dx": 0,
+          "dy": -8,
+          "shx": 0.0,
+          "shy": 0.0,
+          "flipX": 0
+        },
+        "3": {
+          "rotate": 0.0,
+          "scale": 2.1,
+          "dx": 0,
+          "dy": 34,
+          "shx": 0.0,
+          "shy": 0.0,
+          "flipX": 0
+        }
+      },
+      "revision": [
+        "219fdb8cbef7"
+      ]
+    }
+  },
+  "run_revision": "ff70ca8bb4b9fce4"
+}

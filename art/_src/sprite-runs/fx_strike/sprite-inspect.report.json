@@ -26,28 +26,24 @@
       ],
       "metrics": {
         "histogram_intersection": {
-          "min": 0.9772084402031131,
-          "mean": 0.9885825383106235
+          "min": 0.9972512829706799,
+          "mean": 0.9984276719822601
         },
         "dhash_similarity": {
           "min": 0.96875,
-          "mean": 0.984375
+          "mean": 0.9765625
         },
-        "motion_presence": 0.023924823835784315,
+        "motion_presence": 0.03643854677287582,
         "centroid_sigma": {
-          "x": 11.433487117619835,
-          "y": 65.23303413851977
+          "x": 1.7790497163522307,
+          "y": 68.5555276255305
         }
       },
       "ok": true,
       "errors": [],
-      "warnings": [
-        "play: frame 03 is much smaller than median (790 vs 9328)"
-      ]
+      "warnings": []
     }
   ],
   "errors": [],
-  "warnings": [
-    "play: frame 03 is much smaller than median (790 vs 9328)"
-  ]
+  "warnings": []
 }

@@ -1,7 +1,7 @@
 {
   "ok": true,
   "engine": "component-row",
-  "curation_applied": false,
+  "curation_applied": true,
   "frame_variant": "pixel",
   "errors": [],
   "atlas": "sprite-sheet-alpha.png",
@@ -20,7 +20,7 @@
     {
       "state": "play",
       "frame": 0,
-      "nontransparent_pixels": 1414,
+      "nontransparent_pixels": 330533,
       "x": 0,
       "y": 0,
       "w": 1536,
@@ -29,7 +29,7 @@
     {
       "state": "play",
       "frame": 1,
-      "nontransparent_pixels": 3267,
+      "nontransparent_pixels": 424671,
       "x": 1536,
       "y": 0,
       "w": 1536,
@@ -38,7 +38,7 @@
     {
       "state": "play",
       "frame": 2,
-      "nontransparent_pixels": 4246,
+      "nontransparent_pixels": 510831,
       "x": 3072,
       "y": 0,
       "w": 1536,
@@ -47,7 +47,7 @@
     {
       "state": "play",
       "frame": 3,
-      "nontransparent_pixels": 1597,
+      "nontransparent_pixels": 432568,
       "x": 4608,
       "y": 0,
       "w": 1536,

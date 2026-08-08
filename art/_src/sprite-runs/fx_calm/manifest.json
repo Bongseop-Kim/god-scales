@@ -3,7 +3,7 @@
   "engine": "component-row",
   "game_input": "sprite-sheet-alpha.png",
   "degraded_static_fallback": false,
-  "curation_applied": false,
+  "curation_applied": true,
   "frame_variant": "pixel",
   "sprite_sheet_alpha": "sprite-sheet-alpha.png",
   "sprite_sheet_alpha_report": "sprite-sheet-alpha.report.json",
@@ -16,14 +16,54 @@
     "safe_margin_y": 0
   },
   "chroma_key": {
-    "name": "magenta",
-    "hex": "#FF00FF",
+    "name": "green",
+    "hex": "#00FF00",
     "rgb": [
-      255,
       0,
-      255
+      255,
+      0
     ],
-    "selection": "manual"
+    "selection": "auto",
+    "score": 399.36,
+    "min_subject_distance": 356.66,
+    "background": {
+      "mode": "heterogeneous",
+      "opaque_border_fraction": 1.0,
+      "border_coverage": 0.451,
+      "note": "border ring is not a flat fill (largest color covers 45% of it, needs 75%); no background pixels were excluded, so candidate distances may be skewed by the background",
+      "subject_pixels": 42788
+    },
+    "candidates": [
+      {
+        "name": "magenta",
+        "hex": "#FF00FF",
+        "score": 20.62,
+        "min_subject_distance": 19.8,
+        "clears_erase_radius": false
+      },
+      {
+        "name": "green",
+        "hex": "#00FF00",
+        "score": 399.36,
+        "min_subject_distance": 356.66,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "cyan",
+        "hex": "#00FFFF",
+        "score": 312.96,
+        "min_subject_distance": 253.42,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "blue",
+        "hex": "#004DFF",
+        "score": 250.38,
+        "min_subject_distance": 247.21,
+        "clears_erase_radius": true
+      }
+    ],
+    "selection_reason": "highest 1st-percentile subject distance among the 3 candidate(s) clearing the 96 erase radius"
   },
   "animation": {
     "cellWidth": 1536,

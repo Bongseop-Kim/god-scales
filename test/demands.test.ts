@@ -239,11 +239,11 @@ describe("demands", () => {
   it("말한다 — 트리거 아홉 × 단계 넷이 다 줄을 갖고 난수를 안 당긴다", () => {
     for (const { id } of godData) {
       for (const trigger of ["demand_offer", "demand_kept", "demand_broken", "tear", "join", "reconcile"] as const) {
-        expect(godLine(id, trigger, 0), `${id}:${trigger}`).not.toBe("");
+        expect(godLine(id, trigger, 0).trim(), `${id}:${trigger}`).not.toBe("");
       }
       for (const trigger of ["encounter", "intervene", "cross"] as const) {
         for (const stage of ["devotion", "calm", "anger", "wrath"] as const) {
-          expect(godLine(id, trigger, 0, stage), `${id}:${trigger}:${stage}`).not.toBe("");
+          expect(godLine(id, trigger, 0, stage).trim(), `${id}:${trigger}:${stage}`).not.toBe("");
           // 같은 `n`이면 같은 줄이다 — 새 RNG 스트림이 끼면 대사를 켜는 것만으로 replay가 어긋난다
           expect(godLine(id, trigger, 7, stage)).toBe(godLine(id, trigger, 7, stage));
         }

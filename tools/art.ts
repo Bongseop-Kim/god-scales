@@ -9,7 +9,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { regions } from "../core/map.ts";
 import { godDecks } from "../sim/engine.ts";
-import { artRegion, backdropName, cardArtCandidates, tagParticle, type CardArtSource } from "../ui/art-keys.ts";
+import { artRegion, backdropName, tagParticle, type CardArtSource } from "../ui/art-keys.ts";
 import { iconIds } from "./icons.ts";
 
 type CardData = CardArtSource & { name: string; effects: { op: string; value?: number; token?: string; stacks?: number }[] };
@@ -29,8 +29,8 @@ const missingFrom = (have: Set<string>, need: string[]) => need.filter((name) =>
  * 안의 id로 한다 — `<use href="#icon-shock">`가 없는 id를 가리키면 배지가 조용히 빈 원이 된다
  */
 const symbols = new Set([...readFileSync("art/icons.svg", "utf8").matchAll(/id="icon-([\w-]+)"/g)].map(([, id]) => id));
-/** P-51부터 카드 아트는 데이터 id와 1:1이다. */
-const unresolved = cards.filter((card) => !cardArtCandidates(card).some((key) => cardArt.has(key)));
+/** P-51부터 카드 아트는 데이터 id와 1:1이다 — 폴백(`cardArtCandidates`)은 화면 몫이고 게이트는 id만 본다. */
+const unresolved = cards.filter((card) => !cardArt.has(card.id));
 
 const checks = [
   { kind: "sprites", made: 20, found: sprites.size, missing: missingFrom(sprites, [...enemies.map(({ id }) => id), "player"]) },

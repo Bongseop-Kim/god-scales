@@ -50,7 +50,7 @@ demandSettled(tier, facts)       // "kept" | "broken" | undefined
 
 `.fx`가 `z-index: 3`, `.voice`가 4다. **그림은 신이 무엇을 했는지고 말은 신이 무엇을 말하는지다** — 합류 조우 시작에 둘이 다 뜬다:
 
-```
+```text
 fx   cut   아테나 · 진노 — 적 전체에게 방벽 5 · 아테나가 적으로 합류   (480ms)
 voice L3   네 방벽이 이제 내 것이다.                                  (그 뒤 3s)
 ```
@@ -65,7 +65,7 @@ P-46의 컷인은 `godStageText`가 빈 문자열이면 아예 안 섰다(「이
 
 `DemandOffer`에 `rule` 필드 하나가 붙었고 엔진이 `ruleText(tier.condition)`으로 채운다 — **화면이 `condition`을 다시 파싱하지 않는다.** 요구 화면은 문장 아래에 `.rule` 한 줄을 따로 세운다:
 
-```
+```text
 시련 · 대가 아테나 호의 −18 즉시
   한 번의 벼락으로 셋을 쳐라. 흩어진 적에게 자비를 두지 마라.
   한 턴에 맞힌 적 3 이상                       ← 새로 선 줄
@@ -80,7 +80,7 @@ P-46의 컷인은 `godStageText`가 빈 문자열이면 아예 안 섰다(「이
 
 머리글 바로 아래, 판보다 위에 한 줄:
 
-```
+```text
 ⚖ 제우스   한 턴에 맞힌 적 2 이상                        0 / 2
 ```
 
@@ -98,7 +98,7 @@ P-46의 컷인은 `godStageText`가 빈 문자열이면 아예 안 섰다(「이
 
 `data/gods.json`의 신마다 `lines`. 신당 31줄 × 다섯이다:
 
-```
+```text
 encounter · intervene · cross   → 단계 넷으로 갈린다 (2·3·1줄)
 demand_offer · demand_kept · demand_broken · tear · join · reconcile → 한 벌 (1·1·1·2·1·1줄)
 ```

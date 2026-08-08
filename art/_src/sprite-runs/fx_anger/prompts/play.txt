@@ -3,13 +3,11 @@ Create a single horizontal sprite strip for the game character `fx_anger` in the
 If this is a pre-idle/simple run, the attached base image may be used as the canonical character design. In direction-anchor mode, do not use base images for final action rows; accepted idle/direction anchors own row identity. Use the attached accepted idle/direction anchor as the canonical character design for this row. If a state anchor is attached for a non-locomotion state, treat it as approved state vocabulary only. Use the attached layout guide image only for frame count, slot spacing, centering, and safe padding. If an additional generated row strip is attached, use it only as a motion reference, never as a replacement identity source. Do not simply copy the still reference pose. Generate distinct animation poses that create a readable cycle or action.
 
 Character: fx_anger.
-Style contract: soft luminous abstract game effect matching the accepted base image exactly; smooth glow and clean edges, no pixel art, no added outline, no palette reduction.
+Style contract: bold high-contrast branching crack effect matching the accepted base image; thick fully opaque ivory-orange cores with a crisp dark-red rim, clean hard edges, no pixel art, no palette reduction.
 
 Use this prompt as an authoritative sprite-production spec. Do not expand it into a polished illustration, painterly character image, anime key art, 3D render, vector mascot, glossy app icon, realistic portrait, or marketing artwork.
 
-Animation action: four-frame one-shot withdrawal: frame 1 the pale light is still present with the first hairline cracks; frames 2 and 3 the light visibly pulls upward and out through the top edge while the cracks widen and sharpen; frame 4 the light is gone and only the jagged cracks remain with their thin dull rim. No downward motion and no impact point in any frame; the lower third and the centre stay completely empty..
-
-Chroma constraint: render every crack and light edge as fully opaque neutral white or gray with crisp hard boundaries. No pink, magenta, purple, translucent haze, or color blending with the #FF00FF background.
+Animation action: four-frame one-shot withdrawal, designed for immediate readability over a #10131c game screen: frame 1 shows a connected branching crack network across the upper 55% of the frame; frames 2 and 3 spread it wider and pull its pale light upward; frame 4 leaves a broad jagged network spanning at least 70% of the width. Main branches have fully opaque ivory-orange cores 18-36 pixels thick and secondary branches 10-18 pixels thick, with a crisp dark-red rim. No hairlines, isolated tiny cracks, faint gray marks, or translucent-only light. Keep the lower 35% and a clear central play area empty..
 
 Anchor lock:
 - Accepted idle/direction anchors own character identity, outfit details, colors, face design, asymmetric markings, and side-specific accessories for final action rows.

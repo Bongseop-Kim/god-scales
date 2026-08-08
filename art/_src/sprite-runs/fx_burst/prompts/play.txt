@@ -3,13 +3,11 @@ Create a single horizontal sprite strip for the game character `fx_burst` in the
 If this is a pre-idle/simple run, the attached base image may be used as the canonical character design. In direction-anchor mode, do not use base images for final action rows; accepted idle/direction anchors own row identity. Use the attached accepted idle/direction anchor as the canonical character design for this row. If a state anchor is attached for a non-locomotion state, treat it as approved state vocabulary only. Use the attached layout guide image only for frame count, slot spacing, centering, and safe padding. If an additional generated row strip is attached, use it only as a motion reference, never as a replacement identity source. Do not simply copy the still reference pose. Generate distinct animation poses that create a readable cycle or action.
 
 Character: fx_burst.
-Style contract: soft luminous abstract game effect matching the accepted base image exactly; smooth glow and clean edges, no pixel art, no added outline, no palette reduction.
+Style contract: bold high-contrast expanding burst matching the accepted base image; thick fully opaque white-gold ring cores and attached hard-edged sparks with crisp clean edges, no pixel art, no dark outline, no palette reduction.
 
 Use this prompt as an authoritative sprite-production spec. Do not expand it into a polished illustration, painterly character image, anime key art, 3D render, vector mascot, glossy app icon, realistic portrait, or marketing artwork.
 
-Animation action: four-frame one-shot scatter: frame 1 a tight sparse ring of particles surrounding (never covering) the clear centre; frames 2 and 3 the particles fly outward toward the edges, spreading and thinning; frame 4 only the outermost embers remain, small and fading. Hard-edged particles, no motion blur, no streaks; the very centre stays clear and the game screen stays readable through the effect in every frame..
-
-Extraction constraint: in each frame, place every particle on one bright fully opaque continuous pale ring at least 8 pixels thick so the ring and all particles form one connected component. The ring expands but stays solid and unbroken even in frame 4; only the particles fade. Keep the particles discrete and the centre empty. No detached specks or satellites.
+Animation action: four-frame one-shot scatter, designed for immediate readability over a #10131c game screen: frame 1 is a connected 36-pixel-thick opaque white-gold ring about 360 pixels across; frames 2 and 3 expand it to about 600 and 900 pixels; frame 4 holds a 1050-pixel ring with fewer attached embers. Every ring has a fully opaque bright core at least 32 pixels thick and attached hard-edged sparks 18-40 pixels wide. No faint dotted-only ring, tiny isolated specks, hairlines, or translucent-only particles. Keep the inside of the ring clear..
 
 Anchor lock:
 - Accepted idle/direction anchors own character identity, outfit details, colors, face design, asymmetric markings, and side-specific accessories for final action rows.

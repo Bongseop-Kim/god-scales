@@ -1,5 +1,5 @@
 # Wrath fx QA
 
-- `codex` 이미지 백엔드로 최종 `prompts/play.txt`를 생성했다.
-- 1536×960 셀 4장, 8fps 원샷. 손과 사슬의 압력이 아래로 진행하며 탁한 적색 형태가 유지된다.
-- projection + YCbCr 추출과 atlas는 `ok: true`, edge/chroma-adjacent pixel은 0이다. inspect의 낮은 motion 경고(0.0013)는 중앙을 비운 제한된 실루엣 면적 때문이며 접촉 시트의 진행 동작으로 수용했다.
+- `sprite-gen`의 `codex` 이미지 백엔드로 최종 `prompts/play.txt`를 생성했다.
+- 1536×960 셀 4장, 8fps 원샷. 중명도 적색 손·압착판·사슬이 단계적으로 내려오며 주황 외곽광을 유지한다.
+- projection + RGB 추출 후 2.5배 확대·상단 정렬했다. `#10131c` 배경 접촉 시트와 atlas·inspect에서 오류·경고 없이 통과했다.

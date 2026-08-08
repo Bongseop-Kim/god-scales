@@ -22,17 +22,32 @@
       0,
       255
     ],
-    "selection": "manual"
+    "selection": "fallback",
+    "background": {
+      "mode": "flat",
+      "hex": "#EC14DB",
+      "rgb": [
+        236,
+        20,
+        219
+      ],
+      "opaque_border_fraction": 1.0,
+      "border_coverage": 0.996,
+      "enclosed_background_pixels": 0,
+      "enclosed_material_pixels": 0,
+      "subject_pixels": 0
+    },
+    "selection_reason": "the base reference yielded no subject pixels once its background was excluded"
   },
   "states": {
     "play": {
       "frames": 4,
       "fps": 8,
       "loop": false,
-      "action": "four-frame one-shot withdrawal: frame 1 the pale light is still present with the first hairline cracks; frames 2 and 3 the light visibly pulls upward and out through the top edge while the cracks widen and sharpen; frame 4 the light is gone and only the jagged cracks remain with their thin dull rim. No downward motion and no impact point in any frame; the lower third and the centre stay completely empty."
+      "action": "four-frame one-shot withdrawal, designed for immediate readability over a #10131c game screen: frame 1 shows a connected branching crack network across the upper 55% of the frame; frames 2 and 3 spread it wider and pull its pale light upward; frame 4 leaves a broad jagged network spanning at least 70% of the width. Main branches have fully opaque ivory-orange cores 18-36 pixels thick and secondary branches 10-18 pixels thick, with a crisp dark-red rim. No hairlines, isolated tiny cracks, faint gray marks, or translucent-only light. Keep the lower 35% and a clear central play area empty."
     }
   },
-  "style": "soft luminous abstract game effect matching the accepted base image exactly; smooth glow and clean edges, no pixel art, no added outline, no palette reduction",
+  "style": "bold high-contrast branching crack effect matching the accepted base image; thick fully opaque ivory-orange cores with a crisp dark-red rim, clean hard edges, no pixel art, no palette reduction",
   "motion_phase_guides": false,
   "layout": "taxonomy/v1",
   "fit": {
@@ -43,7 +58,7 @@
     "outline": false
   },
   "chroma": {
-    "mode": "ycbcr",
+    "mode": "rgb",
     "unmix_reach": 4,
     "spill_max_fraction": 0.005
   }

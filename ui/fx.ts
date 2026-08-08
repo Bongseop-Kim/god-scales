@@ -63,13 +63,13 @@ const voiceHold: Record<VoiceLevel, number> = { 1: 1200, 2: 2000, 3: 3000 };
  * 늘고 replay 형식이 바뀌고 봇이 그것에 답해야 하고 `npm run e2e`의 「반출 → CLI 재생 일치」가 깨진다.
  * 여기 클릭은 **넘기기만** 하고 기록되지 않는다: 화면 상태고 게임 상태가 아니다.
  *
- * 겹치면 **큐가 아니라 순서**다 — 높은 레벨이 낮은 레벨을 덮고, 같은 레벨끼리는 호출자가 220ms
- * 어긋나게 낸다(P-46의 컷인과 같은 규칙)
+ * 겹치면 **큐가 아니라 순서**다 — 새 발화가 낮거나 같은 레벨을 지우고 선다(같은 자리에 두 장이 서면
+ * 글자가 겹친다). 같은 레벨끼리는 호출자가 220ms 어긋나게 낸다(P-46의 컷인과 같은 규칙)
  */
 export function speak(level: VoiceLevel, god: string, text: string, portrait?: string): void {
   if (!text) return;
   for (const older of document.querySelectorAll<HTMLElement>(".voice")) {
-    if (Number(older.dataset.level) < level) older.remove();
+    if (Number(older.dataset.level) <= level) older.remove();
   }
   const line = document.createElement("div");
   line.className = `voice l${level}`;

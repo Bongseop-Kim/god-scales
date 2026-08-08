@@ -15,24 +15,71 @@
     "safe_margin_y": 0
   },
   "chroma_key": {
-    "name": "magenta",
-    "hex": "#FF00FF",
+    "name": "cyan",
+    "hex": "#00FFFF",
     "rgb": [
-      255,
       0,
+      255,
       255
     ],
-    "selection": "manual"
+    "selection": "auto",
+    "score": 357.82,
+    "min_subject_distance": 340.87,
+    "background": {
+      "mode": "flat",
+      "hex": "#F403F3",
+      "rgb": [
+        244,
+        3,
+        243
+      ],
+      "opaque_border_fraction": 1.0,
+      "border_coverage": 0.789,
+      "enclosed_background_pixels": 252,
+      "enclosed_material_pixels": 18,
+      "subject_pixels": 14190
+    },
+    "candidates": [
+      {
+        "name": "magenta",
+        "hex": "#FF00FF",
+        "score": 329.71,
+        "min_subject_distance": 19.21,
+        "clears_erase_radius": false
+      },
+      {
+        "name": "green",
+        "hex": "#00FF00",
+        "score": 252.13,
+        "min_subject_distance": 246.07,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "cyan",
+        "hex": "#00FFFF",
+        "score": 357.82,
+        "min_subject_distance": 340.87,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "blue",
+        "hex": "#004DFF",
+        "score": 264.31,
+        "min_subject_distance": 239.45,
+        "clears_erase_radius": true
+      }
+    ],
+    "selection_reason": "highest 1st-percentile subject distance among the 3 candidate(s) clearing the 96 erase radius"
   },
   "states": {
     "play": {
       "frames": 4,
       "fps": 8,
       "loop": false,
-      "action": "four-frame one-shot pressure: frame 1 the chains, slab and enormous hand are just entering from the top edge; frames 2 and 3 they press further down across the frame, gaining weight; frame 4 they hold at their lowest point while the thin dull red rim along their lower edges brightens. All motion is downward only; the lower third and the far left and right edges stay completely empty in every frame."
+      "action": "four-frame one-shot pressure, immediately readable over #10131c. Frame 1 brings a huge iron-red hand, slab, and two heavy chains from the top; frames 2 and 3 press them lower; frame 4 holds them across at least 70% width and 35% height. Fill every major form with opaque medium iron red #7A2834, add broad #B9363F planes, and outline every lower edge with a fully opaque hot crimson-orange #FF5A3C rim 32-56 pixels thick. Pure black and near-black are forbidden anywhere in the effect. No faint silhouette, hairline rim, tiny isolated links, or translucent-only red. Keep the lower 30% empty."
     }
   },
-  "style": "dark hard-edged abstract silhouettes matching the accepted base image exactly; smooth dull red rim light, no pixel art, no added outline, no palette reduction",
+  "style": "massive high-contrast iron-red pressure effect matching the accepted base image; opaque medium-red #7A2834 and #B9363F forms with a thick fully opaque #FF5A3C rim, absolutely no black or near-black fill, crisp hard edges, no pixel art, no palette reduction",
   "motion_phase_guides": false,
   "layout": "taxonomy/v1",
   "fit": {
@@ -43,7 +90,7 @@
     "outline": false
   },
   "chroma": {
-    "mode": "ycbcr",
+    "mode": "rgb",
     "unmix_reach": 4,
     "spill_max_fraction": 0.005
   }

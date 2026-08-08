@@ -15,14 +15,61 @@
     "safe_margin_y": 0
   },
   "chroma_key": {
-    "name": "magenta",
-    "hex": "#FF00FF",
+    "name": "green",
+    "hex": "#00FF00",
     "rgb": [
-      255,
       0,
-      255
+      255,
+      0
     ],
-    "selection": "manual"
+    "selection": "auto",
+    "score": 305.0,
+    "min_subject_distance": 296.75,
+    "background": {
+      "mode": "flat",
+      "hex": "#F80BF1",
+      "rgb": [
+        248,
+        11,
+        241
+      ],
+      "opaque_border_fraction": 1.0,
+      "border_coverage": 0.85,
+      "enclosed_background_pixels": 0,
+      "enclosed_material_pixels": 0,
+      "subject_pixels": 3493
+    },
+    "candidates": [
+      {
+        "name": "magenta",
+        "hex": "#FF00FF",
+        "score": 75.4,
+        "min_subject_distance": 66.16,
+        "clears_erase_radius": false
+      },
+      {
+        "name": "green",
+        "hex": "#00FF00",
+        "score": 305.0,
+        "min_subject_distance": 296.75,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "cyan",
+        "hex": "#00FFFF",
+        "score": 255.51,
+        "min_subject_distance": 253.4,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "blue",
+        "hex": "#004DFF",
+        "score": 253.18,
+        "min_subject_distance": 251.71,
+        "clears_erase_radius": true
+      }
+    ],
+    "selection_reason": "highest 1st-percentile subject distance among the 3 candidate(s) clearing the 96 erase radius"
   },
   "rows": [
     {
@@ -38,48 +85,48 @@
       "frame_records": [
         {
           "index": 0,
-          "nontransparent_pixels": 11103,
+          "nontransparent_pixels": 38059,
           "bbox": [
-            725,
-            361,
-            810,
-            599
+            579,
+            399,
+            957,
+            561
           ],
           "edge_pixels": 0,
           "chroma_adjacent_pixels": 0
         },
         {
           "index": 1,
-          "nontransparent_pixels": 11049,
+          "nontransparent_pixels": 57963,
           "bbox": [
-            728,
-            352,
-            808,
-            608
+            577,
+            357,
+            958,
+            603
           ],
           "edge_pixels": 0,
           "chroma_adjacent_pixels": 0
         },
         {
           "index": 2,
-          "nontransparent_pixels": 47085,
+          "nontransparent_pixels": 87413,
           "bbox": [
-            668,
-            277,
-            868,
-            682
+            577,
+            299,
+            959,
+            660
           ],
           "edge_pixels": 0,
           "chroma_adjacent_pixels": 0
         },
         {
           "index": 3,
-          "nontransparent_pixels": 63379,
+          "nontransparent_pixels": 133804,
           "bbox": [
-            658,
-            241,
-            878,
-            718
+            576,
+            210,
+            960,
+            749
           ],
           "edge_pixels": 0,
           "chroma_adjacent_pixels": 0

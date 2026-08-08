@@ -10,15 +10,17 @@
 
 | fx | 배포본 | inspect |
 |---|---:|---|
-| devotion | 6144×960 · 34,196B | 통과 |
-| calm | 6144×960 · 13,484B | 통과 |
-| anger | 6144×960 · 17,838B | 낮은 motion 0.0052 — 가는 균열의 진행을 접촉 시트로 확인 |
-| wrath | 6144×960 · 55,494B | 낮은 motion 0.0013 — 제한된 손·사슬 동작을 접촉 시트로 확인 |
-| burst | 6144×960 · 30,002B | 통과 |
-| strike | 6144×960 · 20,666B | 마지막 잔불 크기 790 vs 9328 — 명세와 일치 |
+| devotion | 6144×960 · 59,942B | 오류·경고 0 |
+| calm | 6144×960 · 58,908B | 오류·경고 0 |
+| anger | 6144×960 · 185,240B | 오류·경고 0 |
+| wrath | 6144×960 · 158,440B | 오류·경고 0 |
+| burst | 6144×960 · 178,700B | 오류·경고 0 |
+| strike | 6144×960 · 33,736B | 오류·경고 0 |
 
-- 전부 sprite-gen `component-row`의 `codex` 이미지 백엔드로 생성했다. 최종 프롬프트는 각 `art/_src/sprite-runs/fx_{name}/prompts/play.txt`, 원본·추출 프레임·접촉 시트·리포트·판정은 같은 run과 `qa-notes.md`에 보존했다.
-- projection + YCbCr로 추출했고 모든 frame의 `edge_pixels`와 `chroma_adjacent_pixels`가 0이다. 배포본은 q90 + alpha-quality 100이다.
+- 전부 sprite-gen `component-row`의 `codex` 이미지 백엔드로 다시 생성했다. 최종 프롬프트는 각 `art/_src/sprite-runs/fx_{name}/prompts/play.txt`, 원본·추출 프레임·접촉 시트·리포트·판정은 같은 run과 `qa-notes.md`에 보존했다.
+- devotion은 projection + YCbCr, 나머지는 projection + RGB로 추출했다. 공식 atlas·inspect 리포트는 전부 `ok: true`, 오류·경고 0이며 `curation_applied: true`다.
+- 이전 배포본의 가는 선과 작은 원본 슬롯 때문에 효과가 안 보이던 문제를 굵은 불투명 코어, 밝은 외곽광, 프레임별 1.15–3.1배 curation으로 바로잡았다. `#10131c` 배경 접촉 시트에서 여섯 동작의 시작·중간·끝을 다시 확인했다.
+- 배포본은 셀당 768×480 단계에서 point 재표본화해 픽셀 질감을 유지한 뒤 6144×960으로 인코딩했다. devotion·calm·burst·strike는 q70, wrath는 q45, anger는 q35로 각 WebP 200KiB 상한을 통과했다.
 - 기존 `art/_src/fx/*.png`는 diff 0으로 입력 원본을 건드리지 않았다.
 
 ## 재생 확인
@@ -32,8 +34,8 @@ Aside CLI로 전투에서 직접 관측했다.
 ## 게이트
 
 ```text
-npm run size             통과 — assets=138, 3.58MiB, violations=0
-npx vite build (임시 경로) 통과 — 585 modules transformed
+npm run size             실패 — assets=247, 4.42MiB, violations=0; 동시 작업 포함 총량만 4MiB 초과
+npx vite build (임시 경로) 통과 — 694 modules transformed
 git diff --check         통과
 npx tsc --noEmit         실패 — 동시 작업 tools/validate.ts:255의 nullable match
 npm test                 실패 — 기존 favor/gate fixture 2건(schema ↔ token_scope), 171/173 통과

@@ -349,7 +349,7 @@ const helpsPlayer = ({ op, token }: Effect, target: string): boolean => {
  */
 function godLineFailure(god: Item): boolean {
   const lines = (god.lines ?? {}) as Record<string, unknown>;
-  const spoken = (held: unknown) => Array.isArray(held) && held.length > 0 && held.every((line) => typeof line === "string" && line.length > 0);
+  const spoken = (held: unknown) => Array.isArray(held) && held.length > 0 && held.every((line) => typeof line === "string" && line.trim().length > 0);
   return lineTriggers.some((trigger) => {
     const held = lines[trigger];
     if (!stagedLineTriggers.includes(trigger)) return !spoken(held);

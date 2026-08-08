@@ -15,24 +15,64 @@
     "safe_margin_y": 0
   },
   "chroma_key": {
-    "name": "magenta",
-    "hex": "#FF00FF",
+    "name": "green",
+    "hex": "#00FF00",
     "rgb": [
-      255,
       0,
-      255
+      255,
+      0
     ],
-    "selection": "manual"
+    "selection": "auto",
+    "score": 399.36,
+    "min_subject_distance": 356.66,
+    "background": {
+      "mode": "heterogeneous",
+      "opaque_border_fraction": 1.0,
+      "border_coverage": 0.451,
+      "note": "border ring is not a flat fill (largest color covers 45% of it, needs 75%); no background pixels were excluded, so candidate distances may be skewed by the background",
+      "subject_pixels": 42788
+    },
+    "candidates": [
+      {
+        "name": "magenta",
+        "hex": "#FF00FF",
+        "score": 20.62,
+        "min_subject_distance": 19.8,
+        "clears_erase_radius": false
+      },
+      {
+        "name": "green",
+        "hex": "#00FF00",
+        "score": 399.36,
+        "min_subject_distance": 356.66,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "cyan",
+        "hex": "#00FFFF",
+        "score": 312.96,
+        "min_subject_distance": 253.42,
+        "clears_erase_radius": true
+      },
+      {
+        "name": "blue",
+        "hex": "#004DFF",
+        "score": 250.38,
+        "min_subject_distance": 247.21,
+        "clears_erase_radius": true
+      }
+    ],
+    "selection_reason": "highest 1st-percentile subject distance among the 3 candidate(s) clearing the 96 erase radius"
   },
   "states": {
     "play": {
       "frames": 4,
       "fps": 8,
       "loop": false,
-      "action": "four-frame one-shot breath: frame 1 the edge halo at rest; frames 2 and 3 the thin band along the top, left and right edges brightens very slightly and thickens by a hair; frame 4 it settles back near rest. Nothing radiates inward, bursts or streaks; the entire centre and the whole lower half stay completely empty in every frame. This is the quietest of the four overlays — the motion must read as one slow breath, not an event."
+      "action": "four-frame one-shot breath, immediately readable over #10131c. In every 1536x960 slot draw one connected open-bottom rectangular Pi-shaped border: a straight horizontal top bar from x=80 to x=1456 and straight vertical side bars at x=80 and x=1456 down to y=700. It must hug the slot edges and fill almost the whole width; it is not a compact arch, oval, doorway, or centered icon. Use a fully opaque pale-cyan-white core 32, 48, 64, then 40 pixels thick across frames 1-4. No hairlines, haze, tiny corner marks, or translucent-only border. Keep the broad center and bottom opening empty."
     }
   },
-  "style": "soft luminous abstract game effect matching the accepted base image exactly; smooth glow and clean edges, no pixel art, no added outline, no palette reduction",
+  "style": "quiet but unmistakable high-contrast abstract game effect matching the accepted base image; a thick fully opaque pale-cyan-white core with crisp clean edges and only a restrained soft fringe, no pixel art, no dark outline, no palette reduction",
   "motion_phase_guides": false,
   "layout": "taxonomy/v1",
   "fit": {
@@ -43,7 +83,7 @@
     "outline": false
   },
   "chroma": {
-    "mode": "ycbcr",
+    "mode": "rgb",
     "unmix_reach": 4,
     "spill_max_fraction": 0.005
   }

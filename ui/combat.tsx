@@ -136,10 +136,11 @@ export function CombatScreen({ seed, decision, onAnswer }: {
     const start = view.turn === 1;
     if (!start && !intervenesOnTurn(view.turn)) return;
     const hook = start ? "on_encounter_start" : "on_turn_start";
-    const timers = view.patrons.map((god, index) => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    view.patrons.forEach((god, index) => {
       const stage = favorStage(view.favor[god] ?? favorInitial);
       const text = godStageText(god, stage)[start ? "start" : "turn"];
-      return setTimeout(() => {
+      timers.push(setTimeout(() => {
         /**
          * **말은 판을 안 흔들어도 나온다** — 컷인은 「무엇을 했는가」라 데이터가 없으면 빈 문장이지만,
          * 아무것도 안 하는 단계에도 신은 말한다. 조우 시작은 말(L2)이고 개입 턴은 자막(L1)이다:
@@ -157,7 +158,8 @@ export function CombatScreen({ seed, decision, onAnswer }: {
          */
         if (joinEffect) {
           const joined = joinEffect.god ?? god;
-          setTimeout(() => speak(3, joined, godLine(joined, "join", view.depth), godArt[`../art/gods/${joined}.webp`]), 480);
+          // 이 타이머도 `timers`에 든다 — 안 걷으면 화면·조우가 바뀐 뒤 묵은 외침이 선다
+          timers.push(setTimeout(() => speak(3, joined, godLine(joined, "join", view.depth), godArt[`../art/gods/${joined}.webp`]), 480));
         }
         if (reducedMotion) return;
         // 피해 개입은 화면이 흔들린다. 진노만 크게 — `.fx`와 같은 WAAPI라 새 의존이 없다
@@ -173,7 +175,7 @@ export function CombatScreen({ seed, decision, onAnswer }: {
             if (sprite) void playSprite(host, sprite, "spark");
           }
         }
-      }, index * 220);
+      }, index * 220));
     });
     return () => { for (const timer of timers) clearTimeout(timer); };
   }, [view.turn]);

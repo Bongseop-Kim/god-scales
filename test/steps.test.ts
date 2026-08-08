@@ -36,6 +36,16 @@ describe("steppable engine", () => {
     for (const pair of pairs) expect(() => runSteps(1, undefined, pair).next(), pair.join("+")).not.toThrow();
   });
 
+  // 파일은 `readReplay`가 지키지만 직접 호출(러너 `--split` 포함)은 엔진이 지켜야 한다
+  it("rejects a split outside integer [0, 100]", () => {
+    for (const bad of [-1, 101, 50.5, Number.NaN]) {
+      expect(() => runSteps(1, undefined, undefined, undefined, bad).next(), String(bad)).toThrow("split");
+    }
+    for (const ok of [0, 50, 100]) {
+      expect(() => runSteps(1, undefined, undefined, undefined, ok).next(), String(ok)).not.toThrow();
+    }
+  });
+
   it("offers three of that god's graces, each on a distinct slot", () => {
     const patrons = new Set(["zeus", "athena"]);
     /**

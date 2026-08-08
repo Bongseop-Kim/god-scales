@@ -568,6 +568,8 @@ export function* runSteps(
    */
   split: number = favorPool / 2,
 ): Generator<Decision, RunResult, string> {
+  // `readReplay`는 파일만 지킨다 — 직접 호출자(러너 플래그 포함)가 음수·소수·NaN을 넘기면 여기서 끊는다
+  if (!Number.isInteger(split) || split < 0 || split > favorPool) throw new Error(`split ${split}: 정수 [0, ${favorPool}]만 받는다`);
   const fusedCard = fusionCards.find(({ patronPair }) => patronPair?.every((god) => patrons.includes(god)));
   if (!fusedCard) throw new Error(`${patrons.join("+")}: no fused card for this pairing`);
   const deck = [...startingDeck, ...(scenario === "fused_deck" ? [fusedCard.id] : [])];

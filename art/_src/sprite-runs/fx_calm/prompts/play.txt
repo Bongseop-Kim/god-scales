@@ -3,11 +3,11 @@ Create a single horizontal sprite strip for the game character `fx_calm` in the 
 If this is a pre-idle/simple run, the attached base image may be used as the canonical character design. In direction-anchor mode, do not use base images for final action rows; accepted idle/direction anchors own row identity. Use the attached accepted idle/direction anchor as the canonical character design for this row. If a state anchor is attached for a non-locomotion state, treat it as approved state vocabulary only. Use the attached layout guide image only for frame count, slot spacing, centering, and safe padding. If an additional generated row strip is attached, use it only as a motion reference, never as a replacement identity source. Do not simply copy the still reference pose. Generate distinct animation poses that create a readable cycle or action.
 
 Character: fx_calm.
-Style contract: soft luminous abstract game effect matching the accepted base image exactly; smooth glow and clean edges, no pixel art, no added outline, no palette reduction.
+Style contract: quiet but unmistakable high-contrast abstract game effect matching the accepted base image; a thick fully opaque pale-cyan-white core with crisp clean edges and only a restrained soft fringe, no pixel art, no dark outline, no palette reduction.
 
 Use this prompt as an authoritative sprite-production spec. Do not expand it into a polished illustration, painterly character image, anime key art, 3D render, vector mascot, glossy app icon, realistic portrait, or marketing artwork.
 
-Animation action: four-frame one-shot breath: frame 1 the edge halo at rest; frames 2 and 3 the thin band along the top, left and right edges brightens very slightly and thickens by a hair; frame 4 it settles back near rest. Nothing radiates inward, bursts or streaks; the entire centre and the whole lower half stay completely empty in every frame. This is the quietest of the four overlays — the motion must read as one slow breath, not an event..
+Animation action: four-frame one-shot breath, immediately readable over #10131c. In every 1536x960 slot draw one connected open-bottom rectangular Pi-shaped border: a straight horizontal top bar from x=80 to x=1456 and straight vertical side bars at x=80 and x=1456 down to y=700. It must hug the slot edges and fill almost the whole width; it is not a compact arch, oval, doorway, or centered icon. Use a fully opaque pale-cyan-white core 32, 48, 64, then 40 pixels thick across frames 1-4. No hairlines, haze, tiny corner marks, or translucent-only border. Keep the broad center and bottom opening empty..
 
 Anchor lock:
 - Accepted idle/direction anchors own character identity, outfit details, colors, face design, asymmetric markings, and side-specific accessories for final action rows.
@@ -36,8 +36,8 @@ Layout requirements:
 - Treat the image as 4 equal-width invisible 1536x960 frame slots. Fill every slot: each requested slot must contain exactly one complete full-body pose.
 - Spread the 4 poses evenly across the whole image width. Do not leave any requested slot blank or create large empty gaps between poses.
 - Center one complete pose in each slot. No pose may cross into the neighboring slot.
-- Use a perfectly flat pure magenta #FF00FF chroma-key background across the whole image.
-- Do not use #FF00FF, pure magenta, or chroma-adjacent colors in the character, highlights, props, shadows, or effects.
+- Use a perfectly flat pure green #00FF00 chroma-key background across the whole image.
+- Do not use #00FF00, pure green, or chroma-adjacent colors in the character, highlights, props, shadows, or effects.
 - Keep the rendering faithful to the attached reference sprite: same outline weight, same palette, same detail level — do not restyle it.
 - Keep every frame self-contained with at least 0 px horizontal and 0 px vertical safe padding. No character body part should be clipped by the frame slot.
 - Avoid motion blur. Use clear pose changes readable at 1536x960.
