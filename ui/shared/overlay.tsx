@@ -8,14 +8,15 @@ import { GameCard } from "./card.tsx";
 import { godName, placeName } from "./header.tsx";
 
 /**
- * 오버레이 넷(토큰 사전·도움말·덱·약속)이 같은 셸 하나를 쓴다. **네이티브 `<dialog>`다** —
+ * 토큰 사전·도움말·덱·약속·시작 덱 설정이 같은 셸 하나를 쓴다. **네이티브 `<dialog>`다** —
  * focus trap·Esc·backdrop이 공짜라 라이브러리가 없다. 열림 상태는 여는 쪽(App)이 들고,
  * 이 컴포넌트는 열려 있는 동안만 산다. 게임 상태는 그대로다 — 엔진은 답을 기다리는 중이라 멈출 것도 없다
  */
-export function Overlay({ title, wide, onClose, children }: {
+export function Overlay({ title, wide, action, onClose, children }: {
   title: string;
   /** 덱만 920이다 — 한 줄 6장(140px 카드)이 서려면 680으로는 모자란다 */
   wide?: boolean;
+  action?: ReactNode;
   onClose: () => void;
   children: ReactNode;
 }) {
@@ -33,7 +34,10 @@ export function Overlay({ title, wide, onClose, children }: {
     >
       <header className="overlay-head">
         <h2>{title}</h2>
-        <button type="button" onClick={onClose} aria-label="닫기">×</button>
+        <span className="overlay-actions">
+          {action}
+          <button type="button" onClick={onClose} aria-label="닫기">×</button>
+        </span>
       </header>
       <div className="overlay-body">{children}</div>
     </dialog>

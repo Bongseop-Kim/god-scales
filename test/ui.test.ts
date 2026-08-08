@@ -324,8 +324,11 @@ describe("browser replay export", () => {
     // 둘이므로 「런 시작」이 눌린다 — 폼 안에서 `disabled`가 붙는 자리는 그것 하나뿐이다.
     // 전역 아이콘의 덱·약속(P-53)은 런 밖이라 죽어 있다 — 지우지 않고 `disabled`가 정답이다(UI.md)
     expect(markup.match(/<form[\s\S]*<\/form>/)?.[0] ?? "").not.toContain("disabled");
+    // 호의 배분은 시작 화면에서 빠지고 시작 덱 설정 모달을 열어야 나온다
+    expect(markup).toContain("시작 덱 설정 · 10/10장");
+    expect(markup).not.toContain("시작 호의 배분");
     // 편집기는 한 방향 문이 아니다 — 조합을 하나로 줄여 슬롯을 비운 사람이 여기로 돌아온다
-    expect(markup).toContain("규칙 덱으로");
+    expect(markup).not.toContain("규칙 덱으로");
   });
 
   /**

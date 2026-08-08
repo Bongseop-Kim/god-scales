@@ -101,6 +101,27 @@ export const reachText = (reach = fullReach): string =>
   `${reachBars(reach)} ${reachNames[reach] ?? `칸 ${reachSlots(reach).join("·")}`}`;
 
 /**
+ * 카드 면 기호의 범례(P-61) — 토큰 사전의 셋째 목록이고 `TokenDictionary`가 자식으로 받는다.
+ * 토큰 열셋과 적 능력 여덟은 사전에 있었는데 **카드 면의 기호는 어디에도 설명이 없었다.**
+ * 그림은 카드가 쓰는 클래스·함수를 그대로 세운다 — 설명용 사본을 그리면 카드가 바뀔 때 사전만 옛 얼굴이다
+ */
+export const CardSigns = () => (
+  <>
+    <h3>카드 기호</h3>
+    <ul className="token-dict sign-dict">
+      <li><span className="sign"><b className="cost-gem">2</b></span><span>이 카드를 내는 데 드는 에너지</span></li>
+      <li><span className="sign"><em className="card-reach">{reachBars("0")}</em></span><span>닿는 칸 — 채운 칸의 적만 대상</span></li>
+      <li><span className="sign card-fx"><Icon name="damage" /><Icon name="block" /><Icon name="heal" /></span><span>그 효과의 값</span></li>
+      <li><span className="sign card-fx"><em><Icon name="shock" /><b>2</b></em></span><span>붙일 토큰과 스택</span></li>
+      <li><span className="sign"><em className="card-kind">파워</em></span><span>손을 떠나 전투 내내 매 턴 발동</span></li>
+      <li><span className="sign"><em className="card-kind">전체</em></span><span>사거리 안 모든 적</span></li>
+      <li><span className="sign">{Object.values(tierNames).map((name) => <em key={name} className="card-tier">{name}</em>)}</span><span>카드 등급</span></li>
+      <li><span className="sign card-fx"><em className="cond"><Icon name="damage" /><b>6</b></em></span><span>조건이 맞을 때만 붙는 효과</span></li>
+    </ul>
+  </>
+);
+
+/**
  * 스크린 리더가 읽는 카드 한 줄. **화면은 채널 넷으로 갈라 그린다**(젬·배지·효과 줄·캡션) — 숫자만
  * 남으면 「8 2」로 읽히므로 문장은 여기서 한 번 만들어 `aria-label`이 든다.
  * 자기 대상 카드에는 사거리 칸이 없다 — 닿을 적이 없으므로 읽으면 거짓말이다

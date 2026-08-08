@@ -6,6 +6,7 @@ import { deckSize, favorPool, gods, startableCards, type PatronPair } from "../.
 import { Backdrop, hero, Prop } from "../shared/backdrop.tsx";
 import { CardRow, GameCard } from "../shared/card.tsx";
 import { godArt, godName, godStageText, stageName } from "../shared/header.tsx";
+import { Overlay } from "../shared/overlay.tsx";
 
 /**
  * id → 그 카드의 신과 면. 시작 화면에는 관측이 없으므로 **값은 엔진이 내보낸 `startableCards`에서**
@@ -64,7 +65,7 @@ export function IntroScreen({ onStart }: { onStart: () => void }) {
 }
 
 /**
- * 시작 덱 편집기. **접혀 있는 것이 기본이라** 시작 화면 높이는 그대로다 — 상태는 `<details>`가 든다.
+ * 시작 덱 편집기. 시작 화면에는 버튼만 두고 내용은 기존 네이티브 `Overlay`에 띄운다.
  * 규칙이 뽑은 열 장이 미리 차 있어 손대지 않으면 고정 모드와 같은 런이다: 빈 열 칸에서 시작하면
  * 124장을 훑어야 한다. 슬롯을 누르면 빠지고 목록을 누르면 들어간다.
  *
@@ -72,9 +73,12 @@ export function IntroScreen({ onStart }: { onStart: () => void }) {
  * 덱이지 막을 것이 아니다. 열한째는 조합 선택과 같은 꼴로 가장 오래된 것을 밀어낸다: 「먼저 빼세요」를
  * 만들지 않는다. 카드는 `CardRow`/`GameCard` 그대로다 — 보상 화면과 같은 그림이라 새 컴포넌트가 없다
  */
-function DeckEditor({ deck, picked, onChange, onRestore }: {
+function DeckEditor({ deck, picked, pair, split, onSplitChange, onChange, onRestore }: {
   deck: string[];
   picked: GodId[];
+  pair?: PatronPair;
+  split: number;
+  onSplitChange: (split: number) => void;
   onChange: (deck: string[]) => void;
   /**
    * 「손대지 않았다」로 되돌린다. **되돌릴 길이 없으면 편집기는 한 방향 문이다** — 조합을 둘에서
@@ -83,54 +87,72 @@ function DeckEditor({ deck, picked, onChange, onRestore }: {
    */
   onRestore: () => void;
 }) {
+  const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<GodId>(gods[0]);
   const list = startableCards[tab];
+  const reset = () => {
+    onRestore();
+    onSplitChange(favorPool / 2);
+  };
   return (
-    <details className="deck-editor">
-      <summary>시작 덱 {deck.length} / {deckSize}장 — 손대지 않으면 규칙이 뽑은 열 장입니다</summary>
-      {/*
-        §3의 저울은 **이미 코드에 있다**(`core/favor.ts`) — 지금까지 어디에도 안 적혀 있었을 뿐이다.
-        조합 밖 신의 카드는 그 신의 호의만 올리고, 은혜·개입·합성은 전부 `patrons`만 읽는다
-      */}
-      <p className="hint">
-        조합 밖 신의 카드도 넣을 수 있습니다. 다만 그 신의 호의는 아무것도 움직이지 않고, 조우마다
-        후원 신 호의가 −3씩(그 조우에 한 장도 안 쓴 신은 −2 더) 빠집니다 — 은혜와 융합이 그만큼 멀어집니다.
-      </p>
-      <div className="deck-slots">
-        {deck.map((id, index) => {
-          const held = cardIndex.get(id)!;
-          const alien = !picked.includes(held.god);
-          return (
-            <span className={alien ? "slot alien" : "slot"} key={`${id}-${index}`}>
-              <GameCard cardId={id} card={held.card} onSelect={() => onChange(deck.filter((_, at) => at !== index))} />
-              {/* 색이 아니라 글자다 — 색만으로는 흑백에서 규칙이 사라진다(R-26의 채널 규칙) */}
-              {alien && <em>호의 안 오름</em>}
-            </span>
-          );
-        })}
-      </div>
-      <button type="button" onClick={onRestore}>규칙 덱으로</button>
-      {/* 124장을 한 화면에 깔지 않는다 — 조합 선택과 같은 버튼 줄이 신 다섯으로 거른다 */}
-      <div className="god-legend" role="group" aria-label="신별 카드">
-        {gods.map((god) => (
-          <button
-            key={god}
-            type="button"
-            aria-pressed={tab === god}
-            style={{ "--god-color": `var(--${god})` } as CSSProperties}
-            onClick={() => setTab(god)}
-          >
-            <i />
-            {godName(god)}
-          </button>
-        ))}
-      </div>
-      <CardRow
-        cards={list}
-        options={list.map(({ id }) => id)}
-        onSelect={(id) => onChange([...deck, id].slice(-deckSize))}
-      />
-    </details>
+    <>
+      <button className="deck-editor-trigger" type="button" onClick={() => setOpen(true)}>
+        시작 덱 설정 · {deck.length}/{deckSize}장
+      </button>
+      {open && (
+        <Overlay
+          wide
+          title={`시작 덱 설정 · ${deck.length}/${deckSize}장`}
+          action={<button type="button" onClick={reset}>초기화</button>}
+          onClose={() => setOpen(false)}
+        >
+          <div className="deck-editor">
+            <SplitField pair={pair} split={split} onChange={onSplitChange} />
+            {/*
+              §3의 저울은 **이미 코드에 있다**(`core/favor.ts`) — 지금까지 어디에도 안 적혀 있었을 뿐이다.
+              조합 밖 신의 카드는 그 신의 호의만 올리고, 은혜·개입·합성은 전부 `patrons`만 읽는다
+            */}
+            <p className="hint">
+              조합 밖 신의 카드도 넣을 수 있습니다. 다만 그 신의 호의는 아무것도 움직이지 않고, 조우마다
+              후원 신 호의가 −3씩(그 조우에 한 장도 안 쓴 신은 −2 더) 빠집니다 — 은혜와 융합이 그만큼 멀어집니다.
+            </p>
+            <div className="deck-slots">
+              {deck.map((id, index) => {
+                const held = cardIndex.get(id)!;
+                const alien = !picked.includes(held.god);
+                return (
+                  <span className={alien ? "slot alien" : "slot"} key={`${id}-${index}`}>
+                    <GameCard cardId={id} card={held.card} onSelect={() => onChange(deck.filter((_, at) => at !== index))} />
+                    {/* 색이 아니라 글자다 — 색만으로는 흑백에서 규칙이 사라진다(R-26의 채널 규칙) */}
+                    {alien && <em>호의 안 오름</em>}
+                  </span>
+                );
+              })}
+            </div>
+            {/* 124장을 한 화면에 깔지 않는다 — 조합 선택과 같은 버튼 줄이 신 다섯으로 거른다 */}
+            <div className="god-legend" role="group" aria-label="신별 카드">
+              {gods.map((god) => (
+                <button
+                  key={god}
+                  type="button"
+                  aria-pressed={tab === god}
+                  style={{ "--god-color": `var(--${god})` } as CSSProperties}
+                  onClick={() => setTab(god)}
+                >
+                  <i />
+                  {godName(god)}
+                </button>
+              ))}
+            </div>
+            <CardRow
+              cards={list}
+              options={list.map(({ id }) => id)}
+              onSelect={(id) => onChange([...deck, id].slice(-deckSize))}
+            />
+          </div>
+        </Overlay>
+      )}
+    </>
   );
 }
 
@@ -142,9 +164,8 @@ function DeckEditor({ deck, picked, onChange, onRestore }: {
  * 가르치는 유일한 문서다. 눈금 셋은 `favorBoundaries`에서 온다: 위치를 CSS에 박으면 규칙이 바뀔 때
  * 화면만 옛 자리에 남는다. **폼 컨트롤이므로 라이브러리를 안 쓴다**.
  *
- * 조합이 둘이 아니면 **`visibility: hidden`으로 자리만 지킨다** — 둘째 신을 고르는 클릭에 이 블록이
- * 끼어들어 시드·「런 시작」이 밀려 내려가면 안 된다(UI.md 제1규칙). 숨은 동안의 라벨은 어차피 안
- * 보이므로 엔진 순서의 앞 둘로 채워 높이만 같게 둔다
+ * 조합이 둘이 아니면 숨긴다. 모달 안이라 시작 화면의 배치는 움직이지 않는다. 숨은 동안의 라벨은
+ * 어차피 안 보이므로 엔진 순서의 앞 둘로 채워 높이만 같게 둔다
  */
 function SplitField({ pair, split, onChange }: { pair?: PatronPair; split: number; onChange: (split: number) => void }) {
   const shown = pair ?? (gods.slice(0, 2) as unknown as PatronPair);
@@ -248,10 +269,17 @@ export function SetupScreen({
           </Fragment>;
         })}
       </div>
-      {/* 하단 한 줄 — 배분 슬라이더(둘 골라야 등장, 자리는 지킨다) · 덱 편집기(접힘) · 런 시작 */}
+      {/* 하단 한 줄 — 시작 덱 설정 모달 · 런 시작 */}
       <div className="setup-row">
-        <SplitField pair={pair} split={split} onChange={onSplitChange} />
-        <DeckEditor deck={deck} picked={picked} onChange={onDeckChange} onRestore={onRestoreDeck} />
+        <DeckEditor
+          deck={deck}
+          picked={picked}
+          pair={pair}
+          split={split}
+          onSplitChange={onSplitChange}
+          onChange={onDeckChange}
+          onRestore={onRestoreDeck}
+        />
         <button className="primary" type="submit" disabled={picked.length !== 2 || deck.length !== deckSize}>런 시작</button>
       </div>
       </form>

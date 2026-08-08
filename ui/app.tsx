@@ -8,6 +8,7 @@ import type { ReplayAction } from "../sim/replay.ts";
 import type { RunResult } from "../sim/report.ts";
 import { BetScreen, DemandScreen, GraceScreen, OracleScreen, RestScreen } from "./screens/choices.tsx";
 import { CombatScreen } from "./screens/combat.tsx";
+import { CardSigns } from "./shared/card.tsx";
 import { IconSheet } from "./shared/icon.tsx";
 import { MapScreen } from "./screens/map.tsx";
 import { ResultScreen } from "./screens/result.tsx";
@@ -211,8 +212,9 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
           onOverlay={setOverlay}
         />
       )}
+      {/* 제목만 「토큰과 기호」다(P-61) — 전역 버튼 라벨(「토큰」)과 단축키 `T`는 그대로다: 버튼 글자가 길어지면 우상단 줄의 폭이 흔들린다 */}
       {overlay === "tokens" && (
-        <Overlay title="상태 토큰" onClose={() => setOverlay(undefined)}><TokenDictionary /></Overlay>
+        <Overlay title="토큰과 기호" onClose={() => setOverlay(undefined)}><TokenDictionary><CardSigns /></TokenDictionary></Overlay>
       )}
       {overlay === "help" && (
         <Overlay title="도움말" onClose={() => setOverlay(undefined)}><HelpPanel /></Overlay>
