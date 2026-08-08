@@ -382,6 +382,7 @@ describe("browser replay export", () => {
 
   it("plays shipped effects at the requested volume", () => {
     const nativeAudio = globalThis.Audio;
+    const wasEnabled = sound.enabled;
     const made: { src: string; volume: number }[] = [];
     globalThis.Audio = class {
       volume = 1;
@@ -397,7 +398,7 @@ describe("browser replay export", () => {
       playSound("card-slide-6");
       expect(made).toHaveLength(6);
     } finally {
-      sound.enabled = true;
+      sound.enabled = wasEnabled;
       globalThis.Audio = nativeAudio;
     }
   });

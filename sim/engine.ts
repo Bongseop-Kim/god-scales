@@ -441,11 +441,13 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
       if (id === "player") facts.damage_taken += amount;
       else if (source === "attack" || source === "card") turnTargets.add(id);
     }
+    // 재지정은 **플레이어 카드에서만** 난다 — 다른 출처의 프레임에 지난 카드의 기록이 남으면 화면이
+    // 적 턴 피해에 지킴이를 내보낸다. 피해가 없는 프레임에서도 다시 적는다(`return` 앞이다) — 안 그러면
+    // 지난 대신 맞기가 상태 줄(`combat.tsx`의 `guardLine`)에 계속 서 있다. `hits`·`hitSeq`는 반대다:
+    // seq가 안 오르면 화면이 아무것도 다시 재생하지 않고, 비우면 700ms 피해 팝이 날아가는 중에 사라진다
+    guarded = source === "attack" || source === "card" ? state.combat.guarded : [];
     if (!damage.length) return;
     hits = damage;
-    // 재지정은 **플레이어 카드에서만** 난다 — 다른 출처의 프레임에 지난 카드의 기록이 남으면 화면이
-    // 적 턴 피해에 지킴이를 내보낸다
-    guarded = source === "attack" || source === "card" ? state.combat.guarded : [];
     hitSource = source;
     hitSeq += 1;
   };

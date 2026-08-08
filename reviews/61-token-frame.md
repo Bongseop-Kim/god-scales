@@ -17,7 +17,7 @@
 크기에서 회색 죽이 되고, 기존 두 장(`panel-border-00{7,10}`)은 6px에서 실오라기다. 고른 것은
 **028**: 변이 민무늬 한 띠라 밑변 띠가 그 위에 읽히고, 네 귀의 꺾쇠가 16 → 6 축소를 견딘다.
 
-```
+```bash
 magick "…/panel-transparent-center-028.png" -colorspace sRGB -fill '#c6a969' -colorize 100 \
   art/kenney/token-frame-bronze.png
 ```
