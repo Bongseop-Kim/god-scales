@@ -110,13 +110,15 @@ describe("steppable engine", () => {
     const struck = after.value.observation.enemies.find(({ id }) => id === enemyId)!;
     expect(hit.amount).toBe(Math.round((struck.maxHp - struck.hp) * 10) / 10);
     expect(after.value.observation.hitSeq).toBe(1);
+    expect(after.value.observation.hitSource).toBe("attack");
     // 같은 피해가 두 번 튀지 않도록 seq는 새 피해에서만 오른다. 턴을 넘기면 피해 뭉치가 **둘** 생긴다 —
     // 적의 공격(2)과 2턴 시작의 신 개입(3)이다. 개입을 안 세면 화면이 그 피해를 못 튀긴다 (P-34).
     // 신탁이 그 **사이**에 선다(P-46): 개입 앞이라 ±12가 넘긴 단계로 그 턴의 개입이 터진다
     const oracle = steps.next(endTurnAction);
     if (oracle.done || oracle.value.phase !== "oracle") throw new Error("expected an oracle decision");
     expect(oracle.value.observation.hitSeq).toBe(2);
-    expect(steps.next(oracle.value.bot).value).toMatchObject({ observation: { hitSeq: 3 } });
+    expect(oracle.value.observation.hitSource).toBe("enemy");
+    expect(steps.next(oracle.value.bot).value).toMatchObject({ observation: { hitSeq: 3, hitSource: "favor" } });
   });
 
   /**

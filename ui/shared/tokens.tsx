@@ -1,5 +1,5 @@
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { harmfulTokens } from "../../core/rules.ts";
 import type { PassiveName, TokenName, Tokens } from "../../core/state.ts";
 import { Icon } from "./icon.tsx";
@@ -67,9 +67,9 @@ export const tokenSummary = (tokens: Tokens): string => (Object.entries(tokens) 
   .map(([token, stacks]) => `${tokenName(token)} ${stacks}`)
   .join(" ");
 
-/** 붙는 순간 160ms · 스택이 오르는 순간 140ms. 배지는 한 화면에 13개까지라 `scale`·`opacity`만 쓴다 */
-const appear = { duration: 0.16, ease: [0.23, 1, 0.32, 1] } as const;
-const bump = { duration: 0.14, ease: [0.23, 1, 0.32, 1] } as const;
+/** 붙는 순간 240ms · 스택이 오르는 순간 200ms. 배지는 한 화면에 13개까지라 `scale`·`opacity`만 쓴다 */
+const appear = { duration: 0.24, ease: [0.23, 1, 0.32, 1] } as const;
+const bump = { duration: 0.2, ease: [0.23, 1, 0.32, 1] } as const;
 
 function TokenBadge({ token, stacks = 1, still }: { token: TokenName; stacks?: number; still?: boolean }) {
   const style = tokenStyle[token];
@@ -85,8 +85,13 @@ function TokenBadge({ token, stacks = 1, still }: { token: TokenName; stacks?: n
       animate={{ opacity: 1, scale: 1 }}
       exit={still ? { opacity: 0 } : { opacity: 0, scale: 0.9 }}
       transition={still ? { duration: 0 } : appear}
-      // 진영을 색에만 실으면 색각 이상에서 사라진다 — 해로움은 채움, 이로움은 외곽이다
+      // 진영을 색에만 실으면 색각 이상에서 사라진다 — 해로움은 채움, 이로움은 빈 바탕이다
       className={`token-badge ${harmful ? "harmful" : "boon"} ${style.duration}`}
+      /**
+       * 스택 눈금(P-61) — 2 이상이면 배지 뒤에 한 겹, 4 이상이면 두 겹이 깔린다(CSS `box-shadow`).
+       * **세 단계뿐이다**: 겹은 「많다」를 말하는 눈금이고 정확한 수는 아래 숫자가 계속 든다
+       */
+      data-stacks={stacks >= 4 ? 4 : stacks >= 2 ? 2 : 1}
       style={{ "--token-color": style.color } as CSSProperties}
       title={`${style.name} — ${style.text} · ${durationText[style.duration]}`}
     >
@@ -121,9 +126,10 @@ export function TokenRow({ tokens, limit = 4 }: { tokens: Tokens; limit?: number
 
 /**
  * 토큰 사전(P-53) — 13종을 한눈에. **데이터는 `tokenStyle` 하나에서** 만든다: 사전용 사본을 만들면
- * 같은 사실에 두 경로다. 진영(외곽/채움)·지속 테두리는 배지가 이미 들고 있으므로 여기서 다시 말하지 않는다
+ * 같은 사실에 두 경로다. 진영(빈 바탕/채움)·지속 띠는 배지가 이미 들고 있으므로 여기서 다시 말하지 않는다.
+ * 셋째 목록(카드 기호, P-61)은 `card.tsx`의 것이라 **자식으로 받는다** — 여기서 import하면 순환이다
  */
-export function TokenDictionary() {
+export function TokenDictionary({ children }: { children?: ReactNode }) {
   return (
     <div className="token-dictionaries">
       <ul className="token-dict">
@@ -147,6 +153,7 @@ export function TokenDictionary() {
           </li>
         ))}
       </ul>
+      {children}
     </div>
   );
 }

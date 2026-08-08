@@ -5,6 +5,7 @@ import { favorPool, singleBet, watchDemand, type BetDecision, type CardView, typ
 import { Backdrop, backdropArt, Flanks, Prop } from "../shared/backdrop.tsx";
 import { CardRow, effectText } from "../shared/card.tsx";
 import { godArt, godName, stageName } from "../shared/header.tsx";
+import { playSound } from "../shared/sfx.ts";
 
 /**
  * 휴식·은혜·요구 셋 다 지도 위의 한 칸짜리 결정이다 — 지도 패널 없이 한 단짜리로 그린다.
@@ -51,14 +52,19 @@ function GodSay({ god, children }: { god: string; children: React.ReactNode }) {
 function Choice({ mark, label, detail, disabled, onChoose }: { mark: string; label: string; detail: React.ReactNode; disabled?: boolean; onChoose: () => void }) {
   return (
     // 못 고르는 칸은 `disabled`가 말한다 — 핸들러 안에서 조용히 무시하면 멀쩡한 버튼이 고장으로 읽힌다
-    <button className="choice" type="button" disabled={disabled} onClick={onChoose}>
+    <button className="choice" type="button" disabled={disabled} onClick={() => { playSound("chip-lay-3", 0.35); onChoose(); }}>
       <span>{mark}</span><b>{label}</b><small>{detail}</small>
     </button>
   );
 }
 
-export function RestScreen({ decision, onAnswer }: {
+export function RestScreen({ decision, upgrading, onAnswer }: {
   decision: MapDecision;
+  /**
+   * 제거인지 강화인지. `rest_card`는 **둘이 같은 화면**이라 관측만으로는 갈 수 없다(후보가 덱 전체일
+   * 수도 있어 길이로도 못 가른다). App이 직전 `rest` 답을 `actions`에 이미 들고 있으므로 새 상태가 아니다
+   */
+  upgrading?: boolean;
   onAnswer: (choice: string) => void;
 }) {
   const { phase, options, observation: view } = decision;
@@ -82,7 +88,8 @@ export function RestScreen({ decision, onAnswer }: {
           <>
             <h2>어느 카드를 고를까요?</h2>
             {/* 후보가 덱 전체가 아닐 수 있다 — 강화는 `+2`에 닿은 카드와 융합을 뺀다(`sim/engine.ts`) */}
-            <CardRow cards={view.deck} options={options} onSelect={onAnswer} />
+            {/* 강화면 후보가 **강화 후** 얼굴로 선다 — 고르기 전과 고른 뒤가 같은 얼굴이다 */}
+            <CardRow cards={view.deck} options={options} upgrade={upgrading} onSelect={onAnswer} />
           </>
         )}
     </Screen>

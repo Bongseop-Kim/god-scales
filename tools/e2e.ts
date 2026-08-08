@@ -61,6 +61,11 @@ await tab.bringToFront();
 await tab.waitForSelector("[data-phase='intro']");
 await tab.click(".intro-menu button.primary");
 await tab.waitForSelector("[data-phase='setup']");
+const finishOpening = async () => {
+  await tab.waitForSelector("[data-phase='opening']");
+  await tab.evaluate(() => document.querySelectorAll(".run-opening video").forEach((video) => { video.playbackRate = 16; }));
+  await tab.waitForSelector("[data-phase='path']");
+};
 
 /**
  * 조합은 기본값이 이미 제우스+아테나다 — 껐다 켜야 토글과 「둘 아니면 못 시작」을 실제로 지난다.
@@ -80,12 +85,12 @@ const setup = await tab.evaluate(async () => {
   await wait();
   return { gods: [...document.querySelectorAll(picker)].length, blocked, ready: !submit().disabled,
     picked: [...document.querySelectorAll(picker + "[aria-pressed='true']")].map((el) => el.querySelector(".nameplate b").textContent.trim()),
-    // 덱 편집기가 접혀 있으므로 시작 화면은 아직 한 눈금이다. 펼친 뒤는 스크롤을 허용한다
+    // 덱 편집기는 모달이므로 시작 화면은 한 눈금이다. 모달 본문만 스크롤을 허용한다
     tall: document.documentElement.scrollHeight > window.innerHeight };
 });
 
 await tab.click("form.setup button.primary");
-await tab.waitForSelector("[data-phase]:not([data-phase='setup'])");
+await finishOpening();
 
 // 한 evaluate에 런 전체를 넣으면 CDP가 30초에 끊는다 — 드라이버를 페이지에 심고 조금씩 돌린다
 await tab.evaluate(() => {
@@ -156,7 +161,9 @@ await tab.evaluate(() => {
       if (!this.download) return anchorClick.call(this);
       filename = this.download;
     };
-    document.querySelector(".result-layout .actions button.primary").click();
+    // 반출은 주요 버튼 자리를 「다시 시작」에 내주고 .ghost로 물러났다(P-65) — 증명은 그대로다.
+    // 백틱은 이 스크립트가 템플릿 문자열이라 못 쓴다
+    document.querySelector(".result-layout .actions button.ghost").click();
     URL.createObjectURL = createObjectURL;
     HTMLAnchorElement.prototype.click = anchorClick;
     if (!blobs.length) throw new Error("export produced no blob");
@@ -222,7 +229,7 @@ const captured = await tab.evaluate(async () => {
  * 자유 모드 체크포인트. 같은 탭에서 「다시 시작」으로 돌아가 **편집기만** 지나간다 — 완주는 위에서
  * 이미 증명했고, 이 열 장은 1층에서 끝나므로 스무 남짓 결정이면 결과 화면과 반출에 닿는다
  */
-await tab.click(".result-layout .actions button:not(.primary)");
+await tab.click(".result-layout .actions button.primary");
 await tab.waitForSelector("[data-phase='setup']");
 
 const editor = await tab.evaluate(async () => {
@@ -230,22 +237,30 @@ const editor = await tab.evaluate(async () => {
   const submit = () => document.querySelector("form.setup button.primary");
   const slots = () => [...document.querySelectorAll(".deck-slots .game-card")];
   const ids = () => slots().map((el) => el.dataset.card);
-  // 접힘이 기본이다 — 열지 않으면 시작 화면 높이가 그대로라는 것이 이 한 줄로 드러난다
-  const details = document.querySelector("details.deck-editor");
-  const collapsed = !details.open;
-  details.open = true;
+  // 편집기는 모달이다 — 시작 화면에는 버튼만 있고 호의 배분도 그 안에 있다
+  const hidden = !document.querySelector(".deck-editor") && !document.body.textContent.includes("시작 호의 배분");
+  document.querySelector(".deck-editor-trigger").click();
   await wait();
+  const modal = document.querySelector("dialog.overlay[open]");
+  const moved = !!modal && modal.textContent.includes("시작 호의 배분");
+  const body = document.querySelector(".overlay-body");
+  const singleScroll = getComputedStyle(document.querySelector(".deck-editor .hand")).overflowY === "visible"
+    && getComputedStyle(body).overflowY === "auto" && getComputedStyle(body).overflowX === "hidden";
   const ruled = ids();
+  const split = document.querySelector(".split-track input");
+  split.value = "60";
+  split.dispatchEvent(new Event("input", { bubbles: true }));
+  await wait();
 
   // 한 장을 빼면 아홉이라 시작이 막힌다 — 「열 장이 아니면 못 누른다」가 서는 자리다
   slots()[0].click();
   await wait();
   const short = { count: ids().length, blocked: submit().disabled };
 
-  // 되돌리면 규칙 덱이다 — 이 버튼이 없으면 편집기는 한 방향 문이고 아홉 장에서 갇힌다
-  document.querySelector("details.deck-editor > button").click();
+  // 초기화하면 규칙 덱과 호의 50:50이 함께 돌아온다
+  [...document.querySelectorAll(".overlay-actions button")].find((el) => el.textContent.trim() === "초기화").click();
   await wait();
-  const restored = { deck: ids(), ready: !submit().disabled };
+  const restored = { deck: ids(), split: Number(document.querySelector(".split-track input").value), ready: !submit().disabled };
 
   // 신 탭으로 목록을 거르고 같은 카드를 열 번 누른다. 열한째가 가장 오래된 것을 밀어내므로 열 번이면
   // 열 장이 다 그 카드다. React가 다시 그리기 전에 두 번 누르면 두 번째가 옛 덱 위에 얹혀 사라진다
@@ -255,11 +270,14 @@ const editor = await tab.evaluate(async () => {
     document.querySelector(".deck-editor .hand button.game-card[data-card='${freeCard}']").click();
     await wait();
   }
-  return { collapsed, ruled, short, restored, deck: ids(), ready: !submit().disabled };
+  const result = { hidden, modal: moved, singleScroll, ruled, short, restored, deck: ids(), ready: !submit().disabled };
+  document.querySelector(".overlay-actions button[aria-label='닫기']").click();
+  await wait();
+  return result;
 });
 
 await tab.click("form.setup button.primary");
-await tab.waitForSelector("[data-phase]:not([data-phase='setup'])");
+await finishOpening();
 await tab.evaluate(() => window.__e2e.restart());
 for (let batch = 0; ; batch += 1) {
   if (batch > 20) throw new Error("free-deck run never reached the result screen");
@@ -289,8 +307,8 @@ function browserRun(): {
   summary: Record<string, number>;
   setup: { gods: number; blocked: boolean; ready: boolean; picked: string[]; tall: boolean };
   editor: {
-    collapsed: boolean; ruled: string[]; short: { count: number; blocked: boolean };
-    restored: { deck: string[]; ready: boolean }; deck: string[]; ready: boolean;
+    hidden: boolean; modal: boolean; singleScroll: boolean; ruled: string[]; short: { count: number; blocked: boolean };
+    restored: { deck: string[]; split: number; ready: boolean }; deck: string[]; ready: boolean;
   };
   free: { decisions: number; replay: ReplayFile; won: boolean };
 } {
@@ -386,11 +404,11 @@ try {
    */
   const { editor, free } = browser;
   console.log(`clicked ${free.decisions} decisions with a hand-built deck`);
-  // 접힘이 기본 · 기본값은 규칙 덱 그대로 · 한 장 빼면 아홉이고 시작이 막힌다 · 채우면 다시 열린다
-  check("편집기 기본값", { collapsed: editor.collapsed, ruled: editor.ruled }, { collapsed: true, ruled: ruleDeck(["zeus", "athena"]) });
+  // 시작 화면에는 배분이 없고 모달 안에만 있다 · 기본값은 규칙 덱 그대로다
+  check("편집기 기본값", { hidden: editor.hidden, modal: editor.modal, singleScroll: editor.singleScroll, ruled: editor.ruled }, { hidden: true, modal: true, singleScroll: true, ruled: ruleDeck(["zeus", "athena"]) });
   check("열 장이 아니면 시작 못 함", editor.short, { count: deckSize - 1, blocked: true });
   // 손댄 것을 되돌리는 길. 조합을 하나로 줄여 슬롯을 비운 사람도 여기로 나온다
-  check("규칙 덱으로 되돌린다", editor.restored, { deck: ruleDeck(["zeus", "athena"]), ready: true });
+  check("초기화", editor.restored, { deck: ruleDeck(["zeus", "athena"]), split: 50, ready: true });
   check("짠 덱", { deck: editor.deck, ready: editor.ready }, { deck: freeDeck, ready: true });
   // 고정 모드 반출에는 `deck`이 없어야 한다 — 있으면 편집기가 안 건드린 런까지 자유 모드로 적는다
   check("고정 모드 반출에 deck 없음", browser.replay.deck, undefined);

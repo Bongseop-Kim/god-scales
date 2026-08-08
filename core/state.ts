@@ -76,6 +76,12 @@ export type CombatState = {
    * 파워 발동은 세지 않는다 — 카드를 낸 것이 아니다
    */
   turnPlays: { cards_played: number; attacks: number; energy_spent: number };
+  /**
+   * 이번 카드가 재지정한 피해. `playCard` 진입에서 비운다 — 한 번의 클릭이 만드는 사실이다.
+   * `turnPlays`와 같은 꼴의 **파생 기록**이라 규칙이 이것을 읽고 분기하지 않는다: 화면이 「누가 대신
+   * 맞았나」를 체력바 비교로 추측하면 연쇄·전체 카드가 섞인 프레임에서 그 추측이 틀린다
+   */
+  guarded: { by: string; from: string }[];
 };
 
 export type GameState = {

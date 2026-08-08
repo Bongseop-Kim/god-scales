@@ -1,6 +1,6 @@
 import type { GraceSlot } from "./grace.ts";
 import { drawCards } from "./deck.ts";
-import { tokenNames, type ActorState, type CombatState, type GameState, type TokenName, type Trigger } from "./state.ts";
+import { tokenNames, type ActorState, type CombatState, type GameState, type TokenName, type Tokens, type Trigger } from "./state.ts";
 import { livingInReach, reachSlots, resolveChainTargets, resolveTargets, type Target } from "./targeting.ts";
 
 export type GodId = "zeus" | "poseidon" | "athena" | "ares" | "artemis";
@@ -160,19 +160,35 @@ function consumeToken(actor: ActorState, token: TokenName): boolean {
   return true;
 }
 
+/**
+ * 공격자 쪽 보정 넷. **대상이 누구든 같으므로** 대상을 고르기 전에도 참이고, 카드 면이 미리
+ * 보여줄 수 있는 유일한 몫이다 — 대상 쪽 둘(감전 +스택 · 표식 ×1.5)은 고른 뒤에 값을 또 바꾼다.
+ * `tools/value.ts`의 tokenWeights와 같은 눈금이고, 소모는 `dealDamage`가 한다:
+ * 위력만 **소모되지 않는다** — 전투가 끝날 때까지 남는다(가시와 같은 자리다)
+ */
+export function attackPreview(tokens: Tokens, amount: number): number {
+  if (tokens.crit) amount *= 2;
+  amount += tokens.might ?? 0;
+  if (tokens.frenzy) amount += 2;
+  if (tokens.soaked) amount = Math.max(0, amount - 1);
+  return amount;
+}
+
 export function dealDamage(attacker: ActorState, target: ActorState, amount: number, reflected = false): number {
   if (consumeToken(target, "deflect")) {
     attacker.hp = Math.max(0, attacker.hp - amount);
     return 0;
   }
 
-  if (consumeToken(attacker, "crit")) amount *= 2;
-  // 공격자 쪽 보정 셋(위력 +스택, 광란 +2, 침수 -1), 대상 쪽 보정 둘. tools/value.ts의 tokenWeights와 같은 눈금이다.
-  // 위력만 **소모되지 않는다** — 전투가 끝날 때까지 남으므로 `consumeToken`을 안 탄다(가시와 같은 자리다)
-  amount += attacker.tokens.might ?? 0;
-  if (consumeToken(attacker, "frenzy")) amount += 2;
-  if (consumeToken(attacker, "soaked")) amount = Math.max(0, amount - 1);
-  // 감전은 스택마다 +1로 이번 턴의 모든 피해를 키운다(턴 끝에 사라진다). 한 방에 소모되면 후속타가 없는
+  // 소모는 여기서 하고 산술은 `attackPreview`가 한다 — **카드 면이 부르는 것과 같은 함수다.**
+  // 소모 순서는 그대로다: 셋은 서로 다른 키라 순서가 상태를 안 바꾸고, 위력은 읽기만 한다
+  amount = attackPreview({
+    crit: consumeToken(attacker, "crit") ? 1 : 0,
+    might: attacker.tokens.might ?? 0,
+    frenzy: consumeToken(attacker, "frenzy") ? 1 : 0,
+    soaked: consumeToken(attacker, "soaked") ? 1 : 0,
+  }, amount);
+  // 대상 쪽 보정 둘. 감전은 스택마다 +1로 이번 턴의 모든 피해를 키운다(턴 끝에 사라진다). 한 방에 소모되면 후속타가 없는
   // 대상에서 그냥 버려져 기본 피해보다 못하다 — 제우스의 chain 여러 대상 타격과 맞물리는 자리다
   amount += target.tokens.shock ?? 0;
   // 표식만 소모되지 않는다 — 전투가 끝날 때까지 그 적이 1.5배로 맞는다. 그래서 스택이 아니라 배수다.
@@ -372,6 +388,15 @@ export function executeCard(state: GameState, card: Card, enemyId?: string, deck
    */
   const conditionTarget = targets[0];
   /**
+   * 지킴이가 대신 받았으면 그 사실을 남긴다 — `guardFor`는 안 바꾼다(반환값 비교로 이미 알 수 있다).
+   * 한 카드가 여러 번 지날 수 있다: `all_enemies`·`chain`은 대상마다 여기를 지난다
+   */
+  const aim = (target: ActorState) => {
+    const guard = guardFor(state.combat, target, card.reach);
+    if (guard !== target) state.combat.guarded.push({ by: guard.id, from: target.id });
+    return guard;
+  };
+  /**
    * 「무방비 피해」는 여기가 자리다 — P-25가 `guard`를 `dealDamage` **호출부**에 둔 것과 같은 줄이고,
    * `dealDamage`는 `GameState`를 모른다. 파워가 낸 피해로는 다시 터지지 않는다(그래야 순환이 없다)
    */
@@ -384,7 +409,7 @@ export function executeCard(state: GameState, card: Card, enemyId?: string, deck
   for (const effect of cardEffects(state, card)) {
     if (effect.when && !(conditionTarget && evaluateCondition(effect.when, { state, card, target: conditionTarget, deckCards }))) continue;
     const value = effect.value ?? 0;
-    if (effect.op === "damage") for (const target of targets) strike(card.target === "enemy" ? guardFor(state.combat, target, card.reach) : target, value);
+    if (effect.op === "damage") for (const target of targets) strike(card.target === "enemy" ? aim(target) : target, value);
     else if (effect.op === "block") state.combat.player.block += value;
     else if (effect.op === "draw") drawCards(state.combat, value, random);
     else if (effect.op === "energy") state.combat.energy += value;

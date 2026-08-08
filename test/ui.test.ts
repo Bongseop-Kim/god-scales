@@ -8,13 +8,15 @@ import { run } from "../sim/engine.ts";
 import type { RunResult } from "../sim/report.ts";
 import type { ReplayAction } from "../sim/replay.ts";
 import { bossLane, generateMap } from "../core/map.ts";
-import { App, patronPair } from "../ui/app.tsx";
+import { upgraded, type Card } from "../core/rules.ts";
+import { App, patronPair, RunOpening } from "../ui/app.tsx";
 import { cardArtCandidates, type CardArtSource } from "../ui/shared/art-keys.ts";
 import { conditionLabel } from "../ui/shared/card.tsx";
 import { BetScreen, DemandScreen, GraceScreen, OracleScreen, RestScreen } from "../ui/screens/choices.tsx";
 import { CombatScreen } from "../ui/screens/combat.tsx";
 import { replayPayload } from "../ui/shared/export.ts";
 import { StatusBar } from "../ui/shared/header.tsx";
+import { musicForScreen, playSound, sound } from "../ui/shared/sfx.ts";
 import { MapPanel, MapScreen } from "../ui/screens/map.tsx";
 import { RewardScreen } from "../ui/screens/reward.tsx";
 import { TokenDictionary } from "../ui/shared/tokens.tsx";
@@ -24,6 +26,8 @@ import { TokenDictionary } from "../ui/shared/tokens.tsx";
  * 그래서 화면이 실제로 부른 이름을 시트와 맞춘다. `tools/art.ts`는 반대쪽(시트에 28개가 다 들었나)을 센다
  */
 const sheetIds = new Set([...iconSheet.matchAll(/id="icon-([\w-]+)"/g)].map(([, id]) => id));
+/** 카드 원문. 강화 표기를 보는 두 테스트가 화면과 **같은 파일**에서 값을 읽는다 */
+const cards = cardDataJson as unknown as Card[];
 const unresolvedIcons = (markup: string) =>
   [...markup.matchAll(/href="#icon-([\w-]+)"/g)].map(([, id]) => id).filter((id) => !sheetIds.has(id));
 
@@ -126,7 +130,7 @@ describe("browser replay export", () => {
           tokens: { shock: 2 }, passives: { guard: 2 },
           intent: { damage: 9, token: "soaked", stacks: 1 },
         }],
-        hits: [], hitSeq: 0, promises: [],
+        hits: [], hitSeq: 0, guarded: [], promises: [],
       },
     } as never;
     const markup = renderToStaticMarkup(createElement(CombatScreen, { seed: 1, decision, onAnswer: () => {} }));
@@ -177,7 +181,7 @@ describe("browser replay export", () => {
         depth: 3, lane: 1, region: "underworld", floor: 4, hp: 44, maxHp: 92,
         patrons: ["zeus", "athena"], grid: [], favor: { zeus: 50, athena: 50 }, grace: {},
         turn: 5, block: 0, energy: 3, draw: 4, tokens: {}, hand: [], powers: [], enemies: [],
-        hits: [], hitSeq: 0,
+        hits: [], hitSeq: 0, guarded: [],
         promises: [
           { god: "athena", text: "여덟이다.", rule: "이 조우에서 잃은 체력 8 이하", current: 5, target: 8 },
           { god: "zeus", text: "둘은 맞아야 한다.", rule: "한 턴에 맞힌 적 2 이상", current: 2, target: 2, settled: "kept" },
@@ -213,7 +217,7 @@ describe("browser replay export", () => {
         patrons: ["zeus", "athena"], grid: [], favor: { zeus: 50, athena: 50 }, grace: {},
         turn: 2, block: 0, energy: 3, draw: 4, tokens: {}, hand: [], powers: [],
         enemies: [{ id: "enemy_under_boss", slot: 0, span: 2, hp: 100, maxHp: 130, block: 0, tokens: {}, passives: { ward: 2 }, intent: { damage: 6 } }],
-        hits: [], hitSeq: 0, promises: [],
+        hits: [], hitSeq: 0, guarded: [], promises: [],
       },
     } as never;
     const markup = renderToStaticMarkup(createElement(CombatScreen, { seed: 1, decision, onAnswer: () => {} }));
@@ -248,7 +252,7 @@ describe("browser replay export", () => {
         patrons: ["zeus", "athena"], grid: [], favor: { zeus: 40, athena: 40 }, grace: {},
         turn: 5, block: 0, energy: 3, draw: 4, tokens: {}, hand, powers: [],
         enemies: [{ id: "enemy_under_guardian", slot: 0, span: 1, hp: 20, maxHp: 30, block: 0, tokens: {}, passives: {}, intent: { damage: 9 } }],
-        hits: [], hitSeq: 0, promises: [],
+        hits: [], hitSeq: 0, guarded: [], promises: [],
         // 무대에 오른 카드. **`view.card`는 id다** — 그것을 그대로 문장에 넣으면 화면에 영문 id가 뜬다
         card: "card_zeus_19",
       },
@@ -288,6 +292,69 @@ describe("browser replay export", () => {
     expect(markup).not.toContain("card_zeus_19 ·");
   });
 
+  /**
+   * 강화와 토큰이 카드 면에 보이는가(P-62). 「작은 번개」는 원문이 피해 5고 `+1`이면 7이다 —
+   * 위력 3 · 광란이 붙은 손에서 실제로 나가는 값은 12다(`attackPreview`). 화면은 **원문과 지금 값
+   * 둘만** 적는다: 중간 단계(7)는 안 적는다
+   */
+  it("strikes the written value and stands up what the card will actually deal", () => {
+    const raised = upgraded(cards.find(({ id }) => id === "card_zeus_01")!, 1);
+    expect(raised.effects[0].value, "규칙이 5 → 7이다").toBe(7);
+    const decision = {
+      phase: "card",
+      options: [raised.id, endTurnAction],
+      bot: endTurnAction,
+      observation: {
+        depth: 3, lane: 1, region: "underworld", floor: 4, hp: 44, maxHp: 92,
+        patrons: ["zeus", "athena"], grid: [], favor: { zeus: 40, athena: 40 }, grace: {}, deck: [],
+        turn: 5, block: 0, energy: 3, draw: 4, tokens: { might: 3, frenzy: 1 }, powers: [],
+        hand: [{ id: raised.id, name: raised.name, cost: raised.cost, target: raised.target, effects: raised.effects }],
+        enemies: [{ id: "enemy_under_guardian", slot: 0, span: 1, hp: 20, maxHp: 30, block: 0, tokens: {}, passives: {}, intent: { damage: 9 } }],
+        hits: [], hitSeq: 0, guarded: [], promises: [],
+      },
+    } as never;
+    const markup = renderToStaticMarkup(createElement(CombatScreen, { seed: 1, decision, onAnswer: () => {} }));
+
+    // 원문 5는 취소선으로 남고 12가 크게 선다 — 취소선이 흑백에서도 남는 채널이라 색만으로 안 말한다
+    expect(markup).toContain("<s>5</s><b class=\"up\">12</b>");
+    expect(markup).not.toContain(">7<");
+    // `+N`은 이름에서 떨어져 배지가 됐다 — 캡션은 원문 이름이고 `aria-label`이 문장을 든다
+    expect(markup).toContain('<em class="card-up">+1</em>');
+    expect(markup).toContain(">작은 번개</small>");
+    expect(markup).toContain('aria-label="작은 번개+1 · 1 에너지 · ▮▮▮▮ 전체 · 피해 12"');
+  });
+
+  /**
+   * 쉼터의 강화 후보는 **고른 뒤와 같은 얼굴**로 선다 — 값은 `upgraded` 하나가 만들고,
+   * e2e가 읽는 `data-card`·`data-cost`·`data-damage` 셋은 덱에 실제로 있는 카드의 것 그대로다
+   */
+  it("shows the rest node's upgrade candidates as they will look once picked", () => {
+    const deck = ["card_zeus_01", "card_athena_01"].map((id) => {
+      const { name, cost, target, effects } = cards.find((card) => card.id === id)!;
+      return { id, name, cost, target, effects };
+    });
+    const decision = {
+      phase: "rest_card",
+      options: ["card_zeus_01"],
+      bot: "card_zeus_01",
+      observation: {
+        depth: 3, lane: 1, region: "underworld", floor: 4, hp: 44, maxHp: 92,
+        patrons: ["zeus", "athena"], grid: [], favor: { zeus: 40, athena: 40 }, grace: {}, deck,
+      },
+    } as never;
+    const markup = renderToStaticMarkup(createElement(RestScreen, { decision, upgrading: true, onAnswer: () => {} }));
+
+    expect(markup).toContain("<s>5</s><b class=\"up\">7</b>");
+    expect(markup).toContain('<em class="card-up">+1</em>');
+    // 클릭 계약은 덱의 id다 — 미리보기가 `card_zeus_01+1`을 실으면 e2e가 없는 카드를 고른다
+    expect(markup).toContain('data-card="card_zeus_01"');
+    expect(markup).not.toContain('data-card="card_zeus_01+1"');
+    // 못 고르는 칸(강화 후보가 아닌 카드)은 지금 얼굴 그대로다 — 거짓 약속을 안 한다
+    expect(markup.split('data-card="card_athena_01"')[1]).not.toContain("<s>");
+    // 제거 화면은 같은 `rest_card`지만 얼굴이 안 바뀐다
+    expect(renderToStaticMarkup(createElement(RestScreen, { decision, onAnswer: () => {} }))).not.toContain("<s>");
+  });
+
   // 첫 화면은 타이틀이다 — 메뉴 셋(시작·통계 링크·전체화면)이 서고, setup의 폼은 아직 없다
   it("renders the intro screen first", () => {
     const markup = renderToStaticMarkup(createElement(App));
@@ -300,6 +367,40 @@ describe("browser replay export", () => {
     // 「결정론적 덱빌딩 프로토타입」은 이제 사실도 아니다
     expect(markup).not.toContain("프로토타입");
     expect(markup).not.toContain("런 시작");
+  });
+
+  it("loops music only on the main and result screens", () => {
+    expect(musicForScreen("intro")).toContain("Beneath_the_Iron_Altar");
+    expect(musicForScreen("setup")).toBe(musicForScreen("intro"));
+    expect(musicForScreen("result")).toContain("Beneath_the_Golden_Banner");
+    for (const screen of ["opening", "map", "combat", "rest", "reward"]) expect(musicForScreen(screen), screen).toBeUndefined();
+
+    const markup = renderToStaticMarkup(createElement(App));
+    expect(markup).toContain("<audio");
+    expect(markup).toContain("loop=\"\"");
+  });
+
+  it("plays shipped effects at the requested volume", () => {
+    const nativeAudio = globalThis.Audio;
+    const wasEnabled = sound.enabled;
+    const made: { src: string; volume: number }[] = [];
+    globalThis.Audio = class {
+      volume = 1;
+      constructor(readonly src: string) { made.push(this); }
+      play() { return Promise.resolve(); }
+    } as unknown as typeof Audio;
+    try {
+      for (const name of ["card-place-4", "turn-end", "attack", "hit", "guard", "enemy-death"]) playSound(name, 0.12);
+      expect(made.map(({ src }) => src)).toEqual(expect.arrayContaining(["card-place-4", "turn-end", "attack", "hit", "guard", "enemy-death"].map((name) => expect.stringContaining(name))));
+      expect(made).toHaveLength(6);
+      expect(made.every(({ volume }) => volume === 0.12)).toBe(true);
+      sound.enabled = false;
+      playSound("card-slide-6");
+      expect(made).toHaveLength(6);
+    } finally {
+      sound.enabled = wasEnabled;
+      globalThis.Audio = nativeAudio;
+    }
   });
 
   it("renders the setup screen through React", () => {
@@ -319,13 +420,31 @@ describe("browser replay export", () => {
     expect(select.match(/data-pick="2"/g)).toHaveLength(1);
     // 선택한 둘만 헌신 능력을 짧게 보여 준다. 문장은 전투 상태 바와 같은 실제 효과 데이터에서 온다
     expect(select.match(/class="god-ability"/g)).toHaveLength(2);
-    expect(select).toContain("헌신 능력 · 시작 적 하나에게 피해 8 · 3턴마다 적 하나에게 감전 1");
-    expect(select).toContain("헌신 능력 · 시작 나에게 반사 1 · 3턴마다 나에게 방어 3");
+    expect(select).toContain("시작 적 하나에게 피해 8 · 3턴마다 적 하나에게 감전 1");
+    expect(select).toContain("시작 나에게 반사 1 · 3턴마다 나에게 방어 3");
     // 둘이므로 「런 시작」이 눌린다 — 폼 안에서 `disabled`가 붙는 자리는 그것 하나뿐이다.
     // 전역 아이콘의 덱·약속(P-53)은 런 밖이라 죽어 있다 — 지우지 않고 `disabled`가 정답이다(UI.md)
     expect(markup.match(/<form[\s\S]*<\/form>/)?.[0] ?? "").not.toContain("disabled");
+    // 호의 배분은 시작 화면에서 빠지고 시작 덱 설정 모달을 열어야 나온다
+    expect(markup).toContain("시작 덱 설정 · 10/10장");
+    expect(markup).not.toContain("시작 호의 배분");
     // 편집기는 한 방향 문이 아니다 — 조합을 하나로 줄여 슬롯을 비운 사람이 여기로 돌아온다
-    expect(markup).toContain("규칙 덱으로");
+    expect(markup).not.toContain("규칙 덱으로");
+  });
+
+  it("shows both selected gods before entering the run", () => {
+    const markup = renderToStaticMarkup(createElement(RunOpening, { patrons: ["zeus", "athena"], onDone: () => {} }));
+
+    expect(markup.match(/<video/g)).toHaveLength(2);
+    expect(markup).toContain("제우스");
+    expect(markup).toContain("아테나");
+    expect(markup).toContain("두 신이 한 인간의 운명을 두고 맞섭니다.");
+    expect(markup.match(/autoplay/gi)).toHaveLength(2);
+    expect(markup.match(/muted/gi)).toHaveLength(2);
+    expect(markup.match(/playsinline/gi)).toHaveLength(2);
+    expect(Object.keys(import.meta.glob("../art/gods/*.mp4")).map((path) => path.replace(/^.*\//, "")).sort()).toEqual([
+      "ares.mp4", "artemis.mp4", "athena.mp4", "poseidon.mp4", "zeus.mp4",
+    ]);
   });
 
   /**
@@ -422,7 +541,6 @@ describe("지도를 걷는다", () => {
       region,
       here: { depth, lane: bossLane },
       open: { depth: depth + 1, options: ["0:combat", "1:combat", "2:combat"] },
-      text: "무너진 다리를 건넌다",
       onEnter: () => {},
     }));
 
@@ -451,9 +569,9 @@ describe("지도를 걷는다", () => {
   it("결과 화면의 같은 격자는 눌리지 않는다", () => {
     const markup = renderToStaticMarkup(createElement(MapPanel, { grid, region: "underworld", taken: [] }));
     expect(markup).not.toContain("<button");
-    // 크기와 설명 줄은 `.walkable`에만 붙는다 — 결과 화면은 30px 칸 둘을 `0.8fr` 열에 나란히 세운다
+    // 크기는 `.walkable`에만 붙는다 — 경로 화면이 760px 판에 72px 칸을 깔아도 결과 화면은 30px 칸
+    // 둘을 `0.8fr` 열에 나란히 세운다
     expect(markup).not.toContain("walkable");
-    expect(markup).not.toContain("node-hint");
   });
 });
 

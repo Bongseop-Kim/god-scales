@@ -5,6 +5,7 @@ import type { MapDecision } from "../../sim/engine.ts";
 import { Backdrop, backdropArt, Flanks, Prop } from "../shared/backdrop.tsx";
 import { regionName } from "../shared/header.tsx";
 import { Icon } from "../shared/icon.tsx";
+import { playSound } from "../shared/sfx.ts";
 
 const laneName = ["왼쪽", "가운데", "오른쪽"];
 const nodeLabel: Record<MapNodeType, string> = { combat: "전투", elite: "정예", rest: "쉼터", omen: "예고", boss: "보스" };
@@ -16,8 +17,11 @@ const nodeDetail: Record<MapNodeType, string> = {
   boss: "지역의 끝입니다.",
 };
 
-/** 마커 이동. `motion`의 layout이 JS로 보간하므로 시간이 CSS에 없다 — `--ease-in-out`과 같은 곡선이다 */
-const markerTransition = { duration: 0.24, ease: [0.77, 0, 0.175, 1] } as const;
+/**
+ * 마커 이동. `motion`의 layout이 JS로 보간하므로 시간이 CSS에 없다 — `--ease-in-out`과 같은 곡선이다.
+ * 0.5초는 **걷는 속도다**(P-63) — 이 값이 곧 화면이 넘어가기까지의 대기이기도 하다
+ */
+const markerTransition = { duration: 0.5, ease: [0.77, 0, 0.175, 1] } as const;
 
 export function MapScreen({ decision, onChoosePath }: {
   decision: MapDecision;
@@ -45,7 +49,6 @@ export function MapScreen({ decision, onChoosePath }: {
             region={view.region}
             here={{ depth: view.depth - 1, lane: view.lane }}
             open={{ depth: view.depth, options: decision.options }}
-            text={view.text}
             onEnter={onChoosePath}
           />
           <Prop name={view.region === "surface" ? "surface_storm_cloud" : "under_tartarus_glow"} className="boss-signal" />
@@ -62,7 +65,7 @@ export function MapScreen({ decision, onChoosePath }: {
  * `onEnter`가 오면 **격자가 곧 조작 면이다** — 칸이 `<button>`이 되고 누르면 마커가 그 칸으로 걸어간
  * 다음에 화면이 넘어간다. 결과 화면은 그것을 안 주므로 같은 격자가 읽는 그림으로 남는다
  */
-export function MapPanel({ grid, region, open, here, taken = [], text, onEnter }: {
+export function MapPanel({ grid, region, open, here, taken = [], onEnter }: {
   grid: MapGrid;
   region: string;
   /** 지금 고를 수 있는 갈래. `"lane:type"` 그대로 든다 — 격자에서 되만들면 두 번째 진실이 생긴다 */
@@ -71,14 +74,10 @@ export function MapPanel({ grid, region, open, here, taken = [], text, onEnter }
   here?: { depth: number; lane: number };
   /** `depth` → 지나온 갈래. 결과 화면이 걸어온 길을 여기로 표시한다 */
   taken?: (number | undefined)[];
-  /** 아무 칸도 안 가리킬 때 설명 줄이 드는 문장 — 그 층의 문구다 */
-  text?: string;
   /** 열린 칸을 누를 수 있게 한다. 없으면 격자는 읽는 그림이다(결과 화면) */
   onEnter?: (option: string) => void;
 }) {
   const base = region === "surface" ? floorsPerRegion : 0;
-  /** 가리킨 칸의 종류. **hover와 focus 둘 다** 여기 들어온다 — hover만 보면 키보드·터치에서 설명이 사라진다 */
-  const [pointed, setPointed] = useState<MapNodeType>();
   /** 걸어가는 중인 갈래(`"lane:type"`). 서면 전 칸이 잠기고 마커가 그 칸으로 간다 */
   const [moving, setMoving] = useState<string>();
   const reducedMotion = useReducedMotion();
@@ -103,7 +102,12 @@ export function MapPanel({ grid, region, open, here, taken = [], text, onEnter }
   );
   return (
     <div className={`map-panel${onEnter ? " walkable" : ""}`}>
-      <h2>{regionName(region)} 6층 × 3갈래</h2>
+      {/**
+       * 제목은 **읽는 격자에만** 남는다(P-63). 경로 화면은 격자가 보이는데 격자의 크기를 글로 다시
+       * 적고 있었고, 지역은 상태 바가 든다. 결과 화면은 두 지역을 나란히 세우므로 어느 쪽이 저승인지를
+       * 말할 것이 이 줄뿐이다 — 여기서 지우면 격자 둘이 이름 없이 선다
+       */}
+      {!onEnter && <h2>{regionName(region)} 6층 × 3갈래</h2>}
       <ol>
         {/* 위에서 아래로 6층 → 1층. 오르는 방향과 화면 방향이 같다 */}
         {Array.from({ length: floorsPerRegion }, (_, index) => {
@@ -135,11 +139,11 @@ export function MapPanel({ grid, region, open, here, taken = [], text, onEnter }
                     disabled={!option || moving !== undefined}
                     // 격자에서는 위치가 곧 갈래다. 스크린리더에는 격자가 없으므로 갈래 이름이 여기 남는다
                     aria-label={`${laneName[lane]} · ${nodeLabel[type]} · ${nodeDetail[type]}`}
-                    onClick={() => (reducedMotion ? onEnter(option!) : setMoving(option))}
-                    onPointerEnter={() => setPointed(type)}
-                    onPointerLeave={() => setPointed(undefined)}
-                    onFocus={() => setPointed(type)}
-                    onBlur={() => setPointed(undefined)}
+                    onClick={() => {
+                      playSound("chips-handle-4", 0.45);
+                      if (reducedMotion) onEnter(option!);
+                      else setMoving(option);
+                    }}
                   >
                     <Icon name={type} />
                     <b>{nodeLabel[type]}</b>
@@ -162,8 +166,6 @@ export function MapPanel({ grid, region, open, here, taken = [], text, onEnter }
           </li>
         )}
       </ol>
-      {/* 가리킨 칸의 설명 한 줄. 아무것도 안 가리키면 그 층의 문구가 이 자리를 든다 */}
-      {text && <p className="node-hint">{pointed ? `${nodeLabel[pointed]} — ${nodeDetail[pointed]}` : text}</p>}
     </div>
   );
 }

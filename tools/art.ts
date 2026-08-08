@@ -53,7 +53,7 @@ const checks = [
       ...missingFrom(marker, ["marker"]),
       // 커서·파티클·아이콘은 제작 83개가 아니다(Kenney CC0 · game-icons.net CC BY). 쓰는 것만 이름을 잠근다
       ...missingFrom(particle, Object.values(tagParticle)),
-      ...missingFrom(cursor, ["tile_0026", "tile_0134", "tile_0044", "tile_0015"]),
+      ...missingFrom(cursor, ["tile_0026", "tile_0134", "tile_0015"]),
       ...missingFrom(symbols, iconIds),
     ],
   },

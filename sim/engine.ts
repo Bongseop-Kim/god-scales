@@ -269,8 +269,15 @@ export type CombatObservation = RunView & {
   enemies: EnemyView[];
   /** 지난 yield 이후 깎인 체력. `id`는 적 id 또는 `player` */
   hits: { id: string; amount: number }[];
+  /** 같은 hits를 만든 주체. 피해 연출이 신의 개입을 병사의 공격으로 오인하지 않게 한다 */
+  hitSource?: "attack" | "card" | "favor" | "enemy";
   /** hits가 새로 생길 때마다 오른다 — UI가 같은 팝을 두 번 재생하지 않게 하는 열쇠 */
   hitSeq: number;
+  /**
+   * 이 hits에서 지킴이가 대신 받은 피해. **새 seq를 만들지 않는다** — 재지정은 언제나 피해와 같은
+   * 프레임에 온다. 빈 배열이면 아무 일도 없었다는 뜻이다(`core/state.ts`의 `guarded`)
+   */
+  guarded: { by: string; from: string }[];
   /**
    * 지금 걸린 내기표. 신 조건 한 줄과 승부 카드 한 줄이 **같은 사실로 판정되므로** 같은 줄에 선다
    * (관망이면 빈 배열이다). 요구를 수락하고도 화면에 흔적이 없던 자리다
@@ -412,7 +419,9 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
   const targetSpread: ("single" | "multi")[] = [];
   const cardsPlayed: string[] = [];
   let hits: CombatObservation["hits"] = [];
+  let hitSource: CombatObservation["hitSource"];
   let hitSeq = 0;
+  let guarded: CombatObservation["guarded"] = [];
   const facts = { hit_targets_in_turn: 0, damage_taken: 0, tokens_applied: 0, tokens_applied_in_turn: 0, turns: 0, bet_kill: 0 };
   /** 찢긴 카드. 화면이 규칙(「진노인 신의 카드」)을 다시 계산하면 규칙이 갈릴 때 화면만 옛 자리에 남는다 */
   let torn: CombatObservation["torn"];
@@ -421,8 +430,8 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
   const healthBar = () => [["player", state.combat.player.hp] as const, ...state.combat.enemies.map(({ id, hp: enemyHp }) => [id, enemyHp] as const)];
   /** 함수 한 겹이 있어야 한다 — 안쪽 `while`이 `outcome`을 `"ongoing"`으로 좁혀 두고 `playCard`가 그 뒤에 바꾼다 */
   const won = () => state.combat.outcome === "victory";
-  /** `byCard`일 때만 맞은 적을 센다 — 출혈 도트는 이번 턴에 "친" 것이 아니다 */
-  const recordHits = (before: (readonly [string, number])[], byCard = false) => {
+  /** 카드일 때만 맞은 적을 센다 — 출혈 도트와 신의 개입은 이번 턴에 "친" 것이 아니다 */
+  const recordHits = (before: (readonly [string, number])[], source: NonNullable<CombatObservation["hitSource"]>) => {
     const now = new Map(healthBar());
     const damage = before.flatMap(([id, hp]) => {
       const lost = hp - (now.get(id) ?? hp);
@@ -430,10 +439,16 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
     });
     for (const { id, amount } of damage) {
       if (id === "player") facts.damage_taken += amount;
-      else if (byCard) turnTargets.add(id);
+      else if (source === "attack" || source === "card") turnTargets.add(id);
     }
+    // 재지정은 **플레이어 카드에서만** 난다 — 다른 출처의 프레임에 지난 카드의 기록이 남으면 화면이
+    // 적 턴 피해에 지킴이를 내보낸다. 피해가 없는 프레임에서도 다시 적는다(`return` 앞이다) — 안 그러면
+    // 지난 대신 맞기가 상태 줄(`combat.tsx`의 `guardLine`)에 계속 서 있다. `hits`·`hitSeq`는 반대다:
+    // seq가 안 오르면 화면이 아무것도 다시 재생하지 않고, 비우면 700ms 피해 팝이 날아가는 중에 사라진다
+    guarded = source === "attack" || source === "card" ? state.combat.guarded : [];
     if (!damage.length) return;
     hits = damage;
+    hitSource = source;
     hitSeq += 1;
   };
   /**
@@ -488,7 +503,9 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
       return [{ id: enemy.id, slot, span, hp: enemy.hp, maxHp: enemy.maxHp, block: enemy.block, tokens: { ...enemy.tokens }, passives, intent: pattern[enemy.patternIndex % pattern.length] }];
     }),
     hits,
+    hitSource,
     hitSeq,
+    guarded,
     promises: promiseViews(),
     ...(torn ? { torn } : {}),
   });
@@ -530,7 +547,7 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
       applyFavorStageEffects(state, patronGods(), "on_turn_start");
       // 개입이 준 방어도 쌓은 방어다 — 안 세면 `block_efficiency`의 분모가 빠져 효율이 1을 넘는다
       blockBuilt += state.combat.player.block - blockBefore;
-      recordHits(beforeAura);
+      recordHits(beforeAura, "favor");
       updateOutcome(state.combat);
     }
     while (state.combat.outcome === "ongoing") {
@@ -567,7 +584,7 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
       targetSpread.push(card.target === "all_enemies" || played.some(({ op }) => op === "chain") ? "multi" : "single");
       const beforeCard = healthBar();
       playCard(state, cardMap, cardId, target, random);
-      recordHits(beforeCard, true);
+      recordHits(beforeCard, card.tags.includes("attack") ? "attack" : "card");
       /**
        * 카드 조건. **이 카드가 판을 끝냈는가** 하나뿐이다 — `playCard`가 이미 `updateOutcome`을 지났으므로
        * 여기서 승리면 방금 낸 이 카드가 마지막 적을 눕힌 것이다. 같은 id가 여러 장이면 어느 장인지
@@ -602,7 +619,7 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
       const block = state.combat.player.block;
       const beforeTurn = healthBar();
       endTurn(state, enemyMap, random);
-      recordHits(beforeTurn);
+      recordHits(beforeTurn, "enemy");
       blockAbsorbed += Math.max(0, block - state.combat.player.block);
     }
   }

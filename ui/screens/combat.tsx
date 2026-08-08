@@ -4,7 +4,7 @@ import type { CSSProperties, Ref } from "react";
 import { ENERGY_PER_TURN, MAX_SLOTS, type EnemyAction } from "../../core/combat.ts";
 import { favorInitial, favorStage, godEnemyId, intervenesOnTurn, type FavorStage, type StageEffect } from "../../core/favor.ts";
 import { floorsPerRegion } from "../../core/map.ts";
-import type { PassiveName, Trigger } from "../../core/state.ts";
+import type { PassiveName, Tokens, Trigger } from "../../core/state.ts";
 import enemyDataJson from "../../data/enemies.json" with { type: "json" };
 import { endTurnAction, type CardView, type CombatDecision, type CombatObservation, type PromiseView } from "../../sim/engine.ts";
 import { tagParticle } from "../shared/art-keys.ts";
@@ -14,6 +14,7 @@ import { playSprite, shake, speak } from "../shared/fx.ts";
 import { godArt, godLine, godName, godStageEffects, godStageText, stageName } from "../shared/header.tsx";
 import { Icon, type IconName } from "../shared/icon.tsx";
 import { passiveName, tokenName, tokenSummary, TokenRow } from "../shared/tokens.tsx";
+import { playSound } from "../shared/sfx.ts";
 
 const spriteArt = import.meta.glob<string>("../../art/sprites/*.webp", { eager: true, query: "?url", import: "default" });
 const fxArt = import.meta.glob<string>("../../art/fx/*.webp", { eager: true, query: "?url", import: "default" });
@@ -26,15 +27,18 @@ const opParticle: Record<string, string> = { damage: "slash_01", block: "window_
 
 type EnemyInfo = { id: string; name: string; intent_visible: boolean };
 const enemyInfo = new Map((enemyDataJson as EnemyInfo[]).map((enemy) => [enemy.id, enemy]));
-const pop = { duration: 0.16, ease: [0.23, 1, 0.32, 1] } as const;
-/** 적이 사라지는 180ms. 셋이 둘이 되는 순간에 화면이 덜컥 올라오면 고장으로 읽힌다 */
-const exitPop = { duration: 0.18, ease: [0.23, 1, 0.32, 1] } as const;
-/** 손 → 무대 200ms. 들어오는 것이라 `--ease-out`과 같은 곡선이다 */
-const stageIn = { duration: 0.2, ease: [0.23, 1, 0.32, 1] } as const;
-const damagePop = { duration: 0.4, ease: [0.23, 1, 0.32, 1] } as const;
+const pop = { duration: 0.24, ease: [0.23, 1, 0.32, 1] } as const;
+/** 적이 쓰러지는 두 프레임을 보여 준 뒤 사라지는 500ms. popLayout이라 판은 즉시 닫힌다 */
+const exitPop = { duration: 0.5, ease: [0.23, 1, 0.32, 1] as const, times: [0, 0.6, 1] };
+/** 손 → 무대 300ms. 들어오는 것이라 `--ease-out`과 같은 곡선이다 */
+const stageIn = { duration: 0.3, ease: [0.23, 1, 0.32, 1] } as const;
+const damagePop = { duration: 0.7, ease: [0.23, 1, 0.32, 1] } as const;
 
-/** A-2.6 팝 400ms. hitSeq를 key로 써서 같은 피해가 두 번 튀지 않고, 새 피해는 다시 튄다 */
-function DamagePop({ hits, id, seq, still }: { hits: CombatObservation["hits"]; id: string; seq: number; still: boolean }) {
+/**
+ * A-2.6 팝 700ms. hitSeq를 key로 써서 같은 피해가 두 번 튀지 않고, 새 피해는 다시 튄다.
+ * `delay`는 대신 맞기(P-64)의 260ms — 지킴이가 도착하기 전에 숫자가 뜨면 인과가 거꾸로 읽힌다
+ */
+function DamagePop({ hits, id, seq, still, delay = 0 }: { hits: CombatObservation["hits"]; id: string; seq: number; still: boolean; delay?: number }) {
   const amount = hits.find((hit) => hit.id === id)?.amount;
   if (!amount) return null;
   return still
@@ -46,7 +50,7 @@ function DamagePop({ hits, id, seq, still }: { hits: CombatObservation["hits"]; 
         aria-hidden="true"
         initial={{ opacity: 0, scale: 0.7, y: 0 }}
         animate={{ opacity: [0, 1, 1, 0], scale: [0.7, 1.15, 1, 1], y: [0, -10, -16, -22] }}
-        transition={damagePop}
+        transition={{ ...damagePop, delay }}
       >
         -{amount}
       </m.span>
@@ -109,7 +113,7 @@ function sweepBanner(text: string): void {
   document.body.append(node);
   node.animate(
     [{ opacity: 0, transform: "scaleX(.2)" }, { opacity: 1, transform: "scaleX(1)", offset: 0.35 }, { opacity: 1, offset: 0.75 }, { opacity: 0 }],
-    { duration: 400, easing: "ease-out" },
+    { duration: 650, easing: "ease-out" },
   ).finished.finally(() => node.remove());
 }
 
@@ -150,16 +154,25 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
   /** 타겟팅 화살표의 출발점 — 무대 카드가 선 자리 */
   const stageRef = useRef<HTMLDivElement>(null);
 
+  /** 무대에 선 적 하나의 판. `data-enemy`가 그 열쇠다 — 적마다 ref를 다는 대신이다 */
+  const enemyNode = (id: string) => enemySide.current?.querySelector<HTMLElement>(`[data-enemy="${id}"]`);
+
   /** 개입이 때린/붙인 대상의 판. 카드 파티클이 쓰는 두 패널과 같은 자리, 한 칸 더 좁을 뿐이다 */
   const hostsFor = (target: StageEffect["target"]): HTMLElement[] => {
     if (target === "self") return playerSide.current ? [playerSide.current] : [];
     // `targets()`와 같은 규칙 — `enemy`는 앞의 산 적 하나다(`core/favor.ts`)
     const aimed = target === "enemy" ? view.enemies.slice(0, 1) : view.enemies;
     return aimed.flatMap(({ id }) => {
-      const node = enemySide.current?.querySelector<HTMLElement>(`[data-enemy="${id}"]`);
+      const node = enemyNode(id);
       return node ? [node] : [];
     });
   };
+
+  /**
+   * 이번 프레임에 대신 맞은 지킴이(P-64). 재지정이 둘 이상이어도 **한 번 나가서 한 번 버틴다** —
+   * 같은 지킴이가 두 대상 몫을 받는 것이 규칙이고, 화면도 한 동작이면 족하다
+   */
+  const guarded = view.guarded[0];
 
   /**
    * 조우 시작(1턴)과 개입 턴(2·5·8턴, `intervenesOnTurn`)에 컷인이 뜬다. 그 두 자리가 신이 실제로
@@ -168,7 +181,7 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
    *
    * **데이터가 있는 신만 선다.** 「조우 시작에는 극단 둘만」이던 옛 규칙은 평온이 그 자리에서 아무것도
    * 안 하던 시절의 것이다(P-46 §5가 채웠다) — 빈 문장이 곧 「이 신은 지금 아무 일도 안 한다」다.
-   * 겹침은 큐가 아니라 **순서**로 푼다: 신 하나씩 220ms 어긋난다
+   * 겹침은 큐가 아니라 **순서**로 푼다: 신 하나씩 320ms 어긋난다
    */
   useEffect(() => {
     const start = view.turn === 1;
@@ -186,7 +199,7 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
          */
         speak(start ? 2 : 1, god, godLine(god, start ? "encounter" : "intervene", start ? view.depth : view.turn, stage));
         const effects = godStageEffects(god, stage, hook);
-        // 「신이 적으로 합류」는 판이 뒤집히는 사건이라 480ms 페이드로 지나가면 안 된다 — 신 일러가 선다
+        // 「신이 적으로 합류」는 판이 뒤집히는 사건이라 800ms 페이드로 지나가면 안 된다 — 신 일러가 선다
         const joinEffect = effects.find(({ op }) => op === "join");
         const source = joinEffect ? godArt[`../../art/gods/${god}.webp`] : fxArt[`../../art/fx/${stage}.webp`];
         if (text && source) void playSprite(document.body, source, "cut", { god, stage, text: `${godName(god)} · ${stageName[stage]} — ${text}` });
@@ -197,7 +210,7 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
         if (joinEffect) {
           const joined = joinEffect.god ?? god;
           // 이 타이머도 `timers`에 든다 — 안 걷으면 화면·조우가 바뀐 뒤 묵은 외침이 선다
-          timers.push(setTimeout(() => speak(3, joined, godLine(joined, "join", view.depth), godArt[`../../art/gods/${joined}.webp`]), 480));
+          timers.push(setTimeout(() => speak(3, joined, godLine(joined, "join", view.depth), godArt[`../../art/gods/${joined}.webp`]), 800));
         }
         if (reducedMotion) return;
         // 피해 개입은 화면이 흔들린다. 진노만 크게 — `.fx`와 같은 WAAPI라 새 의존이 없다
@@ -210,7 +223,7 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
             if (sprite) void playSprite(host, sprite, "spark");
           }
         }
-      }, index * 220));
+      }, index * 320));
     });
     return () => { for (const timer of timers) clearTimeout(timer); };
   }, [view.turn]);
@@ -273,40 +286,91 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
   }, [decision]);
 
   /**
-   * 피격 연출(P-58) — 맞은 쪽 흰 플래시 120ms + 셰이크 4px, 때린 쪽 20px 전진.
-   * 「누가 때렸나」는 관측에 없으므로(관측은 맞은 쪽만 든다) **직전 렌더의 의도**로 귀속한다 —
-   * 적 턴 피해가 온 프레임에는 의도가 이미 다음 것으로 넘어가 있다. WAAPI의 `translate`·`filter`
-   * 속성은 motion이 쓰는 `transform`과 다른 채널이라 layout 애니메이션과 안 싸운다
+   * 피격 연출(P-58) — 맞은 쪽 흰 플래시 220ms + 셰이크 4px, 때린 쪽 20px 전진.
+   * 관측의 `hitSource`가 카드·신 개입·적 턴을 가른다. 적 공격자만 직전 렌더의 의도로 찾는다 — 적 턴
+   * 피해가 온 프레임에는 의도가 이미 다음 것으로 넘어가 있다. WAAPI의 `translate`·`filter` 속성은
+   * motion이 쓰는 `transform`과 다른 채널이라 layout 애니메이션과 안 싸운다
    */
   const prevAttackers = useRef<string[]>([]);
   useEffect(() => {
     const attackers = prevAttackers.current;
     prevAttackers.current = view.enemies.filter(({ intent }) => intent?.damage).map(({ id }) => id);
-    if (!view.hits.length || reducedMotion) return;
-    for (const { id } of view.hits) {
-      const node = id === "player" ? playerSide.current : enemySide.current?.querySelector<HTMLElement>(`[data-enemy="${id}"]`);
-      node?.animate([{ filter: "brightness(2.2)" }, { filter: "brightness(1)" }], { duration: 120, easing: "ease-out" });
-      node?.animate([{ translate: "-4px 0" }, { translate: "4px 0" }, { translate: "0 0" }], { duration: 200, easing: "ease-in-out" });
+    if (!view.hits.length) return;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const impactDelay = guarded ? 260 : 0;
+    if (view.hitSource === "attack" || view.hitSource === "enemy") playSound("attack", 0.35);
+    timers.push(setTimeout(() => playSound(guarded ? "guard" : "hit", 0.5), impactDelay));
+    if (view.hits.some(({ id }) => id !== "player" && !view.enemies.some((enemy) => enemy.id === id))) {
+      timers.push(setTimeout(() => playSound("enemy-death", 0.45), impactDelay + 120));
     }
-    // 병사가 쳤으면 병사가, 적 턴이면 직전 의도가 공격이던 적들이 나선다(160ms 전진 + 복귀)
-    if (view.hits.some(({ id }) => id !== "player")) {
-      playerSide.current?.animate([{ translate: "0 0" }, { translate: "20px 0", offset: 0.5 }, { translate: "0 0" }], { duration: 320, easing: "ease-out" });
+    if (reducedMotion) return () => { for (const timer of timers) clearTimeout(timer); };
+    const posed = new Set<HTMLElement>();
+    const pose = (node: HTMLElement | null | undefined, name: "attack" | "hit", duration: number) => {
+      if (!node) return;
+      node.dataset.pose = name;
+      posed.add(node);
+      timers.push(setTimeout(() => delete node.dataset.pose, duration));
+    };
+    /**
+     * 대신 맞기(P-64) — 지킴이가 원래 대상 앞으로 나가(260ms) 버티고(240ms) 돌아온다(300ms).
+     * 거리는 칸 차이 × 180px다(`style.css`의 `--slot` 간격) — DOM을 재지 않는다. 목표 칸 **앞**에서
+     * 멈춘다: 겹쳐 서면 누가 대신 맞았는지가 안 보인다. 쓰러진 지킴이는 칸이 없어 안 나선다(퇴장 연출이 든다)
+     */
+    const guardSlot = view.enemies.find(({ id }) => id === guarded?.by)?.slot;
+    const fromSlot = view.enemies.find(({ id }) => id === guarded?.from)?.slot;
+    if (guarded && guardSlot !== undefined && fromSlot !== undefined) {
+      const gap = (fromSlot - guardSlot) * 180;
+      const stop = `${gap - Math.sign(gap) * 40}px 0`;
+      enemyNode(guarded.by)?.animate(
+        [{ translate: "0 0" }, { translate: stop, offset: 0.325 }, { translate: stop, offset: 0.625 }, { translate: "0 0" }],
+        { duration: 800, easing: "ease-in-out" },
+      );
+      // 원래 대상 위에 「보호」 자국 한 장 — 흐름 밖 absolute라 판을 안 민다(UI.md). `playSprite`와 같은 꼴이다
+      const mark = document.createElement("span");
+      mark.className = "guard-mark";
+      mark.innerHTML = `<svg class="icon"><use href="#icon-guard" /></svg>`;
+      enemyNode(guarded.from)?.append(mark);
+      void mark.animate(
+        [{ opacity: 0 }, { opacity: 1, offset: 0.2 }, { opacity: 1, offset: 0.7 }, { opacity: 0 }],
+        { duration: 540, delay: 260, easing: "ease-out" },
+      ).finished.finally(() => mark.remove());
     }
-    if (view.hits.some(({ id }) => id === "player")) {
+    // 맞은 쪽은 지킴이가 **도착한 뒤에** 맞는다 — 그래야 인과가 읽힌다. 피해 팝도 같은 260ms다
+    timers.push(setTimeout(() => {
+      for (const { id } of view.hits) {
+        const node = id === "player" ? playerSide.current : enemyNode(id);
+        pose(node, "hit", 300);
+        node?.animate([{ filter: "brightness(2.2)" }, { filter: "brightness(1)" }], { duration: 220, easing: "ease-out" });
+        // 나가 있는 지킴이는 안 흔든다 — 셰이크가 미끄러짐과 같은 `translate` 채널이라 제자리로 튕긴다.
+        // 버팀은 「그 자리에서 흰 플래시」다(실측으로 잡은 자리다)
+        if (id !== guarded?.by) node?.animate([{ translate: "-4px 0" }, { translate: "4px 0" }, { translate: "0 0" }], { duration: 320, easing: "ease-in-out" });
+      }
+    }, impactDelay));
+    // 병사가 쳤으면 병사가, 적 턴이면 직전 의도가 공격이던 적들이 나선다(240ms 전진 + 복귀)
+    if (view.hitSource === "attack" && view.hits.some(({ id }) => id !== "player")) {
+      pose(playerSide.current, "attack", 350);
+      playerSide.current?.animate([{ translate: "0 0" }, { translate: "20px 0", offset: 0.5 }, { translate: "0 0" }], { duration: 480, easing: "ease-out" });
+    }
+    if (view.hitSource === "enemy" && view.hits.some(({ id }) => id === "player")) {
       for (const id of attackers) {
-        enemySide.current?.querySelector<HTMLElement>(`[data-enemy="${id}"]`)
-          ?.animate([{ translate: "0 0" }, { translate: "-20px 0", offset: 0.5 }, { translate: "0 0" }], { duration: 320, easing: "ease-out" });
+        const node = enemyNode(id);
+        pose(node, "attack", 350);
+        node?.animate([{ translate: "0 0" }, { translate: "-20px 0", offset: 0.5 }, { translate: "0 0" }], { duration: 480, easing: "ease-out" });
       }
     }
+    return () => {
+      for (const timer of timers) clearTimeout(timer);
+      for (const node of posed) delete node.dataset.pose;
+    };
   }, [view.hitSeq]);
 
   /**
-   * 턴 배너(P-58) — 「내 턴 / 적 턴」 400ms 스윕. 적 턴은 「턴 종료」 클릭이, 내 턴은 turn 증가가
-   * 낸다(적 턴 배너가 지나간 뒤 420ms). 줄인 모션에서는 안 낸다 — 장식이고 정보는 상태 바의 턴 수다
+   * 턴 배너(P-58) — 「내 턴 / 적 턴」 650ms 스윕. 적 턴은 「턴 종료」 클릭이, 내 턴은 turn 증가가
+   * 낸다(적 턴 배너가 지나간 뒤 700ms). 줄인 모션에서는 안 낸다 — 장식이고 정보는 상태 바의 턴 수다
    */
   useEffect(() => {
     if (reducedMotion || view.turn === 1) return;
-    const timer = setTimeout(() => sweepBanner("내 턴"), 420);
+    const timer = setTimeout(() => sweepBanner("내 턴"), 700);
     return () => clearTimeout(timer);
   }, [view.turn]);
 
@@ -316,6 +380,9 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
   const fan = view.hand.map((card, index) => ({ card, key: keys[index] })).filter((_, index) => index !== staged);
   /** 낼 수 있는 카드가 남았는가 — 에너지 젬 맥동(P-58)의 조건. 0이면 무채색(P-55) */
   const canPlay = phase === "card" && options.some((option) => option !== endTurnAction);
+  /** 이름이 데이터에서 오므로 조사를 문장에 박을 수 없다 — 받침이 있으면 「이」다 */
+  const guardName = guarded ? enemyInfo.get(guarded.by)?.name ?? guarded.by : "";
+  const guardLine = guardName && `${guardName}${(guardName.charCodeAt(guardName.length - 1) - 0xac00) % 28 ? "이" : "가"} 대신 맞았습니다.`;
 
   return (
     <>
@@ -355,6 +422,8 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
                 slot={slot}
                 hits={view.hits}
                 hitSeq={view.hitSeq}
+                // 지킴이가 나가 있는 동안은 숫자를 참는다(P-64) — 줄인 모션에서는 나가지 않으므로 0이다
+                popDelay={guarded && !reducedMotion ? 0.26 : 0}
                 enabled={targeting && options.includes(enemy.id)}
                 reducedMotion={!!reducedMotion}
                 onSelect={() => onAnswer(enemy.id)}
@@ -380,8 +449,11 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
             <b>{view.draw}</b>
           </span>
         </div>
-        {/* 평소엔 침묵한다 — 카드 단계는 화면이 이미 말한다. 대상 선택만 문장이 필요하다 */}
-        <p className="hint" role="status">{targeting ? "대상을 고르세요" : ""}</p>
+        {/**
+          * 평소엔 침묵한다 — 카드 단계는 화면이 이미 말한다. 대상 선택만 문장이 필요하다.
+          * 대신 맞기는 **글로도 남긴다**(P-64) — 연출을 꺼도 정보가 안 사라진다(UI.md)
+          */}
+        <p className="hint" role="status">{targeting ? "대상을 고르세요" : guardLine}</p>
         {/**
          * 무대. **흐름 밖 오버레이라 서고 사라져도 판이 안 덜컥인다**(UI.md 제1규칙) — 자리는
          * 병사와 적 진영 사이 비무장지대(`.stage`).
@@ -396,7 +468,8 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={reducedMotion ? { duration: 0 } : stageIn}
             >
-              <GameCard cardId={view.hand[staged].id} card={view.hand[staged]} />
+              {/* 무대 카드도 손패와 같은 얼굴이다 — 대상을 고르는 동안 숫자가 바뀌면 그게 더 나쁘다 */}
+              <GameCard cardId={view.hand[staged].id} card={view.hand[staged]} boost={view.tokens} />
             </m.div>
           )}
         </div>
@@ -411,6 +484,7 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
               <FanCard
                 key={key}
                 card={card}
+                boost={view.tokens}
                 index={index}
                 transition={transition}
                 disabled={targeting || !options.includes(card.id)}
@@ -445,8 +519,10 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
  * 흐려지는 카드를 눌러도 아무 일이 안 일어나고, e2e 드라이버는 그것을 첫 후보로 골라 1초 헛돈다
  * (실측 78회 × 1초). 사라지는 중이면 누를 수 없다 — 적 버튼과 같은 이유, 같은 한 줄이다
  */
-function FanCard({ card, index, transition, disabled, onSelect }: {
+function FanCard({ card, boost, index, transition, disabled, onSelect }: {
   card: CardView;
+  /** 플레이어의 지금 토큰 — 카드 면이 「지금 누르면 나갈 값」을 세운다 */
+  boost: Tokens;
   index: number;
   transition: { duration: number };
   disabled: boolean;
@@ -461,21 +537,23 @@ function FanCard({ card, index, transition, disabled, onSelect }: {
       exit={{ opacity: 0 }}
       transition={transition}
     >
-      <GameCard cardId={card.id} card={card} disabled={disabled || !present} onSelect={onSelect} />
+      <GameCard cardId={card.id} card={card} boost={boost} disabled={disabled || !present} onSelect={onSelect} />
     </m.div>
   );
 }
 
 /**
  * 적 하나. **컴포넌트로 나눈 이유는 `useIsPresent()` 하나다** — 퇴장 애니메이션 중인 버튼은 마지막
- * 렌더의 props를 그대로 들고 있어서, 대상 선택 중에 죽은 적은 180ms 동안 `disabled`가 아닌 채로 DOM에
+ * 렌더의 props를 그대로 들고 있어서, 대상 선택 중에 죽은 적은 퇴장 동안 `disabled`가 아닌 채로 DOM에
  * 남는다. e2e 드라이버(`tools/e2e.ts:52`)는 `!el.disabled`만 보므로 **죽은 적을 고르고** 1초 헛돈다
  */
-function EnemyButton({ enemy, slot, hits, hitSeq, enabled, reducedMotion, onSelect, ref }: {
+function EnemyButton({ enemy, slot, hits, hitSeq, popDelay, enabled, reducedMotion, onSelect, ref }: {
   enemy: CombatObservation["enemies"][number];
   slot: number;
   hits: CombatObservation["hits"];
   hitSeq: number;
+  /** 피해 팝을 늦추는 초 — 대신 맞기(P-64)가 도착할 시간이다 */
+  popDelay: number;
   enabled: boolean;
   reducedMotion: boolean;
   onSelect: () => void;
@@ -498,8 +576,9 @@ function EnemyButton({ enemy, slot, hits, hitSeq, enabled, reducedMotion, onSele
       // 칩 행의 높이는 애니메이션하지 않는다 — 적의 칸 이동만 보간해야 스프라이트가 상태 변화에 안 흔들린다
       layout={reducedMotion ? false : "position"}
       transition={reducedMotion ? { duration: 0 } : pop}
-      exit={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.92, transition: exitPop }}
+      exit={reducedMotion ? { opacity: 0 } : { opacity: [1, 1, 0], scale: [1, 1, 0.92], transition: exitPop }}
       className={enemy.span > 1 ? "enemy wide" : "enemy"}
+      data-pose={present ? undefined : "death"}
       // 개입 파티클이 맞은 판을 여기서 찾는다 — 적마다 ref를 하나 더 다는 대신이다(`popLayout`이 ref를 이미 쓴다)
       data-enemy={enemy.id}
       // 칸이 곧 자리다(P-55) — `--slot`이 지면 위 x를 정하고, 두 칸짜리는 `--span`이 중심을 옮긴다
@@ -531,7 +610,7 @@ function EnemyButton({ enemy, slot, hits, hitSeq, enabled, reducedMotion, onSele
         {passives.map(([id, stacks]) => <em key={id} className="passive"><Icon name={id} />{passiveName(id)} {stacks}</em>)}
         <TokenRow tokens={enemy.tokens} />
       </span>
-      <DamagePop hits={hits} id={enemy.id} seq={hitSeq} still={reducedMotion} />
+      <DamagePop hits={hits} id={enemy.id} seq={hitSeq} still={reducedMotion} delay={popDelay} />
     </m.button>
   );
 }

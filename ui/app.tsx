@@ -1,31 +1,68 @@
 // `domMax`는 `domAnimation` + drag + **layout**이다 — 적이 자리를 맞바꿀 때 미끄러지는 데 그 셋째가 필요하다
 import { AnimatePresence, LazyMotion, domMax, m, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
-import type { FormEvent } from "react";
+import type { CSSProperties, FormEvent } from "react";
 import type { GodId } from "../core/rules.ts";
 import { deckSize, endTurnAction, favorPool, gods, ruleDeck, runSteps, type Decision, type PatronPair } from "../sim/engine.ts";
 import type { ReplayAction } from "../sim/replay.ts";
 import type { RunResult } from "../sim/report.ts";
 import { BetScreen, DemandScreen, GraceScreen, OracleScreen, RestScreen } from "./screens/choices.tsx";
 import { CombatScreen } from "./screens/combat.tsx";
+import { CardSigns } from "./shared/card.tsx";
 import { IconSheet } from "./shared/icon.tsx";
 import { MapScreen } from "./screens/map.tsx";
 import { ResultScreen } from "./screens/result.tsx";
 import { RewardScreen } from "./screens/reward.tsx";
 import { FullscreenButton, IntroScreen, SetupScreen } from "./screens/setup.tsx";
-import { StatusBar } from "./shared/header.tsx";
+import { godName, StatusBar } from "./shared/header.tsx";
 import { DeckPanel, HelpPanel, JournalPanel, Overlay, type PromiseRecord } from "./shared/overlay.tsx";
-import { playSound, sound } from "./shared/sfx.ts";
+import { musicForScreen, playSound, sound } from "./shared/sfx.ts";
 import { TokenDictionary } from "./shared/tokens.tsx";
 import "./motion.css";
 import "./style.css";
 
 type Steps = Generator<Decision, RunResult, string>;
-/** 오버레이 넷. 열림 상태는 여기(App)가 든다 — URL·저장에 싣지 않으므로 새로고침하면 닫힌 상태다 */
-type OverlayKind = "tokens" | "help" | "deck" | "journal";
+/** 오버레이 다섯. 열림 상태는 여기(App)가 든다 — URL·저장에 싣지 않으므로 새로고침하면 닫힌 상태다 */
+type OverlayKind = "tokens" | "help" | "deck" | "journal" | "restart";
 
 /** 화면 전환 애니메이션의 key. 여기 없는 phase는 이름 그대로 자기 화면이다 */
 const screens: Partial<Record<Decision["phase"], string>> = { path: "map", rest_card: "rest", card: "combat", target: "combat" };
+const godVideos = import.meta.glob<string>("../art/gods/*.mp4", { eager: true, query: "?url", import: "default" });
+
+/** 선택한 두 신의 영상이 모두 끝나야 첫 지도가 열린다. 실패한 영상은 런을 가두지 않고 끝난 것으로 친다 */
+export function RunOpening({ patrons, onDone }: { patrons: PatronPair; onDone: () => void }) {
+  const finished = useRef(new Set<GodId>());
+  const finish = (god: GodId) => {
+    if (finished.current.has(god)) return;
+    finished.current.add(god);
+    if (finished.current.size === patrons.length) onDone();
+  };
+  return (
+    <div className="run-opening">
+      {patrons.map((god) => (
+        <figure key={god} style={{ "--god-color": `var(--${god})` } as CSSProperties}>
+          <video
+            autoPlay
+            muted
+            playsInline
+            preload="auto"
+            src={godVideos[`../art/gods/${god}.mp4`]}
+            onEnded={() => finish(god)}
+            onError={() => finish(god)}
+          />
+        </figure>
+      ))}
+      <div className="opening-story">
+        <strong>
+          <b style={{ color: `var(--${patrons[0]})` }}>{godName(patrons[0])}</b>
+          <i>VS</i>
+          <b style={{ color: `var(--${patrons[1]})` }}>{godName(patrons[1])}</b>
+        </strong>
+        <p>두 신이 한 인간의 운명을 두고 맞섭니다.</p>
+      </div>
+    </div>
+  );
+}
 
 /**
  * 화면 전환. **런 하나에 약 36번 돈다** — `mode="wait"`가 퇴장이 끝난 뒤에 등장을 붙이므로 한 번의
@@ -64,6 +101,7 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
   const [split, setSplit] = useState(favorPool / 2);
   const [actions, setActions] = useState<ReplayAction[]>([]);
   const [pending, setPending] = useState<Decision>();
+  const [opening, setOpening] = useState<PatronPair>();
   const [result, setResult] = useState<RunResult>();
   const [soundEnabled, setSoundEnabled] = useState(sound.enabled);
   const [overlay, setOverlay] = useState<OverlayKind>();
@@ -71,11 +109,13 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
   const [journal, setJournal] = useState<PromiseRecord[]>([]);
   /** 같은 확정을 두 번 쌓지 않는다 — `settled`는 확정 뒤에도 매 관측에 그대로 실려 온다 */
   const settledSeen = useRef(new Set<string>());
+  const music = useRef<HTMLAudioElement>(null);
   const steps = useRef<Steps>(null);
   // 퇴장 애니메이션 중인 카드의 onClick은 옛 pending을 클로저에 들고 있다. 판정은 언제나 최신 결정으로 한다
   const latest = useRef<Decision>(null);
   const reducedMotion = useReducedMotion();
-  const screen = intro ? "intro" : result ? "result" : pending ? screens[pending.phase] ?? pending.phase : "setup";
+  const screen = intro ? "intro" : opening ? "opening" : result ? "result" : pending ? screens[pending.phase] ?? pending.phase : "setup";
+  const musicUrl = musicForScreen(screen);
   const pair = picked.length === 2 ? patronPair(picked) : undefined;
   /** 편집기가 그리는 열 장. 손대지 않았으면 규칙이 뽑은 것 그대로다 */
   const startingDeck = deck ?? (pair ? ruleDeck(pair) : []);
@@ -117,10 +157,16 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
     setPatrons(pair);
     // `deck`을 그대로 넘긴다 — 손대지 않은 `undefined`가 곧 규칙 덱이다
     steps.current = runSteps(nextSeed, undefined, pair, deck, split);
-    const step = steps.current.next();
+    if (reducedMotion) enterRun();
+    else setOpening(pair);
+    playSound("chips-handle-4", 0.45);
+  };
+
+  const enterRun = () => {
+    const step = steps.current!.next();
+    setOpening(undefined);
     if (step.done) setResult(step.value);
     else show(step.value);
-    playSound("start");
   };
 
   // 엔진이 물은 phase 그대로 답한다. UI는 게임 상태를 갖지 않는다 — 그린 것은 전부 마지막 yield의 observation이다
@@ -128,7 +174,12 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
     const current = latest.current;
     // options에 없는 값은 엔진에 보내지 않는다. 이미 지나간 결정에 눌린 카드가 여기서 걸린다
     if (!current || !steps.current || !current.options.includes(choice)) return;
+    if (choice === endTurnAction) playSound("turn-end", 0.3);
     const step = steps.current.next(choice);
+    // 마지막 적은 다음 combat 관측 없이 곧장 보상/결과로 넘어가므로 CombatScreen의 퇴장 effect가 못 본다.
+    const leftWonCombat = (current.phase === "card" || current.phase === "target" || current.phase === "oracle")
+      && (step.done ? step.value.won : step.value.phase !== "card" && step.value.phase !== "target" && step.value.phase !== "oracle");
+    if (leftWonCombat) playSound("enemy-death", 0.45);
     setActions((all) => [...all, { type: current.phase, choice } as ReplayAction]);
     if (step.done) {
       show(undefined);
@@ -167,6 +218,35 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
     // `answer`·`latest`는 ref와 안정한 setState만 만진다 — 한 번 걸면 된다
   }, []);
 
+  useEffect(() => {
+    const player = music.current;
+    if (!player) return;
+    const play = () => {
+      if (sound.enabled) void player.play().catch(() => {});
+    };
+    if (!musicUrl || !soundEnabled) {
+      player.pause();
+      return;
+    }
+    play();
+    // 첫 클릭은 브라우저의 자동 재생 제한을 푼다. 이미 재생 중이면 play()는 그대로 이어 간다.
+    document.addEventListener("click", play, { once: true });
+    return () => document.removeEventListener("click", play);
+  }, [musicUrl, soundEnabled]);
+
+  /**
+   * 런이 도는 동안에만 새로고침·탭 닫기를 한 번 묻는다(P-65). **문구는 브라우저 것이다** — 앱이 할 수
+   * 있는 것은 「물어보게 만드는 것」까지라 우리 문장을 시도하지 않는다. 결과·시작·타이틀에서는 안 건다:
+   * 거기서는 버릴 것이 없고, `tools/e2e.ts`가 탭을 닫는 것도 결과 화면(= `pending` 없음)이다
+   */
+  const running = Boolean(pending);
+  useEffect(() => {
+    if (!running) return;
+    const ask = (event: BeforeUnloadEvent) => event.preventDefault();
+    addEventListener("beforeunload", ask);
+    return () => removeEventListener("beforeunload", ask);
+  }, [running]);
+
   // 셋째를 누르면 가장 오래된 것이 빠진다 — 「먼저 해제하세요」를 만들지 않는다
   const toggleGod = (god: GodId) =>
     setPicked((now) => (now.includes(god) ? now.filter((id) => id !== god) : [...now, god].slice(-2)));
@@ -178,41 +258,59 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
   };
 
   // 시작·결과는 런당 한 번뿐이라 길어도 된다. 나머지 여섯 화면은 ~36번 도는 자리라 짧다
-  const slow = screen === "intro" || screen === "setup" || screen === "result";
-  const enter = reducedMotion ? { duration: 0 } : screenTransition(slow ? 0.32 : 0.16);
-  const leave = reducedMotion ? { duration: 0 } : screenTransition(slow ? 0.32 : 0.12);
+  const slow = screen === "intro" || screen === "setup" || screen === "opening" || screen === "result";
+  const enter = reducedMotion ? { duration: 0 } : screenTransition(slow ? 0.4 : 0.26);
+  const leave = reducedMotion ? { duration: 0 } : screenTransition(slow ? 0.4 : 0.2);
 
   return (
     <LazyMotion features={domMax}>
       {/* 아이콘 시트는 **화면 전환 밖**에 선다 — `AnimatePresence` 안에 넣으면 전환마다 `<use>`가 가리킬
           대상이 사라졌다 다시 생긴다 */}
       <IconSheet />
+      <audio ref={music} src={musicUrl} autoPlay={soundEnabled && !!musicUrl} loop preload="auto" />
       {/* 아이콘 시트와 같은 이유로 전환 밖이다 — 열 화면 어디에나 같은 자리에 서야 한다. 인트로만 예외:
           메뉴에 큰 것이 서므로 구석의 작은 것은 중복이다 */}
-      {screen !== "intro" && <FullscreenButton />}
+      {screen !== "intro" && screen !== "opening" && <FullscreenButton />}
       {/**
         * 전역 아이콘 셋(P-53) — 우상단 fixed, 셸 밖, zoom 미적용. 소리 토글은 시작 화면의
         * 버튼을 대체했다. 덱·약속 둘은 상태 바(P-54)로 이사했다 — 런 밖에는 덱도 약속도 없다
         */}
-      <nav className="global-icons" aria-label="전역 메뉴">
-        <button type="button" aria-pressed={soundEnabled} onClick={toggleSound}>{soundEnabled ? "소리 켜짐" : "소리 꺼짐"}</button>
-        <button type="button" onClick={() => setOverlay("tokens")}>토큰</button>
-        <button type="button" onClick={() => setOverlay("help")}>도움말</button>
-      </nav>
+      {screen !== "opening" && (
+        <nav className="global-icons" aria-label="전역 메뉴">
+          <button type="button" aria-pressed={soundEnabled} onClick={toggleSound}>{soundEnabled ? "소리 켜짐" : "소리 꺼짐"}</button>
+          <button type="button" onClick={() => setOverlay("tokens")}>토큰</button>
+          <button type="button" onClick={() => setOverlay("help")}>도움말</button>
+        </nav>
+      )}
       {/**
         * 상단 상태 바(P-54) — 여덟 런 화면의 값(체력·호의·위치·덱·약속)을 하나가 든다.
         * **화면 전환 밖**이다: 안에 넣으면 런당 ~36번 다시 서고 경계 펄스의 ref가 그때마다 리셋된다
         */}
-      {pending && (
+      {pending && !opening && (
         <StatusBar
           view={pending.observation}
           turn={"turn" in pending.observation ? pending.observation.turn : undefined}
           block={"block" in pending.observation ? pending.observation.block : undefined}
           onOverlay={setOverlay}
+          onRestart={() => setOverlay("restart")}
         />
       )}
+      {/**
+        * 런을 버리는 확인(P-65). `confirm()`을 안 쓴다 — 커서 넷·픽셀 서체·청동 틀이 전부 죽고
+        * 게임 안에서 유일하게 OS가 말하는 자리가 된다. Esc·바깥 클릭·×는 셸이 이미 취소로 든다
+        */}
+      {overlay === "restart" && (
+        <Overlay title="다시 시작" onClose={() => setOverlay(undefined)}>
+          <p>진행 중인 런을 버립니다. 처음부터 시작할까요?</p>
+          <div className="actions">
+            <button className="primary" type="button" onClick={() => { setOverlay(undefined); reset(); }}>다시 시작</button>
+            <button type="button" onClick={() => setOverlay(undefined)}>취소</button>
+          </div>
+        </Overlay>
+      )}
+      {/* 제목만 「토큰과 기호」다(P-61) — 전역 버튼 라벨(「토큰」)과 단축키 `T`는 그대로다: 버튼 글자가 길어지면 우상단 줄의 폭이 흔들린다 */}
       {overlay === "tokens" && (
-        <Overlay title="상태 토큰" onClose={() => setOverlay(undefined)}><TokenDictionary /></Overlay>
+        <Overlay title="토큰과 기호" onClose={() => setOverlay(undefined)}><TokenDictionary><CardSigns /></TokenDictionary></Overlay>
       )}
       {overlay === "help" && (
         <Overlay title="도움말" onClose={() => setOverlay(undefined)}><HelpPanel /></Overlay>
@@ -240,7 +338,7 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
           animate={{ opacity: 1, y: 0, transition: enter }}
           exit={{ opacity: 0, y: -6, transition: leave }}
         >
-          {screen === "intro" && <IntroScreen onStart={() => setIntro(false)} />}
+          {screen === "intro" && <IntroScreen onStart={() => { playSound("chips-handle-4", 0.45); setIntro(false); }} />}
           {screen === "setup" && (
             <SetupScreen
               picked={picked}
@@ -254,6 +352,7 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
               onStart={start}
             />
           )}
+          {screen === "opening" && opening && <RunOpening patrons={opening} onDone={enterRun} />}
           {pending?.phase === "path" && (
             <MapScreen decision={pending} onChoosePath={answer} />
           )}
@@ -261,7 +360,8 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
             <CombatScreen seed={seed} decision={pending} onAnswer={answer} onOpenJournal={() => setOverlay("journal")} />
           )}
           {(pending?.phase === "rest" || pending?.phase === "rest_card") && (
-            <RestScreen decision={pending} onAnswer={answer} />
+            /* 직전 답이 곧 갈래다 — `rest_card`는 그 답 **바로 다음** 결정이고 `heal`은 여기를 안 지난다 */
+            <RestScreen decision={pending} upgrading={actions.at(-1)?.choice === "upgrade"} onAnswer={answer} />
           )}
           {pending?.phase === "reward" && (
             <RewardScreen decision={pending} onAnswer={answer} />

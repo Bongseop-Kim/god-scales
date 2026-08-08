@@ -67,7 +67,7 @@
 /**
  * 게임 화면은 페이지 스크롤이 없다. FX·컷인이 잠깐 뷰포트를 삐져나가도 스크롤바가 깜빡이면 안 되므로
  * 루트에서 `clip`으로 자른다 — `hidden`과 달리 프로그램 스크롤조차 불가능하다.
- * 스크롤이 필요한 곳(`.deck-editor .hand`, `.combat-log ol`)은 각자 `overflow: auto`를 가진다
+ * 스크롤이 필요한 곳(`.overlay-body`)만 세로 `overflow: auto`를 가진다
  */
 /* 다크 테마 게임인데 스크롤바만 OS 라이트로 뜨면 튄다 — 브라우저 내장 다크 스크롤바(및 폼 컨트롤)를 쓴다 */
 html { overflow: clip; color-scheme: dark; }
@@ -79,16 +79,16 @@ button, input { font: inherit; }
 button { color: inherit; cursor: pointer; }
 
 /**
- * 커서 넷. **핫스팟이 상태마다 다르다** — 화살표는 촉이 좌상단이라 `0 0`, 손은 검지 끝이라 `5 0`,
- * 조준·금지는 원 중심이라 `8 8`이다. `0 0`으로 통일하면 눌리는 자리와 보이는 자리가 어긋난다.
+ * 커서 넷. **핫스팟이 상태마다 다르다** — 2배 자산이라 화살표는 `0 0`, 손은 `10 0`,
+ * 조준·금지는 원 중심인 `32 32`·`16 16`이다. `0 0`으로 통일하면 눌리는 자리와 보이는 자리가 어긋난다.
  * 폴백 키워드를 반드시 뒤에 붙인다 — PNG를 못 읽는 환경에서 커서가 아예 사라진다
  */
 body { cursor: url(../art/cursor-pixel/tile_0026.png) 0 0, auto; }
-button:not(:disabled) { cursor: url(../art/cursor-pixel/tile_0134.png) 5 0, pointer; }
-button:disabled { cursor: url(../art/cursor-pixel/tile_0015.png) 8 8, not-allowed; }
-/* 적 버튼은 `targeting`일 때만 눌린다 — 케니 크로스헤어(32px, 핫스팟 중앙)가 「지금 대상을 고르는 중」을 말한다 */
-.stage-field.aiming { cursor: url(../art/kenney/crosshair-030-32.png) 16 16, crosshair; }
-.enemy:not(:disabled) { cursor: url(../art/kenney/crosshair-030-32.png) 16 16, crosshair; }
+button:not(:disabled) { cursor: url(../art/cursor-pixel/tile_0134.png) 10 0, pointer; }
+button:disabled { cursor: url(../art/cursor-pixel/tile_0015.png) 16 16, not-allowed; }
+/* 적 버튼은 `targeting`일 때만 눌린다 — 케니 크로스헤어(64px, 핫스팟 중앙)가 「지금 대상을 고르는 중」을 말한다 */
+.stage-field.aiming { cursor: url(../art/kenney/crosshair-030-64.png) 32 32, crosshair; }
+.enemy:not(:disabled) { cursor: url(../art/kenney/crosshair-030-64.png) 32 32, crosshair; }
 
 /**
  * 배경은 화면 뒤 한 장이다. **`.shell` 바깥에 서고 `fixed`다** — 안에 넣으면 `tools/e2e.ts`의
@@ -160,9 +160,10 @@ dialog.overlay.wide { width: 920px; }
 dialog.overlay::backdrop { background: rgba(9, 11, 17, .68); }
 .overlay-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
 .overlay-head h2 { margin: 0; font-size: 1.2rem; }
-.overlay-head button { padding: 2px 10px; font-size: 1rem; line-height: 1.4; }
-/* 스크롤은 본문만 갖는다 — 루트 `clip` 규칙의 예외는 언제나 안쪽 영역이다 */
-.overlay-body { overflow-y: auto; max-height: calc(100vh - 220px); }
+.overlay-actions { display: flex; gap: 8px; }
+.overlay-actions button { padding: 2px 10px; font-size: 1rem; line-height: 1.4; }
+/* 스크롤은 본문 세로 한 축만 갖는다 — 카드 줄은 넘치지 않고 다음 줄로 감긴다 */
+.overlay-body { overflow-x: hidden; overflow-y: auto; max-height: calc(100vh - 220px); }
 
 /* 토큰 사전 — 배지 38 + 이름 + 지속 + 효과 한 줄. 값은 전부 `tokenStyle`에서 온다 */
 .token-dictionaries { display: grid; gap: 10px; }
@@ -171,8 +172,15 @@ dialog.overlay::backdrop { background: rgba(9, 11, 17, .68); }
 .token-dict li { display: grid; grid-template-columns: 38px 72px 76px 1fr; align-items: center; gap: 12px; font-size: .84rem; }
 .token-dict em { color: #9298aa; font-style: normal; font-size: .74rem; }
 .token-dict span { color: #b9bdc9; }
-.token-dict .passive-icon { display: grid; width: 38px; height: 38px; place-items: center; border: 1px solid #4a4260; border-radius: 50%; color: #bfa8e0; background: #181c27; }
+.token-dict .passive-icon { display: grid; width: 38px; height: 38px; place-items: center; border: 1px solid #75658c; border-radius: 8px; color: #d1b9f0; background: #211d2c; }
 .token-dict .passive-icon .icon { width: 20px; height: 20px; }
+/**
+ * 셋째 목록 — 카드 면의 기호(P-61). 두 칸이다: 기호 하나 + 문구. **그림은 카드가 쓰는 클래스 그대로**라
+ * 카드 면이 바뀌면 사전도 같이 바뀐다. 카드에서 절대 배치인 둘만 여기서 줄 안에 세운다
+ */
+.sign-dict li { grid-template-columns: 92px 1fr; }
+.sign-dict .sign { display: flex; align-items: center; gap: 6px; min-height: 30px; --frame: #c6a969; }
+.sign-dict .cost-gem, .sign-dict .card-kind { position: static; }
 
 /* 도움말 여섯 항목 */
 .help-list { display: grid; gap: 14px; margin: 0; }
@@ -204,6 +212,10 @@ dialog.overlay::backdrop { background: rgba(9, 11, 17, .68); }
 .intro header { display: block; }
 .intro-menu { display: grid; gap: 12px; width: 220px; }
 .intro-menu button, .intro-menu a { padding: 14px 22px; font-size: 1.05rem; text-align: center; }
+/* 진입 CTA 둘만 계단형 청동 틀을 쓴다. 3px outset은 모서리를 버튼 경계 밖까지 온전히 펼친다 */
+:is(.intro-menu, .setup-row) .primary { color: #f0d694; border-width: 10px; border-image: url(../art/kenney/panel-transparent-center-022-bronze.png) 16 / 10px / 3px round; background: linear-gradient(#2b2930, #14161d); box-shadow: 0 8px 24px rgba(0, 0, 0, .45), 0 0 16px rgba(198, 169, 105, .12); letter-spacing: .08em; text-shadow: 0 1px #000; transition: transform 120ms ease; }
+:is(.intro-menu, .setup-row) .primary:not(:disabled):hover { transform: translateY(-2px); }
+:is(.intro-menu, .setup-row) .primary:focus-visible { outline: 2px solid #f5dd9a; outline-offset: 7px; }
 /* 시뮬 통계는 페이지 이동이라 `<a>`다 — 메뉴에서는 버튼과 같은 얼굴로 선다 */
 .intro-menu a { border: 1px solid #454c5f; border-radius: 8px; background: #1c2130; color: inherit; text-decoration: none; }
 .eyebrow { margin: 0 0 8px; color: #c6a969; font-size: .78rem; font-weight: 750; letter-spacing: .14em; text-transform: uppercase; }
@@ -234,10 +246,10 @@ h2 { font-weight: 500; }
 /* 디바이더 — 청동 그라데이션이 위→아래로 흐른다(2.6s). 줄인 모션에서는 정지 */
 .god-divider { width: 2px; margin: 16px 7px; background: linear-gradient(180deg, transparent, #c6a969 50%, transparent) 0 0 / 100% 300%; animation: divider-flow 2.6s linear infinite; }
 @keyframes divider-flow { to { background-position: 0 300%; } }
-/* 하단 한 줄 — 배분 슬라이더 · 덱 편집기(접힘) · 런 시작 오른쪽 끝 */
-.setup-row { display: flex; align-items: start; gap: 20px; width: 100%; margin-top: 18px; }
-.setup-row .split-field { max-width: 500px; margin-bottom: 0; }
-.setup-row .deck-editor { flex: 1; width: auto; margin-bottom: 0; }
+/* 하단 한 줄 — 런 시작은 중앙 CTA, 덱 설정은 오른쪽 보조 행동 */
+.setup-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; width: 100%; margin-top: 18px; }
+.setup-row .primary { grid-column: 2; min-width: 180px; padding: 14px 28px; font-size: 1.05rem; }
+.deck-editor-trigger { grid-column: 3; grid-row: 1; justify-self: end; }
 /**
  * 배분 슬라이더. **저울이므로 라벨이 양 끝이고 트랙이 그 사이다** — 한 숫자가 둘을 정한다는 것이
  * 그림으로 서야 한다. 눈금 셋(70·30·10)은 React가 `favorBoundaries`에서 넣는다
@@ -261,33 +273,45 @@ button { padding: 12px 18px; border: 1px solid #454c5f; border-radius: 8px; back
 button:not(:disabled):hover { border-color: #c6a969; }
 /* 주요 버튼의 케니 스킨(P-54 §3). `.kbtn`이 아니라 `.primary`에 건다 — 주요 버튼은 이미 전부 `.primary`다 */
 .primary { color: #18130b; border: 8px solid transparent; border-radius: 0; border-image: url(../art/kenney/panel-border-010-bronze.png) 16 / 8px round; image-rendering: pixelated; background: #c6a969; font-weight: 750; }
+/* 있어야 하지만 눈이 먼저 닿으면 안 되는 행동(반출). `.fullscreen`·`.global-icons`와 같은 40% 물러남이다 */
+.ghost { padding: 6px 12px; border-color: transparent; background: none; font-size: .72rem; opacity: .4; }
+.ghost:not(:disabled):hover { opacity: 1; }
 .hint { margin-top: 14px; color: #777e90; font-size: .8rem; }
 /**
- * 시작 덱 편집기. **접힘이 기본이라**(`<details>`) 시작 화면은 한 눈금(1440×900)을 그대로 지킨다 —
- * 펼치면 넘치므로 목록 쪽만 스크롤을 갖는다. `.setup`이 `justify-items: start`라 폭은 여기서 편다
+ * 시작 덱 편집기. 네이티브 모달 안에 서므로 시작 화면을 밀지 않는다. 스크롤은 모달 본문 하나가 맡는다
  */
-.deck-editor { justify-self: stretch; width: 100%; margin-bottom: 22px; }
-.deck-editor summary { cursor: pointer; color: #b9bdc9; font-size: .8rem; }
+.deck-editor { width: 100%; }
+.deck-editor .split-field { max-width: none; }
 .deck-editor .hint { max-width: 590px; margin: 14px 0; }
 .deck-editor .god-legend { margin-bottom: 14px; }
-/* 「규칙 덱으로」 하나뿐이다 — 슬롯과 신 탭 사이에 서서 손댄 것을 되돌린다 */
-.deck-editor > button { margin-bottom: 14px; }
-/* 124장이 한 화면을 넘는다 — 스크롤은 목록에만 준다. 슬롯 열 칸은 언제나 눈에 남아야 한다 */
-.deck-editor .hand { max-height: 44vh; overflow-y: auto; }
 .deck-slots { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 18px; }
 .deck-slots .slot { display: grid; gap: 3px; }
 /* 조합 밖 신의 카드. 글자로 적는다 — 색만으로는 흑백에서 규칙이 사라진다(R-26) */
 .deck-slots .alien .game-card { opacity: .72; }
 .deck-slots .alien em { color: #c6a969; font-size: .68rem; font-style: normal; text-align: center; }
-/* 테두리는 진영, 안쪽 고리는 신, 바깥 고리는 지속 — 셋이 겹치지 않는 채널을 하나씩 갖는다 */
-.token-badge { position: relative; display: grid; width: 38px; height: 38px; place-items: center; border: 1px solid currentColor; border-radius: 50%; background: #181c27; box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--token-color) 60%, transparent); }
-/* 색만으로 진영을 말하면 색각 이상에서 사라진다 — 해로움은 채움, 이로움은 외곽이다 */
+/**
+ * 토큰 배지. 38px 크기와 채널 넷은 그대로다 — 진영은 배경 채움·테두리, 지속은 밑변 띠,
+ * 종류는 아이콘 색, 스택은 겹. 얇은 CSS 테두리라 아이콘을 가리지 않고 진영색이 바로 읽힌다
+ */
+.token-badge { position: relative; display: grid; width: 38px; height: 38px; padding-bottom: 3px; place-items: center; border: 2px solid currentColor; border-radius: 8px; background: #181c27; }
+/* 색만으로 진영을 말하면 색각 이상에서 사라진다 — 해로움은 채움, 이로움은 빈 바탕이다 */
 .token-badge.boon { color: var(--boon); }
 .token-badge.harmful { color: var(--bane); background: color-mix(in srgb, var(--bane) 30%, #181c27); }
-/* 지속 넷: 이번 턴은 점선, 다음 턴은 파선, 1회 소모는 기본, 전투 내내는 고리 하나 더 */
-.token-badge.turn { border-style: dotted; }
-.token-badge.next { border-style: dashed; }
-.token-badge.combat { outline: 1px solid color-mix(in srgb, currentColor 60%, transparent); outline-offset: 2px; }
+/**
+ * 지속 넷은 **밑변 띠**다. 색은 새로 만들지 않고 진영색(`currentColor`)에
+ * 패턴만 다르게 준다: 점선·파선·실선·두 줄. `border-style`이 하던 말과 같은 말, 다른 자리다
+ */
+.token-badge::after { content: ""; position: absolute; inset: auto 4px 3px; border-top: 2px solid currentColor; }
+.token-badge.turn::after { border-top-style: dotted; }
+.token-badge.next::after { border-top-style: dashed; }
+.token-badge.combat::after { border-top-width: 3px; border-top-style: double; }
+/**
+ * 스택 눈금 — 2 이상이면 뒤에 한 겹, 4 이상이면 두 겹. `.draw-pile i`(뽑을 더미)와 같은 `box-shadow`
+ * 수법이라 DOM이 안 는다. **정확한 값은 계속 숫자가 든다** — 겹은 「많다」를 말하는 눈금이지 값이 아니다.
+ * 흐름 밖이라 겹이 이웃 칩을 밀지 않는다(UI.md 제1규칙)
+ */
+.token-badge[data-stacks="2"] { box-shadow: 3px 3px 0 -1px currentColor, 3px 3px 0 0 #11131a; }
+.token-badge[data-stacks="4"] { box-shadow: 3px 3px 0 -1px currentColor, 3px 3px 0 0 #11131a, 6px 6px 0 -1px currentColor, 6px 6px 0 0 #11131a; }
 /**
  * 아이콘 28개는 `art/icons.svg` 한 장에서 온다. **`display: none`으로 감추지 않는다** — 시트가 그
  * 안에 있으면 `<use>`가 못 그리는 브라우저가 있다. 0×0 + `overflow: hidden`이 같은 값에 안전하다
@@ -296,11 +320,18 @@ button:not(:disabled):hover { border-color: #c6a969; }
 /* 기본은 16px — 의도와 지도 격자가 그대로 쓴다. 벡터지만 이 크기에서는 픽셀 배경과 어긋나지 않는다 */
 .icon { width: 16px; height: 16px; fill: currentColor; }
 /**
- * 38px 배지 안 20px. 전용 픽셀 아이콘(P-57) — 흰 알파 원본을 `mask`로 쓰고 `--token-color`가
- * 칠한다. **신 색을 그대로 쓰고 흐리지 않는다** — 아이콘이 종류를 말하는 유일한 자리다
+ * 38px 배지 안 22px. 전용 픽셀 아이콘(P-57) — 흰 알파 원본을 `mask`로 쓰고
+ * `--token-color`가 칠한다. **신 색을 그대로 쓰고 흐리지 않는다** — 아이콘이 종류를 말하는 유일한 자리다
  */
-.token-badge .token-icon { width: 20px; height: 20px; background: var(--token-color); mask: var(--token-icon) center / contain no-repeat; }
-.token-badge small { position: absolute; right: -3px; bottom: -3px; display: grid; width: 16px; height: 16px; place-items: center; border-radius: 50%; color: #151821; background: currentColor; font-size: .62rem; font-weight: 750; }
+.token-badge .token-icon { width: 22px; height: 22px; background: var(--token-color); mask: var(--token-icon) center / contain no-repeat; }
+/**
+ * 겹이 우하단으로 자라므로 숫자는 **우상단**이다 — 아래에 두면 스택 2 이상에서 겹과 겹친다.
+ * 진영색은 `.boon`·`.harmful`이 다시 적는다: 같은 요소에서 `background: currentColor`는 제 `color`를
+ * 가리키므로 어둠 위의 어둠이 되어 **숫자가 안 보였다**(P-61에서 잡았다)
+ */
+.token-badge small { position: absolute; right: -4px; top: -4px; display: grid; width: 17px; height: 17px; place-items: center; border: 1px solid #11131a; border-radius: 50%; color: #151821; font-size: .62rem; font-weight: 750; font-variant-numeric: tabular-nums; }
+.token-badge.boon small { background: var(--boon); }
+.token-badge.harmful small { background: var(--bane); }
 /* 배우 위 한 줄. 텍스트 줄에 섞이지 않는 것이 이 줄의 존재 이유다 */
 .actor-tokens { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .actor-tokens em { color: #9298aa; font-size: .74rem; font-style: normal; }
@@ -315,10 +346,10 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .status-bar { position: fixed; top: 0; left: 0; z-index: 2; width: calc(100vw / var(--fit, 1)); height: 40px; background: rgba(9, 11, 17, .78); zoom: var(--fit, 1); }
 /* 내용은 셸과 같은 1040 정렬 — 좌 체력·방어 · 중 호의 미터 둘 · 우 위치·턴/덱과 덱·약속 버튼 */
 .status-bar > div { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; width: 1040px; height: 100%; margin: 0 auto; font-size: .78rem; color: #9298aa; }
-.status-bar .vitals { display: flex; gap: 12px; }
+.status-bar .vitals { display: flex; align-items: center; gap: 12px; white-space: nowrap; }
 .status-bar b { color: #f4efe5; font-variant-numeric: tabular-nums; }
 .status-bar .whereabouts { display: flex; align-items: center; justify-content: end; gap: 10px; white-space: nowrap; }
-.status-bar .whereabouts button { padding: 2px 9px; border-radius: 5px; font-size: .72rem; }
+.status-bar :is(.vitals, .whereabouts) button { padding: 2px 9px; border-radius: 5px; font-size: .72rem; }
 /* 미터 둘은 40px 바 안에 눕는다 — 전투 패널의 타일 꼴(테두리·2행)을 여기서 편다 */
 .status-bar .favor-row { display: flex; gap: 18px; }
 .status-bar .favor { display: flex; align-items: center; gap: 7px; padding: 0; border: 0; background: none; font-size: .74rem; }
@@ -361,8 +392,8 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .bet-sheet > div { display: grid; grid-template-columns: 78px 1fr; align-items: baseline; gap: 10px; }
 .bet-sheet dt { color: #7f8698; }
 .bet-sheet dd { margin: 0; color: #5c6274; }
-/* 채워진 칸만 220ms 한 번 들어온다 — 움직이는 것은 transform과 opacity뿐이다(UI.md) */
-.bet-sheet dd.filled { color: #d5d7de; animation: bet-fill .22s cubic-bezier(.23, 1, .32, 1); }
+/* 채워진 칸만 340ms 한 번 들어온다 — 움직이는 것은 transform과 opacity뿐이다(UI.md) */
+.bet-sheet dd.filled { color: #d5d7de; animation: bet-fill .34s cubic-bezier(.23, 1, .32, 1); }
 @keyframes bet-fill { from { opacity: 0; transform: translateY(6px); } }
 /**
  * 승부 정산 — 카드 두 장이 화살표를 사이에 두고 선다. 입력을 막지 않고 한 번만 재생한다.
@@ -372,12 +403,12 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .bet-settled > b { color: #c6a969; font-size: .82rem; letter-spacing: .12em; }
 .bet-settled > div { display: flex; align-items: center; gap: 14px; }
 .bet-settled em { color: #7f8698; font-style: normal; }
-.bet-settled .game-card:last-child { animation: bet-flip .22s cubic-bezier(.23, 1, .32, 1); }
+.bet-settled .game-card:last-child { animation: bet-flip .34s cubic-bezier(.23, 1, .32, 1); }
 @keyframes bet-flip { from { opacity: .2; transform: rotateY(90deg); } }
 /* 칸 사이는 격자 gap 하나로만 띈다 — 여덟 화면이 같은 간격을 쓰는 자리다 */
 .decision-panel .hint { margin-top: 0; }
 /* `position`은 파티클이 쓴다 — `.fx.spark`가 이 칸 가운데에 서려면 여기가 기준이어야 한다 */
-.map-panel, .decision-panel, .combat-log, .summary-grid article { position: relative; padding: 24px; border: 1px solid #303648; border-radius: 14px; background: rgba(21, 25, 35, .86); }
+.map-panel, .decision-panel, .summary-grid article { position: relative; padding: 24px; border: 1px solid #303648; border-radius: 14px; background: rgba(21, 25, 35, .86); }
 .map-panel ol { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .map-panel li { display: grid; grid-template-columns: 40px repeat(3, 1fr); align-items: center; gap: 8px; }
 .map-panel li small { color: #757b8b; font-size: .78rem; }
@@ -390,14 +421,21 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
  */
 .map-node .marker { position: absolute; top: -7px; right: -7px; width: 16px; height: 16px; background: url(../art/ui/marker.png) 0 0 / 16px 16px no-repeat; }
 .map-node.empty { border-color: transparent; }
-/* 잠긴 칸. 열린 셋만 또렷하고, 이동 중에는 그 셋도 여기 걸린다 */
-.map-node:disabled { opacity: .5; }
+/**
+ * 잠긴 칸. 열린 셋만 또렷하고, 이동 중에는 그 셋도 여기 걸린다.
+ * **금지 커서를 끈다**(P-63) — 여기 걸리는 것의 대부분은 못 가는 곳이 아니라 지금 서 있는 칸과
+ * 방금 지나온 칸이다. 그 위에 「막힘」이 뜨면 화면이 고장난 것처럼 읽힌다
+ */
+.map-node:disabled { opacity: .5; cursor: default; }
 .map-node.rest { border-color: #5c9985; color: #9de0c7; }
 .map-node.combat { border-color: #a4615a; color: #efa198; }
 .map-node.elite { border-color: #b0543f; color: #f2a07a; }
 .map-node.omen { border-color: #6b6198; color: #b6a9e6; }
 .map-node.boss { border-color: #b2495f; color: #f28fa4; }
-.map-node.open { box-shadow: 0 0 0 1px #c6a969 inset; }
+/* 열린 갈래 셋. 청동 2px + 바깥 발광이 「여기가 지금 고를 자리」를 말한다 */
+.map-node.open { box-shadow: 0 0 0 2px #c6a969 inset, 0 0 14px rgba(198, 169, 105, .38); }
+/* hover는 밝기만 — 크기·여백을 바꿔 이웃 칸을 밀지 않는다(UI.md). 테두리 색은 `button:hover`가 든다 */
+.map-node.open:not(:disabled):hover { filter: brightness(1.3); }
 .decision-panel { display: grid; align-content: start; gap: 12px; }
 .choice { display: grid; grid-template-columns: 48px 1fr; gap: 2px 14px; padding: 18px; text-align: left; }
 /* 못 고르는 칸도 서되 죽는다 — 멀쩡해 보이는데 눌러도 조용한 버튼은 고장으로 읽힌다(UI.md) */
@@ -422,20 +460,22 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 
 /**
  * 경로 화면의 격자는 **누르는 자리다** — 30px는 읽는 그림의 크기였고 최소 터치는 44px이다.
- * 크기를 `.walkable`에만 거는 이유는 **결과 화면이 같은 `MapPanel`을 `0.8fr` 열에 둘 나란히** 세워서다.
- * 폭을 520px로 묶는 것은 오른쪽 패널이 없어져 1040px이 통째로 남기 때문이다
+ * 크기를 `.walkable`에만 거는 이유는 **결과 화면이 같은 `MapPanel`을 반폭에 둘 나란히** 세워서다.
+ * 폭 760px은 오른쪽 패널이 없어져 통째로 남은 1040px을 쓰는 크기다(P-63) — 520px은 반을 배경에
+ * 내주고 있었다. 그릇은 결정 화면 여섯과 같은 케니 청동 9-slice다
  */
-.map-panel.walkable { width: min(520px, 100%); margin: 0 auto; }
+.map-panel.walkable { width: min(760px, 100%); margin: 0 auto; border: 12px solid transparent; border-radius: 0; border-image: url(../art/kenney/panel-border-007-bronze.png) 16 / 12px round; image-rendering: pixelated; }
 /* 「지하에서」 넉 자가 40px에서 접힌다 */
-.map-panel.walkable li { grid-template-columns: 56px repeat(3, 1fr); }
+.map-panel.walkable li { grid-template-columns: 64px repeat(3, 1fr); }
 .map-panel.walkable li small { white-space: nowrap; }
-.map-panel.walkable .map-node { height: 48px; gap: 1px; }
+.map-panel.walkable .map-node { height: 72px; gap: 1px; }
+.map-panel.walkable .map-node .icon { width: 28px; height: 28px; }
 /* 이름이 아이콘 아래 칸 안에 선다 — 갈래 이름은 위치가 말하므로 `aria-label`에만 남는다 */
-.map-panel.walkable .map-node b { font-size: .62rem; font-weight: 600; }
+.map-panel.walkable .map-node b { font-size: .74rem; font-weight: 600; }
+/* 마커 32px은 16×16 원본의 **정수 2배**다 — 그래서 픽셀이 안 뭉갠다(위 `image-rendering: pixelated`) */
+.map-panel.walkable .map-node .marker { top: -14px; right: -14px; width: 32px; height: 32px; background-size: 32px 32px; }
 /* 마커의 집. 종류가 없고 안 눌린다 — 저승 1층과 지상 1층에서만 선다 */
 .map-panel .start .map-node { border-style: dashed; }
-/* 가리킨 칸의 설명 한 줄. 두 줄 자리를 미리 잡아 훑을 때마다 패널 높이가 안 흔들린다 */
-.node-hint { min-height: 2.8em; margin: 16px 0 0; color: #949aad; font-size: .84rem; line-height: 1.4; }
 
 /**
  * ─ 전투 무대(P-55) ─ 패널 상자가 없다. 배경이 무대고 캐릭터가 주인공이다.
@@ -485,15 +525,22 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .stage-field .enemy:hover .name, .stage-field .enemy:focus-visible .name { opacity: 1; }
 /* 가리킨 대상 위에 케니 크로스헤어 링 — 커서(30번)와 한 세트다 */
 .stage-field .enemy:not(:disabled):hover::before { content: ""; position: absolute; bottom: 34px; left: 50%; width: 188px; height: 188px; margin-left: -94px; background: url(../art/kenney/crosshair-167.png) center / contain no-repeat; opacity: .8; pointer-events: none; }
+/**
+ * 대신 맞은 자국(P-64) — 원래 대상 위에 「보호」 글리프 한 장이 뜬다. 색은 능력 칩(`.enemy .passive`)의
+ * 것이다: 화면에 적힌 「보호 2」와 방금 발동한 그것이 같은 색이어야 한 사건으로 읽힌다.
+ * 이 노드는 이펙트가 붙였다 지운다(`combat.tsx`) — absolute라 배우의 네 행을 안 민다(UI.md)
+ */
+.stage-field .guard-mark { position: absolute; top: 92px; left: 50%; margin-left: -24px; color: #d1b9f0; pointer-events: none; }
+.stage-field .guard-mark .icon { width: 48px; height: 48px; filter: drop-shadow(0 0 6px rgba(9, 11, 17, .95)); }
 /* 체력 바 140×16 발밑 — 채움은 `width`가 아니라 `scaleX`다(GPU로 간다). 글자는 형제라 안 늘어난다 */
 .stage-field .hp { position: relative; display: grid; width: 140px; height: 16px; place-items: center; overflow: hidden; border-radius: 4px; background: #2a3040; font-size: .68rem; }
-.stage-field .hp i { position: absolute; inset: 0 auto 0 0; width: 100%; transform-origin: left; transform: scaleX(var(--fill)); background: #6c3b3b; transition: transform 200ms var(--ease-out); }
+.stage-field .hp i { position: absolute; inset: 0 auto 0 0; width: 100%; transform-origin: left; transform: scaleX(var(--fill)); background: #6c3b3b; transition: transform 400ms var(--ease-out); }
 .stage-field .hp small { position: relative; font-variant-numeric: tabular-nums; }
 /* 발밑 칩 한 줄 — 방어·패시브·토큰. 자리를 예약해 첫 칩에 이웃이 안 밀린다(UI.md) */
 .stage-field .chips { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; min-height: 40px; max-width: 190px; }
 .stage-field .shield { padding: 1px 7px; border: 1px solid #3f5c54; border-radius: 4px; background: rgba(21, 25, 35, .8); color: #9de0c7; font-size: .74rem; font-style: normal; white-space: nowrap; }
-/* 패시브는 소모품이 아니다 — 방어·토큰 배지와 색을 나눈다. 소모되는 ward·guard는 숫자가 줄어든다 */
-.enemy .passive { display: inline-flex; align-items: center; gap: 3px; padding: 0 5px; border: 1px solid #4a4260; border-radius: 4px; background: rgba(21, 25, 35, .8); color: #bfa8e0; font-size: .74rem; font-style: normal; white-space: nowrap; }
+/** 패시브는 소모품이 아니다 — 보라색 알약형 칩으로 방어·사각 토큰 배지와 모양까지 나눈다 */
+.enemy .passive { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border: 1px solid #75658c; border-radius: 999px; background: #211d2c; color: #d1b9f0; font-size: .74rem; font-style: normal; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .enemy .passive .icon { width: 14px; height: 14px; }
 
 /* 피해 팝 — 체력 바 위에서 떠오른다 */
@@ -529,8 +576,9 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 /* 쉼터의 모닥불 — 패널 아래 중앙 96px */
 .prop.campfire { position: absolute; bottom: 5%; left: 50%; margin-left: -48px; opacity: .8; }
 /* 지도 — 보스 층(맨 윗줄) 옆 신호 프롭: 끝이 가까워지는 감각 */
-.map-wrap { position: relative; width: min(520px, 100%); margin: 0 auto; }
-.prop.boss-signal { position: absolute; top: 44px; right: -72px; --sprite: 48px; opacity: .7; }
+.map-wrap { position: relative; width: min(760px, 100%); margin: 0 auto; }
+/* 판이 760px이 되며 좌우 여백이 140px로 줄었다 — `-72px`면 `.prop.flank.right`(셸 끝 36px)와 겹친다 */
+.prop.boss-signal { position: absolute; top: 44px; right: -56px; --sprite: 48px; opacity: .7; }
 /* 인트로 — 메뉴 옆을 떠도는 도깨비불 둘 */
 .prop.intro-wisp { position: absolute; --sprite: 48px; opacity: .6; }
 .prop.intro-wisp.w0 { left: 270px; top: 56%; }
@@ -547,13 +595,13 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .aim-arrow { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; }
 .aim-arrow path { fill: none; stroke: #f0d79a; stroke-width: 2; stroke-dasharray: 7 7; }
 
-/* 턴 배너(P-58) — 400ms 스윕은 WAAPI(`sweepBanner`)가 든다. 판을 안 가리는 슬림 띠다 */
+/* 턴 배너(P-58) — 650ms 스윕은 WAAPI(`sweepBanner`)가 든다. 판을 안 가리는 슬림 띠다 */
 .turn-banner { position: fixed; inset: 30% 0 auto 0; z-index: 3; padding: 9px 0; background: linear-gradient(90deg, transparent, rgba(9, 11, 17, .88) 30%, rgba(9, 11, 17, .88) 70%, transparent); color: #f0d79a; font-size: 1.3rem; font-weight: 750; text-align: center; letter-spacing: .3em; pointer-events: none; }
 
 /* 상태 바(P-54)의 우호도 미터 — 색·눈금 규칙. 단계 색은 `--stage-*` 한 곳에서만 정한다 */
 .favor small { color: #9298aa; }
 .favor b, .favor em { color: currentColor; font-size: .74rem; font-style: normal; font-variant-numeric: tabular-nums; }
-.favor .meter i { position: absolute; inset: 0 auto 0 0; width: 100%; transform-origin: left; transform: scaleX(var(--fill)); background: currentColor; transition: transform 200ms var(--ease-out); }
+.favor .meter i { position: absolute; inset: 0 auto 0 0; width: 100%; transform-origin: left; transform: scaleX(var(--fill)); background: currentColor; transition: transform 400ms var(--ease-out); }
 /* 눈금은 favorBoundaries에서 온다 — 위치를 CSS에 박으면 규칙이 바뀔 때 화면만 옛 자리에 남는다 */
 .favor .meter .tick { position: absolute; top: 0; bottom: 0; width: 1px; background: #11131a; }
 .favor.devotion { color: var(--stage-devotion); }
@@ -576,7 +624,13 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
  */
 /* 위아래 여백은 기운 카드의 모서리 몫이다 — 없으면 바깥 카드가 「턴 종료」 위에 5px 걸친다 */
 /* width 100%는 겹침 공식의 분모다 — `.combat-bottom`의 `justify-items: center`가 폭을 0으로 만들면 아래 100%가 0이 되어 손패가 한 점에 포개진다 */
-.fan { display: flex; justify-content: center; width: 100%; padding: 14px 0 12px; }
+/**
+ * **손을 다 내도 자리가 남는다**(P-64) — 카드가 사라지며 아래가 당겨 올라오면 안 된다(UI.md 제1규칙).
+ * 206px = 카드 높이 최댓값 180 + 위아래 여백 26. `--card-w`가 고정이라 카드 높이는 두 값뿐이고
+ * (효과문 한 줄 157 · 두 줄 180) 큰 쪽을 박는다 — aside 실측 3판 364프레임에 그 둘만 나온다.
+ * 최댓값이라 손패가 바뀌어도 부채꼴은 언제나 206이다: 0장만이 아니라 「짧은 손 ↔ 긴 손」도 안 흔들린다
+ */
+.fan { display: flex; justify-content: center; width: 100%; min-height: 206px; padding: 14px 0 12px; }
 .fan > * {
   /* **`--n: 1`이면 각이 0이다** — `(1-1)/2 = 0`. 한 장짜리 손패가 기울면 버그로 읽힌다 */
   --a: calc((var(--i) - (var(--n) - 1) / 2) * min(6deg, 34deg / var(--n)));
@@ -602,18 +656,18 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
  */
 .combat-bottom > .stage { position: absolute; left: 250px; bottom: calc(100% + 8px); }
 
+/**
+ * 결과 화면은 한 줄기다(P-65) — 승패 → 요약 넷 → 걸어온 길 → 마지막 카드 셋 → 버튼.
+ * 옛 2열(`.result-columns`)의 오른쪽 절반은 개발자 로그였고, 로그와 함께 그 격자도 죽었다
+ */
 .result-layout header h1 { margin-bottom: 0; }
-.outcome { padding: 8px 12px; border: 1px solid currentColor; border-radius: 999px; }
-.outcome.win { color: #8fd6a4; }
-.outcome.loss { color: #eb887d; }
 .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .summary-grid article { display: grid; gap: 8px; }
 .summary-grid small { color: #9298aa; }
 .summary-grid strong { font-size: 2rem; }
-.result-columns { display: grid; grid-template-columns: .8fr 1.2fr; gap: 16px; margin-top: 16px; }
-.combat-log ol { max-height: 300px; margin: 0; padding-left: 22px; overflow: auto; color: #a9afbe; font: .72rem/1.6 ui-monospace, monospace; }
-/* 고정 폭 카드가 `repeat(3, 1fr)` 격자의 120px 칸에 안 들어간다 — 접히게 둔다 */
-.used-cards { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.result-layout .map-columns { margin-top: 16px; }
+/* 고정 폭 카드 셋. 가운데 정렬은 지도 둘의 축과 맞춘다 */
+.used-cards { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 18px; }
 /**
  * 청동 프레임은 **무채색 한 장**이다(`art/ui/card-frame.md`). 신별로 다섯 장을 안 그린 이유가 여기다 —
  * 마스크로 실루엣만 쓰고 색은 진영색 변수가 든다. 카드가 화면에서 약 105px이라 파일도 256px이다
@@ -642,10 +696,27 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
  * 자리를 다투면 하나가 사라진다. 신 색(`--frame`)을 쓰지만 글자가 뜻을 다 들고 있다 — tier1(124장)에는 없다
  */
 .card-tier { margin-right: 4px; padding: 0 4px; border: 1px solid color-mix(in srgb, var(--frame) 70%, transparent); border-radius: 3px; color: var(--frame); font-size: .58rem; font-style: normal; }
+/**
+ * 강화 배지. 등급 칩과 **같은 줄, 다른 슬롯**이다 — 등급은 카드가 태어난 계단이고 강화는 이 런에서
+ * 키운 것이라 직교한다. 프레임색(`--frame`)은 안 쓴다: 그 색은 신의 것이고 이건 이로움(`--boon`)이다
+ */
+.card-up { margin-right: 4px; padding: 0 4px; border: 1px solid color-mix(in srgb, var(--boon) 60%, transparent); border-radius: 3px; color: var(--boon); font-size: .58rem; font-style: normal; }
 /* 카드의 본체. 아이콘은 `art/icons.svg` 28개에서 그대로 꺼낸다 — 적 머리 위 배지와 같은 글리프다 */
 .card-fx { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; }
 .card-fx em { display: inline-flex; align-items: center; gap: 3px; color: #e4e8f2; font-size: .68rem; font-style: normal; }
-.card-fx em b { font-size: 1.05rem; font-weight: 750; }
+/* 위력이 붙었다 떨어지며 매 턴 바뀌는 숫자다 — 폭이 변해 이웃 조각을 밀면 그것이 흔들림이다(UI.md) */
+.card-fx em b { font-size: 1.05rem; font-weight: 750; font-variant-numeric: tabular-nums; }
+/**
+ * 원래 적힌 값. **취소선 자체가 흑백에서도 남는 채널이라** 색은 거드는 쪽이다(R-26) — 오른 값은
+ * 이로움(`--boon`), 내린 값(침수)은 경고색이다. 파랑(`--bane`)은 해로움이라 강조에 못 쓴다.
+ *
+ * **선은 직접 긋는다** — 픽셀 서체(Galmuri11)의 `line-through`는 이 크기에서 아무것도 안 그린다.
+ * 실측으로 확인한 자리고, 그대로 두면 남는 채널이 색 하나뿐이 된다
+ */
+.card-fx em s { position: relative; color: #7f869a; font-size: .72rem; text-decoration: none; }
+.card-fx em s::after { content: ""; position: absolute; inset: 50% -1px auto; height: 1px; background: currentColor; }
+.card-fx em b.up { color: var(--boon); }
+.card-fx em b.down { color: #eb887d; }
 .card-fx .icon { width: 18px; height: 18px; }
 /* 내가 손해 보는 줄이다 */
 .card-fx .harm { color: #eb887d; }
@@ -657,7 +728,9 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .card-art img { position: absolute; width: 100%; height: 100%; object-fit: cover; }
 .card-art > span { color: rgba(255, 255, 255, .28); font-size: 2rem; }
 .card-art.missing img { display: none; }
-.actions { display: flex; gap: 10px; margin-top: 20px; }
+.actions { display: flex; align-items: center; gap: 10px; margin-top: 20px; }
+/* 주요 행동은 왼쪽 끝, 물러난 반출은 오른쪽 끝 — 둘이 붙어 서면 강등이 안 읽힌다 */
+.actions .ghost { margin-left: auto; }
 
 /**
  * 720px 미만의 1열 대비는 **없앴다.** 미디어 쿼리는 뷰포트를 보고 `zoom`은 그 안을 줄이므로 둘이

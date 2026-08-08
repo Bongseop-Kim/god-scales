@@ -12,8 +12,8 @@ import {
   type EnemyDefinition,
 } from "../core/combat";
 import { createRng } from "../core/rng";
-import { addToken, dealDamage, type Card } from "../core/rules";
-import type { ActorState, CombatState, GameState } from "../core/state";
+import { addToken, attackPreview, dealDamage, type Card } from "../core/rules";
+import type { ActorState, CombatState, GameState, Tokens } from "../core/state";
 
 /** `startTurn`·`endTurn`이 파워를 발동하려면 `GameState`가 필요하다 — 전투만 있는 테스트는 여기서 감싼다 */
 const wrap = (combat: CombatState): GameState => ({ seed: 1, combat, favor: {}, grace: {}, graceSlots: {}, map: { depth: 0, lane: 1, grid: [], completed: [] } });
@@ -50,6 +50,26 @@ describe("combat", () => {
     const target = { id: "player", hp: 10, maxHp: 10, block: 2, tokens: { bulwark: 3 } };
     dealDamage(attacker, target, 6);
     expect([target.block, target.tokens.bulwark, target.hp]).toEqual([0, undefined, 9]);
+  });
+
+  /**
+   * 카드 면이 부르는 것과 엔진이 도는 것이 **같은 함수**다(P-62). 두 벌이면 화면에 11이 적힌 카드가
+   * 9를 내보내는 자리가 생긴다 — 대상은 방어도 보루도 껍질도 없으므로 `dealDamage`가 돌려주는 값이
+   * 곧 공격자 쪽 보정을 마친 값이다
+   */
+  it("previews the attacker's four modifiers exactly as dealDamage applies them", () => {
+    const combos: Tokens[] = [
+      {}, { might: 3 }, { crit: 1 }, { frenzy: 1 }, { soaked: 1 },
+      { crit: 1, might: 3 }, { might: 2, soaked: 1 }, { crit: 1, might: 3, frenzy: 1, soaked: 1 },
+    ];
+    for (const tokens of combos) {
+      for (const amount of [0, 1, 6, 21]) {
+        const attacker: ActorState = { id: "player", hp: 40, maxHp: 40, block: 0, tokens: { ...tokens } };
+        const target: ActorState = { id: "enemy", hp: 999, maxHp: 999, block: 0, tokens: {} };
+        const dealt = dealDamage(attacker, target, amount);
+        expect(dealt, `${JSON.stringify(tokens)} × ${amount}`).toBe(attackPreview(tokens, amount));
+      }
+    }
   });
 
   it("reshuffles discard, stops on empty piles, and respects the hand limit", () => {
@@ -147,10 +167,16 @@ describe("enemy passives", () => {
     // 둘이 서로를 지킨다 — 재지정이 순환하면 이 테스트가 끝나지 않는다
     const first = { ...idle, id: "first", hp: 30, passives: { guard: 1 } };
     const second = { ...idle, id: "second", hp: 30, passives: { guard: 1 } };
-    const state = gameState([first, second], [strike.id]);
-    playCard(state, new Map([[strike.id, strike]]), strike.id, "first");
+    const state = gameState([first, second], [strike.id, strike.id]);
+    const cards = new Map([[strike.id, strike]]);
+    playCard(state, cards, strike.id, "first");
     // 판은 언제나 네 칸이다 — 편성이 둘이면 뒤 두 칸이 처음부터 비어 있다
     expect(state.combat.enemies.map(({ hp }) => hp)).toEqual([30, 24, 0, 0]);
+    // 화면이 「누가 대신 맞았나」를 체력바에서 추측하지 않게 재지정을 사실로 남긴다(P-64)
+    expect(state.combat.guarded).toEqual([{ by: "second", from: "first" }]);
+    // 스택을 다 쓴 판에서는 재지정이 없다 — 기록도 그 클릭마다 비어야 한다
+    playCard(state, cards, strike.id, "first");
+    expect(state.combat.guarded).toEqual([]);
   });
 
   it("pours ramp, rally, and spite into frenzy", () => {

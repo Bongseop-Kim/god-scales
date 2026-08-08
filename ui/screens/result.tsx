@@ -21,7 +21,7 @@ export function ResultScreen({ seed, patrons, deck, split, actions, result, onRe
 }) {
   const finalFavor = result.favorCurve.at(-1) ?? {};
   const reached = Math.min(mapDepth, result.hpCurve.length - 1);
-  // **마지막** 세 장이다 — 아래 로그가 마지막 열 줄이라 같은 순간을 가리켜야 한 화면이 된다
+  // 런을 끝낸 **마지막** 세 장이다 — 마지막 전투의 그림이라 걸어온 길 바로 아래 선다
   const recentCards = [...new Set(result.cardsPlayed)].slice(-3);
   return (
     <>
@@ -32,8 +32,8 @@ export function ResultScreen({ seed, patrons, deck, split, actions, result, onRe
         .map((name, index) => <Prop key={name} name={name} className={`outcome-prop o${index}`} />)}
       <header>
         {/* 「시드 N」은 개발자 표기다(P-54) — 시드는 반출 JSON에 남는 것이 맞고 화면에는 안 선다 */}
+        {/* 「균형 유지 / 저울 붕괴」 배지는 지웠다(P-65) — `h1`의 「승리/패배」와 같은 말이다 */}
         <div><p className="eyebrow">{patrons.map(godName).join(" + ")} · {reached}/{mapDepth}층</p><h1>{result.won ? "승리" : "패배"}</h1></div>
-        <span className={`outcome ${result.won ? "win" : "loss"}`}>{result.won ? "균형 유지" : "저울 붕괴"}</span>
       </header>
       <div className="summary-grid">
         <Summary label="최종 체력" value={result.hpCurve.at(-1) ?? 0} />
@@ -43,23 +43,20 @@ export function ResultScreen({ seed, patrons, deck, split, actions, result, onRe
           <Summary key={god} label={`${godName(god)} 호의`} value={finalFavor[god] ?? 0} />
         ))}
       </div>
-      <div className="result-columns">
-        <div className="map-columns">
-          {["underworld", "surface"].map((region) => (
-            <MapPanel key={region} grid={result.grid} region={region} taken={takenLanes(result.grid, result.pathChoices, reached)} />
-          ))}
-        </div>
-        <div className="combat-log">
-          {/* 「전투 기록」 소제목은 지웠다(P-54) — 로그 목록이 스스로 말한다 */}
-          <div className="used-cards">
-            {recentCards.map((cardId) => <GameCard key={cardId} cardId={cardId} />)}
-          </div>
-          <ol>{result.log.slice(-10).map((line, index) => <li key={`${index}-${line}`}>{line}</li>)}</ol>
-        </div>
+      {/* 개발자 로그 열 줄은 화면에서 내렸다(P-65) — `result.log`는 리포트·CLI가 계속 읽는다 */}
+      <div className="map-columns">
+        {["underworld", "surface"].map((region) => (
+          <MapPanel key={region} grid={result.grid} region={region} taken={takenLanes(result.grid, result.pathChoices, reached)} />
+        ))}
       </div>
+      <div className="used-cards">
+        {recentCards.map((cardId) => <GameCard key={cardId} cardId={cardId} />)}
+      </div>
+      {/* 반출은 개발·검증용 보조 행동이라 `.ghost`로 물러난다(P-65). 지우지 않는 이유: `tools/e2e.ts`가
+          이 버튼으로 「반출 → CLI 재생 동치」를 증명한다 — 가리는 것과 없애는 것은 다르다 */}
       <div className="actions">
-        <button className="primary" type="button" onClick={() => downloadReplay(seed, actions, patrons, deck, split)}>런 JSON 반출</button>
-        <button type="button" onClick={onReset}>다시 시작</button>
+        <button className="primary" type="button" onClick={onReset}>다시 시작</button>
+        <button className="ghost" type="button" onClick={() => downloadReplay(seed, actions, patrons, deck, split)}>런 JSON 반출</button>
       </div>
       </div>
     </>
