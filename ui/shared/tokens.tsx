@@ -67,9 +67,9 @@ export const tokenSummary = (tokens: Tokens): string => (Object.entries(tokens) 
   .map(([token, stacks]) => `${tokenName(token)} ${stacks}`)
   .join(" ");
 
-/** 붙는 순간 160ms · 스택이 오르는 순간 140ms. 배지는 한 화면에 13개까지라 `scale`·`opacity`만 쓴다 */
-const appear = { duration: 0.16, ease: [0.23, 1, 0.32, 1] } as const;
-const bump = { duration: 0.14, ease: [0.23, 1, 0.32, 1] } as const;
+/** 붙는 순간 240ms · 스택이 오르는 순간 200ms. 배지는 한 화면에 13개까지라 `scale`·`opacity`만 쓴다 */
+const appear = { duration: 0.24, ease: [0.23, 1, 0.32, 1] } as const;
+const bump = { duration: 0.2, ease: [0.23, 1, 0.32, 1] } as const;
 
 function TokenBadge({ token, stacks = 1, still }: { token: TokenName; stacks?: number; still?: boolean }) {
   const style = tokenStyle[token];

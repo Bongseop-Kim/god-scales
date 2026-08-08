@@ -5,6 +5,7 @@ import type { MapDecision } from "../../sim/engine.ts";
 import { Backdrop, backdropArt, Flanks, Prop } from "../shared/backdrop.tsx";
 import { regionName } from "../shared/header.tsx";
 import { Icon } from "../shared/icon.tsx";
+import { playSound } from "../shared/sfx.ts";
 
 const laneName = ["왼쪽", "가운데", "오른쪽"];
 const nodeLabel: Record<MapNodeType, string> = { combat: "전투", elite: "정예", rest: "쉼터", omen: "예고", boss: "보스" };
@@ -138,7 +139,11 @@ export function MapPanel({ grid, region, open, here, taken = [], onEnter }: {
                     disabled={!option || moving !== undefined}
                     // 격자에서는 위치가 곧 갈래다. 스크린리더에는 격자가 없으므로 갈래 이름이 여기 남는다
                     aria-label={`${laneName[lane]} · ${nodeLabel[type]} · ${nodeDetail[type]}`}
-                    onClick={() => (reducedMotion ? onEnter(option!) : setMoving(option))}
+                    onClick={() => {
+                      playSound("chips-handle-4", 0.45);
+                      if (reducedMotion) onEnter(option!);
+                      else setMoving(option);
+                    }}
                   >
                     <Icon name={type} />
                     <b>{nodeLabel[type]}</b>

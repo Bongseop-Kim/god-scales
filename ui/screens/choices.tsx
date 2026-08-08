@@ -5,6 +5,7 @@ import { favorPool, singleBet, watchDemand, type BetDecision, type CardView, typ
 import { Backdrop, backdropArt, Flanks, Prop } from "../shared/backdrop.tsx";
 import { CardRow, effectText } from "../shared/card.tsx";
 import { godArt, godName, stageName } from "../shared/header.tsx";
+import { playSound } from "../shared/sfx.ts";
 
 /**
  * 휴식·은혜·요구 셋 다 지도 위의 한 칸짜리 결정이다 — 지도 패널 없이 한 단짜리로 그린다.
@@ -51,7 +52,7 @@ function GodSay({ god, children }: { god: string; children: React.ReactNode }) {
 function Choice({ mark, label, detail, disabled, onChoose }: { mark: string; label: string; detail: React.ReactNode; disabled?: boolean; onChoose: () => void }) {
   return (
     // 못 고르는 칸은 `disabled`가 말한다 — 핸들러 안에서 조용히 무시하면 멀쩡한 버튼이 고장으로 읽힌다
-    <button className="choice" type="button" disabled={disabled} onClick={onChoose}>
+    <button className="choice" type="button" disabled={disabled} onClick={() => { playSound("chip-lay-3", 0.35); onChoose(); }}>
       <span>{mark}</span><b>{label}</b><small>{detail}</small>
     </button>
   );

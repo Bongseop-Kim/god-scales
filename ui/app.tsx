@@ -159,7 +159,7 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
     steps.current = runSteps(nextSeed, undefined, pair, deck, split);
     if (reducedMotion) enterRun();
     else setOpening(pair);
-    playSound("start");
+    playSound("chips-handle-4", 0.45);
   };
 
   const enterRun = () => {
@@ -174,7 +174,12 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
     const current = latest.current;
     // options에 없는 값은 엔진에 보내지 않는다. 이미 지나간 결정에 눌린 카드가 여기서 걸린다
     if (!current || !steps.current || !current.options.includes(choice)) return;
+    if (choice === endTurnAction) playSound("turn-end", 0.3);
     const step = steps.current.next(choice);
+    // 마지막 적은 다음 combat 관측 없이 곧장 보상/결과로 넘어가므로 CombatScreen의 퇴장 effect가 못 본다.
+    const leftWonCombat = (current.phase === "card" || current.phase === "target" || current.phase === "oracle")
+      && (step.done ? step.value.won : step.value.phase !== "card" && step.value.phase !== "target" && step.value.phase !== "oracle");
+    if (leftWonCombat) playSound("enemy-death", 0.45);
     setActions((all) => [...all, { type: current.phase, choice } as ReplayAction]);
     if (step.done) {
       show(undefined);
@@ -254,8 +259,8 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
 
   // 시작·결과는 런당 한 번뿐이라 길어도 된다. 나머지 여섯 화면은 ~36번 도는 자리라 짧다
   const slow = screen === "intro" || screen === "setup" || screen === "opening" || screen === "result";
-  const enter = reducedMotion ? { duration: 0 } : screenTransition(slow ? 0.32 : 0.16);
-  const leave = reducedMotion ? { duration: 0 } : screenTransition(slow ? 0.32 : 0.12);
+  const enter = reducedMotion ? { duration: 0 } : screenTransition(slow ? 0.4 : 0.26);
+  const leave = reducedMotion ? { duration: 0 } : screenTransition(slow ? 0.4 : 0.2);
 
   return (
     <LazyMotion features={domMax}>
@@ -333,7 +338,7 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
           animate={{ opacity: 1, y: 0, transition: enter }}
           exit={{ opacity: 0, y: -6, transition: leave }}
         >
-          {screen === "intro" && <IntroScreen onStart={() => setIntro(false)} />}
+          {screen === "intro" && <IntroScreen onStart={() => { playSound("chips-handle-4", 0.45); setIntro(false); }} />}
           {screen === "setup" && (
             <SetupScreen
               picked={picked}

@@ -14,6 +14,7 @@ import { playSprite, shake, speak } from "../shared/fx.ts";
 import { godArt, godLine, godName, godStageEffects, godStageText, stageName } from "../shared/header.tsx";
 import { Icon, type IconName } from "../shared/icon.tsx";
 import { passiveName, tokenName, tokenSummary, TokenRow } from "../shared/tokens.tsx";
+import { playSound } from "../shared/sfx.ts";
 
 const spriteArt = import.meta.glob<string>("../../art/sprites/*.webp", { eager: true, query: "?url", import: "default" });
 const fxArt = import.meta.glob<string>("../../art/fx/*.webp", { eager: true, query: "?url", import: "default" });
@@ -26,15 +27,15 @@ const opParticle: Record<string, string> = { damage: "slash_01", block: "window_
 
 type EnemyInfo = { id: string; name: string; intent_visible: boolean };
 const enemyInfo = new Map((enemyDataJson as EnemyInfo[]).map((enemy) => [enemy.id, enemy]));
-const pop = { duration: 0.16, ease: [0.23, 1, 0.32, 1] } as const;
+const pop = { duration: 0.24, ease: [0.23, 1, 0.32, 1] } as const;
 /** 적이 쓰러지는 두 프레임을 보여 준 뒤 사라지는 500ms. popLayout이라 판은 즉시 닫힌다 */
 const exitPop = { duration: 0.5, ease: [0.23, 1, 0.32, 1] as const, times: [0, 0.6, 1] };
-/** 손 → 무대 200ms. 들어오는 것이라 `--ease-out`과 같은 곡선이다 */
-const stageIn = { duration: 0.2, ease: [0.23, 1, 0.32, 1] } as const;
-const damagePop = { duration: 0.4, ease: [0.23, 1, 0.32, 1] } as const;
+/** 손 → 무대 300ms. 들어오는 것이라 `--ease-out`과 같은 곡선이다 */
+const stageIn = { duration: 0.3, ease: [0.23, 1, 0.32, 1] } as const;
+const damagePop = { duration: 0.7, ease: [0.23, 1, 0.32, 1] } as const;
 
 /**
- * A-2.6 팝 400ms. hitSeq를 key로 써서 같은 피해가 두 번 튀지 않고, 새 피해는 다시 튄다.
+ * A-2.6 팝 700ms. hitSeq를 key로 써서 같은 피해가 두 번 튀지 않고, 새 피해는 다시 튄다.
  * `delay`는 대신 맞기(P-64)의 260ms — 지킴이가 도착하기 전에 숫자가 뜨면 인과가 거꾸로 읽힌다
  */
 function DamagePop({ hits, id, seq, still, delay = 0 }: { hits: CombatObservation["hits"]; id: string; seq: number; still: boolean; delay?: number }) {
@@ -112,7 +113,7 @@ function sweepBanner(text: string): void {
   document.body.append(node);
   node.animate(
     [{ opacity: 0, transform: "scaleX(.2)" }, { opacity: 1, transform: "scaleX(1)", offset: 0.35 }, { opacity: 1, offset: 0.75 }, { opacity: 0 }],
-    { duration: 400, easing: "ease-out" },
+    { duration: 650, easing: "ease-out" },
   ).finished.finally(() => node.remove());
 }
 
@@ -180,7 +181,7 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
    *
    * **데이터가 있는 신만 선다.** 「조우 시작에는 극단 둘만」이던 옛 규칙은 평온이 그 자리에서 아무것도
    * 안 하던 시절의 것이다(P-46 §5가 채웠다) — 빈 문장이 곧 「이 신은 지금 아무 일도 안 한다」다.
-   * 겹침은 큐가 아니라 **순서**로 푼다: 신 하나씩 220ms 어긋난다
+   * 겹침은 큐가 아니라 **순서**로 푼다: 신 하나씩 320ms 어긋난다
    */
   useEffect(() => {
     const start = view.turn === 1;
@@ -198,7 +199,7 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
          */
         speak(start ? 2 : 1, god, godLine(god, start ? "encounter" : "intervene", start ? view.depth : view.turn, stage));
         const effects = godStageEffects(god, stage, hook);
-        // 「신이 적으로 합류」는 판이 뒤집히는 사건이라 480ms 페이드로 지나가면 안 된다 — 신 일러가 선다
+        // 「신이 적으로 합류」는 판이 뒤집히는 사건이라 800ms 페이드로 지나가면 안 된다 — 신 일러가 선다
         const joinEffect = effects.find(({ op }) => op === "join");
         const source = joinEffect ? godArt[`../../art/gods/${god}.webp`] : fxArt[`../../art/fx/${stage}.webp`];
         if (text && source) void playSprite(document.body, source, "cut", { god, stage, text: `${godName(god)} · ${stageName[stage]} — ${text}` });
@@ -209,7 +210,7 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
         if (joinEffect) {
           const joined = joinEffect.god ?? god;
           // 이 타이머도 `timers`에 든다 — 안 걷으면 화면·조우가 바뀐 뒤 묵은 외침이 선다
-          timers.push(setTimeout(() => speak(3, joined, godLine(joined, "join", view.depth), godArt[`../../art/gods/${joined}.webp`]), 480));
+          timers.push(setTimeout(() => speak(3, joined, godLine(joined, "join", view.depth), godArt[`../../art/gods/${joined}.webp`]), 800));
         }
         if (reducedMotion) return;
         // 피해 개입은 화면이 흔들린다. 진노만 크게 — `.fx`와 같은 WAAPI라 새 의존이 없다
@@ -222,7 +223,7 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
             if (sprite) void playSprite(host, sprite, "spark");
           }
         }
-      }, index * 220));
+      }, index * 320));
     });
     return () => { for (const timer of timers) clearTimeout(timer); };
   }, [view.turn]);
@@ -285,7 +286,7 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
   }, [decision]);
 
   /**
-   * 피격 연출(P-58) — 맞은 쪽 흰 플래시 120ms + 셰이크 4px, 때린 쪽 20px 전진.
+   * 피격 연출(P-58) — 맞은 쪽 흰 플래시 220ms + 셰이크 4px, 때린 쪽 20px 전진.
    * 관측의 `hitSource`가 카드·신 개입·적 턴을 가른다. 적 공격자만 직전 렌더의 의도로 찾는다 — 적 턴
    * 피해가 온 프레임에는 의도가 이미 다음 것으로 넘어가 있다. WAAPI의 `translate`·`filter` 속성은
    * motion이 쓰는 `transform`과 다른 채널이라 layout 애니메이션과 안 싸운다
@@ -294,8 +295,15 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
   useEffect(() => {
     const attackers = prevAttackers.current;
     prevAttackers.current = view.enemies.filter(({ intent }) => intent?.damage).map(({ id }) => id);
-    if (!view.hits.length || reducedMotion) return;
+    if (!view.hits.length) return;
     const timers: ReturnType<typeof setTimeout>[] = [];
+    const impactDelay = guarded ? 260 : 0;
+    if (view.hitSource === "attack" || view.hitSource === "enemy") playSound("attack", 0.35);
+    timers.push(setTimeout(() => playSound(guarded ? "guard" : "hit", 0.5), impactDelay));
+    if (view.hits.some(({ id }) => id !== "player" && !view.enemies.some((enemy) => enemy.id === id))) {
+      timers.push(setTimeout(() => playSound("enemy-death", 0.45), impactDelay + 120));
+    }
+    if (reducedMotion) return () => { for (const timer of timers) clearTimeout(timer); };
     const posed = new Set<HTMLElement>();
     const pose = (node: HTMLElement | null | undefined, name: "attack" | "hit", duration: number) => {
       if (!node) return;
@@ -331,23 +339,23 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
     timers.push(setTimeout(() => {
       for (const { id } of view.hits) {
         const node = id === "player" ? playerSide.current : enemyNode(id);
-        pose(node, "hit", 200);
-        node?.animate([{ filter: "brightness(2.2)" }, { filter: "brightness(1)" }], { duration: 120, easing: "ease-out" });
+        pose(node, "hit", 300);
+        node?.animate([{ filter: "brightness(2.2)" }, { filter: "brightness(1)" }], { duration: 220, easing: "ease-out" });
         // 나가 있는 지킴이는 안 흔든다 — 셰이크가 미끄러짐과 같은 `translate` 채널이라 제자리로 튕긴다.
         // 버팀은 「그 자리에서 흰 플래시」다(실측으로 잡은 자리다)
-        if (id !== guarded?.by) node?.animate([{ translate: "-4px 0" }, { translate: "4px 0" }, { translate: "0 0" }], { duration: 200, easing: "ease-in-out" });
+        if (id !== guarded?.by) node?.animate([{ translate: "-4px 0" }, { translate: "4px 0" }, { translate: "0 0" }], { duration: 320, easing: "ease-in-out" });
       }
-    }, guarded ? 260 : 0));
-    // 병사가 쳤으면 병사가, 적 턴이면 직전 의도가 공격이던 적들이 나선다(160ms 전진 + 복귀)
+    }, impactDelay));
+    // 병사가 쳤으면 병사가, 적 턴이면 직전 의도가 공격이던 적들이 나선다(240ms 전진 + 복귀)
     if (view.hitSource === "attack" && view.hits.some(({ id }) => id !== "player")) {
-      pose(playerSide.current, "attack", 250);
-      playerSide.current?.animate([{ translate: "0 0" }, { translate: "20px 0", offset: 0.5 }, { translate: "0 0" }], { duration: 320, easing: "ease-out" });
+      pose(playerSide.current, "attack", 350);
+      playerSide.current?.animate([{ translate: "0 0" }, { translate: "20px 0", offset: 0.5 }, { translate: "0 0" }], { duration: 480, easing: "ease-out" });
     }
     if (view.hitSource === "enemy" && view.hits.some(({ id }) => id === "player")) {
       for (const id of attackers) {
         const node = enemyNode(id);
-        pose(node, "attack", 250);
-        node?.animate([{ translate: "0 0" }, { translate: "-20px 0", offset: 0.5 }, { translate: "0 0" }], { duration: 320, easing: "ease-out" });
+        pose(node, "attack", 350);
+        node?.animate([{ translate: "0 0" }, { translate: "-20px 0", offset: 0.5 }, { translate: "0 0" }], { duration: 480, easing: "ease-out" });
       }
     }
     return () => {
@@ -357,12 +365,12 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
   }, [view.hitSeq]);
 
   /**
-   * 턴 배너(P-58) — 「내 턴 / 적 턴」 400ms 스윕. 적 턴은 「턴 종료」 클릭이, 내 턴은 turn 증가가
-   * 낸다(적 턴 배너가 지나간 뒤 420ms). 줄인 모션에서는 안 낸다 — 장식이고 정보는 상태 바의 턴 수다
+   * 턴 배너(P-58) — 「내 턴 / 적 턴」 650ms 스윕. 적 턴은 「턴 종료」 클릭이, 내 턴은 turn 증가가
+   * 낸다(적 턴 배너가 지나간 뒤 700ms). 줄인 모션에서는 안 낸다 — 장식이고 정보는 상태 바의 턴 수다
    */
   useEffect(() => {
     if (reducedMotion || view.turn === 1) return;
-    const timer = setTimeout(() => sweepBanner("내 턴"), 420);
+    const timer = setTimeout(() => sweepBanner("내 턴"), 700);
     return () => clearTimeout(timer);
   }, [view.turn]);
 

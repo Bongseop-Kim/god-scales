@@ -16,7 +16,7 @@ import { BetScreen, DemandScreen, GraceScreen, OracleScreen, RestScreen } from "
 import { CombatScreen } from "../ui/screens/combat.tsx";
 import { replayPayload } from "../ui/shared/export.ts";
 import { StatusBar } from "../ui/shared/header.tsx";
-import { musicForScreen } from "../ui/shared/sfx.ts";
+import { musicForScreen, playSound, sound } from "../ui/shared/sfx.ts";
 import { MapPanel, MapScreen } from "../ui/screens/map.tsx";
 import { RewardScreen } from "../ui/screens/reward.tsx";
 import { TokenDictionary } from "../ui/shared/tokens.tsx";
@@ -378,6 +378,28 @@ describe("browser replay export", () => {
     const markup = renderToStaticMarkup(createElement(App));
     expect(markup).toContain("<audio");
     expect(markup).toContain("loop=\"\"");
+  });
+
+  it("plays shipped effects at the requested volume", () => {
+    const nativeAudio = globalThis.Audio;
+    const made: { src: string; volume: number }[] = [];
+    globalThis.Audio = class {
+      volume = 1;
+      constructor(readonly src: string) { made.push(this); }
+      play() { return Promise.resolve(); }
+    } as unknown as typeof Audio;
+    try {
+      for (const name of ["card-place-4", "turn-end", "attack", "hit", "guard", "enemy-death"]) playSound(name, 0.12);
+      expect(made.map(({ src }) => src)).toEqual(expect.arrayContaining(["card-place-4", "turn-end", "attack", "hit", "guard", "enemy-death"].map((name) => expect.stringContaining(name))));
+      expect(made).toHaveLength(6);
+      expect(made.every(({ volume }) => volume === 0.12)).toBe(true);
+      sound.enabled = false;
+      playSound("card-slide-6");
+      expect(made).toHaveLength(6);
+    } finally {
+      sound.enabled = true;
+      globalThis.Audio = nativeAudio;
+    }
   });
 
   it("renders the setup screen through React", () => {

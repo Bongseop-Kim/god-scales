@@ -8,6 +8,7 @@ import type { CardView } from "../../sim/engine.ts";
 import { cardTier } from "../../tools/value.ts";
 import { cardArtCandidates, cardGod, cardTag, type CardArtSource } from "./art-keys.ts";
 import { Icon, type IconName } from "./icon.tsx";
+import { playSound } from "./sfx.ts";
 import { tokenName } from "./tokens.tsx";
 
 const cardArt = import.meta.glob<string>("../../art/cards/*.webp", { eager: true, query: "?url", import: "default" });
@@ -277,7 +278,8 @@ export function GameCard({ cardId, card, boost, upgrade, disabled, onSelect }: {
         data-damage={card && cardDamage(card)}
         aria-label={label}
         disabled={disabled}
-        onClick={onSelect}
+        onMouseEnter={() => playSound("card-place-4", 0.12)}
+        onClick={() => { playSound("card-slide-6", 0.35); onSelect(); }}
       >
         {body}
       </button>

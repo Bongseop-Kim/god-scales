@@ -72,4 +72,10 @@ SIL Open Font License 1.1 — 전문은 배포본에 함께 실린 [`Galmuri11-L
 
 ## 사운드
 
-없습니다. 무음으로 동작합니다.
+| 종류 | 자산 | 출처 · 라이선스 |
+|---|---|---|
+| 배경음악 | `Beneath_the_Iron_Altar` · `Beneath_the_Golden_Banner` | 프로젝트 제공 원본 |
+| 효과음 | `chip-lay-3` · `card-slide-6` · `card-place-4` · `chips-handle-4` | [Kenney Casino Audio](https://kenney.nl/assets/casino-audio), CC0 1.0 |
+| 효과음 | `turn-end` · `enemy-death` · `guard` · `attack` · `hit` | [Mixkit Sound Effects](https://mixkit.co/free-sound-effects/), [Sound Effects Free License](https://mixkit.co/license/#sfx) |
+
+Kenney 효과음은 CC0이라 귀속 의무가 없지만 재수급 경로를 남깁니다.

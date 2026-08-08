@@ -5,7 +5,7 @@
 export type CutLabel = { god: string; stage: string; text: string };
 
 /**
- * 한 장이나 4프레임 스트립을 0.5초 띄웠다 지운다. `kind`는 크기만 가른다 — `cut`은 화면 전체(개입 컷인·신 일러),
+ * 한 장이나 4프레임 스트립을 0.8초 띄웠다 지운다. `kind`는 크기만 가른다 — `cut`은 화면 전체(개입 컷인·신 일러),
  * `spark`는 `host` 가운데 한 장(카드 파티클·개입이 때린 대상)이다. 파티클 엔진도 풀도 만들지 않는다
  */
 export async function playSprite(host: HTMLElement, source: string, kind: "cut" | "spark" = "cut", label?: CutLabel): Promise<void> {
@@ -38,12 +38,12 @@ export async function playSprite(host: HTMLElement, source: string, kind: "cut" 
   const still = label !== undefined && reduced;
   const fade = effect.animate(
     still ? [{ opacity: 1 }, { opacity: 1 }] : [{ opacity: 0 }, { opacity: 1 }, { opacity: 0 }],
-    { duration: still ? 3000 : strip ? 500 : 480, easing: "cubic-bezier(0.23, 1, 0.32, 1)" },
+    { duration: still ? 3000 : 800, easing: "cubic-bezier(0.23, 1, 0.32, 1)" },
   ).finished;
   const frames = strip && !reduced
     ? image.animate(
       [{ transform: "translate(0, -50%)" }, { transform: "translate(-100%, -50%)" }],
-      { duration: 500, easing: "steps(4, jump-end)" },
+      { duration: 800, easing: "steps(4, jump-end)" },
     ).finished
     : Promise.resolve();
   await Promise.all([fade, frames]);
@@ -77,7 +77,7 @@ const voiceHold: Record<VoiceLevel, number> = { 1: 1200, 2: 2000, 3: 3000 };
  * 여기 클릭은 **넘기기만** 하고 기록되지 않는다: 화면 상태고 게임 상태가 아니다.
  *
  * 겹치면 **큐가 아니라 순서**다 — 새 발화가 낮거나 같은 레벨을 지우고 선다(같은 자리에 두 장이 서면
- * 글자가 겹친다). 같은 레벨끼리는 호출자가 220ms 어긋나게 낸다(P-46의 컷인과 같은 규칙)
+ * 글자가 겹친다). 같은 레벨끼리는 호출자가 320ms 어긋나게 낸다(P-46의 컷인과 같은 규칙)
  */
 export function speak(level: VoiceLevel, god: string, text: string, portrait?: string): void {
   if (!text) return;
