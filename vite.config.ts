@@ -15,5 +15,5 @@ export default defineConfig({
     },
   },
   // 밴드 테스트가 2000런 층화 시뮬을 돌린다 — 기본 5초는 토큰 구현 후 런이 길어지며 아슬아슬해졌다
-  test: { testTimeout: 30000 },
+  test: { testTimeout: 120000 }, // CI 러너에서 시뮬 테스트(freeze 35s, matrix 51s)가 30s를 넘긴다
 });
