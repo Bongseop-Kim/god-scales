@@ -150,6 +150,12 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
       else if (key === "t") setOverlay("tokens");
       else if (key === "d" && current) setOverlay("deck");
       else if (key === "j" && current) setOverlay("journal");
+      /**
+       * 오버레이가 열려 있으면 게임 단축키는 닫힌다 — 모달 위에서 누른 1이 뒤에 있는 카드를 내면
+       * 안 된다. 열림은 `<dialog open>`이 든다: 이 리스너는 한 번만 걸리므로 `overlay` state를 읽으면
+       * 첫 렌더 값에 갇힌다. 위 넷은 남는다 — 사전에서 도움말로 바로 넘어가는 문이다
+       */
+      else if (document.querySelector("dialog[open]")) return;
       else if (key === "e" && current?.phase === "card") answer(endTurnAction);
       else if (/^[1-9]$/.test(key) && current?.phase === "card") {
         const card = current.observation.hand[Number(key) - 1];

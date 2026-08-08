@@ -118,7 +118,12 @@ function schemaFailure(item: Item, kind: string): boolean {
   if (kind === "demand") {
     const demand = item as Demand;
     return typeof demand.text !== "string" || typeof demand.condition !== "string"
-      || typeof demand.reward !== "object" || demand.reward === null;
+      || typeof demand.reward !== "object" || demand.reward === null
+      /**
+       * 값 둘의 **꼴**도 여기서 본다 — `"12"`는 호의에 더해지는 순간 문자열 이어붙이기가 되고,
+       * `"1"`짜리 `min_enemies`는 `demandEnemies`가 그대로 돌려주므로 아래 축 검사를 그냥 지난다
+       */
+      || !Number.isFinite(demand.reward.favor) || !Number.isInteger(demand.min_enemies);
   }
   if (kind !== "card") return false;
   const card = item as Card;

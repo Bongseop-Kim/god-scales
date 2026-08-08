@@ -10,7 +10,7 @@ import { endTurnAction, type CardView, type CombatDecision, type CombatObservati
 import { tagParticle } from "../shared/art-keys.ts";
 import { Backdrop, backdropArt } from "../shared/backdrop.tsx";
 import { cardTagOf, effectText, GameCard } from "../shared/card.tsx";
-import { playSprite, speak } from "../shared/fx.ts";
+import { playSprite, shake, speak } from "../shared/fx.ts";
 import { godArt, godLine, godName, godStageEffects, godStageText, stageName } from "../shared/header.tsx";
 import { Icon, type IconName } from "../shared/icon.tsx";
 import { passiveName, tokenName, tokenSummary, TokenRow } from "../shared/tokens.tsx";
@@ -201,10 +201,7 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
         }
         if (reducedMotion) return;
         // 피해 개입은 화면이 흔들린다. 진노만 크게 — `.fx`와 같은 WAAPI라 새 의존이 없다
-        if (effects.some(({ op }) => op === "damage")) {
-          const shift = stage === "wrath" ? 10 : 4;
-          document.body.animate([{ transform: `translateX(-${shift}px)` }, { transform: `translateX(${shift}px)` }, { transform: "none" }], { duration: 200, easing: "ease-in-out" });
-        }
+        if (effects.some(({ op }) => op === "damage")) shake(stage === "wrath" ? 10 : 4, 200);
         for (const effect of effects) {
           const sprite = particleArt[`../../art/particle/${opParticle[effect.op]}.webp`];
           for (const host of hostsFor(effect.target)) {
@@ -584,7 +581,7 @@ const triggerLabels: Record<Trigger, string> = {
  */
 function PlayerActor({ view, reducedMotion, ref }: { view: CombatObservation; reducedMotion: boolean; ref?: Ref<HTMLDivElement> }) {
   return (
-    <div className="player-actor" ref={ref} role="img" aria-label={`병사 체력 ${view.hp} / ${view.maxHp} 방어 ${view.block}`}>
+    <div className="player-actor" ref={ref} role="img" aria-label={`병사 체력 ${view.hp} / ${view.maxHp} 방어 ${view.block} ${tokenSummary(view.tokens)}`}>
       {/* 병사는 오른쪽을 보고 적은 왼쪽을 본다(P-32 §1) — 좌우 반전을 넣지 않는다 */}
       <span className="sprite"><img src={spriteArt["../../art/sprites/player.webp"]} alt="" /></span>
       <span className="hp">

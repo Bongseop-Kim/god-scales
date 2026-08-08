@@ -800,7 +800,11 @@ export function* runSteps(
   }
 
   function* askQuest(): Generator<Decision, Bet | undefined, string> {
-    const offers = demandOffers();
+    // 이미 걸린 퀘스트의 신은 빠진다(`askBet`과 같은 자리) — 안 빼면 두 번째 예고가 같은 신의
+    // 같은 조건을 하나 더 걸고, 한 조우가 그 둘을 동시에 지켜 보상이 두 번 나간다
+    const offers = demandOffers(Infinity, quests.map(({ patron }) => patron));
+    // 둘 다 걸려 있으면 물을 것이 「관망」뿐이다 — 갈래가 하나뿐인 층과 같은 규칙으로 안 묻는다
+    if (!offers.length) return undefined;
     const options = [...offers.map(({ action }) => action), watchDemand];
     const choice = yield {
       phase: "demand",

@@ -234,7 +234,6 @@ h2 { font-weight: 500; }
 /* 디바이더 — 청동 그라데이션이 위→아래로 흐른다(2.6s). 줄인 모션에서는 정지 */
 .god-divider { width: 2px; margin: 16px 7px; background: linear-gradient(180deg, transparent, #c6a969 50%, transparent) 0 0 / 100% 300%; animation: divider-flow 2.6s linear infinite; }
 @keyframes divider-flow { to { background-position: 0 300%; } }
-@media (prefers-reduced-motion: reduce) { .god-divider { animation: none; } }
 /* 하단 한 줄 — 배분 슬라이더 · 덱 편집기(접힘) · 런 시작 오른쪽 끝 */
 .setup-row { display: flex; align-items: start; gap: 20px; width: 100%; margin-top: 18px; }
 .setup-row .split-field { max-width: 500px; margin-bottom: 0; }
@@ -468,6 +467,8 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
  * 늘어 스프라이트·HP가 +32px 밀리고, 버튼 기준인 호버 크로스헤어(::before)만 제자리라 어긋난다
  */
 .stage-field .enemy .sprite { --sprite: 224px; margin: 0 -32px; }
+/* 두 칸을 차지하는 보스는 가림틀까지 두 배로 키우되 발 위치와 주변 레이아웃은 고정한다 */
+.stage-field .enemy.wide .sprite { transform: scale(2); transform-origin: center bottom; }
 /* 평소(카드 단계)의 적은 죽은 버튼이지만 죽은 색이면 안 된다 — 어두워지는 것은 대상 선택 중의 비대상뿐 */
 .stage-field .enemy:disabled { cursor: default; opacity: 1; }
 .stage-field.aiming .enemy:disabled { filter: brightness(.55); }
@@ -599,7 +600,7 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
  * 흐름에 두면 빈 무대가 178px을 항상 예약해 배우들이 화면 상단으로 밀린다. 자리는 병사(~284)와
  * 적 진영(420~) 사이 비무장지대 — 카드 140px이 딱 들어가고, 누구의 HP도 안 가린다
  */
-.stage { position: absolute; left: 250px; bottom: calc(100% + 8px); }
+.combat-bottom > .stage { position: absolute; left: 250px; bottom: calc(100% + 8px); }
 
 .result-layout header h1 { margin-bottom: 0; }
 .outcome { padding: 8px 12px; border: 1px solid currentColor; border-radius: 999px; }

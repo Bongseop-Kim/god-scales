@@ -30,7 +30,8 @@ export function FullscreenButton({ menu = false }: { menu?: boolean }) {
   }, []);
   // `type="button"` 필수 — 지금은 `<form className="shell setup">` 바깥이지만 `<button>`의 기본값은 submit이다
   return (
-    <button type="button" className={menu ? undefined : "fullscreen"} onClick={() => (on ? document.exitFullscreen() : document.body.requestFullscreen())}>
+    // 거부는 예외가 아니다 — Aside 내장 브라우저는 `requestFullscreen`을 `not granted`로 돌려준다(R-43)
+    <button type="button" className={menu ? undefined : "fullscreen"} onClick={() => void (on ? document.exitFullscreen() : document.body.requestFullscreen()).catch(() => {})}>
       {on ? "창 모드" : "전체화면"}
     </button>
   );
@@ -162,7 +163,8 @@ function SplitField({ pair, split, onChange }: { pair?: PatronPair; split: numbe
       </span>
       <span className="split-track">
         <input type="range" min={0} max={favorPool} value={split} onChange={(event) => onChange(Number(event.target.value))} />
-        {Object.values(favorBoundaries).filter((at) => at > 0).map((at) => <i key={at} style={{ left: `${at}%` }} />)}
+        {/* 눈금은 호의 값이지 퍼센트가 아니다 — 트랙 길이가 `favorPool`이므로 그것으로 나눈다 */}
+        {Object.values(favorBoundaries).filter((at) => at > 0).map((at) => <i key={at} style={{ left: `${(at / favorPool) * 100}%` }} />)}
       </span>
     </label>
   );

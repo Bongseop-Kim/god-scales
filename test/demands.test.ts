@@ -13,8 +13,6 @@ import { validateItems } from "../tools/validate";
 const demands = demandData as Demand[];
 const athena = demands.find(({ id }) => id === "demand_athena_safe")!;
 const zeus = demands.find(({ id }) => id === "demand_zeus_swift")!;
-/** 배포된 조건의 호의 보상. 상수를 여기 적으면 데이터와 어긋나는 두 번째 진실이 된다 */
-const keepReward = demands[0].reward.favor;
 /** 첫 요구만 고정하고 나머지는 봇에게 맡긴다 — 곡선이 처음 갈라지는 자리가 그 조건 하나의 값이다 */
 const firstAnswer = (choice: string): ReplayAction[] => [{ type: "demand", choice }];
 const everyAnswer = (choice: string): ReplayAction[] =>
@@ -56,8 +54,9 @@ describe("demands", () => {
     // 보상이 없으면 못 지킨 것이다 — 실패 벌금은 없고 이미 나간 값도 안 돌아온다
     resolveDemand(favor, "zeus", undefined);
     expect(favor).toEqual({ zeus: 50, poseidon: 32 });
+    // 값은 데이터가 든다 — 상수를 여기 적으면 데이터와 어긋나는 두 번째 진실이 된다
     resolveDemand(favor, "zeus", athena.reward);
-    expect(favor).toEqual({ zeus: 50 + keepReward, poseidon: 32 });
+    expect(favor).toEqual({ zeus: 50 + athena.reward.favor, poseidon: 32 });
   });
 
   /**
@@ -115,7 +114,7 @@ describe("demands", () => {
         && JSON.stringify(point) !== JSON.stringify(watched.favorCurve[index]));
       if (at <= 0) return false;
       // 지킨 자리라야 값이 실제로 들어온다 — 그 차이가 곧 조건 하나의 값이다
-      return played.favorCurve[at].zeus - watched.favorCurve[at].zeus === keepReward;
+      return played.favorCurve[at].zeus - watched.favorCurve[at].zeus === zeus.reward.favor;
     });
     expect(first, "no seed keeps its first zeus condition").toBeDefined();
     const played = run(first!, undefined, firstAnswer("zeus"));

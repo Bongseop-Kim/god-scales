@@ -57,6 +57,8 @@ npm test            24파일 · 179테스트 통과
 npm run e2e         e2e ok — 연출 켠 채 시드 727 완주(232결정), 클릭 계약(data-*·disabled) 불변.
                     첫 실행은 reward overflowX 플레이크(R-52·R-57과 같은 자리) — 재실행 통과.
                     세 번 반복된 플레이크라 다음에 나오면 tools/e2e.ts의 측정 시점을 볼 자리다
+                    → 측정 시점이 아니라 **연출**이었다: 이 플랜이 얹은 화면 흔들림이 `body`에
+                      transform을 걸어 그 순간의 가로 스크롤 영역을 넓혔다([R-52](52-ui-split.md) 끝)
 aside 실측          인트로 wisp 2 · 초상 테마 프롭 2 · ? 도움말 열림 · 지도 boss-signal+flank 2 ·
                     젬 ready 맥동 · 단축키 1로 카드 발동 → target 진입 · 화살표 DOM 존재
 ```

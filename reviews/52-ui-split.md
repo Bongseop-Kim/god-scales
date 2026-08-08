@@ -52,3 +52,9 @@ npm run e2e                     e2e ok — 아홉 화면 측정 · 40결정 · �
 첫 e2e 한 번은 reward 화면 `overflowX`로 떨어졌다가 재실행에서 아홉 화면 전부 통과했다 —
 이동은 reward의 DOM도 CSS도 안 바꿔서 타이밍성 플레이크로 본다. 다시 나오면 그때가
 `tools/e2e.ts`의 측정 시점을 볼 자리다. 규칙·값·데이터·봇은 안 건드려 밸런스는 재측정하지 않았다.
+
+> **원인은 화면 흔들림이었다**(R-52·R-57·R-58에 세 번 적힌 뒤 [사후 수정](00-index.md)에서 닫혔다).
+> `speak(3)`과 개입 컷인이 `document.body`에 `translateX`를 걸었고, **`body`의 transform은 그만큼이
+> 뷰포트의 가로 스크롤 영역이 된다** — 흔드는 200~220ms 동안 `documentElement.scrollWidth >
+> innerWidth`가 참이다. 브라우저 실측(1440px): 정지 `false` · `body` 흔들림 `true` · `.shell`
+> 흔들림 `false`. 흔드는 대상을 `.shell`로 옮겼다(좌우 여백이 있어 ±10px이 판 밖으로 안 나간다).

@@ -1,3 +1,4 @@
+import { mapDepth } from "../../core/map.ts";
 import type { PatronPair } from "../../sim/engine.ts";
 import type { ReplayAction } from "../../sim/replay.ts";
 import type { RunResult } from "../../sim/report.ts";
@@ -19,8 +20,9 @@ export function ResultScreen({ seed, patrons, deck, split, actions, result, onRe
   onReset: () => void;
 }) {
   const finalFavor = result.favorCurve.at(-1) ?? {};
-  const reached = Math.min(12, result.hpCurve.length - 1);
-  const recentCards = [...new Set(result.cardsPlayed)].slice(0, 3);
+  const reached = Math.min(mapDepth, result.hpCurve.length - 1);
+  // **마지막** 세 장이다 — 아래 로그가 마지막 열 줄이라 같은 순간을 가리켜야 한 화면이 된다
+  const recentCards = [...new Set(result.cardsPlayed)].slice(-3);
   return (
     <>
       <Backdrop src={hero(result.won ? "win" : "loss")} tone="hero" />
@@ -30,7 +32,7 @@ export function ResultScreen({ seed, patrons, deck, split, actions, result, onRe
         .map((name, index) => <Prop key={name} name={name} className={`outcome-prop o${index}`} />)}
       <header>
         {/* 「시드 N」은 개발자 표기다(P-54) — 시드는 반출 JSON에 남는 것이 맞고 화면에는 안 선다 */}
-        <div><p className="eyebrow">{patrons.map(godName).join(" + ")} · {reached}/12층</p><h1>{result.won ? "승리" : "패배"}</h1></div>
+        <div><p className="eyebrow">{patrons.map(godName).join(" + ")} · {reached}/{mapDepth}층</p><h1>{result.won ? "승리" : "패배"}</h1></div>
         <span className={`outcome ${result.won ? "win" : "loss"}`}>{result.won ? "균형 유지" : "저울 붕괴"}</span>
       </header>
       <div className="summary-grid">

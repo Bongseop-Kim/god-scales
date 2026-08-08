@@ -31,9 +31,11 @@ if (!deckOk(freeDeck)) throw new Error(`${freeCard} is no longer a startable tie
  * P-46에서 371 → 727: 신탁이 결정을 하나 더 끼우고 평온 개입이 조우를 바꾸자 371이 `grace`에 못 닿는다.
  * 이번엔 800개 중 220개가 완주한다(게임이 쉬워졌다) — 784·627·575가 727 다음 후보다.
  * P-59에서 727 → 218: 카드 보상이 판돈이 되고 `bet_card` 결정이 하나 더 끼자 727이 6층에서 죽는다.
- * 900개 중 **18개**가 완주하며 열 phase를 다 지난다 — 218이 가장 짧고(246결정) 559·81·129가 다음이다
+ * 900개 중 **18개**가 완주하며 열 phase를 다 지난다 — 218이 가장 짧고(246결정) 559·81·129가 다음이다.
+ * 218 → 32: `askQuest`가 이미 걸린 신을 후보에서 빼자(같은 신의 퀘스트 둘) 218이 12층에서 죽는다.
+ * 900개 중 71개가 완주한다 — 32가 가장 짧고(239결정) 575·369·279가 다음이다
  */
-const seed = 218;
+const seed = 32;
 const phases = ["path", "card", "target", "rest", "rest_card", "reward", "grace", "demand", "bet_card", "oracle"];
 
 /**
@@ -101,7 +103,8 @@ await tab.evaluate(() => {
         if (state().step > from) return;
       }
     }
-    throw new Error("click did not advance the engine");
+    // 어느 화면에서 막혔는지 없으면 실패가 「어딘가에서 안 눌린다」로만 남는다
+    throw new Error("click did not advance the engine at " + state().phase);
   };
 
   /**

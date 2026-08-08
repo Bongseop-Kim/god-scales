@@ -35,6 +35,12 @@ export function MapScreen({ decision, onChoosePath }: {
         <div className="map-wrap">
           {/* 지금 서 있는 칸은 **직전 층의** 걸어온 갈래다 — `view.depth`는 지금 고르는 층이다 */}
           <MapPanel
+            /**
+             * **층이 바뀌면 격자는 새 것이다.** 화면 key가 `"map"` 하나라 층이 이어지면(예고 칸이
+             * 아무 조건도 안 걸고 지나가는 자리) 컴포넌트가 안 갈리고 `moving`이 남는다 — 그러면
+             * 새 층의 칸이 전부 `disabled`인 채로 서고 아무도 누를 수 없다(브라우저 실측)
+             */
+            key={view.depth}
             grid={view.grid}
             region={view.region}
             here={{ depth: view.depth - 1, lane: view.lane }}

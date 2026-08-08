@@ -47,6 +47,7 @@ fx 재압축은 그 에셋을 만든 자리의 판단이다.
 npx tsc --noEmit         통과
 npm test                 24파일 · 179테스트 통과
 npm run art -- --check   made=249/249 · tokens 13/13 · 대조 위반 0
-npm run e2e              e2e ok (첫 실행은 R-52와 같은 reward overflowX 플레이크 — 재실행 통과)
+npm run e2e              e2e ok (첫 실행은 R-52와 같은 reward overflowX 플레이크 — 재실행 통과.
+                         원인은 `body` 흔들림이었고 사후 수정에서 닫혔다 — [R-52](52-ui-split.md) 끝)
 aside 실측               사전 13행 전부 mask 렌더(20px · --token-color 틴트) · 접촉 시트 확인
 ```

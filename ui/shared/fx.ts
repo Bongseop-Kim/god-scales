@@ -51,6 +51,19 @@ export async function playSprite(host: HTMLElement, source: string, kind: "cut" 
 }
 
 /**
+ * 화면 흔들림. **흔드는 것은 `body`가 아니라 `.shell`이다** — `body`에 `transform`을 걸면 그만큼이
+ * 뷰포트의 가로 스크롤 영역이 되어 `documentElement.scrollWidth > innerWidth`가 흔드는 동안 참이
+ * 된다(R-52·R-57·R-58이 세 번 본 「reward 가로 넘침」 플레이크의 자리다). `.shell`은 1040px 고정에
+ * 좌우 여백이 있어(`zoom`이 줄여도 비율이 같다) ±10px이 판 밖으로 안 나간다
+ */
+export function shake(distance: number, duration: number): void {
+  document.querySelector(".shell")?.animate(
+    [{ transform: `translateX(-${distance}px)` }, { transform: `translateX(${distance}px)` }, { transform: "none" }],
+    { duration, easing: "ease-in-out" },
+  );
+}
+
+/**
  * 발화 셋. **빈도가 셋을 정했다** — 개입 턴은 런당 약 49회고 카드가 찢기는 순간은 0~10회다. 49회와
  * 5회가 같은 연출이면 하나는 피로하고 하나는 밋밋하다. 그 사이가 2단계로는 안 나온다
  */
@@ -68,9 +81,11 @@ const voiceHold: Record<VoiceLevel, number> = { 1: 1200, 2: 2000, 3: 3000 };
  */
 export function speak(level: VoiceLevel, god: string, text: string, portrait?: string): void {
   if (!text) return;
+  // 더 높은 레벨이 서 있으면 자막은 아예 안 뜬다 — 「높은 것이 낮은 것을 덮는다」의 나머지 절반이다
   for (const older of document.querySelectorAll<HTMLElement>(".voice")) {
-    if (Number(older.dataset.level) <= level) older.remove();
+    if (Number(older.dataset.level) > level) return;
   }
+  for (const older of document.querySelectorAll<HTMLElement>(".voice")) older.remove();
   const line = document.createElement("div");
   line.className = `voice l${level}`;
   line.dataset.level = String(level);
@@ -91,9 +106,7 @@ export function speak(level: VoiceLevel, god: string, text: string, portrait?: s
    * 문장과 같은 규칙이다. 화면 흔들림은 외침에만 붙고 줄인 모션에서는 통째로 빠진다
    */
   const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (level === 3 && !still) {
-    document.body.animate([{ transform: "translateX(-10px)" }, { transform: "translateX(10px)" }, { transform: "none" }], { duration: 220, easing: "ease-in-out" });
-  }
+  if (level === 3 && !still) shake(10, 220);
   void line.animate(
     still
       ? [{ opacity: 1 }, { opacity: 1 }]

@@ -4,7 +4,7 @@ import { floorsPerRegion, type MapGrid } from "../../core/map.ts";
 import type { Card } from "../../core/rules.ts";
 import type { CombatState } from "../../core/state.ts";
 import { canReachTarget, livingInReach } from "../../core/targeting.ts";
-import { demandPenalty, type DemandOffer } from "../../core/demands.ts";
+import { betDeposit, demandPenalty, type DemandOffer } from "../../core/demands.ts";
 import { favorBoundaries, favorInitial, favorStage, oracleSwing, type FavorStage } from "../../core/favor.ts";
 import { expectedValue, graceValue, powerTurns, tokenWeights } from "../../tools/value.ts";
 
@@ -200,7 +200,7 @@ export function chooseDemandAnswer(offers: DemandOffer[], favor: Record<string, 
  * 걸지 말지의 문턱은 `choosePath`·`chooseRest`와 같은 「반피」다 — 예치를 내고도 반피가 남아야 건다.
  * 문턱이 없으면 봇이 조우마다 최대 체력을 8씩 내려놓고 카드 보상까지 잃어 나선이 된다
  */
-export function chooseBetCard(candidates: { index: number; id: string }[], cards: ReadonlyMap<string, Card>, hp: number, maxHp: number, deposit = 8): string {
+export function chooseBetCard(candidates: { index: number; id: string }[], cards: ReadonlyMap<string, Card>, hp: number, maxHp: number, deposit = betDeposit): string {
   if (!candidates.length || hp - deposit < maxHp * 0.5) return "single";
   const best = chooseReward(candidates.map(({ id }) => id), cards);
   return String(candidates.find(({ id }) => id === best)!.index);
