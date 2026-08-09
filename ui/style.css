@@ -526,6 +526,7 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 /* 피해 팝 — 체력 바 위에서 떠오른다 */
 .damage-pop { position: absolute; inset: auto auto 46% 58%; color: #ffb4a6; font-size: 1.5rem; text-shadow: 0 2px 10px #11131a; pointer-events: none; }
 .damage-pop .blocked { display: inline-flex; align-items: center; color: #9de0c7; }
+.damage-pop .deflected { display: inline-flex; align-items: center; color: var(--athena); }
 
 /**
  * 하단 — 좌 에너지 젬·뽑을 카드, 중앙 무대 카드 + 손패 부채꼴, 우 턴 종료(케니 160×46).

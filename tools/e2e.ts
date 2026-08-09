@@ -145,7 +145,15 @@ await tab.evaluate(() => {
     };
   };
 
-  const driver = { order: [], rests: 0, layout: {}, visual: { playerDamage: false, bossSpan: false, sealFrame: false } };
+  const driver = { order: [], rests: 0, layout: {}, voices: [], visual: { playerDamage: false, bossSpan: false, sealFrame: false } };
+  new MutationObserver((mutations) => {
+    for (const node of mutations.flatMap(({ addedNodes }) => [...addedNodes])) {
+      if (!(node instanceof HTMLElement) || !node.matches(".voice")) continue;
+      const god = node.style.getPropertyValue("--god-color").match(/--([^)]+)/)?.[1];
+      const text = node.querySelector("b")?.textContent;
+      if (god && text) driver.voices.push({ god, text });
+    }
+  }).observe(document.body, { childList: true });
   /** 두 번째 런(자유 모드)이 첫 런의 결정열 위에 쌓이지 않게 한다. 화면 기하는 첫 런 것을 그대로 둔다 */
   driver.restart = () => { driver.order = []; driver.rests = 0; };
   /**
@@ -227,6 +235,7 @@ const captured = await tab.evaluate(async () => {
   }
   return {
     order: window.__e2e.order,
+    voices: window.__e2e.voices,
     layout: window.__e2e.layout,
     visual: window.__e2e.visual,
     filename,
@@ -311,6 +320,7 @@ type ScreenLayout = { vw: number; overflowX: boolean; twoColumn: boolean; layout
 
 function browserRun(): {
   order: string[];
+  voices: { god: string; text: string }[];
   layout: Record<string, ScreenLayout>;
   filename: string;
   replay: ReplayFile;
@@ -412,6 +422,14 @@ try {
   }
   check("측정한 화면 수", screens.length, phases.length);
   check("피격 팝 / 은혜 테두리 / 보스 4칸", browser.visual, { playerDamage: true, bossSpan: true, sealFrame: true });
+  const voiceKeys = browser.voices.map(({ god, text }) => `${god}\0${text}`);
+  check("런 대사 비반복", new Set(voiceKeys).size, voiceKeys.length);
+  const cerberusLines = {
+    zeus: ["내 아들이 끌어낸 문지기가 아직도 짖는군.", "하데스의 문은 세 머리로도 하늘을 막지 못하네.", "하하! 저 개를 지나야 형제 얼굴을 보겠군."],
+    athena: ["헤라클레스가 맨손으로 데려온 문지기예요. 수는 이미 있어요.", "하데스의 문은 지켜도 이 길까지 막지는 못해요.", "세 머리가 보는 틈은 하나예요. 그곳을 치세요."],
+  };
+  check("케르베로스 적별 대사", browser.voices.some(({ god, text }) =>
+    god in cerberusLines && cerberusLines[god as keyof typeof cerberusLines].includes(text)), true);
 
   /**
    * 자유 모드. 위 완주는 편집기를 **안 열었으므로** 반출에 `deck`이 없고, 그래서 기준선이 그대로다 —

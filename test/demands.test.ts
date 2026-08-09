@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import demandData from "../data/demands.json" with { type: "json" };
 import godData from "../data/gods.json" with { type: "json" };
 import { demandEnemies, demandPenalty, demandSatisfied, demandSettled, pairKey, parseCondition, resolveDemand, rivals, ruleText, takeSide, type Demand } from "../core/demands";
-import { godLine } from "../ui/shared/header";
+import { godFoeLines, godLines } from "../ui/shared/header";
+import { nextSpokenLine, resetSpokenLines, speak } from "../ui/shared/fx";
 import { runSteps, simulateStratified, watchDemand } from "../sim/engine";
 import { summarize } from "../sim/report";
 import { validateItems } from "../tools/validate";
@@ -205,21 +206,56 @@ describe("demands", () => {
   });
 
   /**
-   * 트리거 열에 신 다섯이 다 줄을 갖는다. **게이트가 이미 반려하지만** 화면이 읽는 경로(`godLine`)와
+   * 트리거 열에 신 다섯이 다 줄을 갖는다. **게이트가 이미 반려하지만** 화면이 읽는 경로(`godLines`)와
    * 게이트가 세는 경로가 갈릴 수 있다 — 여기서 그 둘을 같은 자리에 세운다. 고르는 것은 나머지 연산이다
    */
   it("말한다 — 트리거 열 × 단계 넷이 다 줄을 갖고 난수를 안 당긴다", () => {
     for (const { id } of godData) {
       for (const trigger of ["demand_offer", "demand_kept", "demand_broken", "tear", "join", "reconcile", "fuse"] as const) {
-        expect(godLine(id, trigger, 0).trim(), `${id}:${trigger}`).not.toBe("");
+        expect(godLines(id, trigger, 0)[0]?.trim(), `${id}:${trigger}`).not.toBe("");
       }
       for (const trigger of ["encounter", "intervene", "cross"] as const) {
         for (const stage of ["devotion", "calm", "anger", "wrath"] as const) {
-          expect(godLine(id, trigger, 0, stage).trim(), `${id}:${trigger}:${stage}`).not.toBe("");
+          expect(godLines(id, trigger, 0, stage)[0]?.trim(), `${id}:${trigger}:${stage}`).not.toBe("");
           // 같은 `n`이면 같은 줄이다 — 새 RNG 스트림이 끼면 대사를 켜는 것만으로 replay가 어긋난다
-          expect(godLine(id, trigger, 7, stage)).toBe(godLine(id, trigger, 7, stage));
+          expect(godLines(id, trigger, 7, stage)).toEqual(godLines(id, trigger, 7, stage));
         }
       }
+    }
+  });
+
+  it("대사 후보를 결정적으로 돌리고 적은 앞 칸 관계를 고른다", () => {
+    const zeus = godData.find(({ id }) => id === "zeus")!.lines.encounter.devotion;
+    expect(godLines("zeus", "encounter", 2, "devotion")).toEqual([...zeus.slice(2), ...zeus.slice(0, 2)]);
+
+    const foes = godData.find(({ id }) => id === "athena")!.lines.foes as unknown as Record<string, string[]>;
+    expect(godFoeLines("athena", ["enemy_under_zealot", "enemy_surface_support"], 1)[0]).toBe(foes.enemy_under_zealot[1]);
+    expect(godFoeLines("athena", ["enemy_under_brute"], 1)).toEqual([]);
+    expect(godLines("athena", "encounter", 1, "calm")).toHaveLength(5);
+  });
+
+  it("한 런에서 같은 신의 같은 문장을 반복하지 않는다", () => {
+    const candidates = ["첫 문장", "다음 문장"];
+    resetSpokenLines();
+    expect(nextSpokenLine("zeus", candidates)).toBe("첫 문장");
+    expect(nextSpokenLine("zeus", candidates)).toBe("다음 문장");
+    expect(nextSpokenLine("zeus", candidates)).toBe("");
+    expect(nextSpokenLine("poseidon", candidates)).toBe("첫 문장");
+    resetSpokenLines();
+    expect(nextSpokenLine("zeus", candidates)).toBe("첫 문장");
+  });
+
+  it("높은 발화에 막힌 후보는 사용하지 않는다", () => {
+    const original = Object.getOwnPropertyDescriptor(globalThis, "document");
+    Object.defineProperty(globalThis, "document", { configurable: true, value: { querySelectorAll: () => [{ dataset: { level: "3" } }] } });
+    try {
+      resetSpokenLines();
+      speak(2, "zeus", ["막힌 문장", "다음 문장"]);
+      expect(nextSpokenLine("zeus", ["막힌 문장", "다음 문장"])).toBe("막힌 문장");
+    } finally {
+      if (original) Object.defineProperty(globalThis, "document", original);
+      else delete (globalThis as { document?: Document }).document;
+      resetSpokenLines();
     }
   });
 

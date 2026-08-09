@@ -246,6 +246,13 @@ describe("browser replay export", () => {
       onAnswer: () => {},
     }));
     expect(full).toMatch(/<span class="blocked"><svg[^>]*>.*?#icon-guard.*?<\/svg>8<\/span><\/span>/s);
+
+    const deflected = renderToStaticMarkup(createElement(CombatScreen, {
+      seed: 1,
+      decision: { phase: "card", options: [], bot: endTurnAction, observation: { ...observation, hits: [{ id: "player", amount: 0, deflected: true }] } } as never,
+      onAnswer: () => {},
+    }));
+    expect(deflected).toMatch(/<span class="deflected"><svg[^>]*>.*?#icon-deflect.*?<\/svg><\/span><\/span>/s);
   });
 
   it("shows three chosen-god cards with the completed task result", () => {

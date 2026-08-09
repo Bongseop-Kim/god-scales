@@ -35,7 +35,8 @@ button:active { transform: scale(.97); }
 .game-card { transition: transform 140ms var(--ease-out), border-color 160ms ease; }
 /* 컷인은 화면 전체(개입 오버레이·신 일러), 파티클은 host 가운데 한 장이다 */
 .fx { position: fixed; inset: 0; display: grid; place-items: center; z-index: 3; pointer-events: none; }
-/* 컷인은 800ms 머무는 층이다 — 불투명하면 그 사이 판이 안 보인다 */
+/* 컷인은 판을 살짝 어둡혀 사건을 세우되, 그 사이 바뀐 상태는 읽힌다 */
+.fx.cut { background: rgba(6, 7, 11, .45); }
 .fx-view { position: absolute; inset: 0; display: grid; place-items: center; }
 .fx-view > img { max-width: 100%; max-height: 100%; }
 .fx.cut .fx-view > img { opacity: .7; }
@@ -55,16 +56,16 @@ button:active { transform: scale(.97); }
  * 단계마다 다른 진입. **그림이 넷뿐이므로 방향이 다섯째 채널이다** — 헌신은 위에서 내려오고,
  * 평온은 제자리에서 부풀고, 분노는 아래로 물러나며, 진노는 크게 눌러 온다
  */
-@keyframes cut-devotion { from { transform: translateY(-7%) scale(1.04); } }
-@keyframes cut-calm { from { transform: scale(1.03); } }
-@keyframes cut-anger { from { transform: translateY(4%) scale(.97); } }
-@keyframes cut-wrath { from { transform: translateY(9%) scale(1.12); filter: saturate(2.2) brightness(1.25); } }
-.fx.devotion > .fx-view { animation: cut-devotion 800ms var(--ease-out); }
-.fx.calm > .fx-view { animation: cut-calm 800ms var(--ease-out); }
-.fx.anger > .fx-view { animation: cut-anger 800ms var(--ease-out); }
+@keyframes cut-devotion { from { transform: translateY(-14%) scale(1.08); filter: brightness(1.15); } }
+@keyframes cut-calm { from { transform: scale(1.06); filter: brightness(1.1); } }
+@keyframes cut-anger { from { transform: translateY(8%) scale(.94); filter: saturate(1.3); } }
+@keyframes cut-wrath { from { transform: translateY(12%) scale(1.16); filter: saturate(2.2) brightness(1.25); } }
+.fx.devotion > .fx-view { animation: cut-devotion 1600ms var(--ease-out); }
+.fx.calm > .fx-view { animation: cut-calm 1600ms var(--ease-out); }
+.fx.anger > .fx-view { animation: cut-anger 1600ms var(--ease-out); }
 /* 진노는 화면을 반쯤 덮는다 — 「신이 적으로 합류」는 판이 뒤집히는 사건이라 스치면 안 된다 */
 .fx.wrath .fx-view > img { opacity: .84; }
-.fx.wrath > .fx-view { animation: cut-wrath 800ms var(--ease-out); }
+.fx.wrath > .fx-view { animation: cut-wrath 1600ms var(--ease-out); }
 /**
  * 발화 셋. **레벨을 가르는 것은 자리와 무게다** — 판 아래 자막(1) · 화면 중앙(2) · 화면 전체(3).
  * 컷인(`z-index: 3`) 위에 선다: 그림은 신이 **무엇을 했는지**고 이것은 신이 **무엇을 말하는지**다

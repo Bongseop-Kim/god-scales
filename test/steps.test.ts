@@ -135,6 +135,27 @@ describe("steppable engine", () => {
     expect(partial.observation.hits).toEqual([{ id: "player", amount: 2, blocked: 3 }]);
   });
 
+  it("reports a deflect on its defender and the reflected hit on its attacker", () => {
+    const steps = runSteps(1, undefined, ["poseidon", "athena"], Array.from({ length: deckSize }, () => "card_poseidon_02"), 0);
+    let step = steps.next();
+    while (!step.done && step.value.phase !== "card") step = steps.next(step.value.bot);
+    if (step.done || step.value.phase !== "card") throw new Error("expected a card decision");
+    const beforeSeq = step.value.observation.hitSeq;
+    const attacker = step.value.observation.enemies.find(({ intent }) => intent?.damage)?.id;
+    if (!attacker) throw new Error("expected an attacking enemy");
+
+    expect(step.value.observation.tokens.deflect).toBe(1);
+    step = steps.next("card_poseidon_02");
+    if (step.done || step.value.phase !== "card") throw new Error("expected a card decision");
+    step = steps.next(endTurnAction);
+    if (step.done || step.value.phase !== "card") throw new Error("expected the next card decision");
+
+    expect(step.value.observation.hitSeq).toBe(beforeSeq + 1);
+    expect(step.value.observation.hitSource).toBe("enemy");
+    expect(step.value.observation.hits).toContainEqual(expect.objectContaining({ id: "player", amount: 0, deflected: true }));
+    expect(step.value.observation.hits.find(({ id }) => id === attacker)?.amount).toBeGreaterThan(0);
+  });
+
   it("carries the final card and enemy hits without adding a decision", () => {
     const steps = runSteps(1);
     let step = steps.next();

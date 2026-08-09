@@ -70,6 +70,26 @@ describe("validation gate", () => {
     expect(validateItems(enemies).passive_coverage).toEqual([]);
   });
 
+  it("keeps shipped dialogue pools complete, unique, and tied to real enemies", () => {
+    const gods = JSON.parse(readFileSync("data/gods.json", "utf8"));
+    expect(validateItems(gods).rejected).toEqual([]);
+
+    const short = structuredClone(gods[0]);
+    short.lines.encounter.devotion.length = 4;
+    const duplicate = structuredClone(gods[1]);
+    duplicate.lines.fuse[1] = duplicate.lines.fuse[0];
+    const unknown = structuredClone(gods[2]);
+    unknown.lines.foes.enemy_missing = ["하나예요.", "둘이에요.", "셋이에요."];
+    const sparse = structuredClone(gods[3]);
+    sparse.lines.foes.enemy_under_boss.length = 2;
+    expect(validateItems([short, duplicate, unknown, sparse]).rejected).toEqual([
+      { id: short.id, failure: "line_coverage" },
+      { id: duplicate.id, failure: "line_coverage" },
+      { id: unknown.id, failure: "line_coverage" },
+      { id: sparse.id, failure: "line_coverage" },
+    ]);
+  });
+
   // 신·tier마다 후보가 셋이어야 3택1이 선다. 밴드는 tier로 기울고, 완화 비율에는 은혜도 합산된다
   it("keeps every shipped grace inside its tier band and leaves a three-way offer", () => {
     const graces = JSON.parse(readFileSync("data/graces.json", "utf8"));

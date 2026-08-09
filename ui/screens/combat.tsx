@@ -11,7 +11,7 @@ import { particleStrip } from "../shared/art-keys.ts";
 import { Backdrop, backdropArt } from "../shared/backdrop.tsx";
 import { cardParticleOf, effectText, GameCard, triggerLabels } from "../shared/card.tsx";
 import { playSprite, shake, speak } from "../shared/fx.ts";
-import { godArt, godLine, godName, godStageEffects, godStageText, stageName } from "../shared/header.tsx";
+import { godArt, godFoeLines, godLines, godName, godStageEffects, godStageText, stageName } from "../shared/header.tsx";
 import { Icon } from "../shared/icon.tsx";
 import { intentBits, passiveName, tokenName, tokenSummary, TokenRow } from "../shared/tokens.tsx";
 import { playSound } from "../shared/sfx.ts";
@@ -41,8 +41,12 @@ const attackerStep = 520;
  */
 function DamagePop({ hits, id, seq, still, delay = 0 }: { hits: CombatObservation["hits"]; id: string; seq: number; still: boolean; delay?: number }) {
   const hit = hits.find((item) => item.id === id);
-  if (!hit || (!hit.amount && !hit.blocked)) return null;
-  const label = <>{hit.blocked && <span className="blocked"><Icon name="guard" />{hit.blocked}</span>}{hit.amount ? `${hit.blocked ? " " : ""}-${hit.amount}` : null}</>;
+  if (!hit || (!hit.amount && !hit.blocked && !hit.deflected)) return null;
+  const label = <>
+    {hit.deflected && <><span className="deflected"><Icon name="deflect" /></span>{hit.blocked || hit.amount ? " " : null}</>}
+    {hit.blocked && <><span className="blocked"><Icon name="guard" />{hit.blocked}</span>{hit.amount ? " " : null}</>}
+    {hit.amount ? `-${hit.amount}` : null}
+  </>;
   return still
     ? <span className="damage-pop" aria-hidden="true">{label}</span>
     : (
@@ -190,7 +194,7 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
    * 없으면 체력이 왜 깎였는지 플레이어가 모른다.
    *
    * **데이터가 있는 신만 선다.** 분노는 상시 훼방이 벌이므로 개입 턴에는 침묵한다.
-   * 겹침은 큐가 아니라 **순서**로 푼다: 신 하나씩 320ms 어긋난다
+   * 겹침은 큐가 아니라 **순서**로 푼다: 앞 컷이 걷힌 뒤 다음 신이 선다
    */
   useEffect(() => {
     const start = view.turn === 1;
@@ -209,7 +213,10 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
          * 조우 시작은 말(L2)이고 개입 턴은 자막(L1)이다:
          * 런당 49회 뜨는 자리를 화면 중앙에 2초씩 세우면 전투가 아니라 낭독이 된다
          */
-        speak(start ? 2 : 1, god, godLine(god, start ? "encounter" : "intervene", start ? view.depth : view.turn, stage));
+        const foes = start && (stage === "devotion" || stage === "calm")
+          ? godFoeLines(god, view.enemies.map(({ id }) => id), view.depth)
+          : [];
+        speak(start ? 2 : 1, god, foes.length ? foes : godLines(god, start ? "encounter" : "intervene", start ? view.depth : view.turn, stage));
         // 「신이 적으로 합류」는 판이 뒤집히는 사건이라 800ms 페이드로 지나가면 안 된다 — 신 일러가 선다
         const joinEffect = effects.find(({ op }) => op === "join");
         const source = joinEffect ? godArt[`../../art/gods/${god}.webp`] : fxArt[`../../art/fx/${stage}.webp`];
@@ -221,20 +228,22 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
         if (joinEffect) {
           const joined = joinEffect.god ?? god;
           // 이 타이머도 `timers`에 든다 — 안 걷으면 화면·조우가 바뀐 뒤 묵은 외침이 선다
-          timers.push(setTimeout(() => speak(3, joined, godLine(joined, "join", view.depth), godArt[`../../art/gods/${joined}.webp`]), 800));
+          timers.push(setTimeout(() => speak(3, joined, godLines(joined, "join", view.depth), godArt[`../../art/gods/${joined}.webp`]), 1600));
         }
         if (reducedMotion) return;
-        // 피해 개입은 화면이 흔들린다. 진노만 크게 — `.fx`와 같은 WAAPI라 새 의존이 없다
-        if (effects.some(({ op }) => op === "damage")) shake(stage === "wrath" ? 10 : 4, 200);
-        for (const effect of effects) {
-          const sprite = particleArt[`../../art/particle/${particleStrip[opParticle[effect.op]]?.[god]}.webp`];
-          for (const host of hostsFor(effect.target)) {
-            // 카드 파티클은 제자리에서 터지고 신의 것은 위에서 내려온다 — 한눈에 갈린다
-            if (effect.op === "damage" || effect.op === "block") void playSprite(host, fxArt["../../art/fx/strike.webp"], "spark");
-            if (sprite) void playSprite(host, sprite, "spark");
+        timers.push(setTimeout(() => {
+          // 피해 개입은 화면이 흔들린다. 진노만 크게 — `.fx`와 같은 WAAPI라 새 의존이 없다
+          if (effects.some(({ op }) => op === "damage")) shake(stage === "wrath" ? 10 : 4, 200);
+          for (const effect of effects) {
+            const sprite = particleArt[`../../art/particle/${particleStrip[opParticle[effect.op]]?.[god]}.webp`];
+            for (const host of hostsFor(effect.target)) {
+              // 카드 파티클은 제자리에서 터지고 신의 것은 위에서 내려온다 — 한눈에 갈린다
+              if (effect.op === "damage" || effect.op === "block") void playSprite(host, fxArt["../../art/fx/strike.webp"], "spark");
+              if (sprite) void playSprite(host, sprite, "spark");
+            }
           }
-        }
-      }, index * 320));
+        }, 200));
+      }, index * 1700));
     });
     return () => { for (const timer of timers) clearTimeout(timer); };
   }, [view.turn]);
@@ -276,7 +285,7 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
     // 찢기는 이 게임에서 가장 말이 필요한 자리다 — 신을 버려 놓고 그 신의 번개를 쓴 순간이다
     if (view.torn) {
       const { god, seq } = view.torn;
-      once(`${view.depth}:torn:${seq}`, () => speak(3, god, godLine(god, "tear", seq), godArt[`../../art/gods/${god}.webp`]));
+      once(`${view.depth}:torn:${seq}`, () => speak(3, god, godLines(god, "tear", seq), godArt[`../../art/gods/${god}.webp`]));
     }
     /**
      * 화해 — 진노로 합류한 신이 판에서 사라지는 순간이다. 호의를 평온 하한으로 돌리는 것은 조우가
@@ -286,7 +295,7 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
     const onBoard = view.enemies.map(({ id }) => id).filter((id) => view.patrons.some((god) => godEnemyId(god) === id));
     for (const gone of godsOnBoard.current.filter((id) => !onBoard.includes(id))) {
       const god = view.patrons.find((patron) => godEnemyId(patron) === gone)!;
-      once(`${view.depth}:felled:${god}`, () => speak(3, god, godLine(god, "reconcile", view.depth), godArt[`../../art/gods/${god}.webp`]));
+      once(`${view.depth}:felled:${god}`, () => speak(3, god, godLines(god, "reconcile", view.depth), godArt[`../../art/gods/${god}.webp`]));
     }
     godsOnBoard.current = onBoard;
   }, [decision, outro]);
@@ -302,7 +311,7 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
   const enemyHits = view.hits.filter(({ id }) => id !== "player");
   const playerHit = view.hits.some(({ id }) => id === "player");
   const blockedOnly = view.hits.every(({ amount }) => amount === 0);
-  const hitSound = guarded || blockedOnly ? "guard" : "hit";
+  const hitSound = guarded || blockedOnly || view.hits.some(({ deflected }) => deflected) ? "guard" : "hit";
   const impactDelay = !reducedMotion && (guarded || (view.hitSource === "attack" && enemyHits.length) || (view.hitSource === "enemy" && playerHit)) ? impactAt : 0;
   useEffect(() => {
     const attackers = prevAttackers.current;

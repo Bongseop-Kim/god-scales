@@ -14,8 +14,8 @@ import { MapScreen } from "./screens/map.tsx";
 import { ResultScreen } from "./screens/result.tsx";
 import { RewardScreen } from "./screens/reward.tsx";
 import { FullscreenButton, IntroScreen, SetupScreen } from "./screens/setup.tsx";
-import { godArt, godLine, godName, StatusBar } from "./shared/header.tsx";
-import { speak } from "./shared/fx.ts";
+import { godArt, godLines, godName, StatusBar } from "./shared/header.tsx";
+import { resetSpokenLines, speak } from "./shared/fx.ts";
 import { CardCatalog, DeckPanel, HelpPanel, JournalPanel, Overlay, type PromiseRecord } from "./shared/overlay.tsx";
 import { musicForScreen, playSound, sound } from "./shared/sfx.ts";
 import { TokenDictionary } from "./shared/tokens.tsx";
@@ -132,8 +132,8 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
   useEffect(() => {
     if (!fusion) return;
     playSound("chips-handle-4", 0.8);
-    speak(1, fusion.patrons[0], godLine(fusion.patrons[0], "fuse", seed));
-    const second = window.setTimeout(() => speak(1, fusion.patrons[1], godLine(fusion.patrons[1], "fuse", seed)), 320);
+    speak(1, fusion.patrons[0], godLines(fusion.patrons[0], "fuse", seed));
+    const second = window.setTimeout(() => speak(1, fusion.patrons[1], godLines(fusion.patrons[1], "fuse", seed)), 320);
     const done = window.setTimeout(() => setFusion(undefined), reducedMotion ? 0 : 2500);
     return () => { clearTimeout(second); clearTimeout(done); };
   }, [fusion, seed]);
@@ -182,6 +182,7 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
      * 반출 JSON에는 그대로 남으므로 재현의 근거는 잃지 않는다. 정수 검증은 입력과 같이 죽었다
      */
     const nextSeed = fixedSeed ?? Math.floor(Math.random() * 2 ** 31) + 1;
+    resetSpokenLines();
     setSeed(nextSeed);
     setPatrons(pair);
     // `deck`을 그대로 넘긴다 — 손대지 않은 `undefined`가 곧 규칙 덱이다
