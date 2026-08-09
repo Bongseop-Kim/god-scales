@@ -44,6 +44,13 @@ button:active { transform: scale(.97); }
 .fx.strip .fx-view > img { position: absolute; top: 50%; left: 0; width: 400%; max-width: none; max-height: none; transform: translateY(-50%); }
 .fx.spark { position: absolute; inset: 50% auto auto 50%; width: 192px; height: 192px; transform: translate(-50%, -50%); }
 /**
+ * 전투 칸의 스파크는 칸 중앙이 아니라 **스프라이트 중앙**에 선다 — 칸은 의도 22 + gap 4 + 스프라이트 224
+ * + 체력바·칩이라 중앙(50%)이 스프라이트보다 아래고, 칩이 줄바꿈되면 더 내려간다. 138 = 22 + 4 + 224/2
+ */
+.stage-field .fx.spark { top: 138px; }
+/* 두 칸짜리는 스프라이트가 2배(origin bottom)로 서 있다 — 보이는 중심은 스팬 위쪽 26px(250 - 448/2)이다 */
+.stage-field .enemy.wide .fx.spark { top: 26px; }
+/**
  * 컷인이 든 문장. **그림 위가 아니라 아래다** — 판을 덮으면 무엇이 바뀌었는지 볼 수가 없다.
  * 색 둘: 왼쪽 띠가 신(`--god-color`), 글자가 단계(`--stage-*`)다
  */

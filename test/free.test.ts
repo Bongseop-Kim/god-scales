@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import cardData from "../data/cards.json" with { type: "json" };
+import presets from "../data/presets.json" with { type: "json" };
 import { deckOk, deckSize, favorPool, gods, ruleDeck, run, runSteps, startableCards, type PatronPair } from "../sim/engine";
 import { readReplay, type ReplayFile } from "../sim/replay";
 import { replayPayload } from "../ui/shared/export";
@@ -10,6 +11,23 @@ import { replayPayload } from "../ui/shared/export";
 const pairs = gods.flatMap((left, index) => gods.slice(index + 1).map((right) => [left, right] as PatronPair));
 const startable = Object.values(startableCards).flat();
 const fill = (id: string) => Array.from({ length: deckSize }, () => id);
+
+it("keeps every recommended preset valid", () => {
+  expect(new Set(presets.map(({ id }) => id)).size).toBe(presets.length);
+  expect(new Set(presets.map(({ name }) => name)).size).toBe(presets.length);
+  expect(new Set(presets.flatMap(({ pair }) => pair))).toEqual(new Set(gods));
+  for (const preset of presets) {
+    const [left, right] = preset.pair;
+    expect(gods, preset.id).toContain(left);
+    expect(gods, preset.id).toContain(right);
+    expect(right, preset.id).not.toBe(left);
+    expect(preset.split, preset.id).toBeGreaterThanOrEqual(0);
+    expect(preset.split, preset.id).toBeLessThanOrEqual(favorPool);
+    expect(preset.deck, preset.id).toHaveLength(deckSize);
+    const allowed = new Set(preset.pair.flatMap((god) => startableCards[god as keyof typeof startableCards].map(({ id }) => id)));
+    expect(preset.deck.every((id) => allowed.has(id)), preset.id).toBe(true);
+  }
+});
 
 /** 파일은 신뢰 경계다 — `readReplay`를 진짜 파일로 지난다. `deckOk`만 부르면 그 경계를 안 지난다 */
 function readWritten(replay: unknown): ReplayFile {

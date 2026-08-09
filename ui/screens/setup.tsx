@@ -2,6 +2,7 @@ import { Fragment, useEffect, useState } from "react";
 import type { CSSProperties, FormEvent } from "react";
 import { favorBoundaries, favorStage, interventionEveryTurns } from "../../core/favor.ts";
 import type { GodId } from "../../core/rules.ts";
+import presetData from "../../data/presets.json" with { type: "json" };
 import { deckSize, favorPool, gods, startableCards, type PatronPair } from "../../sim/engine.ts";
 import { Backdrop, hero, Prop } from "../shared/backdrop.tsx";
 import { CardRow, GameCard } from "../shared/card.tsx";
@@ -13,6 +14,16 @@ import { Overlay } from "../shared/overlay.tsx";
  * 온다 — UI가 `data/cards.json`을 따로 읽으면 같은 사실에 두 경로가 생긴다(`ui/card.tsx`와 같은 규칙)
  */
 const cardIndex = new Map(gods.flatMap((god) => startableCards[god].map((card) => [card.id, { god, card }] as const)));
+
+export interface Preset {
+  id: string;
+  name: string;
+  pair: PatronPair;
+  split: number;
+  text: string;
+  deck: string[];
+}
+const presets = presetData as unknown as Preset[];
 
 /**
  * 1040px 게임이 브라우저 탭·주소창·북마크바 아래에 앉아 있는 것을 지운다. **상태를 직접 들지 않는다** —
@@ -167,7 +178,7 @@ function DeckEditor({ deck, picked, pair, split, onSplitChange, onChange, onRest
  * 조합이 둘이 아니면 숨긴다. 모달 안이라 시작 화면의 배치는 움직이지 않는다. 숨은 동안의 라벨은
  * 어차피 안 보이므로 엔진 순서의 앞 둘로 채워 높이만 같게 둔다
  */
-function SplitField({ pair, split, onChange }: { pair?: PatronPair; split: number; onChange: (split: number) => void }) {
+function SplitField({ pair, split, onChange }: { pair?: PatronPair; split: number; onChange?: (split: number) => void }) {
   const shown = pair ?? (gods.slice(0, 2) as unknown as PatronPair);
   return (
     <label className="split-field" style={pair ? undefined : { visibility: "hidden" }}>
@@ -183,11 +194,49 @@ function SplitField({ pair, split, onChange }: { pair?: PatronPair; split: numbe
         })}
       </span>
       <span className="split-track">
-        <input type="range" min={0} max={favorPool} value={split} onChange={(event) => onChange(Number(event.target.value))} />
+        <input type="range" min={0} max={favorPool} value={split} disabled={!onChange} onChange={(event) => onChange?.(Number(event.target.value))} />
         {/* 눈금은 호의 값이지 퍼센트가 아니다 — 트랙 길이가 `favorPool`이므로 그것으로 나눈다 */}
         {Object.values(favorBoundaries).filter((at) => at > 0).map((at) => <i key={at} style={{ left: `${(at / favorPool) * 100}%` }} />)}
       </span>
     </label>
+  );
+}
+
+function PresetPicker({ onStart }: { onStart: (preset: Preset) => void }) {
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState(presets[0]);
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)}>프리셋 설정</button>
+      {open && (
+        <Overlay wide title="프리셋 설정" onClose={() => setOpen(false)}>
+          <div className="preset-picker">
+            <div className="preset-row" role="group" aria-label="추천 조합">
+              {presets.map((preset) => (
+                <button key={preset.id} type="button" aria-pressed={selected.id === preset.id} onClick={() => setSelected(preset)}>
+                  <span>
+                    <b>{preset.name}</b>
+                    {preset.pair.map((god) => <i key={god} style={{ "--god-color": `var(--${god})` } as CSSProperties} />)}
+                  </span>
+                  <small>{preset.text}</small>
+                </button>
+              ))}
+            </div>
+            <SplitField pair={selected.pair} split={selected.split} />
+            <div className="deck-slots">
+              {selected.deck.map((id, index) => {
+                const held = cardIndex.get(id)!;
+                return <GameCard key={`${id}-${index}`} cardId={id} card={held.card} />;
+              })}
+            </div>
+            <div className="actions preset-actions">
+              <button className="primary" type="button" onClick={() => onStart(selected)}>시작</button>
+              <button type="button" onClick={() => setOpen(false)}>취소</button>
+            </div>
+          </div>
+        </Overlay>
+      )}
+    </>
   );
 }
 
@@ -201,6 +250,7 @@ interface SetupScreenProps {
   onToggleGod: (god: GodId) => void;
   onDeckChange: (deck: string[]) => void;
   onRestoreDeck: () => void;
+  onStartPreset: (preset: Preset) => void;
   onStart: (event: FormEvent<HTMLFormElement>) => void;
 }
 
@@ -227,6 +277,7 @@ export function SetupScreen({
   onToggleGod,
   onDeckChange,
   onRestoreDeck,
+  onStartPreset,
   onStart,
 }: SetupScreenProps) {
   return (
@@ -269,17 +320,20 @@ export function SetupScreen({
           </Fragment>;
         })}
       </div>
-      {/* 하단 한 줄 — 시작 덱 설정 모달 · 런 시작 */}
+      {/* 하단 한 줄 — 프리셋·시작 덱 설정 모달 · 런 시작 */}
       <div className="setup-row">
-        <DeckEditor
-          deck={deck}
-          picked={picked}
-          pair={pair}
-          split={split}
-          onSplitChange={onSplitChange}
-          onChange={onDeckChange}
-          onRestore={onRestoreDeck}
-        />
+        <div className="setup-tools">
+          <PresetPicker onStart={onStartPreset} />
+          <DeckEditor
+            deck={deck}
+            picked={picked}
+            pair={pair}
+            split={split}
+            onSplitChange={onSplitChange}
+            onChange={onDeckChange}
+            onRestore={onRestoreDeck}
+          />
+        </div>
         <button className="primary" type="submit" disabled={picked.length !== 2 || deck.length !== deckSize}>런 시작</button>
       </div>
       </form>

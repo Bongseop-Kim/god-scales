@@ -255,10 +255,22 @@ h2 { font-weight: 500; }
 /* 디바이더 — 청동 그라데이션이 위→아래로 흐른다(2.6s). 줄인 모션에서는 정지 */
 .god-divider { width: 2px; margin: 16px 7px; background: linear-gradient(180deg, transparent, #c6a969 50%, transparent) 0 0 / 100% 300%; animation: divider-flow 2.6s linear infinite; }
 @keyframes divider-flow { to { background-position: 0 300%; } }
+/* 추천 프리셋 — 모달 안 네 칸 중 하나를 골라 덱과 호의를 미리 본다 */
+.preset-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; }
+.preset-row button { display: grid; gap: 5px; padding: 9px 12px; text-align: left; transition: transform 120ms ease; }
+.preset-row button:hover { transform: translateY(-2px); }
+.preset-row button[aria-pressed="true"] { border-color: #c6a969; background: #282536; }
+.preset-row span { display: flex; align-items: center; gap: 6px; }
+.preset-row b { margin-right: auto; color: #f0d694; }
+.preset-row i { width: 9px; height: 9px; border-radius: 50%; background: var(--god-color); box-shadow: 0 0 12px var(--god-color); }
+.preset-row small { min-height: 2.8em; color: #9298aa; line-height: 1.4; }
+.preset-picker .split-field { max-width: none; margin: 18px 0 0; }
+.preset-picker .deck-slots { margin-bottom: 0; }
+.preset-actions { justify-content: flex-end; }
 /* 하단 한 줄 — 런 시작은 중앙 CTA, 덱 설정은 오른쪽 보조 행동 */
 .setup-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; width: 100%; margin-top: 18px; }
 .setup-row .primary { grid-column: 2; min-width: 180px; padding: 14px 28px; font-size: 1.05rem; }
-.deck-editor-trigger { grid-column: 3; grid-row: 1; justify-self: end; }
+.setup-tools { grid-column: 3; grid-row: 1; display: flex; justify-self: end; gap: 8px; }
 /**
  * 배분 슬라이더. **저울이므로 라벨이 양 끝이고 트랙이 그 사이다** — 한 숫자가 둘을 정한다는 것이
  * 그림으로 서야 한다. 눈금 셋(70·30·10)은 React가 `favorBoundaries`에서 넣는다

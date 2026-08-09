@@ -13,7 +13,7 @@ import { Icon, IconSheet } from "./shared/icon.tsx";
 import { MapScreen } from "./screens/map.tsx";
 import { ResultScreen } from "./screens/result.tsx";
 import { RewardScreen } from "./screens/reward.tsx";
-import { FullscreenButton, IntroScreen, SetupScreen } from "./screens/setup.tsx";
+import { FullscreenButton, IntroScreen, SetupScreen, type Preset } from "./screens/setup.tsx";
 import { godArt, godLines, godName, StatusBar } from "./shared/header.tsx";
 import { resetSpokenLines, speak } from "./shared/fx.ts";
 import { CardCatalog, DeckPanel, HelpPanel, JournalPanel, Overlay, type PromiseRecord } from "./shared/overlay.tsx";
@@ -173,10 +173,9 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
     questCutinsSeen.current.clear();
   };
 
-  const start = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    // 둘이 아니거나 열 장이 아니면 submit이 `disabled`다 — 그래도 여기 닿으면 엔진이 던진다
-    if (!pair || startingDeck.length !== deckSize) return;
+  const startRun = (nextPair: PatronPair, nextDeck: string[] | undefined, nextSplit: number) => {
+    // 열 장이 아니면 일반 submit이 `disabled`다 — 프리셋도 같은 문으로 들어오므로 여기서 한 번 더 막는다
+    if ((nextDeck ?? ruleDeck(nextPair)).length !== deckSize) return;
     /**
      * 시드 입력이 사라졌다(P-56) — `?seed=`(개발·e2e)가 있으면 그것, 없으면 런마다 새로 뽑는다.
      * 반출 JSON에는 그대로 남으므로 재현의 근거는 잃지 않는다. 정수 검증은 입력과 같이 죽었다
@@ -184,12 +183,17 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
     const nextSeed = fixedSeed ?? Math.floor(Math.random() * 2 ** 31) + 1;
     resetSpokenLines();
     setSeed(nextSeed);
-    setPatrons(pair);
+    setPatrons(nextPair);
     // `deck`을 그대로 넘긴다 — 손대지 않은 `undefined`가 곧 규칙 덱이다
-    steps.current = runSteps(nextSeed, undefined, pair, deck, split);
+    steps.current = runSteps(nextSeed, undefined, nextPair, nextDeck, nextSplit);
     if (reducedMotion) enterRun();
-    else setOpening(pair);
+    else setOpening(nextPair);
     playSound("chips-handle-4", 0.45);
+  };
+
+  const start = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (pair) startRun(pair, deck, split);
   };
 
   const enterRun = () => {
@@ -300,6 +304,13 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
   // 셋째를 누르면 가장 오래된 것이 빠진다 — 「먼저 해제하세요」를 만들지 않는다
   const toggleGod = (god: GodId) =>
     setPicked((now) => (now.includes(god) ? now.filter((id) => id !== god) : [...now, god].slice(-2)));
+
+  const startPreset = ({ pair: presetPair, split: presetSplit, deck: presetDeck }: Preset) => {
+    setPicked([...presetPair]);
+    setSplit(presetSplit);
+    setDeck([...presetDeck]);
+    startRun(presetPair, [...presetDeck], presetSplit);
+  };
 
   const toggleSound = () => {
     const enabled = !soundEnabled;
@@ -424,6 +435,7 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
               onToggleGod={toggleGod}
               onDeckChange={setDeck}
               onRestoreDeck={() => setDeck(undefined)}
+              onStartPreset={startPreset}
               onStart={start}
             />
           )}
