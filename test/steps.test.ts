@@ -3,7 +3,7 @@ import cardData from "../data/cards.json" with { type: "json" };
 import godData from "../data/gods.json" with { type: "json" };
 import { turnsUntilIntervention } from "../core/favor";
 import { cardLevel } from "../core/rules";
-import { endTurnAction, gods, run, runSteps, type Decision } from "../sim/engine";
+import { deckSize, endTurnAction, gods, run, runSteps, type Decision } from "../sim/engine";
 import type { ReplayAction } from "../sim/replay";
 
 /** 갈래는 이제 `"lane:type"`이다. 그 종류가 열려 있으면 고르고, 없으면 봇 답을 쓴다 */
@@ -110,6 +110,29 @@ describe("steppable engine", () => {
     const nextTurn = steps.next(endTurnAction);
     if (nextTurn.done || nextTurn.value.phase !== "card") throw new Error("expected the next card decision");
     expect(nextTurn.value.observation).toMatchObject({ turn: 2, hitSeq: 3, hitSource: "favor" });
+  });
+
+  it("reports fully and partly blocked hits without mistaking the turn reset for one", () => {
+    const defendedTurn = (cardId: string, plays: number) => {
+      const steps = runSteps(1, undefined, ["poseidon", "athena"], Array.from({ length: deckSize }, () => cardId));
+      let step = steps.next();
+      while (!step.done && step.value.phase !== "card") step = steps.next(step.value.bot);
+      if (step.done || step.value.phase !== "card") throw new Error("expected a card decision");
+      const beforeSeq = step.value.observation.hitSeq;
+      for (let played = 0; played < plays; played += 1) step = steps.next(cardId);
+      if (step.done || step.value.phase !== "card") throw new Error("expected a card decision");
+      step = steps.next(endTurnAction);
+      if (step.done || step.value.phase !== "card") throw new Error("expected the next card decision");
+      return { beforeSeq, observation: step.value.observation };
+    };
+
+    const full = defendedTurn("card_poseidon_02", 2);
+    expect(full.observation).toMatchObject({ hitSeq: full.beforeSeq + 1, hitSource: "enemy", hits: [{ id: "player", amount: 0, blocked: 7 }] });
+    // 적 턴 뒤 남은 방어 5는 턴 시작에 리셋되지만 power 프레임의 가짜 hit/seq가 되지 않는다.
+    expect(full.observation.block).toBe(1);
+
+    const partial = defendedTurn("card_athena_13", 1);
+    expect(partial.observation.hits).toEqual([{ id: "player", amount: 2, blocked: 3 }]);
   });
 
   it("carries the final card and enemy hits without adding a decision", () => {

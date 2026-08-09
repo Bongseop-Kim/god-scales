@@ -284,8 +284,8 @@ export type CombatObservation = RunView & {
   /** 전투 내내 매 턴 일한다 — 화면에 없으면 몇 장 냈는지 플레이어가 세고 있어야 한다 */
   powers: PowerView[];
   enemies: EnemyView[];
-  /** 지난 yield 이후 깎인 체력. `id`는 적 id 또는 `player` */
-  hits: { id: string; amount: number }[];
+  /** 지난 yield 이후 깎인 체력과 흡수한 방어. `id`는 적 id 또는 `player` */
+  hits: { id: string; amount: number; blocked?: number }[];
   /** 같은 hits를 만든 주체. 피해 연출이 신의 개입을 병사의 공격으로 오인하지 않게 한다 */
   hitSource?: "attack" | "card" | "power" | "favor" | "enemy";
   /** hits가 새로 생길 때마다 오른다 — UI가 같은 팝을 두 번 재생하지 않게 하는 열쇠 */
@@ -396,12 +396,15 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
   let turnTargets = new Set<string>();
   let turnTokens = 0;
   const healthBar = () => [["player", state.combat.player.hp] as const, ...state.combat.enemies.map(({ id, hp: enemyHp }) => [id, enemyHp] as const)];
+  const blockBar = () => new Map([["player", state.combat.player.block] as const, ...state.combat.enemies.map(({ id, block: enemyBlock }) => [id, enemyBlock] as const)]);
   /** 카드일 때만 맞은 적을 센다 — 출혈 도트와 신의 개입은 이번 턴에 "친" 것이 아니다 */
-  const recordHits = (before: (readonly [string, number])[], source: NonNullable<CombatObservation["hitSource"]>) => {
+  const recordHits = (before: (readonly [string, number])[], source: NonNullable<CombatObservation["hitSource"]>, blockBefore?: Map<string, number>) => {
     const now = new Map(healthBar());
+    const blockNow = blockBar();
     const damage = before.flatMap(([id, hp]) => {
       const lost = hp - (now.get(id) ?? hp);
-      return lost > 0 ? [{ id, amount: Math.round(lost * 10) / 10 }] : [];
+      const spent = Math.max(0, (blockBefore?.get(id) ?? 0) - (blockNow.get(id) ?? 0));
+      return lost > 0 || spent > 0 ? [{ id, amount: Math.round(lost * 10) / 10, ...(spent > 0 ? { blocked: spent } : {}) }] : [];
     });
     for (const { id, amount } of damage) {
       if (id === "player") facts.damage_taken += amount;
@@ -514,8 +517,9 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
       blockBuilt += played.reduce((sum, effect) => sum + (effect.op === "block" && !effect.when ? effect.value ?? 0 : 0), 0);
       targetSpread.push(card.target === "all_enemies" || played.some(({ op }) => op === "chain") ? "multi" : "single");
       const beforeCard = healthBar();
+      const blockBefore = blockBar();
       playCard(state, cardMap, cardId, target, random);
-      recordHits(beforeCard, card.tags.includes("attack") ? "attack" : "card");
+      recordHits(beforeCard, card.tags.includes("attack") ? "attack" : "card", blockBefore);
       // 조건 없는 토큰만 센다 — `when`이 걸린 효과는 붙었는지 여기서 알 수 없으므로 세지 않는다
       const applied = played.reduce((sum, effect) => sum + (effect.op === "apply_token" && !effect.when ? effect.stacks ?? 1 : 0), 0);
       facts.tokens_applied += applied;
@@ -543,8 +547,9 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
     if (state.combat.outcome === "ongoing") {
       const block = state.combat.player.block;
       const beforeTurn = healthBar();
+      const blockBefore = blockBar();
       endTurn(state, enemyMap, random);
-      recordHits(beforeTurn, "enemy");
+      recordHits(beforeTurn, "enemy", blockBefore);
       blockAbsorbed += Math.max(0, block - state.combat.player.block);
     }
   }

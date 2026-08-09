@@ -40,10 +40,11 @@ const attackerStep = 520;
  * `delay`는 돌진·대신 맞기의 도착 시각 — 공격자가 닿기 전에 숫자가 뜨면 인과가 거꾸로 읽힌다
  */
 function DamagePop({ hits, id, seq, still, delay = 0 }: { hits: CombatObservation["hits"]; id: string; seq: number; still: boolean; delay?: number }) {
-  const amount = hits.find((hit) => hit.id === id)?.amount;
-  if (!amount) return null;
+  const hit = hits.find((item) => item.id === id);
+  if (!hit || (!hit.amount && !hit.blocked)) return null;
+  const label = <>{hit.blocked && <span className="blocked"><Icon name="guard" />{hit.blocked}</span>}{hit.amount ? `${hit.blocked ? " " : ""}-${hit.amount}` : null}</>;
   return still
-    ? <span className="damage-pop" aria-hidden="true">-{amount}</span>
+    ? <span className="damage-pop" aria-hidden="true">{label}</span>
     : (
       <m.span
         key={seq}
@@ -53,7 +54,7 @@ function DamagePop({ hits, id, seq, still, delay = 0 }: { hits: CombatObservatio
         animate={{ opacity: [0, 1, 1, 0], scale: [0.7, 1.15, 1, 1], y: [0, -10, -16, -22] }}
         transition={{ ...damagePop, delay }}
       >
-        -{amount}
+        {label}
       </m.span>
     );
 }
@@ -300,6 +301,8 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
   const prevEnemySlots = useRef(new Map(view.enemies.map(({ id, slot }) => [id, slot])));
   const enemyHits = view.hits.filter(({ id }) => id !== "player");
   const playerHit = view.hits.some(({ id }) => id === "player");
+  const blockedOnly = view.hits.every(({ amount }) => amount === 0);
+  const hitSound = guarded || blockedOnly ? "guard" : "hit";
   const impactDelay = !reducedMotion && (guarded || (view.hitSource === "attack" && enemyHits.length) || (view.hitSource === "enemy" && playerHit)) ? impactAt : 0;
   useEffect(() => {
     const attackers = prevAttackers.current;
@@ -307,7 +310,7 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
     const timers: ReturnType<typeof setTimeout>[] = [];
     if (reducedMotion) {
       if (view.hitSource === "attack" || view.hitSource === "enemy") playSound("attack", 0.35);
-      playSound(guarded ? "guard" : "hit", 0.5);
+      playSound(hitSound, 0.5);
     }
     if (enemyHits.some(({ id }) => !view.enemies.some((enemy) => enemy.id === id))) {
       timers.push(setTimeout(() => playSound("enemy-death", 0.45), impactDelay + 120));
@@ -343,12 +346,12 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
       ).finished.finally(() => mark.remove());
     }
     const impact = () => {
-      for (const { id } of view.hits) {
+      for (const { id, amount } of view.hits) {
         const node = id === "player" ? playerSide.current : enemyNode(id);
         pose(node, "hit", 300);
         node?.animate([{ filter: "brightness(2.2)" }, { filter: "brightness(1)" }], { duration: 220, easing: "ease-out" });
         // 나가 있는 지킴이는 안 흔든다 — 셰이크가 미끄러짐과 같은 `translate` 채널이라 제자리로 튕긴다
-        if (id !== guarded?.by) node?.animate([{ translate: "-4px 0" }, { translate: "4px 0" }, { translate: "0 0" }], { duration: 320, easing: "ease-in-out" });
+        if (amount > 0 && id !== guarded?.by) node?.animate([{ translate: "-4px 0" }, { translate: "4px 0" }, { translate: "0 0" }], { duration: 320, easing: "ease-in-out" });
       }
     };
     if (view.hitSource === "attack" && enemyHits.length) {
@@ -373,10 +376,10 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
           node?.animate([{ translate: "0 0" }, { translate: stop, offset: impactAt / attackerStep }, { translate: "0 0" }], { duration: attackerStep, delay: start, easing: "ease-in-out" });
         }
         timers.push(setTimeout(() => { pose(node, "attack", 350); playSound("attack", 0.35); }, start));
-        timers.push(setTimeout(() => { playSound("hit", 0.5); impact(); }, start + impactAt));
+        timers.push(setTimeout(() => { playSound(hitSound, 0.5); impact(); }, start + impactAt));
       });
     } else {
-      timers.push(setTimeout(() => { playSound(guarded ? "guard" : "hit", 0.5); impact(); }, impactDelay));
+      timers.push(setTimeout(() => { playSound(hitSound, 0.5); impact(); }, impactDelay));
     }
     return () => {
       for (const timer of timers) clearTimeout(timer);

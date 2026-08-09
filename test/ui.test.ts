@@ -227,20 +227,25 @@ describe("browser replay export", () => {
   });
 
   it("keeps deferred task space and player damage visible", () => {
-    const decision = {
-      phase: "card", options: [], bot: endTurnAction,
-      observation: {
+    const observation = {
         depth: 3, lane: 1, region: "underworld", floor: 4, hp: 39, maxHp: 92,
         patrons: ["zeus", "athena"], grid: [], deck: [], favor: { zeus: 50, athena: 50 }, grace: {},
         turn: 2, block: 0, energy: 3, draw: 4, tokens: {}, hand: [], powers: [], enemies: [],
-        hits: [{ id: "player", amount: 5 }], hitSource: "enemy", hitSeq: 1, guarded: [],
+        hits: [{ id: "player", amount: 5, blocked: 3 }], hitSource: "enemy", hitSeq: 1, guarded: [],
         quest: { god: "athena", text: "여덟이다.", rule: "적 셋을 쓰러뜨리기", current: 0, target: 3 },
         promises: [{ god: "athena", text: "여덟이다.", rule: "적 셋을 쓰러뜨리기", current: 0, target: 3, deferred: true }],
-      },
-    } as never;
+      };
+    const decision = { phase: "card", options: [], bot: endTurnAction, observation } as never;
     const markup = renderToStaticMarkup(createElement(CombatScreen, { seed: 1, decision, onAnswer: () => {} }));
-    expect(markup).toMatch(/<span class="damage-pop"[^>]*>-5<\/span>/);
+    expect(markup).toMatch(/<span class="blocked"><svg[^>]*>.*?#icon-guard.*?<\/svg>3<\/span> -5/s);
     expect(markup).toContain("<em>이월</em>");
+
+    const full = renderToStaticMarkup(createElement(CombatScreen, {
+      seed: 1,
+      decision: { phase: "card", options: [], bot: endTurnAction, observation: { ...observation, hits: [{ id: "player", amount: 0, blocked: 8 }] } } as never,
+      onAnswer: () => {},
+    }));
+    expect(full).toMatch(/<span class="blocked"><svg[^>]*>.*?#icon-guard.*?<\/svg>8<\/span><\/span>/s);
   });
 
   it("shows three chosen-god cards with the completed task result", () => {
