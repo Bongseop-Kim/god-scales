@@ -222,13 +222,13 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
         const source = joinEffect ? godArt[`../../art/gods/${god}.webp`] : fxArt[`../../art/fx/${stage}.webp`];
         if (text && source) void playSprite(document.body, source, "cut", { god, stage, text: `${godName(god)} · ${stageName[stage]} — ${text}` });
         /**
-         * 합류는 외침(L3)이다. **컷인이 끝난 뒤**에 낸다 — 같이 내면 L3의 어두운 배경이 「무엇을
+         * 합류는 외침(L3)이다. **모든 컷인이 끝난 뒤**에 낸다 — 같이 내면 L3의 어두운 배경이 「무엇을
          * 했는가」를 덮어 버린다. 신을 버려 놓고 그 신이 판 건너편에 서는 순간이라 스치면 안 된다
          */
         if (joinEffect) {
           const joined = joinEffect.god ?? god;
           // 이 타이머도 `timers`에 든다 — 안 걷으면 화면·조우가 바뀐 뒤 묵은 외침이 선다
-          timers.push(setTimeout(() => speak(3, joined, godLines(joined, "join", view.depth), godArt[`../../art/gods/${joined}.webp`]), 1600));
+          timers.push(setTimeout(() => speak(3, joined, godLines(joined, "join", view.depth), godArt[`../../art/gods/${joined}.webp`]), (view.patrons.length - index) * 1700));
         }
         if (reducedMotion) return;
         timers.push(setTimeout(() => {
