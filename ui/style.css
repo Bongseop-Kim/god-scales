@@ -651,13 +651,8 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
  * 청동 프레임은 **무채색 한 장**이다(`art/ui/card-frame.md`). 신별로 다섯 장을 안 그린 이유가 여기다 —
  * 마스크로 실루엣만 쓰고 색은 진영색 변수가 든다. 카드가 화면에서 약 105px이라 파일도 256px이다
  */
-.game-card { position: relative; width: var(--card-w); padding: 8px; border: 1px solid color-mix(in srgb, var(--frame) 45%, transparent); border-radius: 9px; background: #171b25; text-align: left; --frame: #c6a969; }
-.game-card::before { content: ""; position: absolute; inset: -1px; background: var(--frame); mask: url(../art/ui/card-frame.webp) center / 100% 100% no-repeat; pointer-events: none; }
-.game-card[data-god="zeus"] { --frame: var(--zeus); }
-.game-card[data-god="poseidon"] { --frame: var(--poseidon); }
-.game-card[data-god="athena"] { --frame: var(--athena); }
-.game-card[data-god="ares"] { --frame: var(--ares); }
-.game-card[data-god="artemis"] { --frame: var(--artemis); }
+.game-card { position: relative; width: var(--card-w); padding: 8px; border: 1px solid color-mix(in srgb, var(--frame) 45%, transparent); border-radius: 9px; background: #171b25; text-align: left; --frame: #6b7185; --seal-a: #6b7185; --seal-b: #6b7185; }
+.game-card::before { content: ""; position: absolute; inset: -1px; background: conic-gradient(from 135deg, var(--seal-a) 0 50%, var(--seal-b) 0); mask: url(../art/ui/card-frame.webp) center / 100% 100% no-repeat; pointer-events: none; }
 .game-card.weakened { background: #26191c; box-shadow: inset 0 0 0 1px rgba(235, 136, 125, .28); }
 .game-card.weakened small { color: #eb887d; }
 /* 이름은 캡션이다 — 효과 숫자가 카드에서 제일 큰 글자다. 이름 최대 7자라 자를 것이 없다 */
@@ -672,19 +667,16 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .fan:not(.aiming) .game-card:disabled .cost-gem { border-color: #eb887d; color: #eb887d; }
 /* 예외만 적는다 — 파워·전체·소멸이 배지 슬롯 하나를 나눠 쓴다 */
 .card-kind { position: absolute; top: 29px; right: 5px; padding: 1px 6px; border: 1px solid #4a5165; border-radius: 4px; background: rgba(17, 19, 26, .88); color: #d5d7de; font-size: .58rem; font-style: normal; }
-.card-seals { position: absolute; z-index: 1; top: 5px; right: 5px; display: flex; min-width: 22px; min-height: 22px; gap: 2px; justify-content: end; }
-.card-seals em, .seal-badge { display: grid; place-items: center; width: 20px; height: 20px; border: 1px solid var(--seal-color, #c6a969); border-radius: 50%; background: #171b25; color: var(--seal-color, #c6a969); }
-.card-seals .icon { width: 14px; height: 14px; }
-.card-seals .preview { opacity: .55; }
+.seal-frame { width: 24px; height: 30px; border: 3px solid; border-image: conic-gradient(from 135deg, var(--zeus) 0 50%, #6b7185 0) 1; }
 .fusion-preview { display: block; color: #f1d277; font-style: normal; }
-.fusion-scene { position: fixed; z-index: 3; inset: 0; display: grid; grid-template-columns: 1fr 220px 1fr; place-items: center; border: 0; background: rgba(4, 5, 9, .9); color: #fff; }
-.fusion-scene figure { position: relative; margin: 0; filter: drop-shadow(0 0 28px var(--god-color)); }
+.fusion-scene { position: fixed; z-index: 3; inset: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: minmax(0, 220px) auto; gap: 24px 80px; place-content: center; place-items: center; border: 0; background: rgba(4, 5, 9, .9); color: #fff; }
+.fusion-scene figure { position: relative; align-self: end; margin: 0; filter: drop-shadow(0 0 28px var(--god-color)); }
 .fusion-scene figure:first-of-type { animation: fusion-left .8s both; }
 .fusion-scene figure:last-of-type { animation: fusion-right .8s both; }
-.fusion-god { width: min(30vw, 300px); max-height: 70vh; object-fit: cover; }
+.fusion-god { width: min(16vw, 160px); max-height: 34vh; object-fit: cover; }
 .fusion-particle { position: absolute; inset: 35% -10%; overflow: hidden; mix-blend-mode: screen; }
 .fusion-particle img { position: absolute; top: 50%; left: 0; width: 400%; max-width: none; transform: translateY(-50%); animation: fusion-strip .8s steps(4, jump-end) both; }
-.fusion-cards { position: relative; width: var(--card-w); }
+.fusion-cards { position: relative; grid-column: 1 / -1; align-self: start; width: var(--card-w); }
 .fusion-cards::after { content: ""; position: absolute; inset: -30px; background: #fff; pointer-events: none; animation: fusion-flash 1.2s both; }
 .fusion-cards > span { display: block; }
 .fusion-before { animation: fusion-before 1.2s both; }
@@ -700,12 +692,12 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 @media (prefers-reduced-motion: reduce) { .fusion-scene figure, .fusion-particle img { animation: none; } .fusion-cards::after, .fusion-before { display: none; } .fusion-after { animation: none; opacity: 1; transform: none; } }
 /**
  * 등급 칩. 이름 줄 앞에 서는 이유는 배지 슬롯이 이미 파워·전체의 것이고 **등급은 그 둘과 직교**라
- * 자리를 다투면 하나가 사라진다. 신 색(`--frame`)을 쓰지만 글자가 뜻을 다 들고 있다 — tier1(124장)에는 없다
+ * 자리를 다투면 하나가 사라진다. 회색 프레임색을 쓰지만 글자가 뜻을 다 들고 있다 — tier1(124장)에는 없다
  */
 .card-tier { margin-right: 4px; padding: 0 4px; border: 1px solid color-mix(in srgb, var(--frame) 70%, transparent); border-radius: 3px; color: var(--frame); font-size: .58rem; font-style: normal; }
 /**
  * 강화 배지. 등급 칩과 **같은 줄, 다른 슬롯**이다 — 등급은 카드가 태어난 계단이고 강화는 이 런에서
- * 키운 것이라 직교한다. 프레임색(`--frame`)은 안 쓴다: 그 색은 신의 것이고 이건 이로움(`--boon`)이다
+ * 키운 것이라 직교한다. 프레임색(`--frame`)은 안 쓴다: 그 색은 카드 경계이고 이건 이로움(`--boon`)이다
  */
 .card-up { margin-right: 4px; padding: 0 4px; border: 1px solid color-mix(in srgb, var(--boon) 60%, transparent); border-radius: 3px; color: var(--boon); font-size: .58rem; font-style: normal; }
 /* 카드의 본체. 아이콘은 `art/icons.svg` 28개에서 그대로 꺼낸다 — 적 머리 위 배지와 같은 글리프다 */
@@ -729,7 +721,7 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .card-fx .harm { color: #eb887d; }
 /* 조건부 효과는 물러난다 — 붙을지 아직 모르는 값이다. 문구는 `title`이 든다 */
 .card-fx .cond { opacity: .6; }
-/* 사거리는 마스크를 적은 26장에만 선다. 네 칸 그림은 `reachBars`가 만든다 */
+/* 공격 카드의 명시 사거리. 네 칸 그림은 `reachBars`가 만든다 */
 .card-reach { color: #7f869a; font-size: .66rem; letter-spacing: -1px; }
 .card-art { position: relative; display: grid; aspect-ratio: 4 / 3; margin-bottom: 6px; place-items: center; overflow: hidden; border-radius: 5px; background: linear-gradient(135deg, color-mix(in srgb, var(--zeus) 55%, #191d28), color-mix(in srgb, var(--athena) 55%, #191d28)); }
 .card-art img { position: absolute; width: 100%; height: 100%; object-fit: cover; }

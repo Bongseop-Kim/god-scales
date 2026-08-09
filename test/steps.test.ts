@@ -11,8 +11,8 @@ const pickPath = (decision: Decision, type: string) => decision.options.find((op
 
 describe("steppable engine", () => {
   it("stops at every decision phase", () => {
-    // 아홉 종류를 전부 지나는 시드가 92다
-    const steps = runSteps(92);
+    // 아홉 종류를 전부 지나는 시드가 100이다
+    const steps = runSteps(100);
     const seen = new Set<string>();
     let step = steps.next();
     while (!step.done) {
@@ -52,7 +52,7 @@ describe("steppable engine", () => {
      * 「덱 N장」이 정말 지금 덱을 세는지 본다. 시작 덱 배치는 여기에 적지 않는다 — 그러면 엔진의
      * 사본이 된다. 지도 관측이 이미 덱을 그대로 실어 오므로 마지막 것을 든다
      */
-    const steps = runSteps(4);
+    const steps = runSteps(1);
     let step = steps.next();
     while (!step.done && step.value.phase !== "grace") {
       // 보상은 지도 관측 **뒤에** 덱을 늘린다 — 그 사이에 집은 카드를 얹어야 은혜 화면과 같은 덱이다
@@ -131,7 +131,7 @@ describe("steppable engine", () => {
     }
     expect(sawFinale).toBe(true);
 
-    const lost = run(1);
+    const lost = run(8);
     expect(lost.finale).toMatchObject({ hp: 0, hitSource: "enemy", hits: [{ id: "player" }] });
   });
 

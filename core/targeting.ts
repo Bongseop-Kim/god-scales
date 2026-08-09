@@ -2,7 +2,7 @@ import type { ActorState, CombatState, EnemyState } from "./state.ts";
 
 export type Target = "self" | "enemy" | "all_enemies";
 
-/** 사거리를 안 적은 카드. 배포된 149장 중 123장이 그것이라 그 줄들은 한 줄도 안 바뀐다 */
+/** 사거리를 안 적는 비공격 카드의 기본값 */
 export const fullReach = "0123";
 export const reachSlots = (reach = fullReach): number[] => [...reach].map(Number);
 /** 규칙은 정규식 하나다 — 모양을 표로 두면 열째 모양이 코드 수정이 된다 */

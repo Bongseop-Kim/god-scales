@@ -34,10 +34,10 @@ if (!deckOk(freeDeck)) throw new Error(`${freeCard} is no longer a startable tie
  * 900개 중 **18개**가 완주하며 열 phase를 다 지난다 — 218이 가장 짧고(246결정) 559·81·129가 다음이다.
  * 218 → 32: `askQuest`가 이미 걸린 신을 후보에서 빼자(같은 신의 퀘스트 둘) 218이 12층에서 죽는다.
  * 900개 중 71개가 완주한다 — 32가 가장 짧고(239결정) 575·369·279가 다음이다
- * P-69에서 384 → 623: 훼방과 분노 개입 삭제가 384의 은혜 획득을 막았다.
- * 1000개 중 3개가 완주하며 아홉 phase를 다 지난다 — 623이 가장 짧고 807·260이 다음이다
+ * P-74에서 623 → 2132: 맵의 과업 다음 전투 보장과 전면 사거리화로 623이 은혜 화면을 지나지 않는다.
+ * 과업은 화면만 지나고 거절하는 정책에서 2132가 아홉 phase를 전부 지나 완주한다.
  */
-const seed = 623;
+const seed = 2132;
 const phases = ["path", "card", "target", "rest", "rest_card", "reward", "grace", "grace_card", "demand"];
 
 /**
@@ -145,7 +145,7 @@ await tab.evaluate(() => {
     };
   };
 
-  const driver = { order: [], rests: 0, layout: {} };
+  const driver = { order: [], rests: 0, layout: {}, visual: { playerDamage: false, bossSpan: false, sealFrame: false } };
   /** 두 번째 런(자유 모드)이 첫 런의 결정열 위에 쌓이지 않게 한다. 화면 기하는 첫 런 것을 그대로 둔다 */
   driver.restart = () => { driver.order = []; driver.rests = 0; };
   /**
@@ -174,6 +174,12 @@ await tab.evaluate(() => {
     for (let done = 0; done < count; done += 1) {
       const { phase, step } = state();
       if (phase === "result") return { done: true, decisions: driver.order.length };
+      driver.visual.playerDamage ||= !!document.querySelector(".player-actor .damage-pop");
+      driver.visual.bossSpan ||= [...document.querySelectorAll(".enemy.wide")].some((node) => Number.parseFloat(getComputedStyle(node).getPropertyValue("--span")) === 4) && !document.querySelector(".enemy.empty");
+      if (phase === "grace_card") {
+        const card = [...document.querySelectorAll(".game-card")].find((node) => getComputedStyle(node).getPropertyValue("--seal-a").trim() !== "#6b7185");
+        driver.visual.sealFrame ||= !!card && !card.querySelector(".card-seals");
+      }
       // 승패 아웃트로는 입력을 잠근다(P-71). 같은 결정을 다시 누르지 말고 화면 전환만 기다린다
       if (document.querySelector(".combat-stage[data-outro]")) {
         for (let tick = 0; tick < 80 && document.querySelector(".combat-stage[data-outro]"); tick += 1) await wait(25);
@@ -190,8 +196,10 @@ await tab.evaluate(() => {
         // 제거 → 강화 → 회복 순. 백틱은 이 스크립트가 템플릿 문자열이라 못 쓴다.
         // 강화 칸이 안 서는 덱이면 회복으로 떨어진다 — 화면이 실은 답만 누른다
         ? [enabled("button.choice")[[1, 2][driver.rests++] ?? 0] ?? enabled("button.choice")[0]]
-        : phase === "demand" || phase === "grace"
+        : phase === "grace"
         ? [enabled("button.choice")[0]]
+        : phase === "demand"
+        ? [enabled("button.choice").at(-1)]
         : phase === "target"
         ? enabled("button.enemy").sort((left, right) => enemyHp(left) - enemyHp(right))
         : phase === "card"
@@ -220,6 +228,7 @@ const captured = await tab.evaluate(async () => {
   return {
     order: window.__e2e.order,
     layout: window.__e2e.layout,
+    visual: window.__e2e.visual,
     filename,
     replay,
     won: document.querySelector(".result-layout h1").textContent === "승리",
@@ -309,6 +318,7 @@ function browserRun(): {
   eyebrow: string;
   floors: number;
   summary: Record<string, number>;
+  visual: { playerDamage: boolean; bossSpan: boolean; sealFrame: boolean };
   setup: { gods: number; blocked: boolean; ready: boolean; picked: string[]; tall: boolean };
   editor: {
     hidden: boolean; modal: boolean; singleScroll: boolean; ruled: string[]; short: { count: number; blocked: boolean };
@@ -401,6 +411,7 @@ try {
     console.log(`      ${widths}`);
   }
   check("측정한 화면 수", screens.length, phases.length);
+  check("피격 팝 / 은혜 테두리 / 보스 4칸", browser.visual, { playerDamage: true, bossSpan: true, sealFrame: true });
 
   /**
    * 자유 모드. 위 완주는 편집기를 **안 열었으므로** 반출에 `deck`이 없고, 그래서 기준선이 그대로다 —

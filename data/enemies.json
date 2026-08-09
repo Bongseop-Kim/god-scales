@@ -214,6 +214,7 @@
     "tier": "boss",
     "role": "boss",
     "hp": 130,
+    "size": 4,
     "intent_visible": true,
     "passives": {
       "ward": 2
@@ -448,6 +449,7 @@
     "tier": "boss",
     "role": "boss",
     "hp": 190,
+    "size": 4,
     "intent_visible": true,
     "passives": {
       "ward": 2

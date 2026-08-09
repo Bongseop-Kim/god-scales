@@ -13,7 +13,7 @@ import { tokenName } from "./tokens.tsx";
 
 const cardArt = import.meta.glob<string>("../../art/cards/*.webp", { eager: true, query: "?url", import: "default" });
 /**
- * 그림·프레임색·파티클·이름·파워는 **값이 아니라 종류**라 `data/cards.json`에서 직접 읽는다 — 엔진의
+ * 그림·신 분류·파티클·이름·파워는 **값이 아니라 종류**라 `data/cards.json`에서 직접 읽는다 — 엔진의
  * `CardView`는 값만 싣는다(`sim/engine.ts:130`). 적 이름을 `data/enemies.json`에서 읽는 자리와 같다.
  * 179개 id와 그림 179장의 이름 규칙은 `ui/art-keys.ts`에 있고 `tools/art.ts`가 같은 것을 쓴다
  */
@@ -152,7 +152,7 @@ export const CardSigns = () => (
       <li><span className="sign"><em className="card-kind">소멸</em></span><span>내면 이 전투에서 사라짐</span></li>
       <li><span className="sign">{Object.values(tierNames).map((name) => <em key={name} className="card-tier">{name}</em>)}</span><span>카드 등급</span></li>
       <li><span className="sign"><em className="card-up">+1</em></span><span>쉼터에서 올린 강화 단계</span></li>
-      <li><span className="sign seal-badge"><Icon name="seal" /></span><span>신의 은혜를 이 카드에 새긴 인장</span></li>
+      <li><span className="sign seal-frame" aria-hidden="true" /><span>테두리 색으로 새긴 신의 은혜</span></li>
       <li><span className="sign"><em className="card-tier">융합</em></span><span>두 후원 신의 인장이 만나 바뀐 카드</span></li>
       <li><span className="sign card-fx"><em><Icon name="damage" /><s>6</s><b className="up">11</b></em></span><span>카드에 적힌 값과 지금 나갈 값</span></li>
       <li><span className="sign card-fx"><em className="cond"><Icon name="damage" /><b>6</b></em></span><span>조건이 맞을 때만 붙는 효과</span></li>
@@ -255,7 +255,7 @@ export function GameCard({ cardId, card, boost, upgrade, disabled, onSelect }: {
   disabled?: boolean;
   onSelect?: () => void;
 }) {
-  // 업그레이드본은 `card_zeus_12+1`이다 — 그림·프레임색·등급은 base의 것이고 `+N`은 배지가 든다
+  // 업그레이드본은 `card_zeus_12+1`이다 — 그림·신 분류·등급은 base의 것이고 `+N`은 배지가 든다
   const { base, level } = cardLevel(cardId);
   const face = cardFace.get(base);
   /**
@@ -275,6 +275,13 @@ export function GameCard({ cardId, card, boost, upgrade, disabled, onSelect }: {
   const kind = face?.power ? "파워" : shown?.target === "all_enemies" ? "전체" : face?.exhaust ? "소멸" : undefined;
   const seals = [...(shown?.seals ?? []), ...(shown?.previewSeal ? [shown.previewSeal] : [])];
   const label = shown && `${cardCaption(shown, boost)}${seals.length ? ` · 인장 ${seals.map(({ text }) => text).join(", ")}` : ""}`;
+  const sealColor = (index: number) => {
+    const seal = seals[index];
+    if (!seal) return "#6b7185";
+    return shown?.previewSeal === seal ? `color-mix(in srgb, var(--${seal.patron}) 55%, transparent)` : `var(--${seal.patron})`;
+  };
+  const frameStyle = { "--seal-a": sealColor(0), "--seal-b": sealColor(1) } as React.CSSProperties;
+  const sealTitle = seals.map(({ text, effects }) => `${text} · ${effectText({ target: shown?.target ?? "enemy", effects })}`).join("\n") || undefined;
   const body = (
     <>
       <div className={`card-art${missing ? " missing" : ""}`}>
@@ -282,20 +289,10 @@ export function GameCard({ cardId, card, boost, upgrade, disabled, onSelect }: {
         <span aria-hidden="true">⚖</span>
       </div>
       {shown && <b className="cost-gem">{shown.cost}</b>}
-      <span className="card-seals">
-        {seals.map((seal, index) => (
-          <em
-            key={`${seal.patron}-${index}`}
-            className={shown?.previewSeal === seal ? "preview" : undefined}
-            style={{ "--seal-color": `var(--${seal.patron})` } as React.CSSProperties}
-            title={`${seal.text} · ${effectText({ target: shown?.target ?? "enemy", effects: seal.effects })}`}
-          ><Icon name="seal" /></em>
-        ))}
-      </span>
       {kind && <em className="card-kind">{kind}</em>}
       {shown && (
         <span className="card-fx">
-          {/* 사거리는 마스크를 적은 26장에만 선다 — 기본값(네 칸 전부)에 그리면 같은 뜻의 두 번째 표기다 */}
+          {/* 공격 카드는 모두 의도한 사거리를 직접 보여 준다 */}
           {shown.reach && <em className="card-reach" title={reachText(shown.reach)}>{reachBars(shown.reach)}</em>}
           {/* 원래 값은 원문에서 읽는다. 은혜는 뒤에 잇고 훼방은 값을 낮춘다(`cardEffects`) — 앞에서부터 인덱스로 맞고 뒤에 남는 것이 은혜다 */}
           {shown.effects.map((effect, index) => (
@@ -325,6 +322,8 @@ export function GameCard({ cardId, card, boost, upgrade, disabled, onSelect }: {
         data-cost={card?.cost}
         data-damage={card && cardDamage(card)}
         aria-label={label}
+        title={sealTitle}
+        style={frameStyle}
         disabled={disabled}
         onMouseEnter={() => playSound("card-place-4", 0.12)}
         onClick={() => { playSound("card-slide-6", 0.35); onSelect(); }}
@@ -332,5 +331,5 @@ export function GameCard({ cardId, card, boost, upgrade, disabled, onSelect }: {
         {body}
       </button>
     )
-    : <article className={`game-card${card?.weakened ? " weakened" : ""}`} data-card={cardId} data-god={face?.god} aria-label={label}>{body}</article>;
+    : <article className={`game-card${card?.weakened ? " weakened" : ""}`} data-card={cardId} data-god={face?.god} aria-label={label} title={sealTitle} style={frameStyle}>{body}</article>;
 }

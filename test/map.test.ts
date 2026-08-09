@@ -51,6 +51,19 @@ describe("map", () => {
     expect(shapes.size).toBeGreaterThan(1);
   });
 
+  it("puts a reachable combat after every omen", () => {
+    for (const seed of seeds) {
+      const grid = generateMap(seed, eliteSlots);
+      for (let depth = 0; depth < grid.length - 1; depth += 1) {
+        grid[depth].forEach((type, lane) => {
+          if (type !== "omen") return;
+          const next = reachableLanes(depth + 1, lane).map((reachable) => grid[depth + 1][reachable]);
+          expect(next.some((node) => node === "combat" || node === "elite" || node === "boss"), `seed ${seed} depth ${depth} lane ${lane}`).toBe(true);
+        });
+      }
+    }
+  });
+
   /**
    * 룰 봇은 정예를 고르지 않는다 — 보상이 전투와 같고 편성만 세기 때문이다(은혜는 P-28). 그래서
    * 정예 갈래를 손으로 밟아 그 자리가 실제로 서는지 여기서 잰다. 안 하면 종류 하나가 죽은 코드다

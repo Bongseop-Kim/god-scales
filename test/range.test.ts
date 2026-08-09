@@ -49,11 +49,11 @@ describe("reach", () => {
   });
 
   it("uses all nine shapes across the shipped cards", () => {
-    const cards = JSON.parse(readFileSync("data/cards.json", "utf8")) as { reach?: string }[];
+    const cards = JSON.parse(readFileSync("data/cards.json", "utf8")) as { tags: string[]; reach?: string }[];
     const used = new Set(cards.map(({ reach }) => reach ?? "0123"));
     expect([...used].sort()).toEqual(["0", "01", "012", "0123", "03", "12", "123", "23", "3"]);
-    // 기본값은 마스크를 안 적은 카드가 쓴다 — 명시하면 같은 뜻의 두 번째 표기가 된다
-    expect(cards.filter(({ reach }) => reach === "0123")).toEqual([]);
+    // 공격 카드는 기본값과 같은 전체 사거리도 의도를 명시한다. 비공격 카드의 생략 기본값은 남는다
+    expect(cards.filter(({ tags, reach }) => tags.includes("attack") && !reach)).toEqual([]);
   });
 
   it("keeps out-of-reach enemies out of the target list and out of the hand", () => {
@@ -360,9 +360,19 @@ describe("two-slot enemy", () => {
     expect(combat.outcome).toBe("ongoing");
   });
 
-  it("ships the region bosses two slots wide", () => {
-    const enemies = JSON.parse(readFileSync("data/enemies.json", "utf8")) as { id: string; tier: string }[];
-    const bosses = enemies.filter(({ tier }) => tier === "boss").map(({ id }) => id);
+  it("ships the region bosses four slots wide", () => {
+    const enemies = JSON.parse(readFileSync("data/enemies.json", "utf8")) as { id: string; tier: string; size?: number }[];
+    const bosses = enemies.filter(({ tier }) => tier === "boss").map(({ id, size }) => [id, size]);
     expect(bosses).toHaveLength(2);
+    expect(bosses.every(([, size]) => size === 4)).toBe(true);
+  });
+
+  it("reaches a four-slot boss from every slot and damages it once", () => {
+    for (const reach of ["0", "1", "2", "3"]) {
+      const combat = createCombat(1, [], [{ ...boss(), size: 4 }]);
+      executeCard(wrap(combat), { ...strike(), reach }, "boss");
+      expect(combat.enemies.every((enemy) => enemy === combat.enemies[0]), reach).toBe(true);
+      expect(combat.enemies[0].hp, reach).toBe(54);
+    }
   });
 });

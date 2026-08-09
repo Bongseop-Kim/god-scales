@@ -129,6 +129,7 @@ type EnemyData = {
   tier: "normal" | "boss" | "god";
   role: string;
   hp: number;
+  size?: 1 | 2 | 3 | 4;
   passives?: Passives;
   pattern: { op: string; value?: number; token?: import("../core/state.ts").TokenName; stacks?: number; repeat?: number; target?: EnemyAction["target"] }[];
   /** `with`의 순서가 칸 1·2·3이다. 빈 칸은 못 적는다 — 편성은 언제나 칸 0부터 붙여 채운다 */
@@ -140,6 +141,7 @@ function enemyDefinition(enemy: EnemyData): EnemyDefinition {
   return {
     id: enemy.id,
     hp: enemy.hp,
+    size: enemy.size,
     passives: enemy.passives,
     // 난이도는 피해에만 걸린다 — 회복·토큰까지 긁으면 enemyDamageScale이 조우 밴드와 다른 눈금이 된다
     pattern: enemy.pattern.map((effect) => ({
@@ -164,9 +166,8 @@ function encounter(seed: number, region: string, floor: number, type: MapNodeTyp
     const bosses = enemyData.filter((enemy) => enemy.region === region && enemy.tier === "boss");
     const boss = bosses[seed % bosses.length];
     if (!boss) throw new Error(`${region}: no boss`);
-    // 보스는 칸 0·1 두 칸을 차지한다 — 사거리 `1`·`01`·`12` 카드가 보스전에서 처음으로 산다.
-    // 칸 2·3은 빈다: 부하를 붙이면 보스 층 편성 데이터·밴드·재측정이 통째로 딸려온다
-    return [{ ...enemyDefinition(boss), size: 2 }];
+    // 보스 크기는 적 데이터가 정한다 — 여기서 다시 적으면 데이터와 실제 조우가 어긋난다
+    return [enemyDefinition(boss)];
   }
   const candidates = mapSlots.get(`${region}:${floor}`)?.groups[type === "elite" ? "elite" : "combat"] ?? [];
   if (!candidates.length) throw new Error(`${region} ${floor}: no ${type} group`);
@@ -266,7 +267,7 @@ export type RunView = {
   favor: Record<string, number>;
   grace: Record<string, number>;
   deck: CardView[];
-  /** 맵에서 들고 있는 과업. 판정할 수 없는 전투에서는 전투 관측에 싣지 않는다 */
+  /** 맵에서 들고 있는 과업. 판정할 수 없는 전투에서도 이월 상태를 보여 준다 */
   quest?: PromiseView;
 };
 /** 등록된 파워 하나. 카드를 그대로 실어 화면이 효과문을 손패와 같은 `effectText`로 그린다 */
@@ -305,7 +306,7 @@ export type CombatObservation = RunView & {
  * 과업 한 줄. `current`·`settled`는 `facts`와 조건에서 **계산된다** — 상태를 따로 들면 그것이
  * 사실과 어긋날 자리가 생기고, `facts`는 이미 단조라 계산이 언제나 맞다(`core/demands.ts`).
  */
-export type PromiseView = { god: string; text: string; rule: string; current: number; target: number; settled?: "kept" | "broken" };
+export type PromiseView = { god: string; text: string; rule: string; current: number; target: number; settled?: "kept" | "broken"; deferred?: boolean };
 type Quest = { demand: Demand; patron: GodId };
 const questView = ({ demand, patron }: Quest, facts: Record<string, number> = {}): PromiseView => {
   const { fact, target } = parseCondition(demand.condition);
@@ -357,7 +358,7 @@ const drop = (cards: string[], id: string): void => {
   if (at >= 0) cards.splice(at, 1);
 };
 
-function* playEncounter(state: GameState, seed: number, deck: string[], cardMap: Map<string, Card>, lineup: Lineup, log: string[], patrons: PatronPair, noise: () => number, quest?: Quest): Generator<Decision, EncounterResult, string> {
+function* playEncounter(state: GameState, seed: number, deck: string[], cardMap: Map<string, Card>, lineup: Lineup, log: string[], patrons: PatronPair, noise: () => number, quest?: Quest, deferred = false): Generator<Decision, EncounterResult, string> {
   /** **판과 사전을 갈라 둔다** — 사전에는 신 적 다섯이 미리 들어 있고 판에는 편성만 선다 */
   const enemyMap = new Map([...lineup, ...godEnemies].map((enemy) => [enemy.id, enemy]));
   const random = createRng(seed);
@@ -419,6 +420,7 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
   /** 과업을 지금 사실로 다시 푼다. 확정값은 단조 사실에서 나와 같은 전투 안에서 뒤집히지 않는다 */
   const promiseViews = (): PromiseView[] => {
     if (!quest) return [];
+    if (deferred) return [{ ...questView(quest), deferred: true }];
     const { fact, target } = parseCondition(quest.demand.condition);
     const settled = demandSettled(quest.demand.condition, facts);
     return [{ god: quest.patron, text: quest.demand.text, rule: ruleText(quest.demand.condition), current: facts[fact as keyof typeof facts] ?? 0, target, ...(settled ? { settled } : {}) }];
@@ -793,10 +795,10 @@ export function* runSteps(
       /** 이 조우가 무엇을 요구했는지. `--aura-matrix`가 개입의 부호를 여기서 갈라 읽는다 */
       const passives = [...new Set(members.flatMap(({ passives: own }) => Object.keys(own ?? {})))].sort();
       const devoted = patrons.filter((god) => favorStage(state.favor[god] ?? favorInitial) === "devotion");
-      // 적이 모자라 판정할 수 없으면 HUD에도 싣지 않고 다음 전투까지 그대로 넘긴다
+      // 적이 모자라 판정할 수 없으면 이월로 보여 주고 다음 전투까지 그대로 넘긴다
       const activeQuest = quest && demandEnemies(quest.demand.condition, quest.demand.min_enemies) <= members.length ? quest : undefined;
       const hpBefore = state.combat.player.hp;
-      const result = yield* playEncounter(state, seed * 100 + nodeSeed, deck, cardMap, lineup, log, patrons, noise, activeQuest);
+      const result = yield* playEncounter(state, seed * 100 + nodeSeed, deck, cardMap, lineup, log, patrons, noise, quest, !!quest && !activeQuest);
       const questResult = activeQuest
         ? { ...questView(activeQuest, result.facts), settled: demandSatisfied(activeQuest.demand.condition, result.facts) ? "kept" as const : "broken" as const }
         : undefined;

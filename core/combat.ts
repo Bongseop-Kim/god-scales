@@ -27,8 +27,8 @@ export type EnemyAction = {
   favor?: number;
   target?: "player" | "self" | "ally" | "all_allies";
 };
-/** `size`는 차지하는 칸 수다. 보스만 `2`를 쓰고 나머지는 없다(=1) */
-export type EnemyDefinition = { id: string; hp: number; pattern: EnemyAction[]; bulwark?: number; passives?: Passives; size?: number };
+/** `size`는 차지하는 칸 수다. 판이 네 칸이라 4가 상한이고, 생략하면 1이다. */
+export type EnemyDefinition = { id: string; hp: number; pattern: EnemyAction[]; bulwark?: number; passives?: Passives; size?: 1 | 2 | 3 | 4 };
 /** 편성 한 줄. **칸 0부터 붙여 채운다** — 순서가 곧 칸이고 빈 칸을 사이에 둘 방법이 없다 */
 export type Lineup = EnemyDefinition[];
 
@@ -57,7 +57,7 @@ export const actors = (combat: CombatState): EnemyState[] => [...new Set(combat.
 
 export function createCombat(seed: number, deck: string[], lineup: Lineup): CombatState {
   /**
-   * 칸 0부터 붙여 채운다. `size`가 2인 적은 **같은 객체를 두 칸에** 넣는다 — 체력·토큰·패턴이 하나라
+   * 칸 0부터 붙여 채운다. 큰 적은 `size`만큼 **같은 객체를 여러 칸에** 넣는다 — 체력·토큰·패턴이 하나라
    * 두 번째 진실이 안 생긴다. 남는 칸은 시체와 같은 꼴의 빈 칸이다
    */
   const enemies = lineup.flatMap((definition) => {

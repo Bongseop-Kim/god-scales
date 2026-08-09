@@ -82,6 +82,12 @@ function edgesOk(upper: (MapNodeType | null)[], lower: (MapNodeType | null)[]): 
   return upper.every((type, lane) => !heavy(type) || [lane - 1, lane, lane + 1].every((next) => !heavy(lower[next])));
 }
 
+/** 과업을 고른 갈래에서 다음 층에 닿는 전투가 하나는 있어야 한다. 보스도 과업을 판정하는 전투다. */
+function omensOk(upper: (MapNodeType | null)[], lower: (MapNodeType | null)[]): boolean {
+  const fight = (type: MapNodeType | null | undefined) => type === "combat" || type === "elite" || type === "boss";
+  return upper.every((type, lane) => type !== "omen" || [lane - 1, lane, lane + 1].some((next) => fight(lower[next])));
+}
+
 function shuffled<T>(items: T[], random: () => number): T[] {
   const out = [...items];
   for (let index = out.length - 1; index > 0; index -= 1) {
@@ -115,6 +121,7 @@ export function mapLayoutFailure(grid: MapGrid): string | undefined {
     const distinct = new Set(row.filter((type) => type !== null)).size;
     if (distinct < (floor === 1 || boss ? 1 : floor === 2 ? 2 : 3)) return `depth ${depth}: lanes repeat a type`;
     if (depth > 0 && !edgesOk(grid[depth - 1], row)) return `depth ${depth}: elite/rest follows elite/rest`;
+    if (depth > 0 && !omensOk(grid[depth - 1], row)) return `depth ${depth}: omen cannot reach combat`;
     if (!reach.some((lane) => row[lane] !== null)) return `depth ${depth}: unreachable`;
     reach = [...new Set(reach.filter((lane) => row[lane] !== null).flatMap((lane) => (depth + 1 < grid.length ? reachableLanes(depth + 1, lane) : [])))];
   }
@@ -139,7 +146,7 @@ export function generateMap(seed: number, eliteSlots: ReadonlySet<string> = new 
   const place = (depth: number): boolean => {
     if (depth === candidates.length) return true;
     for (const row of candidates[depth]) {
-      if (depth > 0 && !edgesOk(grid[depth - 1], row)) continue;
+      if (depth > 0 && (!edgesOk(grid[depth - 1], row) || !omensOk(grid[depth - 1], row))) continue;
       grid[depth] = row;
       if (place(depth + 1)) return true;
     }

@@ -39,12 +39,12 @@ describe("demands", () => {
     expect(favor).toEqual({ zeus: 50 + athena.reward.favor, poseidon: 32 });
   });
 
-  it("keeps an ineligible task hidden through a boss and consumes it in the next eligible fight", () => {
+  it("shows an ineligible task as deferred through a boss and consumes it in the next eligible fight", () => {
     const steps = runSteps(4, undefined, ["poseidon", "athena"]);
     let step = steps.next();
     let chooseOnFloorFive = false;
     let chosen = false;
-    let hiddenAtBoss = false;
+    let deferredAtBoss = false;
     let retainedAfterBoss = false;
     let activeNext = false;
     let cleared = false;
@@ -62,9 +62,9 @@ describe("demands", () => {
         chosen = chooseOnFloorFive;
       }
       if (chosen && decision.phase === "card" && decision.observation.region === "underworld" && decision.observation.floor === 6) {
-        hiddenAtBoss = decision.observation.promises.length === 0 && decision.observation.quest === undefined;
+        deferredAtBoss = decision.observation.promises[0]?.deferred === true && decision.observation.quest?.god === "poseidon";
       }
-      if (hiddenAtBoss && decision.phase === "reward" && decision.observation.floor === 6) {
+      if (deferredAtBoss && decision.phase === "reward" && decision.observation.floor === 6) {
         retainedAfterBoss = decision.observation.quest?.god === "poseidon";
       }
       if (retainedAfterBoss && decision.phase === "card" && decision.observation.region === "surface") {
@@ -76,7 +76,7 @@ describe("demands", () => {
       }
       step = steps.next(answer);
     }
-    expect({ chosen, hiddenAtBoss, retainedAfterBoss, activeNext, cleared }).toEqual({ chosen: true, hiddenAtBoss: true, retainedAfterBoss: true, activeNext: true, cleared: true });
+    expect({ chosen, deferredAtBoss, retainedAfterBoss, activeNext, cleared }).toEqual({ chosen: true, deferredAtBoss: true, retainedAfterBoss: true, activeNext: true, cleared: true });
   });
 
   it("gives base reward first, then +12 favor and three cards from the completed task's god", () => {
@@ -112,7 +112,7 @@ describe("demands", () => {
   });
 
   it("gives no extra reward when the task fails", () => {
-    const steps = runSteps(5);
+    const steps = runSteps(11);
     let step = steps.next();
     let chosen = false;
     let taskRewards = 0;

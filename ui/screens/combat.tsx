@@ -654,7 +654,7 @@ function PromiseRow({ promises, onOpen }: { promises: PromiseView[]; onOpen?: ()
   if (!promises.length) return null;
   return (
     <div className="promise-row">
-      {promises.map(({ god, text, rule, current, target, settled }) => (
+      {promises.map(({ god, text, rule, current, target, settled, deferred }) => (
         // 칩이 버튼이다(P-55) — 누르면 약속 저널(P-53)이 열린다
         <button
           type="button"
@@ -667,7 +667,7 @@ function PromiseRow({ promises, onOpen }: { promises: PromiseView[]; onOpen?: ()
           <Icon name="favor" />
           <b>과업 · {godName(god)}</b>
           <span>{rule}</span>
-          <em>{current} / {target}</em>
+          <em>{deferred ? "이월" : `${current} / ${target}`}</em>
         </button>
       ))}
     </div>
