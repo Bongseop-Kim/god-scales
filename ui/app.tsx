@@ -13,7 +13,7 @@ import { Icon, IconSheet } from "./shared/icon.tsx";
 import { MapScreen } from "./screens/map.tsx";
 import { ResultScreen } from "./screens/result.tsx";
 import { RewardScreen } from "./screens/reward.tsx";
-import { FullscreenButton, IntroScreen, SetupScreen, type Preset } from "./screens/setup.tsx";
+import { FullscreenButton, IntroScreen, SetupScreen, type Achievement } from "./screens/setup.tsx";
 import { godArt, godLines, godName, StatusBar } from "./shared/header.tsx";
 import { resetSpokenLines, speak } from "./shared/fx.ts";
 import { CardCatalog, DeckPanel, HelpPanel, JournalPanel, Overlay, type PromiseRecord } from "./shared/overlay.tsx";
@@ -174,7 +174,7 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
   };
 
   const startRun = (nextPair: PatronPair, nextDeck: string[] | undefined, nextSplit: number) => {
-    // 열 장이 아니면 일반 submit이 `disabled`다 — 프리셋도 같은 문으로 들어오므로 여기서 한 번 더 막는다
+    // 열 장이 아니면 일반 submit이 `disabled`다 — 업적도 같은 문으로 들어오므로 여기서 한 번 더 막는다
     if ((nextDeck ?? ruleDeck(nextPair)).length !== deckSize) return;
     /**
      * 시드 입력이 사라졌다(P-56) — `?seed=`(개발·e2e)가 있으면 그것, 없으면 런마다 새로 뽑는다.
@@ -305,11 +305,11 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
   const toggleGod = (god: GodId) =>
     setPicked((now) => (now.includes(god) ? now.filter((id) => id !== god) : [...now, god].slice(-2)));
 
-  const startPreset = ({ pair: presetPair, split: presetSplit, deck: presetDeck }: Preset) => {
-    setPicked([...presetPair]);
-    setSplit(presetSplit);
-    setDeck([...presetDeck]);
-    startRun(presetPair, [...presetDeck], presetSplit);
+  const startAchievement = ({ pair, split, deck }: Achievement) => {
+    setPicked([...pair]);
+    setSplit(split);
+    setDeck([...deck]);
+    startRun(pair, [...deck], split);
   };
 
   const toggleSound = () => {
@@ -435,7 +435,7 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
               onToggleGod={toggleGod}
               onDeckChange={setDeck}
               onRestoreDeck={() => setDeck(undefined)}
-              onStartPreset={startPreset}
+              onStartAchievement={startAchievement}
               onStart={start}
             />
           )}
