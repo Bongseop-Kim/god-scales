@@ -62,11 +62,11 @@ export function turnsUntilIntervention(turn: number): number {
 }
 export type FavorGod = { id: string; stage_effects: Partial<Record<FavorStage, Partial<Record<StageHook, StageEffect[]>>>> };
 /**
- * 신이 말하는 자리 아홉(`data/gods.json`의 `lines`). 셋은 단계로 갈리고 여섯은 한 벌이다 —
+ * 신이 말하는 자리 열(`data/gods.json`의 `lines`). 셋은 단계로 갈리고 일곱은 한 벌이다 —
  * 갈리는 셋이 조우마다 뜨는 것들이고(조우 시작 · 개입 턴 · 단계 경계) 나머지는 사건이라 그 자리에
  * 단계가 없다. 게이트(`tools/validate.ts`)와 화면(`ui/header.tsx`)이 같은 이 한 벌을 읽는다
  */
-export const lineTriggers = ["encounter", "intervene", "cross", "demand_offer", "demand_kept", "demand_broken", "tear", "join", "reconcile"] as const;
+export const lineTriggers = ["encounter", "intervene", "cross", "demand_offer", "demand_kept", "demand_broken", "tear", "join", "reconcile", "fuse"] as const;
 export type LineTrigger = (typeof lineTriggers)[number];
 export const stagedLineTriggers: readonly LineTrigger[] = ["encounter", "intervene", "cross"];
 /**
@@ -99,8 +99,7 @@ export function shiftFavor(favor: Record<string, number>, god: string, amount: n
  * 조우당 신별 상한. **5를 그대로 둔다.** 5는 감쇠 −3보다 커서 호의가 조우마다 +2씩 구조적으로 오르고,
  * 그래서 P-30이 이 상한을 다이얼로 후보에 올렸다 — 4000런으로 재고 되돌렸다:
  *
- * - 3 (표류 0): 진노 0.005 → 0.012인데 **합성률 0.047 → 0.003.** `canFuse`는 조합 둘 다 70을 요구하고,
- *   요구는 patron만 올리고 상대를 내린다 — 표류가 0이면 둘이 같이 70에 서는 일이 사라진다
+ * - 3 (표류 0): 진노 0.005 → 0.012였지만 은혜 도달이 크게 줄었다.
  * - 2 (표류 −1): 진노 0.047(목표 0.05도 못 넘는다)에 아테나 은총 1096 → 174
  *
  * 둘 다 목표를 못 넘으면서 다른 콘텐츠를 끈다. 진노 도달은 P-29의 시련 대가로 연다 — reviews/30-intervention.md

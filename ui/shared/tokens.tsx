@@ -154,7 +154,20 @@ export function TokenDictionary({ children }: { children?: ReactNode }) {
         ))}
       </ul>
       <h3>전투 상태</h3>
+      {/* 순서는 좌상단 칩 줄(`board-chips`) 그대로 — 화면에서 본 차례로 찾게 한다 */}
       <ul className="token-dict">
+        <li>
+          <i className="passive-icon"><Icon name="omen" /></i>
+          <b>과업</b>
+          <em>맵 도전</em>
+          <span>과업 노드에서 받은 신의 조건 · 이번 전투에서 달성하면 호의와 카드 보상 · 칩을 누르면 저널</span>
+        </li>
+        <li>
+          <i className="passive-icon"><Icon name="favor" /></i>
+          <b>개입</b>
+          <em>자동 행동</em>
+          <span>두 후원 신이 2턴째부터 3턴마다 호의 단계대로 행동 · 칩의 숫자는 다음 개입까지 남은 턴</span>
+        </li>
         <li>
           <i className="passive-icon">−1</i>
           <b>훼방</b>
@@ -165,7 +178,7 @@ export function TokenDictionary({ children }: { children?: ReactNode }) {
           <i className="passive-icon">P</i>
           <b>파워</b>
           <em>지속 효과</em>
-          <span>손을 떠난 뒤 전투 내내 지정된 때마다 일함</span>
+          <span>손을 떠난 뒤 전투 내내 지정된 때마다 일하는 카드 · 좌상단 칩에 카드 이름으로 표시 · 호버로 발동 시점과 효과 확인</span>
         </li>
       </ul>
       {children}

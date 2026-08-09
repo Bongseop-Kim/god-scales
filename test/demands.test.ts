@@ -205,12 +205,12 @@ describe("demands", () => {
   });
 
   /**
-   * 트리거 아홉에 신 다섯이 다 줄을 갖는다. **게이트가 이미 반려하지만** 화면이 읽는 경로(`godLine`)와
+   * 트리거 열에 신 다섯이 다 줄을 갖는다. **게이트가 이미 반려하지만** 화면이 읽는 경로(`godLine`)와
    * 게이트가 세는 경로가 갈릴 수 있다 — 여기서 그 둘을 같은 자리에 세운다. 고르는 것은 나머지 연산이다
    */
-  it("말한다 — 트리거 아홉 × 단계 넷이 다 줄을 갖고 난수를 안 당긴다", () => {
+  it("말한다 — 트리거 열 × 단계 넷이 다 줄을 갖고 난수를 안 당긴다", () => {
     for (const { id } of godData) {
-      for (const trigger of ["demand_offer", "demand_kept", "demand_broken", "tear", "join", "reconcile"] as const) {
+      for (const trigger of ["demand_offer", "demand_kept", "demand_broken", "tear", "join", "reconcile", "fuse"] as const) {
         expect(godLine(id, trigger, 0).trim(), `${id}:${trigger}`).not.toBe("");
       }
       for (const trigger of ["encounter", "intervene", "cross"] as const) {

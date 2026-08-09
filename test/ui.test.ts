@@ -85,6 +85,7 @@ describe("browser replay export", () => {
       rest_card: (decision) => createElement(RestScreen, { decision, onAnswer: () => {} }),
       reward: (decision) => createElement(RewardScreen, { decision, onAnswer: () => {} }),
       grace: (decision) => createElement(GraceScreen, { decision, onAnswer: () => {} }),
+      grace_card: (decision) => createElement(GraceScreen, { decision, onAnswer: () => {} }),
       demand: (decision) => createElement(DemandScreen, { decision, onAnswer: () => {} }),
     };
     const seen = new Set<string>();
@@ -176,6 +177,11 @@ describe("browser replay export", () => {
     expect(bar).toContain("진노 · 나에게 감전 2 · 제우스가 적으로 합류 · 나에게 감전 2");
     expect(bar).toContain("헌신 70 / 평온 30 / 분노 10");
     expect(bar).toContain("은총 3");
+
+    const lost = renderToStaticMarkup(createElement(CombatScreen, { seed: 1, decision, outro: "lost", onAnswer: () => {} }));
+    const won = renderToStaticMarkup(createElement(CombatScreen, { seed: 1, decision, outro: "won", onAnswer: () => {} }));
+    expect(lost).toContain('class="player-actor" data-pose="death"');
+    expect(won).not.toContain('data-enemy="enemy_under_guardian"');
   });
 
   /** 과업과 자동 개입의 두 줄은 전투 관측만으로 그린다 */

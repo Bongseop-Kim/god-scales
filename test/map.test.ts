@@ -79,7 +79,7 @@ describe("map", () => {
   });
 
   it("heals 25 without combat neglect at rest", () => {
-    const state: GameState = { seed: 1, favor: { zeus: 50, athena: 50 }, grace: {}, graceSlots: {}, map: { depth: 2, lane: bossLane, grid: [], completed: [] }, combat: createCombat(1, [], []) };
+    const state: GameState = { seed: 1, favor: { zeus: 50, athena: 50 }, grace: {}, map: { depth: 2, lane: bossLane, grid: [], completed: [] }, combat: createCombat(1, [], []) };
     state.combat.player.hp = 40;
     takeRest(state, ["zeus", "athena"], [], "heal");
     expect([state.combat.player.hp, state.favor.zeus, state.favor.athena]).toEqual([65, 47, 47]);

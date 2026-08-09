@@ -1,5 +1,5 @@
 import { actors, type EnemyDefinition } from "../../core/combat.ts";
-import type { Grace, GraceHeld } from "../../core/grace.ts";
+import type { Grace } from "../../core/grace.ts";
 import { floorsPerRegion, type MapGrid } from "../../core/map.ts";
 import type { Card } from "../../core/rules.ts";
 import type { CombatState } from "../../core/state.ts";
@@ -12,12 +12,13 @@ import { expectedValue, graceValue, powerTurns, tokenWeights } from "../../tools
  * v5: `choosePath`가 「쉴까 말까」가 아니라 갈래를 고른다(P-27). 입력과 반환이 통째로 달라 옛 판과
  * 같은 결정을 낼 수가 없다 — 이때만 판을 올린다. v4는 토큰 값을 게이트 표에서 읽고 요구 답이 조건
  * 판정을 전제로 바뀐 판이었고, P-31의 파워 배수는 옛 입력에서 한 자리도 다르지 않아 v4를 유지했다
- * v6: 은총이 「카드 한 장 고르기」에서 「은혜 슬롯 3택1」이 됐다(P-28) — 고르는 것 자체가 다르다
+ * v6: 은총이 「카드 한 장 고르기」에서 「은혜 3택1」이 됐다(P-28) — 고르는 것 자체가 다르다
  * v7: 요구 답이 둘에서 셋이 됐다(P-29) — `chooseDemandAnswer`의 입력과 반환이 통째로 다르다
  * v8: 판에 칸이 넷 생겼다(P-35) — `chooseTarget`이 사거리 안에서만 고르고 `cardValue`의 광역 배수가
  *     사거리 안의 산 적 수다. 같은 손패에서 다른 카드가 나온다
+ * v9: 은혜 뒤 인장을 새길 카드를 고른다(P-70) — 융합 진행을 먼저, 없으면 비용이 큰 카드를 고른다
  */
-export const botPolicyVersion = "v8";
+export const botPolicyVersion = "v9";
 
 /**
  * 확률 ε로 합법수를 무작위로 고른다. 실력을 낮춘 두 번째 열(`승률(ε)`)을 만들어 조합마다 결정이
@@ -164,18 +165,21 @@ export function chooseReward(options: string[], cards: ReadonlyMap<string, Card>
 }
 
 /**
- * 은혜는 지금 덱의 그 태그 카드 수만큼 곱해져 들어간다 — 게이트가 쓰는 환산(`graceValue`)을 그대로
- * 쓴다. 이미 찬 슬롯을 고르는 것은 **차액**만 얻는 것이라 그만큼 깎는다: 그래서 빈 슬롯이 먼저 차고,
- * tier가 올라 차액이 커지면 그때 같은 슬롯을 다시 부어 깊게 간다.
- *
- * `offer`는 그 슬롯에서 걸릴 tier의 줄로 들어온다(`graceOffer`) — 차액을 여기서 다시 풀지 않는다
+ * 은혜 효과 하나의 기대값만 비교한다. 대상 카드는 다음 결정에서 융합 우선·비용 순으로 고른다.
  */
-export function chooseGrace(offer: Grace[], held: GraceHeld, slotCards: Record<string, number>): string | undefined {
-  const gain = (grace: Grace) => {
-    const cards = slotCards[grace.slot] ?? 0;
-    return graceValue(grace.effects, cards) - graceValue(held[grace.slot]?.effects ?? [], cards);
-  };
-  return [...offer].sort((left, right) => gain(right) - gain(left) || (left.id < right.id ? -1 : 1))[0]?.id;
+export function chooseGrace(offer: Grace[]): string | undefined {
+  return [...offer].sort((left, right) => graceValue(right.effects) - graceValue(left.effects) || left.id.localeCompare(right.id))[0]?.id;
+}
+
+/** 다른 후원 신의 인장이 있으면 즉시 융합하고, 아니면 가장 비싼 후보를 키운다. */
+export function chooseGraceCard(options: string[], cards: ReadonlyMap<string, Card>, god: string): string | undefined {
+  return [...options].sort((left, right) => {
+    const a = cards.get(left);
+    const b = cards.get(right);
+    if (!a || !b) return Number(Boolean(b)) - Number(Boolean(a));
+    const fusion = Number(b.seals?.some(({ patron }) => patron !== god)) - Number(a.seals?.some(({ patron }) => patron !== god));
+    return fusion || b.cost - a.cost || left.localeCompare(right);
+  })[0];
 }
 
 /**

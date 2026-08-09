@@ -1,7 +1,6 @@
 import { favorStage } from "../core/favor.ts";
 import type { PenaltyKey } from "../core/demands.ts";
 import { globalParamVersion } from "../core/favor.ts";
-import type { GraceHeld } from "../core/grace.ts";
 import type { MapGrid } from "../core/map.ts";
 import { botPolicyVersion } from "./bots/rule.ts";
 import type { RestChoice } from "./replay.ts";
@@ -25,8 +24,6 @@ export type RunResult = {
   regionsCleared: string[];
   /** 신별 은혜 획득 수 */
   grace: Record<string, number>;
-  /** 런이 끝났을 때 채워진 슬롯. 「은혜가 빌드를 만들었는가」는 이 표가 답한다 */
-  graceSlots: GraceHeld;
   scenario?: "grace_4" | "grace_6" | "fused_deck";
   enemyCounts: number[];
   targetSpread: ("single" | "multi")[];
@@ -162,8 +159,6 @@ export function summarize(results: RunResult[]) {
       return all;
     }, {}),
     grace_milestones: Object.fromEntries([2, 4, 6].map((milestone) => [milestone, results.length ? results.filter(({ grace }) => Object.values(grace).some((value) => value >= milestone)).length / results.length : 0])),
-    /** 런 끝에 채워진 슬롯 수의 평균. 은혜가 빌드를 만들었는지는 이 하나로 읽는다 */
-    grace_slots_filled: results.length ? results.reduce((sum, { graceSlots }) => sum + Object.keys(graceSlots).length, 0) / results.length : 0,
     enemy_count_dist: count(results.flatMap(({ enemyCounts }) => enemyCounts.map(String))),
     encounter_clear_rate,
     defeat_by_passive,
@@ -191,7 +186,7 @@ export function renderReport(report: ReturnType<typeof summarize>): string {
     `demand_choices=${JSON.stringify(report.demand_choices)} defeat_in_trial=${report.defeat_in_trial.toFixed(3)} encounters_in_trial=${report.encounters_in_trial.toFixed(3)}`,
     `hp_curve=${JSON.stringify(report.hp_curve)} path_choices=${JSON.stringify(report.path_choices)} lane_choices=${JSON.stringify(report.lane_choices)} rest_choices=${JSON.stringify(report.rest_choices)}`,
     `region_clear_rate=${JSON.stringify(report.region_clear_rate)} low_rest_clear_rate=${report.low_rest_clear_rate.toFixed(3)}`,
-    `scenario_runs=${report.scenario_runs} grace_earned=${JSON.stringify(report.grace_earned)} grace_milestones=${JSON.stringify(report.grace_milestones)} grace_slots_filled=${report.grace_slots_filled.toFixed(2)}`,
+    `scenario_runs=${report.scenario_runs} grace_earned=${JSON.stringify(report.grace_earned)} grace_milestones=${JSON.stringify(report.grace_milestones)}`,
     `enemy_count_dist=${JSON.stringify(report.enemy_count_dist)} target_spread=${JSON.stringify(report.target_spread)} block_efficiency=${report.block_efficiency.toFixed(3)}`,
     `encounter_clear_rate=${JSON.stringify(report.encounter_clear_rate)} defeat_by_passive=${JSON.stringify(report.defeat_by_passive)}`,
     `fusion_rate=${report.fusion_rate.toFixed(3)}`,

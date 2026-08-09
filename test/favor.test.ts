@@ -22,7 +22,6 @@ const state = (): GameState => ({
   seed: 1,
   favor: { zeus: 70, poseidon: 9 },
   grace: {},
-  graceSlots: {},
   map: { depth: 0, lane: 1, grid: [], completed: [] },
   combat: createCombat(1, [], [{ id: "enemy", hp: 10, pattern: [{ damage: 1 }] }]),
 });

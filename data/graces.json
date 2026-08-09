@@ -2,7 +2,6 @@
   {
     "id": "grace_zeus_attack_shock",
     "patron": "zeus",
-    "slot": "attack",
     "tier": 2,
     "text": "자네 손끝에서도 번개가 갈라지네.",
     "effects": [
@@ -16,7 +15,6 @@
   {
     "id": "grace_zeus_attack_shock",
     "patron": "zeus",
-    "slot": "attack",
     "tier": 4,
     "text": "자네 손끝에서도 번개가 갈라지네.",
     "effects": [
@@ -30,7 +28,6 @@
   {
     "id": "grace_zeus_attack_shock",
     "patron": "zeus",
-    "slot": "attack",
     "tier": 6,
     "text": "자네 손끝에서도 번개가 갈라지네.",
     "effects": [
@@ -50,7 +47,6 @@
   {
     "id": "grace_zeus_defend_block",
     "patron": "zeus",
-    "slot": "defend",
     "tier": 2,
     "text": "천둥이 먼저, 벼락은 뒤일세. 그 사이가 자네 방패네.",
     "effects": [
@@ -63,7 +59,6 @@
   {
     "id": "grace_zeus_defend_block",
     "patron": "zeus",
-    "slot": "defend",
     "tier": 4,
     "text": "천둥이 먼저, 벼락은 뒤일세. 그 사이가 자네 방패네.",
     "effects": [
@@ -76,7 +71,6 @@
   {
     "id": "grace_zeus_defend_block",
     "patron": "zeus",
-    "slot": "defend",
     "tier": 6,
     "text": "천둥이 먼저, 벼락은 뒤일세. 그 사이가 자네 방패네.",
     "effects": [
@@ -94,7 +88,6 @@
   {
     "id": "grace_zeus_utility_draw",
     "patron": "zeus",
-    "slot": "utility",
     "tier": 2,
     "text": "하늘은 자네가 보기 전에 읽어 두지.",
     "effects": [
@@ -108,7 +101,6 @@
   {
     "id": "grace_zeus_utility_draw",
     "patron": "zeus",
-    "slot": "utility",
     "tier": 4,
     "text": "하늘은 자네가 보기 전에 읽어 두지.",
     "effects": [
@@ -121,7 +113,6 @@
   {
     "id": "grace_zeus_utility_draw",
     "patron": "zeus",
-    "slot": "utility",
     "tier": 6,
     "text": "하늘은 자네가 보기 전에 읽어 두지.",
     "effects": [
@@ -139,7 +130,6 @@
   {
     "id": "grace_poseidon_attack_soaked",
     "patron": "poseidon",
-    "slot": "attack",
     "tier": 2,
     "text": "닿고도 안 젖을 성싶나?",
     "effects": [
@@ -154,7 +144,6 @@
   {
     "id": "grace_poseidon_attack_soaked",
     "patron": "poseidon",
-    "slot": "attack",
     "tier": 4,
     "text": "닿고도 안 젖을 성싶나?",
     "effects": [
@@ -168,7 +157,6 @@
   {
     "id": "grace_poseidon_attack_soaked",
     "patron": "poseidon",
-    "slot": "attack",
     "tier": 6,
     "text": "닿고도 안 젖을 성싶나?",
     "effects": [
@@ -188,7 +176,6 @@
   {
     "id": "grace_poseidon_defend_draw",
     "patron": "poseidon",
-    "slot": "defend",
     "tier": 2,
     "text": "물러서 보게. 해류가 보일 걸세.",
     "effects": [
@@ -202,7 +189,6 @@
   {
     "id": "grace_poseidon_defend_draw",
     "patron": "poseidon",
-    "slot": "defend",
     "tier": 4,
     "text": "물러서 보게. 해류가 보일 걸세.",
     "effects": [
@@ -215,7 +201,6 @@
   {
     "id": "grace_poseidon_defend_draw",
     "patron": "poseidon",
-    "slot": "defend",
     "tier": 6,
     "text": "물러서 보게. 해류가 보일 걸세.",
     "effects": [
@@ -233,7 +218,6 @@
   {
     "id": "grace_poseidon_token_heal",
     "patron": "poseidon",
-    "slot": "token",
     "tier": 2,
     "text": "밀물이 상처를 씻고 가네.",
     "effects": [
@@ -246,7 +230,6 @@
   {
     "id": "grace_poseidon_token_heal",
     "patron": "poseidon",
-    "slot": "token",
     "tier": 4,
     "text": "밀물이 상처를 씻고 가네.",
     "effects": [
@@ -259,7 +242,6 @@
   {
     "id": "grace_poseidon_token_heal",
     "patron": "poseidon",
-    "slot": "token",
     "tier": 6,
     "text": "밀물이 상처를 씻고 가네.",
     "effects": [
@@ -277,7 +259,6 @@
   {
     "id": "grace_athena_attack_damage",
     "patron": "athena",
-    "slot": "attack",
     "tier": 2,
     "text": "급소는 제가 먼저 봐 뒀어요.",
     "effects": [
@@ -291,7 +272,6 @@
   {
     "id": "grace_athena_attack_damage",
     "patron": "athena",
-    "slot": "attack",
     "tier": 4,
     "text": "급소는 제가 먼저 봐 뒀어요.",
     "effects": [
@@ -304,7 +284,6 @@
   {
     "id": "grace_athena_attack_damage",
     "patron": "athena",
-    "slot": "attack",
     "tier": 6,
     "text": "급소는 제가 먼저 봐 뒀어요.",
     "effects": [
@@ -322,7 +301,6 @@
   {
     "id": "grace_athena_defend_bulwark",
     "patron": "athena",
-    "slot": "defend",
     "tier": 2,
     "text": "같은 벽은 두 번 쌓지 않아요.",
     "effects": [
@@ -337,7 +315,6 @@
   {
     "id": "grace_athena_defend_bulwark",
     "patron": "athena",
-    "slot": "defend",
     "tier": 4,
     "text": "같은 벽은 두 번 쌓지 않아요.",
     "effects": [
@@ -351,7 +328,6 @@
   {
     "id": "grace_athena_defend_bulwark",
     "patron": "athena",
-    "slot": "defend",
     "tier": 6,
     "text": "같은 벽은 두 번 쌓지 않아요.",
     "effects": [
@@ -371,7 +347,6 @@
   {
     "id": "grace_athena_utility_thorns",
     "patron": "athena",
-    "slot": "utility",
     "tier": 2,
     "text": "방패의 가장자리도 무기예요.",
     "effects": [
@@ -386,7 +361,6 @@
   {
     "id": "grace_athena_utility_thorns",
     "patron": "athena",
-    "slot": "utility",
     "tier": 4,
     "text": "방패의 가장자리도 무기예요.",
     "effects": [
@@ -400,7 +374,6 @@
   {
     "id": "grace_athena_utility_thorns",
     "patron": "athena",
-    "slot": "utility",
     "tier": 6,
     "text": "방패의 가장자리도 무기예요.",
     "effects": [
@@ -420,7 +393,6 @@
   {
     "id": "grace_ares_attack_bleed",
     "patron": "ares",
-    "slot": "attack",
     "tier": 2,
     "text": "상처는 네가 떠난 뒤에도 일해.",
     "effects": [
@@ -435,7 +407,6 @@
   {
     "id": "grace_ares_attack_bleed",
     "patron": "ares",
-    "slot": "attack",
     "tier": 4,
     "text": "상처는 네가 떠난 뒤에도 일해.",
     "effects": [
@@ -449,7 +420,6 @@
   {
     "id": "grace_ares_attack_bleed",
     "patron": "ares",
-    "slot": "attack",
     "tier": 6,
     "text": "상처는 네가 떠난 뒤에도 일해.",
     "effects": [
@@ -469,7 +439,6 @@
   {
     "id": "grace_ares_defend_frenzy",
     "patron": "ares",
-    "slot": "defend",
     "tier": 2,
     "text": "버틴 만큼 화가 쌓이는 거야.",
     "effects": [
@@ -484,7 +453,6 @@
   {
     "id": "grace_ares_defend_frenzy",
     "patron": "ares",
-    "slot": "defend",
     "tier": 4,
     "text": "버틴 만큼 화가 쌓이는 거야.",
     "effects": [
@@ -498,7 +466,6 @@
   {
     "id": "grace_ares_defend_frenzy",
     "patron": "ares",
-    "slot": "defend",
     "tier": 6,
     "text": "버틴 만큼 화가 쌓이는 거야.",
     "effects": [
@@ -518,7 +485,6 @@
   {
     "id": "grace_ares_token_block",
     "patron": "ares",
-    "slot": "token",
     "tier": 2,
     "text": "낙인 새기는 손이 빈 줄 알아?",
     "effects": [
@@ -531,7 +497,6 @@
   {
     "id": "grace_ares_token_block",
     "patron": "ares",
-    "slot": "token",
     "tier": 4,
     "text": "낙인 새기는 손이 빈 줄 알아?",
     "effects": [
@@ -544,7 +509,6 @@
   {
     "id": "grace_ares_token_block",
     "patron": "ares",
-    "slot": "token",
     "tier": 6,
     "text": "낙인 새기는 손이 빈 줄 알아?",
     "effects": [
@@ -562,7 +526,6 @@
   {
     "id": "grace_artemis_attack_mark",
     "patron": "artemis",
-    "slot": "attack",
     "tier": 2,
     "text": "겨눴으면 맞은 거야.",
     "effects": [
@@ -577,7 +540,6 @@
   {
     "id": "grace_artemis_attack_mark",
     "patron": "artemis",
-    "slot": "attack",
     "tier": 4,
     "text": "겨눴으면 맞은 거야.",
     "effects": [
@@ -591,7 +553,6 @@
   {
     "id": "grace_artemis_attack_mark",
     "patron": "artemis",
-    "slot": "attack",
     "tier": 6,
     "text": "겨눴으면 맞은 거야.",
     "effects": [
@@ -610,7 +571,6 @@
   {
     "id": "grace_artemis_token_block",
     "patron": "artemis",
-    "slot": "token",
     "tier": 2,
     "text": "숲이 널 숨겨 줄 거야.",
     "effects": [
@@ -623,7 +583,6 @@
   {
     "id": "grace_artemis_token_block",
     "patron": "artemis",
-    "slot": "token",
     "tier": 4,
     "text": "숲이 널 숨겨 줄 거야.",
     "effects": [
@@ -636,7 +595,6 @@
   {
     "id": "grace_artemis_token_block",
     "patron": "artemis",
-    "slot": "token",
     "tier": 6,
     "text": "숲이 널 숨겨 줄 거야.",
     "effects": [
@@ -654,7 +612,6 @@
   {
     "id": "grace_artemis_utility_crit",
     "patron": "artemis",
-    "slot": "utility",
     "tier": 2,
     "text": "사냥은 한 방에 끝내자.",
     "effects": [
@@ -669,7 +626,6 @@
   {
     "id": "grace_artemis_utility_crit",
     "patron": "artemis",
-    "slot": "utility",
     "tier": 4,
     "text": "사냥은 한 방에 끝내자.",
     "effects": [
@@ -683,7 +639,6 @@
   {
     "id": "grace_artemis_utility_crit",
     "patron": "artemis",
-    "slot": "utility",
     "tier": 6,
     "text": "사냥은 한 방에 끝내자.",
     "effects": [

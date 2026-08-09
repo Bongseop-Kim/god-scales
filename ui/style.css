@@ -674,7 +674,33 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 /* 못 내는 이유가 **비용이나 사거리**일 때만 젬이 빨강이다 — 대상 선택 중은 손 전체가 물러난다(`.fan.aiming`) */
 .fan:not(.aiming) .game-card:disabled .cost-gem { border-color: #eb887d; color: #eb887d; }
 /* 예외만 적는다 — 149장 중 20장(파워 6 · 전체 14)이다. 배지 슬롯은 하나뿐이라 그 둘에 줬다 */
-.card-kind { position: absolute; top: 5px; right: 5px; padding: 1px 6px; border: 1px solid #4a5165; border-radius: 4px; background: rgba(17, 19, 26, .88); color: #d5d7de; font-size: .58rem; font-style: normal; }
+.card-kind { position: absolute; top: 29px; right: 5px; padding: 1px 6px; border: 1px solid #4a5165; border-radius: 4px; background: rgba(17, 19, 26, .88); color: #d5d7de; font-size: .58rem; font-style: normal; }
+.card-seals { position: absolute; z-index: 1; top: 5px; right: 5px; display: flex; min-width: 22px; min-height: 22px; gap: 2px; justify-content: end; }
+.card-seals em, .seal-badge { display: grid; place-items: center; width: 20px; height: 20px; border: 1px solid var(--seal-color, #c6a969); border-radius: 50%; background: #171b25; color: var(--seal-color, #c6a969); }
+.card-seals .icon { width: 14px; height: 14px; }
+.card-seals .preview { opacity: .55; }
+.fusion-preview { display: block; color: #f1d277; font-style: normal; }
+.fusion-scene { position: fixed; z-index: 3; inset: 0; display: grid; grid-template-columns: 1fr 220px 1fr; place-items: center; border: 0; background: rgba(4, 5, 9, .9); color: #fff; }
+.fusion-scene figure { position: relative; margin: 0; filter: drop-shadow(0 0 28px var(--god-color)); }
+.fusion-scene figure:first-of-type { animation: fusion-left .8s both; }
+.fusion-scene figure:last-of-type { animation: fusion-right .8s both; }
+.fusion-god { width: min(30vw, 300px); max-height: 70vh; object-fit: cover; }
+.fusion-particle { position: absolute; inset: 35% -10%; overflow: hidden; mix-blend-mode: screen; }
+.fusion-particle img { position: absolute; top: 50%; left: 0; width: 400%; max-width: none; transform: translateY(-50%); animation: fusion-strip .8s steps(4, jump-end) both; }
+.fusion-cards { position: relative; width: var(--card-w); }
+.fusion-cards::after { content: ""; position: absolute; inset: -30px; background: #fff; pointer-events: none; animation: fusion-flash 1.2s both; }
+.fusion-cards > span { display: block; }
+.fusion-before { animation: fusion-before 1.2s both; }
+.fusion-after { position: absolute; inset: 0; animation: fusion-after 1.2s both; }
+.fusion-cards strong { display: flex; justify-content: center; gap: 6px; margin-top: 16px; color: #f1d277; }
+.fusion-cards strong .icon { width: 20px; height: 20px; }
+@keyframes fusion-before { 0%, 42% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(.8); } }
+@keyframes fusion-after { 0%, 42% { opacity: 0; transform: scale(.8); } 70%, 100% { opacity: 1; transform: scale(1.12); } }
+@keyframes fusion-left { from { opacity: 0; transform: translateX(-80px); } to { opacity: 1; transform: none; } }
+@keyframes fusion-right { from { opacity: 0; transform: translateX(80px); } to { opacity: 1; transform: none; } }
+@keyframes fusion-strip { from { transform: translate(0, -50%); } to { transform: translate(-100%, -50%); } }
+@keyframes fusion-flash { 0%, 48%, 62%, 100% { opacity: 0; } 54% { opacity: .9; } }
+@media (prefers-reduced-motion: reduce) { .fusion-scene figure, .fusion-particle img { animation: none; } .fusion-cards::after, .fusion-before { display: none; } .fusion-after { animation: none; opacity: 1; transform: none; } }
 /**
  * 등급 칩. 이름 줄 앞에 서는 이유는 배지 슬롯이 이미 파워·전체의 것이고 **등급은 그 둘과 직교**라
  * 자리를 다투면 하나가 사라진다. 신 색(`--frame`)을 쓰지만 글자가 뜻을 다 들고 있다 — tier1(124장)에는 없다

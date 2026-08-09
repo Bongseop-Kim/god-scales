@@ -57,7 +57,7 @@ describe("card upgrades", () => {
     // 같은 카드 두 장 중 **한 장만** 오른다 — 병행 맵으로는 표현할 수 없는 것이 이 한 줄이다
     const deck = ["card_zeus_12", "card_zeus_12", "card_athena_01"];
     const state: GameState = {
-      seed: 1, combat: createCombat(1, [], []), favor: {}, grace: {}, graceSlots: {},
+      seed: 1, combat: createCombat(1, [], []), favor: {}, grace: {},
       map: { depth: 0, lane: 1, grid: [], completed: [] },
     };
     takeRest(state, ["zeus"], deck, "upgrade", "card_zeus_12");

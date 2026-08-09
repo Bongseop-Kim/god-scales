@@ -35,10 +35,10 @@ if (!deckOk(freeDeck)) throw new Error(`${freeCard} is no longer a startable tie
  * 218 → 32: `askQuest`가 이미 걸린 신을 후보에서 빼자(같은 신의 퀘스트 둘) 218이 12층에서 죽는다.
  * 900개 중 71개가 완주한다 — 32가 가장 짧고(239결정) 575·369·279가 다음이다
  * P-69에서 384 → 623: 훼방과 분노 개입 삭제가 384의 은혜 획득을 막았다.
- * 1000개 중 3개가 완주하며 여덟 phase를 다 지난다 — 623이 가장 짧고(317결정) 807·260이 다음이다
+ * 1000개 중 3개가 완주하며 아홉 phase를 다 지난다 — 623이 가장 짧고 807·260이 다음이다
  */
 const seed = 623;
-const phases = ["path", "card", "target", "rest", "rest_card", "reward", "grace", "demand"];
+const phases = ["path", "card", "target", "rest", "rest_card", "reward", "grace", "grace_card", "demand"];
 
 /**
  * 정책은 화면에 적힌 것만 쓴다 — 봇 추천은 DOM에 없고, 있어서도 안 된다. 룰 봇을 브라우저로 옮겨 심지도
@@ -47,7 +47,7 @@ const phases = ["path", "card", "target", "rest", "rest_card", "reward", "grace"
  * - 갈림길: 열린 갈래에 쉼터가 있으면 쉼터, 없으면 첫 칸
  * - 휴식: 첫 번째는 카드 제거(그래야 `rest_card`를 지난다), 두 번째는 강화, 이후는 회복
  * - 과업: 첫 신을 선택
- * - 은혜: 첫 후보 — 3택1이 카드가 아니라 `button.choice` 셋이 됐다(P-28). 빈 슬롯이 먼저 서므로 첫 칸이다
+ * - 은혜·인장: 첫 후보
  * - 표적: 체력이 가장 낮은 적 — 동점이면 화면 순서
  * - 카드·보상·제거: 캡션에 적힌 비용이 가장 높은 것, 동점이면 표시된 피해, 그래도 같으면 카드 id
  *
@@ -174,6 +174,12 @@ await tab.evaluate(() => {
     for (let done = 0; done < count; done += 1) {
       const { phase, step } = state();
       if (phase === "result") return { done: true, decisions: driver.order.length };
+      // 승패 아웃트로는 입력을 잠근다(P-71). 같은 결정을 다시 누르지 말고 화면 전환만 기다린다
+      if (document.querySelector(".combat-stage[data-outro]")) {
+        for (let tick = 0; tick < 80 && document.querySelector(".combat-stage[data-outro]"); tick += 1) await wait(25);
+        if (document.querySelector(".combat-stage[data-outro]")) throw new Error("combat outro did not finish");
+        continue;
+      }
       driver.order.push(phase);
       driver.layout[phase] ??= measure(section());
       const choices = phase === "path"

@@ -66,30 +66,8 @@ export function expectedValue(card: Card, averageEnemies = 2, conditionRate = 0.
 /** 같은 눈금이어야 비율이 뜻을 갖는다 — `expectedValue`의 분모·소진 보정을 그대로 탄다 */
 export const mitigationValue = (card: Card): number => expectedValue(card, 2, 0.5, isMitigation);
 
-/**
- * 은혜 하나가 붙는 **덱 안의 카드 수**. 은혜는 카드 한 장이 아니라 이 장수에 들어가므로 같은 효과가
- * 슬롯마다 다른 값이 된다 — 공격 태그가 덱의 절반이면 같은 효과가 두 배로 들어간다.
- * 600런 실측 평균(마지막 지도 결정 시점의 덱)
- */
-export const slotCards: Record<string, number> = { attack: 8.8, token: 7.5, defend: 4.9, utility: 4.8 };
-/**
- * 옛 마일스톤 2가 주던 값 — 카드 한 장 강화(`×1.5`)의 기대값 증가. 배포된 119장 실측 평균 3.06
- * (중앙값 3.00 · 최대 6.00)이고, 은혜 밴드의 기준선이다.
- *
- * **tier1 풀만이다.** P-39의 tier2 15장은 이 모수에 안 든다 — 값 8~10짜리를 섞으면 은혜 45줄의 밴드가
- * 조용히 인플레된다. 그리고 다시 재지 않는다: `expectedValue` 평균 ×0.5는 전체도 tier1도 3.06이 아니라
- * 이 숫자가 어떤 계산에서 나왔는지 모르는 채로 재정의하는 셈이 된다
- */
-export const graceBaseline = 3.06;
-/**
- * 은혜 환산 밴드. **tier가 곧 세기**이므로 밴드도 tier로 기운다 — tier 2가 기준선의 0.7~3.2배다.
- * 카드 밴드(4~8)보다 넓은 이유는 스택이 정수라 한 칸이 곧 배수이기 때문이다: 공격 슬롯(덱 8.8장)에서
- * 가장 싼 토큰 한 스택이 이미 기준선의 2.9배고, 그 아래는 `when` 조건(환산 ×0.5)뿐이다 — R-28
- */
-export const graceBand = (tier: number): [number, number] => [graceBaseline * tier * 0.35, graceBaseline * tier * 1.6];
-/** 은혜 환산값. 카드와 같은 `expectedValue`를 타고 그 슬롯의 카드 수만큼 곱한다 — 두 번째 눈금을 만들지 않는다 */
-export const graceValue = (effects: Effect[], cards: number): number =>
-  expectedValue({ cost: 1, target: "enemy", effects, tags: [] }) * cards;
+/** 은혜 하나가 카드 한 장에 더하는 값. 봇의 3택 정렬에만 쓴다. */
+export const graceValue = (effects: Effect[]): number => expectedValue({ cost: 1, target: "enemy", effects, tags: [] });
 
 /**
  * 값의 계단. **반개구간이라 경계값이 한쪽에만 든다** — 겹치던 옛 밴드(patron `[4, 8]`, 융합 `[6, 10]`)에서는

@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { restHealing } from "../../core/map.ts";
-import { watchDemand, type DemandDecision, type GraceDecision, type MapDecision, type RunView } from "../../sim/engine.ts";
+import { watchDemand, type DemandDecision, type GraceCardDecision, type GraceDecision, type MapDecision, type RunView } from "../../sim/engine.ts";
 import { Backdrop, backdropArt, Flanks, Prop } from "../shared/backdrop.tsx";
 import { CardRow, effectText } from "../shared/card.tsx";
 import { godArt, godName } from "../shared/header.tsx";
@@ -95,28 +95,27 @@ export function RestScreen({ decision, upgrading, onAnswer }: {
   );
 }
 
-/** 슬롯 이름. 태그가 곧 슬롯이라 카드에 적힌 것과 같은 말이어야 한다 */
-const slotName: Record<string, string> = { attack: "공격", defend: "방어", utility: "유틸", token: "토큰" };
-
-/**
- * 은혜 3택1. 은혜는 카드가 아니므로 `CardRow`가 아니라 `Choice` 셋이다 — 고르는 것은 「어느 카드에
- * 붙일까」가 아니라 「어느 슬롯을 어느 신에게 줄까」다. 이미 찬 슬롯이면 **무엇을 밀어내는지** 적는다
- */
 export function GraceScreen({ decision, onAnswer }: {
-  decision: GraceDecision;
+  decision: GraceDecision | GraceCardDecision;
   onAnswer: (choice: string) => void;
 }) {
+  if (decision.phase === "grace_card") return (
+    <Screen view={decision.observation} wide>
+      <GodSay god={decision.observation.god}>{godName(decision.observation.god)}의 인장을 새길 카드</GodSay>
+      <p>{decision.observation.seal.text} · {effectText({ target: "enemy", effects: decision.observation.seal.effects })}</p>
+      <CardRow cards={decision.observation.deck} options={decision.options} onSelect={onAnswer} />
+    </Screen>
+  );
   const { options, observation: view } = decision;
   return (
     <Screen view={view}>
-      {/* 상주 힌트(「은혜는 카드 한 장이 아니라…」)는 도움말(P-53)로 갔다 — 라벨이 타이틀을 대신한다 */}
       <GodSay god={view.god}>{godName(view.god)}의 은혜 · tier {view.tier}</GodSay>
       {view.offer.map((grace) => (
         <Choice
           key={grace.id}
-          mark={slotName[grace.slot] ?? grace.slot}
-          label={`${slotName[grace.slot] ?? grace.slot} 슬롯 · tier ${grace.tier} · 덱 ${grace.cards}장`}
-          detail={`${effectText({ target: "enemy", effects: grace.effects })} — ${grace.text}${grace.replaces ? ` (지금의 「${grace.replaces}」를 밀어냅니다)` : ""}`}
+          mark="은"
+          label={`tier ${grace.tier} · ${grace.text}`}
+          detail={effectText({ target: "enemy", effects: grace.effects })}
           disabled={!options.includes(grace.id)}
           onChoose={() => onAnswer(grace.id)}
         />

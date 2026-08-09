@@ -12,6 +12,7 @@ export type ReplayAction =
   | { type: "rest"; choice: RestChoice }
   | { type: "rest_card"; choice: string }
   | { type: "grace"; choice: string }
+  | { type: "grace_card"; choice: string }
   /** 과업을 맡길 신의 id 또는 `"reject"`(지나간다) */
   | { type: "demand"; choice: string }
   /** `choice: ""`는 건너뛰기다. 기록하지 않으면 재생 때 봇이 대신 한 장 집는다 */

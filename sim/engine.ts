@@ -8,13 +8,12 @@ import graceDataJson from "../data/graces.json" with { type: "json" };
 import mapDataJson from "../data/map.json" with { type: "json" };
 import { applyFavorStageEffects, awardGrace, favorInitial, favorStage, finishCombatFavor, godEnemyId, intervenesOnTurn, recordCardFavor, wrathReconcileFavor, type FavorGod, type FavorUses } from "../core/favor.ts";
 import { demandEnemies, demandPenalty, demandSatisfied, demandSettled, parseCondition, resolveDemand, ruleText, takeSide, type Demand, type DemandOffer } from "../core/demands.ts";
-import { graceOffer, graceSlots, graceTier, takeGrace, type Grace, type GraceSlot } from "../core/grace.ts";
+import { graceOffer, graceTier, type Grace } from "../core/grace.ts";
 import { advanceMap, bossLane, enemyDamageScale, enterNode, floorsPerRegion, generateMap, laneCount, mapDepth, mapSlot, reachableLanes, takeRest, type MapGrid, type MapNodeType } from "../core/map.ts";
-import { canFuse } from "../core/fusion.ts";
-import { cardEffects, cardLevel, cardSaboteur, MAX_UPGRADE, upgraded, type Card, type GodId } from "../core/rules.ts";
+import { cardEffects, cardLevel, cardSaboteur, cardSealIds, MAX_UPGRADE, sealId, upgraded, type Card, type GodId } from "../core/rules.ts";
 import { canReachTarget, livingInReach } from "../core/targeting.ts";
 import type { CombatOutcome, GameState, Passives, Tokens, Trigger } from "../core/state.ts";
-import { chooseCard, chooseDemandAnswer, chooseGrace, choosePath, chooseRest, chooseRestCard, chooseReward, chooseTarget } from "./bots/rule.ts";
+import { chooseCard, chooseDemandAnswer, chooseGrace, chooseGraceCard, choosePath, chooseRest, chooseRestCard, chooseReward, chooseTarget } from "./bots/rule.ts";
 import { renderPlay } from "./log.ts";
 import type { RunResult } from "./report.ts";
 import type { ReplayAction, RestChoice } from "./replay.ts";
@@ -29,7 +28,7 @@ const cards = (cardDataJson as CardData[]).map(({ patron_pair, ...card }) => (pa
 const fusionCards = cards.filter(({ patronPair }) => patronPair);
 /** 헌신·진노 오라의 정의. 조합 밖의 신은 호의가 없어 calm으로 읽히므로 다섯을 다 넘겨도 자기 필터가 된다 */
 const godData = godDataJson as FavorGod[];
-/** 은혜 45줄 = 설계 열다섯 × tier 셋. 슬롯 적용은 `cardEffects` 하나뿐이다 */
+/** 은혜 45줄 = 설계 열다섯 × tier 셋. 선택한 줄은 카드 id에 인장으로 남는다. */
 const graces = graceDataJson as Grace[];
 /**
  * `--aura-matrix`가 **헌신 개입만** 끄고 같은 시드를 다시 돌린다 — 기여는 두 열의 차이로만 잰다.
@@ -196,8 +195,9 @@ const godEnemies = enemyData.filter(({ tier }) => tier === "god").map(enemyDefin
  */
 type EnemyView = { id: string; slot: number; span: number; hp: number; maxHp: number; block: number; tokens: Tokens; passives: Passives; intent?: EnemyAction };
 /** UI가 data/cards.json을 따로 읽으면 두 번째 진실이 된다 — 카드는 엔진이 준 것만 그린다 */
-export type CardView = { id: string; name: string; cost: number; target: Card["target"]; effects: Card["effects"]; reach?: string; weakened?: boolean };
-const cardView = ({ id, name, cost, target, effects, reach }: Card): CardView => ({ id, name, cost, target, effects, ...(reach ? { reach } : {}) });
+type SealView = NonNullable<Card["seals"]>[number];
+export type CardView = { id: string; name: string; cost: number; target: Card["target"]; effects: Card["effects"]; reach?: string; weakened?: boolean; seals?: SealView[]; previewSeal?: SealView; fusesTo?: CardView };
+const cardView = ({ id, name, cost, target, effects, reach, seals }: Card): CardView => ({ id, name, cost, target, effects, ...(reach ? { reach } : {}), ...(seals?.length ? { seals } : {}) });
 /**
  * 자유 덱 편집기가 고를 수 있는 카드 124장을 신별로. **tier1 patron 카드뿐이다** — tier2 15장은
  * 보상이 주는 계단이고, 융합 10장은 `patron`이 없어 같은 줄에서 빠진다(은혜 둘을 모아 여는 자리다).
@@ -218,13 +218,25 @@ export const deckOk = (deck: readonly string[]): boolean =>
  * `+N` 붙은 id를 만나면 그 자리에서 만들어 사전에 넣는다 — **카드를 조회하는 자리가 전부 그대로 돈다.**
  * 덱을 건드린 뒤 한 번씩 부르므로 사전에는 실제로 덱에 든 등급만 선다(`deck_count`가 유령을 세지 않는다)
  */
-function syncUpgrades(cardMap: Map<string, Card>, deck: readonly string[]): void {
+export function materializeCard(card: Card, id: string, allGraces: Grace[]): Card {
+  const raised = upgraded(card, cardLevel(id).level);
+  const seals = cardSealIds(id).map(({ id: sealId, tier }) => {
+    const seal = allGraces.find((grace) => grace.id === sealId && grace.tier === tier);
+    if (!seal) throw new Error(`Unknown seal: ${sealId}.${tier}`);
+    return seal;
+  });
+  return { ...raised, id, effects: [...raised.effects, ...seals.flatMap(({ effects }) => effects)], ...(seals.length ? { seals } : {}) };
+}
+export const fusionReady = (card: Pick<Card, "seals">, pair: PatronPair): boolean =>
+  pair.every((patron) => card.seals?.some(({ patron: sealed }) => sealed === patron));
+
+function syncCards(cardMap: Map<string, Card>, deck: readonly string[]): void {
   for (const id of deck) {
     if (cardMap.has(id)) continue;
-    const { base, level } = cardLevel(id);
+    const { base } = cardLevel(id);
     const card = cardMap.get(base);
-    if (!card) throw new Error(`Unknown upgraded card: ${id}`);
-    cardMap.set(id, upgraded(card, level));
+    if (!card) throw new Error(`Unknown derived card: ${id}`);
+    cardMap.set(id, materializeCard(card, id, graces));
   }
 }
 
@@ -301,12 +313,10 @@ const questView = ({ demand, patron }: Quest, facts: Record<string, number> = {}
 /** `text`는 그 층의 문장이다 — 지도 화면이 지금 어디 서 있는지 한 줄로 읽는다 */
 type MapObservation = RunView & { text: string };
 type RewardObservation = RunView & { cards: CardView[]; questResult?: PromiseView; questReward?: boolean };
-/**
- * 은혜 후보 하나. `cards`는 지금 덱에 있는 그 슬롯의 카드 수 — 은혜가 몇 장에 붙는지가 결정의 근거다.
- * `replaces`는 그 슬롯이 이미 든 은혜의 문장으로, **무엇을 밀어내는지** 화면에 서야 한다
- */
-type GraceOffer = { id: string; slot: GraceSlot; tier: number; text: string; effects: Card["effects"]; cards: number; replaces?: string };
+/** 은혜 후보 하나. 선택한 tier의 효과가 그대로 대상 카드에 새겨진다. */
+type GraceOffer = { id: string; tier: number; text: string; effects: Card["effects"] };
 type GraceObservation = RunView & { god: string; tier: number; offer: GraceOffer[] };
+type GraceCardObservation = RunView & { god: string; tier: number; seal: GraceOffer };
 /**
  * 과업 노드의 선택. 두 신과 지나가기를 항상 싣는다.
  */
@@ -316,8 +326,9 @@ export type CombatDecision = { phase: "card" | "target"; options: string[]; bot:
 export type MapDecision = { phase: "path" | "rest" | "rest_card"; options: string[]; bot: string; observation: MapObservation };
 export type RewardDecision = { phase: "reward"; options: string[]; bot: string; observation: RewardObservation };
 export type GraceDecision = { phase: "grace"; options: string[]; bot: string; observation: GraceObservation };
+export type GraceCardDecision = { phase: "grace_card"; options: string[]; bot: string; observation: GraceCardObservation };
 export type DemandDecision = { phase: "demand"; options: string[]; bot: string; observation: DemandObservation };
-export type Decision = CombatDecision | MapDecision | RewardDecision | GraceDecision | DemandDecision;
+export type Decision = CombatDecision | MapDecision | RewardDecision | GraceDecision | GraceCardDecision | DemandDecision;
 export const endTurnAction = "end_turn";
 /** 과업 노드에서 아무것도 새로 고르지 않는다 */
 export const watchDemand = "reject";
@@ -417,7 +428,7 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
     tokens: { ...state.combat.player.tokens },
     energy: state.combat.energy,
     draw: state.combat.drawPile.length,
-    // 손패는 **은혜가 붙은 뒤의** 효과를 싣는다 — 캡션이 카드 원문만 적으면 공격 슬롯 은혜가 붙은
+    // 손패는 **인장이 붙은 뒤의** 효과를 싣는다 — 캡션이 카드 원문만 적으면 인장 카드가
     // 카드가 화면에서 거짓말을 하고, 그러면 화면만 보고 턴을 계산할 수 없다. 낼 때 도는 목록과 같다
     hand: state.combat.hand.map((id) => {
       const card = cardMap.get(id)!;
@@ -489,7 +500,7 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
           observation: { card: cardId, ...observation() },
         }
         : undefined;
-      // 카드 것 + 그 슬롯 은혜 것을 같이 센다 — 화면에 붙은 토큰을 요구가 세지 않으면 두 번째 진실이다
+      // 카드가 직접 든 인장 효과까지 같이 센다 — 화면과 요구 집계가 같은 목록을 읽는다
       const played = cardEffects(state, card);
       // 조건 없는 방어만 센다 — 아래 토큰과 같은 이유다. `when`이 걸린 방어는 붙었는지 여기서 알 수 없고,
       // 세면 `block_efficiency`의 분모가 쌓지 않은 방어까지 든다
@@ -562,6 +573,7 @@ export function* runSteps(
   if (!Number.isInteger(split) || split < 0 || split > favorPool) throw new Error(`split ${split}: 정수 [0, ${favorPool}]만 받는다`);
   const fusedCard = fusionCards.find(({ patronPair }) => patronPair?.every((god) => patrons.includes(god)));
   if (!fusedCard) throw new Error(`${patrons.join("+")}: no fused card for this pairing`);
+  const fusionCard = fusedCard;
   const deck = [...startingDeck, ...(scenario === "fused_deck" ? [fusedCard.id] : [])];
   const cardMap = new Map(cards.map((card) => [card.id, structuredClone(card)]));
   const graced = scenario === "grace_4" ? 4 : scenario === "grace_6" ? 6 : 0;
@@ -570,7 +582,6 @@ export function* runSteps(
     combat: createCombat(seed, deck, []),
     favor: { [patrons[0]]: graced ? 70 : split, [patrons[1]]: favorPool - split },
     grace: { [patrons[0]]: 0, [patrons[1]]: 0 },
-    graceSlots: {},
     map: { depth: 0, lane: bossLane, grid: generateMap(seed, eliteSlots), completed: [] },
   };
   const log: string[] = [];
@@ -593,7 +604,7 @@ export function* runSteps(
   let defeatContext: RunResult["defeatContext"];
   const targetSpread: ("single" | "multi")[] = [];
   const cardsPlayed: string[] = [];
-  let fused = scenario === "fused_deck";
+  let fusions = scenario === "fused_deck" ? 1 : 0;
   const actions: ReplayAction[] = [];
   /** 과업마다 편든 신 — 통계가 가장 자주 고른 신을 읽는다 */
   const demandSides: string[] = [];
@@ -602,44 +613,55 @@ export function* runSteps(
   let quest: Quest | undefined;
   const view = (): RunView => ({ ...runView(state, patrons, deck, cardMap), ...(quest ? { quest: questView(quest) } : {}) });
 
-  /** 지금 덱의 슬롯별 카드 수. 은혜 값은 이 장수만큼 곱해져 들어가므로 봇도 화면도 이것을 읽는다 */
-  const deckSlotCards = (): Record<string, number> => Object.fromEntries(graceSlots
-    .map((slot) => [slot, deck.filter((id) => cardMap.get(id)?.tags.includes(slot)).length]));
-
-  /**
-   * 은혜 3택1. 옛 판은 「덱에 있는 그 신의 카드 한 장」이었고 그건 결정이 아니라 절차였다 — 지금은
-   * 어느 슬롯에 부을지, 넓게 갈지 깊게 갈지가 결정이다. 은혜는 카드가 아니므로 후보는 은혜 id다
-   */
   function* grantGrace(god: string): Generator<Decision, void, string> {
     const tier = graceTier(state.grace[god] ?? 0);
-    const offer = graceOffer(graces, god, state.graceSlots, tier);
+    const offer = graceOffer(graces, god, tier);
     if (!offer.length) return;
     const options = offer.map(({ id }) => id);
-    const slotCards = deckSlotCards();
-    const held = state.graceSlots;
     const choice = yield {
       phase: "grace",
       options,
-      bot: chooseGrace(offer, held, slotCards) ?? options[0],
+      bot: chooseGrace(offer) ?? options[0],
       observation: {
         ...view(),
         god,
         tier,
-        // `graceOffer`가 슬롯 승계까지 풀어서 준다 — 여기서 tier를 다시 세면 두 번째 진실이다
-        offer: offer.map(({ id, slot, tier: level, text, effects }) => ({
-          id,
-          slot,
-          tier: level,
-          text,
-          effects,
-          cards: slotCards[slot] ?? 0,
-          replaces: graces.find((grace) => grace.id === held[slot]?.id && grace.tier === held[slot]?.tier)?.text,
-        })),
+        offer: offer.map(({ id, tier: level, text, effects }) => ({ id, tier: level, text, effects })),
       },
     };
     if (!options.includes(choice)) throw new Error(`Invalid grace action: ${choice}`);
-    takeGrace(graces, state.graceSlots, offer.find(({ id }) => id === choice)!);
     actions.push({ type: "grace", choice });
+    const grace = offer.find(({ id }) => id === choice)!;
+    const cardOptions = [...new Set(deck.filter((id) => !cardMap.get(id)?.seals?.some(({ patron }) => patron === god)))];
+    if (!cardOptions.length) return;
+    const baseView = view();
+    const pickedCard = yield {
+      phase: "grace_card",
+      options: cardOptions,
+      bot: chooseGraceCard(cardOptions, cardMap, god) ?? cardOptions[0],
+      observation: {
+        ...baseView,
+        god,
+        tier,
+        seal: { id: grace.id, tier: grace.tier, text: grace.text, effects: grace.effects },
+        deck: baseView.deck.map((card) => {
+          if (!cardOptions.includes(card.id)) return card;
+          const seals = [...(card.seals ?? []), grace];
+          const merges = fusionReady({ ...card, seals }, patrons);
+          return { ...card, previewSeal: grace, ...(merges ? { fusesTo: cardView(fusionCard) } : {}) };
+        }),
+      },
+    };
+    if (!cardOptions.includes(pickedCard)) throw new Error(`Invalid grace card action: ${pickedCard}`);
+    const at = deck.indexOf(pickedCard);
+    const sealedId = sealId(pickedCard, grace);
+    const source = cardMap.get(cardLevel(sealedId).base)!;
+    cardMap.set(sealedId, materializeCard(source, sealedId, graces));
+    if (fusionReady(cardMap.get(sealedId)!, patrons)) {
+      deck[at] = fusionCard.id;
+      fusions += 1;
+    } else deck[at] = sealedId;
+    actions.push({ type: "grace_card", choice: pickedCard });
   }
 
   const demandOffers = (): DemandOffer[] => patrons.flatMap((god, index) => {
@@ -751,7 +773,7 @@ export function* runSteps(
         }
         : undefined;
       takeRest(state, [...patrons], deck, choice, cardId);
-      syncUpgrades(cardMap, deck);
+      syncCards(cardMap, deck);
       actions.push({ type: "rest", choice });
       if (cardId !== undefined) actions.push({ type: "rest_card", choice: cardId });
       restChoices.push(choice);
@@ -803,12 +825,7 @@ export function* runSteps(
         resolveDemand(state.favor, activeQuest.patron, activeQuest.demand.reward);
         yield* offerQuestReward(activeQuest, nodeSeed, questResult);
       }
-      // 은혜를 먼저 준다 — 합성 전제가 은혜 보유이므로 이 순서라야 마지막 은혜가 그 자리에서 합성을 연다
       for (const god of awardGrace(state.favor, state.grace, [...patrons])) yield* grantGrace(god);
-      if (!fused && canFuse(state.grace, patrons)) {
-        deck.push(fusedCard.id);
-        fused = true;
-      }
       advanceMap(state);
       if (floor === floorsPerRegion) regionsCleared.push(region);
     }
@@ -820,7 +837,7 @@ export function* runSteps(
   // 런에서 가장 자주 고른 과업의 신 — 최빈값을 세는 데 정렬 한 줄이면 된다
   const conflictChoice = [...demandSides].sort((left, right) =>
     demandSides.filter((god) => god === right).length - demandSides.filter((god) => god === left).length)[0];
-  return { won, grid: state.map.grid, turns, log, favorCurve, encounters, restCount, hpCurve, pathChoices, restChoices, regionsCleared, grace: state.grace, graceSlots: state.graceSlots, scenario, enemyCounts, encounterOutcomes, defeatContext, targetSpread, blockBuilt, blockAbsorbed, fused, actions, cardsPlayed, conflictChoice, demandOutcomes, pairing: patrons.join("+") };
+  return { won, grid: state.map.grid, turns, log, favorCurve, encounters, restCount, hpCurve, pathChoices, restChoices, regionsCleared, grace: state.grace, scenario, enemyCounts, encounterOutcomes, defeatContext, targetSpread, blockBuilt, blockAbsorbed, fused: fusions > 0, actions, cardsPlayed, conflictChoice, demandOutcomes, pairing: patrons.join("+") };
 }
 
 /**

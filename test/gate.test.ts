@@ -21,8 +21,6 @@ describe("validation gate", () => {
       "token_scope",
       // 없는 이름을 적은 패시브는 어떤 훅도 읽지 않는다
       "passive_coverage",
-      // 방어 슬롯에는 `target: self` 카드가 30장 있다 — 거기 붙은 출혈은 플레이어가 먹는다
-      "token_scope",
       // 시련 단이 수락보다 쉬우면 임계 단조가 뒤집힌 것이다 — 값을 치르고 더 쉬운 조건을 받는다
       "demand_axis",
       // 플레이어에게 붙은 `displace`는 소모 경로가 없다 — 영원히 안 지워지고 아무 일도 안 한다

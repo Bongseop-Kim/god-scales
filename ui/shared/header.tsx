@@ -6,7 +6,7 @@ import type { RunView } from "../../sim/engine.ts";
 import { effectText } from "./card.tsx";
 import { speak } from "./fx.ts";
 
-/** 트리거 아홉은 `core/favor.ts`의 한 벌이다 — 게이트(`tools/validate.ts`)가 같은 것을 센다 */
+/** 트리거 열은 `core/favor.ts`의 한 벌이다 — 게이트(`tools/validate.ts`)가 같은 것을 센다 */
 type GodLines = Partial<Record<LineTrigger, string[] | Partial<Record<FavorStage, string[]>>>>;
 const gods = godDataJson as (FavorGod & { name: string; lines: GodLines })[];
 const godNames = new Map(gods.map(({ id, name }) => [id, name]));

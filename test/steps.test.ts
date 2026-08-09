@@ -21,7 +21,7 @@ describe("steppable engine", () => {
       const answer = step.value.phase === "path" ? pickPath(step.value, "rest") : step.value.phase === "rest" ? "remove" : step.value.bot;
       step = steps.next(answer);
     }
-    expect(seen).toEqual(new Set(["path", "card", "target", "rest", "rest_card", "reward", "grace", "demand"]));
+    expect(seen).toEqual(new Set(["path", "card", "target", "rest", "rest_card", "reward", "grace", "grace_card", "demand"]));
   });
 
   /**
@@ -46,19 +46,16 @@ describe("steppable engine", () => {
     }
   });
 
-  it("offers three of that god's graces, each on a distinct slot", () => {
+  it("offers three graces and then the deck cards to seal", () => {
     const patrons = new Set(["zeus", "athena"]);
     /**
      * 「덱 N장」이 정말 지금 덱을 세는지 본다. 시작 덱 배치는 여기에 적지 않는다 — 그러면 엔진의
      * 사본이 된다. 지도 관측이 이미 덱을 그대로 실어 오므로 마지막 것을 든다
      */
-    let deck: string[] = [];
     const steps = runSteps(4);
     let step = steps.next();
     while (!step.done && step.value.phase !== "grace") {
       // 보상은 지도 관측 **뒤에** 덱을 늘린다 — 그 사이에 집은 카드를 얹어야 은혜 화면과 같은 덱이다
-      if (step.value.phase === "path" || step.value.phase === "rest") deck = step.value.observation.deck.map(({ id }) => id);
-      if (step.value.phase === "reward" && step.value.bot) deck.push(step.value.bot);
       step = steps.next(step.value.bot);
     }
     if (step.done || step.value.phase !== "grace") throw new Error("expected a grace decision");
@@ -67,14 +64,12 @@ describe("steppable engine", () => {
     expect(patrons.has(god)).toBe(true);
     expect([2, 4, 6]).toContain(tier);
     expect(offer).toHaveLength(3);
-    expect(new Set(offer.map(({ slot }) => slot)).size).toBe(3);
     for (const grace of offer) {
       expect(grace.id.startsWith(`grace_${god}_`), grace.id).toBe(true);
       expect(grace.effects.length).toBeGreaterThan(0);
-      // 「덱 N장」은 지금 덱의 그 태그 카드 수다 — 은혜가 몇 장에 붙는지가 결정의 근거다
-      // 덱에는 `+N` 붙은 id가 섞여 있다 — base로 되돌리지 않으면 강화된 카드가 태그 없이 세어진다
-      expect(grace.cards).toBe(deck.filter((id) => cardData.find((card) => card.id === cardLevel(id).base)?.tags.includes(grace.slot)).length);
     }
+    const cardStep = steps.next(step.value.bot);
+    expect(cardStep.done || cardStep.value.phase).toBe("grace_card");
   });
 
   it("driving it with bot defaults equals run()", () => {

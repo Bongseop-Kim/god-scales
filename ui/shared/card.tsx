@@ -138,6 +138,8 @@ export const CardSigns = () => (
       <li><span className="sign"><em className="card-kind">전체</em></span><span>사거리 안 모든 적</span></li>
       <li><span className="sign">{Object.values(tierNames).map((name) => <em key={name} className="card-tier">{name}</em>)}</span><span>카드 등급</span></li>
       <li><span className="sign"><em className="card-up">+1</em></span><span>쉼터에서 올린 강화 단계</span></li>
+      <li><span className="sign seal-badge"><Icon name="seal" /></span><span>신의 은혜를 이 카드에 새긴 인장</span></li>
+      <li><span className="sign"><em className="card-tier">융합</em></span><span>두 후원 신의 인장이 만나 바뀐 카드</span></li>
       <li><span className="sign card-fx"><em><Icon name="damage" /><s>6</s><b className="up">11</b></em></span><span>카드에 적힌 값과 지금 나갈 값</span></li>
       <li><span className="sign card-fx"><em className="cond"><Icon name="damage" /><b>6</b></em></span><span>조건이 맞을 때만 붙는 효과</span></li>
     </ul>
@@ -235,13 +237,19 @@ export function GameCard({ cardId, card, boost, upgrade, disabled, onSelect }: {
    * 그릴 카드. 미리보기는 **같은 규칙 함수**(`upgraded`)를 부르므로 재구현이 아니다 —
    * `data-*` 셋은 아래에서 그대로 덱에 있는 카드의 값을 싣는다(e2e 계약)
    */
-  const shown: CardView | undefined = upgrade && face ? upgraded(face.base, level + 1) : card;
+  const shown: CardView | undefined = upgrade && face
+    ? (() => {
+      const raised = upgraded(face.base, level + 1);
+      return { ...raised, effects: [...raised.effects, ...(card?.seals?.flatMap(({ effects }) => effects) ?? [])], seals: card?.seals };
+    })()
+    : card;
   const shownLevel = upgrade ? level + 1 : level;
   const source = face?.art;
   const [missing, setMissing] = useState(!source);
   // 예외만 적는다 — 149장 중 20장이다(파워 6 · 전체 14, 데이터상 안 겹친다). 슬롯이 하나뿐이다
   const kind = face?.power ? "파워" : shown?.target === "all_enemies" ? "전체" : undefined;
-  const label = shown && cardCaption(shown, boost);
+  const seals = [...(shown?.seals ?? []), ...(shown?.previewSeal ? [shown.previewSeal] : [])];
+  const label = shown && `${cardCaption(shown, boost)}${seals.length ? ` · 인장 ${seals.map(({ text }) => text).join(", ")}` : ""}`;
   const body = (
     <>
       <div className={`card-art${missing ? " missing" : ""}`}>
@@ -249,6 +257,16 @@ export function GameCard({ cardId, card, boost, upgrade, disabled, onSelect }: {
         <span aria-hidden="true">⚖</span>
       </div>
       {shown && <b className="cost-gem">{shown.cost}</b>}
+      <span className="card-seals">
+        {seals.map((seal, index) => (
+          <em
+            key={`${seal.patron}-${index}`}
+            className={shown?.previewSeal === seal ? "preview" : undefined}
+            style={{ "--seal-color": `var(--${seal.patron})` } as React.CSSProperties}
+            title={`${seal.text} · ${effectText({ target: shown?.target ?? "enemy", effects: seal.effects })}`}
+          ><Icon name="seal" /></em>
+        ))}
+      </span>
       {kind && <em className="card-kind">{kind}</em>}
       {shown && (
         <span className="card-fx">
@@ -267,6 +285,7 @@ export function GameCard({ cardId, card, boost, upgrade, disabled, onSelect }: {
         {shownLevel > 0 && <em className="card-up">+{shownLevel}</em>}
         {/* 이름은 원문이다 — `+N`은 배지가 들었으므로 캡션에서 뗀다(이름 최대 7자 규칙이 여기서 닫힌다) */}
         {face?.name ?? card?.name ?? cardId}
+        {shown?.fusesTo && <em className="fusion-preview">융합 · {shown.fusesTo.name}</em>}
       </small>
     </>
   );

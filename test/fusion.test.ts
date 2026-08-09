@@ -1,17 +1,48 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { canFuse } from "../core/fusion";
-import { run, simulate } from "../sim/engine";
+import type { Grace } from "../core/grace";
+import { sealId, type Card } from "../core/rules";
+import { fusionReady, materializeCard, run, runSteps, simulate } from "../sim/engine";
 import { summarize } from "../sim/report";
 import { validateItems } from "../tools/validate";
 
 describe("fusion", () => {
-  it("requires one grace earned from each patron and never closes again", () => {
-    expect(canFuse({}, ["zeus", "athena"])).toBe(false);
-    expect(canFuse({ zeus: 3 }, ["zeus", "athena"])).toBe(false);
-    expect(canFuse({ zeus: 3, athena: 1 }, ["zeus", "athena"])).toBe(true);
-    // 호의는 조우마다 새지만 획득 수는 안 샌다 — 한 번 열린 합성이 다시 닫히지 않는 이유다
-    expect(canFuse({ zeus: 6, athena: 6 }, ["zeus", "athena"])).toBe(true);
+  it("opens only when one card carries both patrons' seals", () => {
+    const graces = JSON.parse(readFileSync("data/graces.json", "utf8")) as Grace[];
+    const cards = JSON.parse(readFileSync("data/cards.json", "utf8")) as Card[];
+    const base = cards.find(({ patron }) => patron === "zeus")!;
+    const seals = [graces.find(({ patron, tier }) => patron === "zeus" && tier === 2)!, graces.find(({ patron, tier }) => patron === "athena" && tier === 2)!];
+    const one = materializeCard(base, sealId(base.id, seals[0]), graces);
+    const both = materializeCard(base, sealId(sealId(base.id, seals[0]), seals[1]), graces);
+    expect(fusionReady(one, ["zeus", "athena"])).toBe(false);
+    expect(fusionReady(both, ["zeus", "athena"])).toBe(true);
+  });
+
+  it("replaces that deck entry immediately and drops the original seals", () => {
+    const steps = runSteps(35, undefined, ["poseidon", "athena"]);
+    let step = steps.next();
+    while (!step.done) {
+      const decision = step.value;
+      if (decision.phase === "grace_card") {
+        const source = decision.observation.deck.find(({ id }) => id === decision.bot);
+        if (source?.fusesTo) {
+          const sourceCount = decision.observation.deck.filter(({ id }) => id === source.id).length;
+          const resultCount = decision.observation.deck.filter(({ id }) => id === source.fusesTo!.id).length;
+          const next = steps.next(decision.bot);
+          if (next.done) {
+            expect(next.value.fused).toBe(true);
+            expect(next.value.actions.at(-1)).toEqual({ type: "grace_card", choice: decision.bot });
+            return;
+          }
+          expect(next.value.observation.deck.filter(({ id }) => id === source.id)).toHaveLength(sourceCount - 1);
+          expect(next.value.observation.deck.filter(({ id }) => id === source.fusesTo!.id)).toHaveLength(resultCount + 1);
+          expect(next.value.observation.deck.find(({ id }) => id === source.fusesTo!.id)?.seals).toBeUndefined();
+          return;
+        }
+      }
+      step = steps.next(decision.bot);
+    }
+    throw new Error("expected a fusion");
   });
 
   it("passes all ten generated pairings", () => {
@@ -20,13 +51,12 @@ describe("fusion", () => {
     expect(Object.values(validateItems(items).by_pairing)).toEqual(Array(10).fill(1));
   });
 
-  it("injects fused decks outside the base win-rate denominator", () => {
+  it("keeps fused scenarios outside the base denominator", () => {
     const report = summarize(simulate(20, "fused_deck"));
     expect([report.runs, report.scenario_runs, report.fusion_rate]).toEqual([0, 20, 1]);
   });
 
   it("replays strategic actions deterministically", () => {
-    // 갈래 문자열이 격자에 달려 있으므로 봇이 실제로 걸은 것을 기록으로 되먹인다 — 대체가 0이어야 한다
     const actions = run(1).actions.filter(({ type }) => type === "path");
     const first = run(1, undefined, actions);
     const second = run(1, undefined, actions);
