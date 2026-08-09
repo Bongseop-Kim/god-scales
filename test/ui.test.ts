@@ -185,7 +185,7 @@ describe("browser replay export", () => {
   });
 
   /** 과업과 자동 개입의 두 줄은 전투 관측만으로 그린다 */
-  it("draws the promise, its progress, and whether it is already settled", () => {
+  it("draws the promise and its progress", () => {
     const decision = {
       phase: "card",
       options: [],
@@ -205,8 +205,8 @@ describe("browser replay export", () => {
     expect(markup).toContain("이 조우에서 잃은 체력 8 이하");
     expect(markup).not.toContain("damage_taken");
     expect(markup).toContain("5 / 8");
-    // 단일 과업만 선다
-    expect(markup).toContain("class=\"promise\"");
+    // 단일 과업만 선다 — quest와 promises가 같은 과업을 들고 있어도 한 번만 그린다
+    expect(markup.match(/class="promise"/g)).toHaveLength(1);
     expect(markup).toContain("과업 · 아테나");
     expect(markup).toContain("개입 · 3턴 뒤");
     // 신의 문장은 사라지지 않는다 — 규칙 줄이 그것을 **대신하지 않는다**
@@ -558,7 +558,7 @@ describe("browser replay export", () => {
     // 갈림길은 쉼터로, 휴식은 제거로, 요구는 수락으로 고정하고 첫 카드 한 장만 봇과 다르게 낸다.
     // 전투를 내내 봇 반대로 고르면 은총 마일스톤에 닿기 전에 죽는다 — 요구가 조건 판정을 받게 된 뒤로는
     // 호의가 천천히 올라서 300개 시드 안에 그런 런이 없다.
-    // 과업이 맵 결정이 된 뒤 여덟 종류를 다 지나는 첫 자리는 2다
+    // 아홉 종류를 다 지나는 자리가 92다
     let diverged = false;
     const { result: browser, actions } = playByHand(92, (decision) => {
       const { phase, options, bot } = decision;
@@ -574,8 +574,8 @@ describe("browser replay export", () => {
     const replay = replayPayload(92, actions, ["zeus", "athena"]);
     const cli = run(replay.seed, undefined, replay.actions, replay.patrons);
 
-    // 반출에 사람이 고른 여덟 종류가 전부 있어야 한다 — 빠지면 재생 때 봇이 대신 채운다
-    for (const type of ["path", "card", "target", "rest", "rest_card", "reward", "grace", "demand"]) {
+    // 반출에 사람이 고른 아홉 종류가 전부 있어야 한다 — 빠지면 재생 때 봇이 대신 채운다
+    for (const type of ["path", "card", "target", "rest", "rest_card", "reward", "grace", "grace_card", "demand"]) {
       expect(actions.some((action) => action.type === type), type).toBe(true);
     }
     expect({ won: cli.won, floors: cli.hpCurve.length - 1, favor: cli.favorCurve.at(-1), cards: cli.cardsPlayed }).toEqual({

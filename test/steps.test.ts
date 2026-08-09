@@ -11,7 +11,7 @@ const pickPath = (decision: Decision, type: string) => decision.options.find((op
 
 describe("steppable engine", () => {
   it("stops at every decision phase", () => {
-    // 과업이 맵 결정이 된 뒤 여덟 종류를 전부 지나는 첫 시드는 2다
+    // 아홉 종류를 전부 지나는 시드가 92다
     const steps = runSteps(92);
     const seen = new Set<string>();
     let step = steps.next();

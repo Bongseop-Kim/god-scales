@@ -184,7 +184,7 @@ function tokenScopeFailure(card: Card): boolean {
 }
 
 /**
- * 인장은 어느 카드에도 새길 수 있다. 여기서는 신의 효과 어휘만 지킨다.
+ * 인장은 어느 카드에도 새길 수 있다. 여기서는 공용 op만 허용하고 토큰은 그 신의 어휘만 지킨다.
  */
 function graceScopeFailure(grace: Grace): boolean {
   const vocabulary = gods[grace.patron];

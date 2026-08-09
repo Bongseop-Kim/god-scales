@@ -134,7 +134,7 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
     playSound("chips-handle-4", 0.8);
     speak(1, fusion.patrons[0], godLine(fusion.patrons[0], "fuse", seed));
     const second = window.setTimeout(() => speak(1, fusion.patrons[1], godLine(fusion.patrons[1], "fuse", seed)), 320);
-    const done = window.setTimeout(() => setFusion(undefined), 2500);
+    const done = window.setTimeout(() => setFusion(undefined), reducedMotion ? 0 : 2500);
     return () => { clearTimeout(second); clearTimeout(done); };
   }, [fusion, seed]);
 

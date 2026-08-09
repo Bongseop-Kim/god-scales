@@ -22,7 +22,7 @@ const freeCard = "card_athena_retry_02";
 const freeDeck = Array.from({ length: deckSize }, () => freeCard);
 if (!deckOk(freeDeck)) throw new Error(`${freeCard} is no longer a startable tier1 card`);
 /**
- * 아래 클릭 정책으로 **12층을 완주하면서** 여덟 결정 phase를 전부 지나는 1~1000 중 가장 짧은 시드다.
+ * 아래 클릭 정책으로 **12층을 완주하면서** 아홉 결정 phase를 전부 지나는 1~1000 중 가장 짧은 시드다.
  * 정책이나 콘텐츠가 바뀌면 다시 찾아야 한다 — 800개를 훑는 자리다.
  * P-27에서 141 → 170: 갈래가 격자에서 오면서 옛 시드의 완주가 끊겼다. P-28의 은혜를 지나도 170은 살았다.
  * 427 → 428: 사후 수정이 예고 칸의 빈 방문을 없애면서 요구 하나가 늘었다(R-27 §사후 수정).

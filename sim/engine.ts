@@ -220,9 +220,9 @@ export const deckOk = (deck: readonly string[]): boolean =>
  */
 export function materializeCard(card: Card, id: string, allGraces: Grace[]): Card {
   const raised = upgraded(card, cardLevel(id).level);
-  const seals = cardSealIds(id).map(({ id: sealId, tier }) => {
-    const seal = allGraces.find((grace) => grace.id === sealId && grace.tier === tier);
-    if (!seal) throw new Error(`Unknown seal: ${sealId}.${tier}`);
+  const seals = cardSealIds(id).map(({ id: graceId, tier }) => {
+    const seal = allGraces.find((grace) => grace.id === graceId && grace.tier === tier);
+    if (!seal) throw new Error(`Unknown seal: ${graceId}.${tier}`);
     return seal;
   });
   return { ...raised, id, effects: [...raised.effects, ...seals.flatMap(({ effects }) => effects)], ...(seals.length ? { seals } : {}) };
@@ -812,9 +812,9 @@ export function* runSteps(
       enemyCounts.push(members.length);
       encounters += 1;
       // 편성 이름이 아니라 **자리**로 센다 — 층별 정책이 갈리는지 보려면 열이 층이어야 한다
-      encounterOutcomes.push({ key: `${region}:${floor}:${path}`, cleared: state.combat.outcome === "victory", passives, devoted, hpLost: hpBefore - state.combat.player.hp, trial: false });
+      encounterOutcomes.push({ key: `${region}:${floor}:${path}`, cleared: state.combat.outcome === "victory", passives, devoted, hpLost: hpBefore - state.combat.player.hp });
       if (state.combat.outcome !== "victory") {
-        defeatContext = { region, floor, enemies: members.map(({ id }) => id), passives, trial: false };
+        defeatContext = { region, floor, enemies: members.map(({ id }) => id), passives };
         favorCurve.push({ ...state.favor });
         hpCurve.push(state.combat.player.hp);
         break;

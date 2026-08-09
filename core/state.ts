@@ -87,7 +87,7 @@ export type GameState = {
   seed: number;
   combat: CombatState;
   favor: Record<string, number>;
-  /** 그 신에게서 받은 은혜 수. 다음 은혜의 tier만 정한다. 고른 은혜는 카드 id가 든다. */
+  /** 그 신에게서 받은 은혜 수. 다음 은혜의 tier만 정한다. 고른 인장은 카드 id에 새겨져 덱으로 간다 */
   grace: Record<string, number>;
   /** `lane`은 런 시작에 `bossLane`이다 — 그래야 1층에서 세 갈래가 다 열린다 */
   map: { depth: number; lane: number; grid: MapGrid; completed: string[] };
