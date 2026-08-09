@@ -26,13 +26,13 @@
 
 ### 0. 선행 정비 — `ATTRIBUTION.md` 갱신
 
-"사운드 없음" 절을 실제 상태로 교체: BGM 2곡(Gemini 생성) + SFX 9개(출처 확인해 기입). 문서 B가 이 파일을 인용하므로 먼저 고친다.
+"사운드 없음" 절을 실제 상태로 교체: BGM 2곡(Gemini 생성) + SFX 9개(Kenney, CC0). 문서 B가 이 파일을 인용하므로 먼저 고친다.
 
 ### 1. `submission/` 디렉터리 (신규, 빌드·배포 무관)
 
-- `submission/intro.html` · `submission/ai-tech.html` — 인쇄용 HTML(인라인 CSS, A4 `@page`, 이미지 로컬 상대경로).
-- 캡처는 `aside` CLI로 촬영해 `submission/shots/`에 저장. 주석(화살표·라벨)은 HTML/CSS 오버레이로 — 별도 이미지 편집 툴 불필요.
-- PDF 출력: `chrome --headless --print-to-pdf` 2회. 산출물 `submission/intro.pdf`, `submission/ai-tech.pdf`.
+- `submission/intro.html` · `submission/ai-tech.html` — 인쇄용 HTML(인라인 CSS, `@page`, 이미지 로컬 상대경로). 문서 A는 캡처 중심이므로 **A4 가로**(`size: A4 landscape`), 문서 B는 세로.
+- 캡처는 **LLM이 aside로 게임을 직접 플레이하며 촬영**해 `submission/shots/`에 저장 — 필수 샷 6장: ① 신 선택(조합) ② 맵 3갈래 ③ 전투(카드→대상 지정) ④ 신의 개입 컷인 ⑤ 은혜 3택1/합성 ⑥ 결과 화면. 주석(화살표·라벨)은 HTML/CSS 오버레이로 — 별도 이미지 편집 툴 불필요.
+- PDF 출력: `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome --headless --print-to-pdf` 2회. 산출물 `submission/intro.pdf`, `submission/ai-tech.pdf`. 캡처는 리사이즈해 PDF 수 MB대 유지.
 
 ### 2. 문서 A — 게임 소개 및 설명 (4~6쪽)
 
@@ -51,13 +51,13 @@
 각 섹션에 실제 파일 경로·수치·프롬프트 발췌를 박는다. **문서를 관통하는 원칙 하나를 첫 장에 선언: "AI에게 시킨 모든 작업에는 검증 단계가 따른다."** 이후 각 섹션이 이 원칙의 사례가 되도록 배치 — 코드는 테스트+CodeRabbit+리뷰 문서, 콘텐츠는 `validate.ts` 게이트, 밸런스는 시뮬 게이트, UI는 aside 시각 검증, 아트는 qa 접촉시트, 음성은 스모크 테스트.
 
 1. **개요 표**: 영역별 도구 — 코드·기획(Claude Code, GPT) / 코드 리뷰(CodeRabbit) / 게임 콘텐츠(LLM 생성 + 자동 게이트) / 이미지([sprite-gen](https://github.com/aldegad/sprite-gen) + GPT-image) / BGM·영상(Gemini) / 대사 음성(Qwen3-TTS 로컬) / 플레이테스트·밸런싱(LLM 봇 + 룰 봇) / 브라우저 E2E·시각 검증(aside). 각 행에 "검증 방법" 열을 붙인다.
-2. **개발 워크플로 — plan→commit→review 사이클**: 플랜문서를 깃에 등록·커밋 → 수행 → `reviews/NN-*.md` → plan 삭제. 엿새간 83건 소비 / 86건 잔존, `reviews/00-index.md` 수치 전후표 발췌. 지시 규범 3종(CLAUDE.md 7줄 헌법 전문 인용 + WRITING.md 신별 어미 표 + UI.md 제1규칙). 커밋마다 **CodeRabbit 자동 리뷰**를 받아 반영 — 사람 리뷰어 없이도 AI 상호 검토가 도는 구조(작성: Claude/GPT, 검토: CodeRabbit).
-3. **도구 철학**: 하네스 툴(OMC, Superpowers 등) 배제 — 모델 발달로 토큰 과소비·간단한 해결의 우회 경향. 스킬은 [ponytail](https://github.com/dietrichgebert/ponytail) 하나 + 각 도구 네이티브 기능 + plan별 effort 조절.
+2. **개발 워크플로 — plan→commit→review 사이클**: 플랜문서를 깃에 등록·커밋 → 수행 → `reviews/NN-*.md` → plan 삭제. 엿새간 83건 소비 / 86건 잔존(문서 작성 시점 수치로 갱신), `reviews/00-index.md` 수치 전후표 발췌. 지시 규범 3종(CLAUDE.md 7줄 헌법 전문 인용 + WRITING.md 신별 어미 표 + UI.md 제1규칙). 커밋마다 **CodeRabbit 자동 리뷰**를 받아 반영 — 사람 리뷰어 없이도 AI 상호 검토가 도는 구조(작성: Claude/GPT, 검토: CodeRabbit).
+3. **도구 철학**: 하네스 툴(OMC, Superpowers 등)을 써본 뒤 뺐다 — 모델이 발달하면서 토큰 과소비·간단한 해결의 우회 경향을 확인, 근거를 갖고 배제. 스킬은 [ponytail](https://github.com/dietrichgebert/ponytail) 하나 + 각 도구 네이티브 기능 + plan별 effort 조절로 수렴.
 4. **콘텐츠 생성 파이프라인**: `prompts/` 14종(버전 태그·EV 공식·반송 키) → `staging/`(재시도분 분리 보존) → `tools/validate.ts` 9종 반려 코드(schema/dsl_parse/token_scope/fusion_scope/demand_axis/duplicate/value_outlier/passive_coverage/map_layout) → 통과분만 `data/`. 회차 로그의 pass_rate 개선 사례(0.8→1.0) 1건 상술.
 5. **브라우저를 조종하는 AI — aside E2E·시각 검증** (비중 있게): 브라우저 확인·E2E를 aside CLI/에이전트로 일원화(CLAUDE.md 규칙). 용도 다각화 — (a) 12층 완주 E2E 자동 플레이 → 반출 JSON을 CLI 재생과 대조(`tools/e2e.ts`), (b) UI 변경마다 시각 검증(리뷰 문서의 「Aside 확인 (1440×900)」 절 + 캡처), (c) 특정 게임 상황을 만들어 확인하는 탐색 플레이(예: 부분 방어 팝 순서 검증 — 에이전트가 스스로 "방어 4를 가진 적"을 찾아 공격해 초록 방어량/빨간 피해 팝 표기를 확인). 실제 작업 장면 캡처(`~/Desktop/aside.png` → `submission/shots/`) 1장을 크게 싣는다 — 에이전트가 탭을 제어하며 단계별로 검증하는 화면.
 6. **AI가 게임을 플레이한다**: `sim/` 헤드리스 엔진(브라우저와 `core/` 공유·결정적 시드) → LLM 봇 파일 프로토콜(`decisions/<run>/pending.json` 관측+합법수 ↔ `answer.json` 선택+이유, 무효 시 룰 봇 폴백) → 10런 완주·폴백 0. 밸런스 게이트: 조합 승률 하한 0.05 하나만 테스트에 잠금, 릴리스 목표 0.25는 분리(하한을 깎지 않는 원칙). 6회차 64,000런, 분산 0.0829→0.0353.
 7. **아트 파이프라인**: 프롬프트를 코드로 조립(`gen-docs.mjs`) → 이미지 1장당 프롬프트 전문 사이드카 `.md` 보존 → 스프라이트 38런의 request→prompts→frames→qa 구조. 실패담: 해상도 소실 사고와 재발 방지 4규칙(`art/README.md`).
-8. **오디오·음성·영상**: Gemini — BGM 2곡, 신 컷인 영상 5개. 신 대사 448줄 음성은 로컬 Qwen3-TTS(1.7B CustomVoice, 신별 화자 매핑 + WRITING.md 성격 표 기반 톤 지시)로 배치 생성 — 텍스트 해시 파일명으로 증분 재생성 가능한 구조(P-79). 문서 작성 시점의 진행 상태(완료/진행 중)를 그대로 명기.
+8. **오디오·음성·영상**: Gemini — BGM 2곡, 신 컷인 영상 5개. 신 대사 448줄 음성은 로컬 Qwen3-TTS(1.7B CustomVoice, 신별 화자 매핑 + WRITING.md 성격 표 기반 톤 지시)로 배치 생성 — 본 생성 전 신별 1줄 스모크 테스트로 억양 검증, 텍스트 해시 파일명으로 증분 재생성 가능한 구조(P-79). 문서 작성 시점의 진행 상태(완료/진행 중)를 그대로 명기.
 9. **런타임 청정**: 배포물에 LLM 호출·API 키 0 — `DEPLOY.md` grep 게이트. LLM은 전부 빌드타임.
 10. **외부 에셋 / 오픈소스 출처** (반쪽 표): 폰트 Galmuri11(OFL) · 커서/파티클 Kenney(CC0) · 도구 sprite-gen, ponytail, Qwen3-TTS — 갱신된 `ATTRIBUTION.md` 기준. 나머지 이미지·음악·영상·음성은 전부 AI 자체 생성임을 명시.
 
