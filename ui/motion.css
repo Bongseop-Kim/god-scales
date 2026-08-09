@@ -52,7 +52,7 @@ button:active { transform: scale(.97); }
 .stage-field .enemy.wide .fx.spark { top: 26px; }
 /** 신의 말이 아니라 전투 기록이다 — 셸 왼쪽에 제목과 효과를 나눠 3초 남긴다 */
 .fx-caption { position: absolute; top: 84px; right: max(16px, calc(50% - 520px)); display: grid; width: min(300px, calc(100vw - 32px)); gap: 3px; padding: 9px 12px; border-right: 3px solid var(--god-color); border-radius: 7px; background: rgba(12, 14, 20, .78); box-shadow: 0 4px 18px rgba(0, 0, 0, .18); text-align: left; }
-.fx-caption small { color: currentColor; font-size: .68rem; font-weight: 700; letter-spacing: .04em; }
+.fx-caption small { color: currentcolor; font-size: .68rem; font-weight: 700; letter-spacing: .04em; }
 .fx-caption b { color: #e3e5eb; font-size: .8rem; font-variant-numeric: tabular-nums; line-height: 1.4; }
 .fx.devotion { color: var(--stage-devotion); }
 .fx.calm { color: var(--stage-calm); }
@@ -116,7 +116,7 @@ button:active { transform: scale(.97); }
  * 쓴다. 진노만 조금 더 세게: 그 단계는 다음 조우 시작에 터지므로 들어서기 전에 읽혀야 한다
  */
 @keyframes stage-cross {
-  from { box-shadow: 0 0 0 0 currentColor; }
+  from { box-shadow: 0 0 0 0 currentcolor; }
   to { box-shadow: 0 0 0 var(--pulse, 7px) transparent; }
 }
 .favor.crossed { animation: stage-cross 320ms var(--ease-out); }

@@ -89,7 +89,7 @@ def main() -> None:
             max_new_tokens=2048,
         )
         with tempfile.TemporaryDirectory() as temporary:
-            for index, ((god, text), wav) in enumerate(zip(batch, wavs)):
+            for index, ((god, text), wav) in enumerate(zip(batch, wavs, strict=True)):
                 source = Path(temporary) / f"{index}.wav"
                 target = output_dir / f"{voice_key(god, text)}{suffix}"
                 sf.write(source, wav, rate)
