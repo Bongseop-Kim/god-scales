@@ -319,6 +319,7 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
           대상이 사라졌다 다시 생긴다 */}
       <IconSheet />
       <audio ref={music} src={musicUrl} autoPlay={soundEnabled && !!musicUrl} loop preload="auto" />
+      <div className="size-gate" role="status">1200×720 이상 화면에서 지원합니다.</div>
       {fusion && (
         <button className="fusion-scene" type="button" aria-label="융합 연출 건너뛰기" onClick={() => setFusion(undefined)}>
           {fusion.patrons.map((god) => (

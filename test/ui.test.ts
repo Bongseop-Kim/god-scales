@@ -163,6 +163,7 @@ describe("browser replay export", () => {
     expect(markup).toContain("token-badge harmful turn");
     // 툴팁은 한글 이름 + 효과 한 줄이다 — 영문 id가 화면에 남아 있으면 안 된다
     expect(markup).toContain("가시 — 맞을 때마다 스택만큼 반격 · 전투 내내");
+    expect(markup).toContain('title="보호 — 스택마다 사거리 안 아군의 단일 대상 피해를 대신 받음"');
     // 영문 id가 **글자로** 남아 있으면 안 된다 — `href="#icon-soaked"`는 그림을 가리키는 이름이고 안 읽힌다
     expect(markup).not.toMatch(/>[^<]*soaked/);
     // 복합 의도가 「대기」로 뭉개지지 않고 토큰도 한글이다
@@ -378,6 +379,19 @@ describe("browser replay export", () => {
     expect(markup).toContain("fan aiming");
     expect(markup).toContain("대상을 고르세요");
     expect(markup).not.toContain("card_zeus_19 ·");
+
+    const unavailable = renderToStaticMarkup(createElement(CombatScreen, {
+      seed: 1,
+      decision: {
+        ...(decision as unknown as Record<string, unknown>),
+        phase: "card",
+        options: [],
+        observation: { ...(decision as unknown as { observation: Record<string, unknown> }).observation, energy: 2, hand: [hand[0], hand[3]], card: undefined },
+      } as never,
+      onAnswer: () => {},
+    }));
+    expect(unavailable).toMatch(/data-why="reach".*?aria-label="감전 연쇄/);
+    expect(unavailable).toMatch(/data-why="energy".*?aria-label="달의 화살비/);
   });
 
   /**

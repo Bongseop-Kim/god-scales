@@ -13,7 +13,7 @@ import { cardParticleOf, effectText, GameCard, triggerLabels } from "../shared/c
 import { playSprite, shake, speak } from "../shared/fx.ts";
 import { godArt, godFoeLines, godLines, godName, godStageEffects, godStageText, stageName } from "../shared/header.tsx";
 import { Icon } from "../shared/icon.tsx";
-import { intentBits, passiveName, tokenName, tokenSummary, TokenRow } from "../shared/tokens.tsx";
+import { intentBits, passiveName, passiveTitle, tokenName, tokenSummary, TokenRow } from "../shared/tokens.tsx";
 import { playSound } from "../shared/sfx.ts";
 
 const spriteArt = import.meta.glob<string>("../../art/sprites/*.webp", { eager: true, query: "?url", import: "default" });
@@ -483,11 +483,11 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
           */}
         <div className="resources">
           {/* 낼 수 있는 카드가 남으면 1.04 맥동, 에너지 0이면 무채색(P-58) — 정보는 숫자가 든다 */}
-          <span className={`energy-gem${view.energy === 0 ? " drained" : ""}${canPlay ? " ready" : ""}`} role="img" aria-label={`에너지 ${view.energy} / ${ENERGY_PER_TURN}`}>
+          <span className={`energy-gem${view.energy === 0 ? " drained" : ""}${canPlay ? " ready" : ""}`} role="img" aria-label={`에너지 ${view.energy} / ${ENERGY_PER_TURN}`} title={`에너지 ${view.energy} / ${ENERGY_PER_TURN}`}>
             {view.energy}
             <small aria-hidden="true">{ENERGY_PER_TURN}</small>
           </span>
-          <span className="draw-pile" role="img" aria-label={`뽑을 카드 ${view.draw}장`}>
+          <span className="draw-pile" role="img" aria-label={`뽑을 카드 ${view.draw}장`} title={`뽑을 카드 ${view.draw}장`}>
             <i aria-hidden="true" />
             <b>{view.draw}</b>
           </span>
@@ -531,6 +531,7 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
                 index={index}
                 transition={transition}
                 disabled={targeting || !options.includes(card.id)}
+                why={targeting || options.includes(card.id) ? undefined : card.cost > view.energy ? "energy" : "reach"}
                 onSelect={() => play(card.id)}
               />
             ))}
@@ -562,18 +563,20 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
  * 흐려지는 카드를 눌러도 아무 일이 안 일어나고, e2e 드라이버는 그것을 첫 후보로 골라 1초 헛돈다
  * (실측 78회 × 1초). 사라지는 중이면 누를 수 없다 — 적 버튼과 같은 이유, 같은 한 줄이다
  */
-function FanCard({ card, boost, index, transition, disabled, onSelect }: {
+function FanCard({ card, boost, index, transition, disabled, why, onSelect }: {
   card: CardView;
   /** 플레이어의 지금 토큰 — 카드 면이 「지금 누르면 나갈 값」을 세운다 */
   boost: Tokens;
   index: number;
   transition: { duration: number };
   disabled: boolean;
+  why?: "energy" | "reach";
   onSelect: () => void;
 }) {
   const present = useIsPresent();
   return (
     <m.div
+      data-why={why}
       style={{ "--i": index } as CSSProperties}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -650,7 +653,7 @@ function EnemyButton({ enemy, slot, hits, hitSeq, popDelay, enabled, reducedMoti
       {/* 발밑 칩 한 줄 — 방어·패시브·토큰. 자리를 예약해 첫 토큰에 이웃이 안 밀린다(UI.md) */}
       <span className="chips">
         {enemy.block > 0 && <em className="shield">방어 {enemy.block}</em>}
-        {passives.map(([id, stacks]) => <em key={id} className="passive"><Icon name={id} />{passiveName(id)} {stacks}</em>)}
+        {passives.map(([id, stacks]) => <em key={id} className="passive" title={passiveTitle(id)}><Icon name={id} />{passiveName(id)} {stacks}</em>)}
         <TokenRow tokens={enemy.tokens} />
       </span>
       <DamagePop hits={hits} id={enemy.id} seq={hitSeq} still={reducedMotion} delay={popDelay} />

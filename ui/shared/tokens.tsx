@@ -60,6 +60,7 @@ const passiveStyle: Record<PassiveName, { name: string; text: string }> = {
 
 export const tokenName = (token: TokenName) => tokenStyle[token].name;
 export const passiveName = (passive: PassiveName) => passiveStyle[passive].name;
+export const passiveTitle = (passive: PassiveName) => `${passiveStyle[passive].name} — ${passiveStyle[passive].text}`;
 
 /** 적 머리 위 의도와 사전이 같은 아이콘 변환을 쓴다 */
 export const intentBits = (action?: EnemyAction): [IconName, number | undefined][] => {
