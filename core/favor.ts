@@ -40,7 +40,7 @@ export type StageEffect = Effect & { target: "self" | "enemy" | "all_enemies" };
  */
 export type StageHook = "on_encounter_start" | "on_turn_start";
 /**
- * 매 턴 훅이 터지는 주기. **1이 아니다** — 조우가 5.8턴이라 매 턴 개입은 한 조우에 여섯 번이고,
+ * 매 턴 훅이 터지는 주기. **1이 아니다** — 조우가 6.65턴이라 매 턴 개입은 한 조우에 여섯 번이고,
  * 4000런 대신 1200런 층화로 재보면 그 값이 밴드를 깬다:
  *
  * | 주기 | 승률(층화) | 저휴식 클리어(기본 조합 500런) |
@@ -55,13 +55,11 @@ export type StageHook = "on_encounter_start" | "on_turn_start";
  */
 export const interventionEveryTurns = 3;
 export const intervenesOnTurn = (turn: number): boolean => turn % interventionEveryTurns === 2;
-/**
- * 신탁이 미는 크기. **경계 12 이내에서 시작했을 때만 단계를 넘긴다** — 50:50에서 시작한 런은 신탁
- * 하나로 62나 38에 서서 아무 경계도 못 넘고, 65나 40처럼 경계 근처에서 출발해야 그 조우의 개입 얼굴이
- * 바뀐다. 배분(`favorPool`)이 출발점을 정하고 신탁이 런 중에 미는 것이 축을 나눠 갖는 방식이다.
- * 조우당 한 번이라 한 조우 안 왕복도 없다
- */
-export const oracleSwing = 12;
+/** 지금 턴의 개입은 이미 적용됐다. 다음 2·5·8…턴까지 남은 턴만 파생한다 */
+export function turnsUntilIntervention(turn: number): number {
+  for (let wait = 1; wait <= interventionEveryTurns; wait += 1) if (intervenesOnTurn(turn + wait)) return wait;
+  return interventionEveryTurns;
+}
 export type FavorGod = { id: string; stage_effects: Partial<Record<FavorStage, Partial<Record<StageHook, StageEffect[]>>>> };
 /**
  * 신이 말하는 자리 아홉(`data/gods.json`의 `lines`). 셋은 단계로 갈리고 여섯은 한 벌이다 —

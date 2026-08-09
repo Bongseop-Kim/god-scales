@@ -22,7 +22,7 @@ const freeCard = "card_athena_retry_02";
 const freeDeck = Array.from({ length: deckSize }, () => freeCard);
 if (!deckOk(freeDeck)) throw new Error(`${freeCard} is no longer a startable tier1 card`);
 /**
- * 아래 클릭 정책으로 **12층을 완주하면서** 아홉 결정 phase를 전부 지나는 가장 짧은 시드다(232 결정).
+ * 아래 클릭 정책으로 **12층을 완주하면서** 여덟 결정 phase를 전부 지나는 1~1000 중 가장 짧은 시드다.
  * 정책이나 콘텐츠가 바뀌면 다시 찾아야 한다 — 800개를 훑는 자리다.
  * P-27에서 141 → 170: 갈래가 격자에서 오면서 옛 시드의 완주가 끊겼다. P-28의 은혜를 지나도 170은 살았다.
  * 427 → 428: 사후 수정이 예고 칸의 빈 방문을 없애면서 요구 하나가 늘었다(R-27 §사후 수정).
@@ -30,13 +30,13 @@ if (!deckOk(freeDeck)) throw new Error(`${freeCard} is no longer a startable tie
  * P-39에서 589 → 371: 정예·보스가 tier2 세 자리를 주자 589의 덱이 바뀌어 저승을 지나고 6조우에서 죽는다.
  * P-46에서 371 → 727: 신탁이 결정을 하나 더 끼우고 평온 개입이 조우를 바꾸자 371이 `grace`에 못 닿는다.
  * 이번엔 800개 중 220개가 완주한다(게임이 쉬워졌다) — 784·627·575가 727 다음 후보다.
- * P-59에서 727 → 218: 카드 보상이 판돈이 되고 `bet_card` 결정이 하나 더 끼자 727이 6층에서 죽는다.
+ * P-59에서 727 → 218: 전투 시작 결정이 하나 더 끼자 727이 6층에서 죽는다.
  * 900개 중 **18개**가 완주하며 열 phase를 다 지난다 — 218이 가장 짧고(246결정) 559·81·129가 다음이다.
  * 218 → 32: `askQuest`가 이미 걸린 신을 후보에서 빼자(같은 신의 퀘스트 둘) 218이 12층에서 죽는다.
  * 900개 중 71개가 완주한다 — 32가 가장 짧고(239결정) 575·369·279가 다음이다
  */
-const seed = 32;
-const phases = ["path", "card", "target", "rest", "rest_card", "reward", "grace", "demand", "bet_card", "oracle"];
+const seed = 384;
+const phases = ["path", "card", "target", "rest", "rest_card", "reward", "grace", "demand"];
 
 /**
  * 정책은 화면에 적힌 것만 쓴다 — 봇 추천은 DOM에 없고, 있어서도 안 된다. 룰 봇을 브라우저로 옮겨 심지도
@@ -44,8 +44,7 @@ const phases = ["path", "card", "target", "rest", "rest_card", "reward", "grace"
  *
  * - 갈림길: 열린 갈래에 쉼터가 있으면 쉼터, 없으면 첫 칸
  * - 휴식: 첫 번째는 카드 제거(그래야 `rest_card`를 지난다), 두 번째는 강화, 이후는 회복
- * - 요구: 수락
- * - 신탁: 첫 칸(묻는 신 쪽으로 기운다) — 요구와 같은 `button.choice`고 둘 다 값이 붙어 있다(P-46)
+ * - 과업: 첫 신을 선택
  * - 은혜: 첫 후보 — 3택1이 카드가 아니라 `button.choice` 셋이 됐다(P-28). 빈 슬롯이 먼저 서므로 첫 칸이다
  * - 표적: 체력이 가장 낮은 적 — 동점이면 화면 순서
  * - 카드·보상·제거: 캡션에 적힌 비용이 가장 높은 것, 동점이면 표시된 피해, 그래도 같으면 카드 id
@@ -183,11 +182,8 @@ await tab.evaluate(() => {
         // 제거 → 강화 → 회복 순. 백틱은 이 스크립트가 템플릿 문자열이라 못 쓴다.
         // 강화 칸이 안 서는 덱이면 회복으로 떨어진다 — 화면이 실은 답만 누른다
         ? [enabled("button.choice")[[1, 2][driver.rests++] ?? 0] ?? enabled("button.choice")[0]]
-        : phase === "demand" || phase === "grace" || phase === "oracle"
+        : phase === "demand" || phase === "grace"
         ? [enabled("button.choice")[0]]
-        // 승부 카드는 덱이 깔린 화면이다 — 걸 수 있는 카드가 있으면 걸고, 없으면 「이대로 건다」로 떨어진다
-        : phase === "bet_card"
-        ? bestCard().concat(enabled("button.choice"))
         : phase === "target"
         ? enabled("button.enemy").sort((left, right) => enemyHp(left) - enemyHp(right))
         : phase === "card"

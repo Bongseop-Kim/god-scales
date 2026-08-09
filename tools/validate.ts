@@ -223,8 +223,7 @@ function fusionFailure(card: Card): boolean {
 }
 
 /**
- * 조건 하나짜리 요구의 규칙 넷. 임계·보상·대가 단조 셋은 두 단이 없어진 자리에서 같이 사라졌다
- * (P-59) — 판돈은 데이터가 아니라 내기표가 들고, 「걸 만한가」는 조합 승률 하한이 이미 잡는다
+ * 조건 하나짜리 과업의 규칙 넷. 가치는 조합 승률 하한 하나가 잡는다.
  */
 function demandFailure(demand: Demand): boolean {
   if (!axes.includes(demand.axis)) return true;
@@ -234,7 +233,7 @@ function demandFailure(demand: Demand): boolean {
   if (!(parsed[1] in factName)) return true;
   // 비교자가 곧 polarity다 — `-`는 유지형(`<=`), `+`는 달성형(`>=`·`>`). 어긋나면 화면과 판정이 갈린다
   if ((parsed[2] === "<=") !== (demand.polarity === "-")) return true;
-  // 지킬 수 없는 약속을 안 띄우는 눈금. 조우 크기 하한이 조건과 어긋나면 `askBet`이 못 거른다
+  // 지킬 수 없는 과업을 안 띄우는 눈금. 조우 크기 하한이 조건과 어긋나면 엔진이 판정할 수 없다
   if (demandEnemies(demand.condition, demand.min_enemies) !== demand.min_enemies) return true;
   // 지켜도 아무것도 안 들어오는 조건은 결정이 아니다
   return !(demand.reward?.favor ?? 0);

@@ -2,7 +2,7 @@ import { AnimatePresence, m, useIsPresent, useReducedMotion } from "motion/react
 import { useEffect, useRef } from "react";
 import type { CSSProperties, Ref } from "react";
 import { ENERGY_PER_TURN, MAX_SLOTS, type EnemyAction } from "../../core/combat.ts";
-import { favorInitial, favorStage, godEnemyId, intervenesOnTurn, type FavorStage, type StageEffect } from "../../core/favor.ts";
+import { favorInitial, favorStage, godEnemyId, intervenesOnTurn, turnsUntilIntervention, type FavorStage, type StageEffect } from "../../core/favor.ts";
 import { floorsPerRegion } from "../../core/map.ts";
 import type { PassiveName, Tokens, Trigger } from "../../core/state.ts";
 import enemyDataJson from "../../data/enemies.json" with { type: "json" };
@@ -262,12 +262,6 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
       spoken.current.add(key);
       say();
     };
-    // 확정은 `settled`가 처음 생기는 프레임이 그 자리고, 그 뒤로는 값이 안 바뀐다(사실이 단조다)
-    for (const { god, rule, settled } of view.promises) {
-      if (!settled) continue;
-      once(`${view.depth}:kept:${god}:${rule}`, () =>
-        speak(2, god, godLine(god, settled === "kept" ? "demand_kept" : "demand_broken", view.turn)));
-    }
     // 찢기는 이 게임에서 가장 말이 필요한 자리다 — 신을 버려 놓고 그 신의 번개를 쓴 순간이다
     if (view.torn) {
       const { god, seq } = view.torn;
@@ -393,6 +387,7 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
       {/* 약속·파워 칩 — 상태 바 바로 아래 좌측, 판보다 먼저 읽힌다(P-55 §5) */}
       <div className="board-chips">
         <PromiseRow promises={view.promises} onOpen={onOpenJournal} />
+        <span className="intervention-count">개입 · {turnsUntilIntervention(view.turn)}턴 뒤</span>
         <PowerRow powers={view.powers} />
       </div>
 
@@ -617,31 +612,26 @@ function EnemyButton({ enemy, slot, hits, hitSeq, popDelay, enabled, reducedMoti
 }
 
 /**
- * 지금 걸린 약속. 요구를 수락하고 전투에 들어가면 화면에 흔적이 하나도 없던 자리다 — 무엇을
- * 약속했는지, 지금 지키고 있는지, 이미 깨졌는지 셋 다 볼 방법이 없었다.
- *
- * `omen`이 걸어 둔 약속도 같은 줄에 선다(둘까지 온다). 값은 전부 관측에서 오고 **여기서 다시 재는
+ * 지금 판정하는 과업 하나. 값은 전부 관측에서 오고 **여기서 다시 재는
  * 것이 없다** — `settled`가 있으면 그 조우 안에서는 다시 안 바뀐다(사실이 단조다)
  */
 function PromiseRow({ promises, onOpen }: { promises: PromiseView[]; onOpen?: () => void }) {
   if (!promises.length) return null;
   return (
     <div className="promise-row">
-      {promises.map(({ god, text, rule, current, target, settled, deposit, quest }) => (
+      {promises.map(({ god, text, rule, current, target, settled }) => (
         // 칩이 버튼이다(P-55) — 누르면 약속 저널(P-53)이 열린다
         <button
           type="button"
-          key={`${quest ? "quest" : "bet"}:${god}:${rule}`}
+          key={`${god}:${rule}`}
           className={`promise${settled ? ` ${settled}` : ""}`}
           style={{ "--god-color": `var(--${god})` } as CSSProperties}
           title={text}
           onClick={onOpen}
         >
           <Icon name="favor" />
-          <b>{godName(god)}</b>
+          <b>과업 · {godName(god)}</b>
           <span>{rule}</span>
-          {/* 예치한 최대 체력은 승부 카드 줄에만 선다 — 그 줄의 판돈이 그것이다 (P-59 §5) */}
-          {quest ? <i className="stake">퀘스트</i> : deposit ? <i className="stake">최대 체력 {deposit}</i> : null}
           <em>{current} / {target}</em>
         </button>
       ))}

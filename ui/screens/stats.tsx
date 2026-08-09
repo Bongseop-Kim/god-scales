@@ -20,7 +20,7 @@ function Tile({ value, label }: { value: string; label: string }) {
   );
 }
 
-/** Δ 히스토그램 — 이봉. 가운데는 카드·감쇠 드리프트, 바깥은 요구의 보상·벌 */
+/** Δ 히스토그램 — 이봉. 가운데는 카드·감쇠 드리프트, 바깥은 과업의 보상·비용 */
 function DeltaHistogram({ hist, steps }: { hist: Record<string, number>; steps: number }) {
   const entries = Object.entries(hist).map(([delta, count]) => [Number(delta), count] as const).sort((a, b) => a[0] - b[0]);
   const lo = entries[0]?.[0] ?? 0;
@@ -41,9 +41,9 @@ function DeltaHistogram({ hist, steps }: { hist: Record<string, number>; steps: 
         </g>
       ))}
       {[-12, 12].map((v) => <line key={v} x1={x(v) + barW / 2} x2={x(v) + barW / 2} y1={mt} y2={H - mb} className="stats-guide" />)}
-      <text x={x(-13)} y={mt + 2} textAnchor="end" className="stats-note">요구 벌 ←</text>
+      <text x={x(-13)} y={mt + 2} textAnchor="end" className="stats-note">과업 비용 ←</text>
       <text x={x(0) + barW / 2} y={mt + 2} textAnchor="middle" className="stats-note">드리프트</text>
-      <text x={x(13)} y={mt + 2} textAnchor="start" className="stats-note">→ 요구 보상</text>
+      <text x={x(13)} y={mt + 2} textAnchor="start" className="stats-note">→ 과업 보상</text>
       {/* lo·hi가 ±12에 붙으면 눈금이 겹친다 — 같은 자리에 두 번 그리지 않는다 */}
       {[...new Set([lo, -12, 0, 12, hi])].map((v) => <text key={v} x={x(v) + barW / 2} y={H - 8} textAnchor="middle" className="stats-axis">{v}</text>)}
       {entries.map(([delta, count]) => (
@@ -148,8 +148,8 @@ function BarRow({ label, value, max, text, strong }: { label: string; value: num
 /** 승/패 그룹 비교 — 같은 지표를 나란히. 판정 없이 값만 */
 function WinVsLoss({ won, lost }: StatsPayload["winVsLoss"]) {
   const rows: [string, (g: typeof won) => number, (v: number) => string][] = [
-    ["요구 이행률", (g) => g.demandKeptRate, (v) => pct(v)],
-    ["요구 수락 / 런", (g) => g.demandAcceptedPerRun, (v) => v.toFixed(1)],
+    ["과업 달성률", (g) => g.demandKeptRate, (v) => pct(v)],
+    ["과업 선택 / 런", (g) => g.demandAcceptedPerRun, (v) => v.toFixed(1)],
     ["은혜 / 런", (g) => g.gracePerRun, (v) => v.toFixed(1)],
     ["휴식 / 런", (g) => g.restPerRun, (v) => v.toFixed(1)],
     ["헌신 점유율", (g) => g.stageShare.devotion, (v) => pct(v)],
@@ -204,7 +204,7 @@ export function StatsPage({ data }: { data: StatsPayload }) {
       <section>
         <h2>우호도의 움직임</h2>
         <p>스냅샷은 노드 사이에 찍힌다 — 전투 안에서 호의는 움직이지 않는다. 분포는 이봉이다:
-          가운데(+2 · 0 · −3)는 카드·감쇠 드리프트, 바깥(±12 이상)은 요구의 보상·벌이고 그 사이가 비어 있다.
+          가운데(+2 · 0 · −3)는 카드·감쇠 드리프트, 바깥(±12 이상)은 과업의 보상·비용이고 그 사이가 비어 있다.
           단계 경계를 넘는 스텝은 {pct(favor.crossShare)}다.</p>
         <figure className="stats-panel">
           <figcaption><b>스냅샷 간 Δ호의</b> · {favor.steps.toLocaleString()}스텝 (런 × 후원 2)</figcaption>

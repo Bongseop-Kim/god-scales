@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { CSSProperties } from "react";
-import { favorBoundaries, favorInitial, favorStage, interventionEveryTurns, type FavorGod, type FavorStage, type LineTrigger, type StageEffect, type StageHook } from "../../core/favor.ts";
+import { favorBoundaries, favorInitial, favorStage, type FavorGod, type FavorStage, type LineTrigger, type StageEffect, type StageHook } from "../../core/favor.ts";
 import godDataJson from "../../data/gods.json" with { type: "json" };
 import type { RunView } from "../../sim/engine.ts";
 import { effectText } from "./card.tsx";
@@ -10,7 +10,7 @@ import { speak } from "./fx.ts";
 type GodLines = Partial<Record<LineTrigger, string[] | Partial<Record<FavorStage, string[]>>>>;
 const gods = godDataJson as (FavorGod & { name: string; lines: GodLines })[];
 const godNames = new Map(gods.map(({ id, name }) => [id, name]));
-/** 신 일러 다섯. 요구·컷인·발화가 같은 다섯 장을 쓴다 — 이름과 같은 자리에서 나눠 준다 */
+/** 신 일러 다섯. 과업·컷인·발화가 같은 다섯 장을 쓴다 — 이름과 같은 자리에서 나눠 준다 */
 export const godArt = import.meta.glob<string>("../../art/gods/*.webp", { eager: true, query: "?url", import: "default" });
 const godLines = new Map(gods.map(({ id, lines }) => [id, lines]));
 
@@ -81,7 +81,7 @@ export function FavorMeter({ god, value, grace }: { god: string; value: number; 
     seen.current = stage;
   });
   const { start, turn } = godStageText(god, stage);
-  const stageText = [stageName[stage], start && `조우 시작에 ${start}`, turn && `${interventionEveryTurns}턴마다 ${turn}`].filter(Boolean).join(" · ");
+  const stageText = [stageName[stage], start, turn].filter(Boolean).join(" · ");
   return (
     <div
       className={`favor ${stage}${crossed ? " crossed" : ""}`}
@@ -134,8 +134,11 @@ export function StatusBar({ view, turn, block, onOverlay, onRestart }: {
         <span className="whereabouts">
           {placeName(view)}{turn !== undefined && ` · ${turn}턴`}
           <button type="button" onClick={() => onOverlay("deck")}>덱 {view.deck.length}</button>
-          <button type="button" onClick={() => onOverlay("journal")}>약속</button>
+          <button type="button" onClick={() => onOverlay("journal")}>과업</button>
         </span>
+        <p className={`active-quest${view.quest ? "" : " empty"}`}>
+          {view.quest ? `진행 중인 과업 · ${godName(view.quest.god)} · ${view.quest.rule}` : "진행 중인 과업"}
+        </p>
       </div>
     </header>
   );

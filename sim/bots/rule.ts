@@ -4,8 +4,8 @@ import { floorsPerRegion, type MapGrid } from "../../core/map.ts";
 import type { Card } from "../../core/rules.ts";
 import type { CombatState } from "../../core/state.ts";
 import { canReachTarget, livingInReach } from "../../core/targeting.ts";
-import { betDeposit, demandPenalty, type DemandOffer } from "../../core/demands.ts";
-import { favorBoundaries, favorInitial, favorStage, oracleSwing, type FavorStage } from "../../core/favor.ts";
+import { demandPenalty, type DemandOffer } from "../../core/demands.ts";
+import { favorBoundaries, favorInitial } from "../../core/favor.ts";
 import { expectedValue, graceValue, powerTurns, tokenWeights } from "../../tools/value.ts";
 
 /**
@@ -191,34 +191,6 @@ export function chooseDemandAnswer(offers: DemandOffer[], favor: Record<string, 
     (favor[other] ?? favorInitial) + demandPenalty(god, other).amount >= favorBoundaries.anger;
   const safe = offers.filter(affordable);
   return (safe.find(({ god }) => god === preferred) ?? safe[0])?.action ?? "reject";
-}
-
-/**
- * 승부 카드 한 장. **기대값이 가장 큰 후보**다 — 보상 3택1과 같은 표를 쓴다(`chooseReward`): 확정
- * 강화 한 단은 그 덱에서 제일 자주 도는 카드에 붙는 것이 언제나 맞다.
- *
- * 걸지 말지의 문턱은 `choosePath`·`chooseRest`와 같은 「반피」다 — 예치를 내고도 반피가 남아야 건다.
- * 문턱이 없으면 봇이 조우마다 최대 체력을 8씩 내려놓고 카드 보상까지 잃어 나선이 된다
- */
-export function chooseBetCard(candidates: { index: number; id: string }[], cards: ReadonlyMap<string, Card>, hp: number, maxHp: number, deposit = betDeposit): string {
-  if (!candidates.length || hp - deposit < maxHp * 0.5) return "single";
-  const best = chooseReward(candidates.map(({ id }) => id), cards);
-  return String(candidates.find(({ id }) => id === best)!.index);
-}
-
-/** 단계의 서열. 저울이 어느 쪽으로 기울어야 나은지는 **두 신의 단계 합**이 정한다 */
-const stageRank: Record<FavorStage, number> = { wrath: 0, anger: 1, calm: 2, devotion: 3 };
-
-/**
- * 신탁 2택. 저울이라 한쪽을 올리면 반대쪽이 내려간다 — **거절할 「거절」이 없다**(`chooseDemandAnswer`와
- * 갈리는 자리다). 그래서 판정은 「받을까 말까」가 아니라 **어느 쪽으로 기울일까**고, 눈금은 기운
- * 뒤의 두 단계 합 하나다: 헌신은 개입이 순이득이고 진노는 신이 적으로 서므로 서열이 곧 값이다.
- * 동점이면 묻는 신 쪽이다 — 결정론이어야 재생이 선다
- */
-export function chooseOracle(favor: Record<string, number>, god: string, other: string): string {
-  const worth = (tilt: number) =>
-    stageRank[favorStage((favor[god] ?? favorInitial) + tilt)] + stageRank[favorStage((favor[other] ?? favorInitial) - tilt)];
-  return worth(oracleSwing) >= worth(-oracleSwing) ? "obey" : "refuse";
 }
 
 export function chooseCard(

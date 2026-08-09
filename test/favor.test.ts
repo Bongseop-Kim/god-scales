@@ -96,9 +96,8 @@ describe("favor", () => {
       const { phase, observation } = step.value;
       if (phase === "path" && !deckBefore) deckBefore = observation.deck.length;
       if (phase === "card") stood ??= observation.enemies.find(({ id }) => id.startsWith("enemy_god_"));
-      // 조우 밖의 첫 결정이 곧 정산 뒤 첫 관측이다. **카드 보상 화면으로 잡지 않는다** — 그것은
-      // 판돈이라 못 지킨 내기 뒤에는 아예 서지 않고(P-59), 그러면 몇 조우 뒤의 값을 읽게 된다
-      else if (stood && phase !== "target" && phase !== "oracle") after = observation;
+      // 조우 밖의 첫 결정이 곧 정산 뒤 첫 관측이다
+      else if (stood && phase !== "target") after = observation;
       step = steps.next(step.value.bot);
     }
     expect(stood?.id).toBe(godEnemyId("athena"));

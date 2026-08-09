@@ -33,7 +33,7 @@ export function Prop({ name, className }: { name: string; className?: string }) 
   return src ? <span className={`sprite prop ${className ?? ""}`} aria-hidden="true"><img src={src} alt="" /></span> : null;
 }
 
-/** 패널 좌우 바깥 1쌍(P-58) — 지도·보상·휴식·은혜·요구가 같은 둘을 층 시드로 고른다 */
+/** 패널 좌우 바깥 1쌍(P-58) — 지도·보상·휴식·은혜·과업이 같은 둘을 층 시드로 고른다 */
 export function Flanks({ region, depth }: { region: string; depth: number }) {
   return (
     <>

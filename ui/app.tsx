@@ -6,7 +6,7 @@ import type { GodId } from "../core/rules.ts";
 import { deckSize, endTurnAction, favorPool, gods, ruleDeck, runSteps, type Decision, type PatronPair } from "../sim/engine.ts";
 import type { ReplayAction } from "../sim/replay.ts";
 import type { RunResult } from "../sim/report.ts";
-import { BetScreen, DemandScreen, GraceScreen, OracleScreen, RestScreen } from "./screens/choices.tsx";
+import { DemandScreen, GraceScreen, RestScreen } from "./screens/choices.tsx";
 import { CombatScreen } from "./screens/combat.tsx";
 import { CardSigns } from "./shared/card.tsx";
 import { IconSheet } from "./shared/icon.tsx";
@@ -14,7 +14,8 @@ import { MapScreen } from "./screens/map.tsx";
 import { ResultScreen } from "./screens/result.tsx";
 import { RewardScreen } from "./screens/reward.tsx";
 import { FullscreenButton, IntroScreen, SetupScreen } from "./screens/setup.tsx";
-import { godName, StatusBar } from "./shared/header.tsx";
+import { godArt, godName, StatusBar } from "./shared/header.tsx";
+import { speak } from "./shared/fx.ts";
 import { DeckPanel, HelpPanel, JournalPanel, Overlay, type PromiseRecord } from "./shared/overlay.tsx";
 import { musicForScreen, playSound, sound } from "./shared/sfx.ts";
 import { TokenDictionary } from "./shared/tokens.tsx";
@@ -110,6 +111,7 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
   const [journal, setJournal] = useState<PromiseRecord[]>([]);
   /** 같은 확정을 두 번 쌓지 않는다 — `settled`는 확정 뒤에도 매 관측에 그대로 실려 온다 */
   const settledSeen = useRef(new Set<string>());
+  const questCutinsSeen = useRef(new Set<string>());
   const music = useRef<HTMLAudioElement>(null);
   const steps = useRef<Steps>(null);
   // 퇴장 애니메이션 중인 카드의 onClick은 옛 pending을 클로저에 들고 있다. 판정은 언제나 최신 결정으로 한다
@@ -124,14 +126,21 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
   const show = (decision?: Decision) => {
     latest.current = decision ?? null;
     setPending(decision);
-    // 약속 히스토리는 관측 스트림에서 줍는다 — 화면이 규칙을 다시 재지 않고, 엔진에 새 API도 없다
+    // 과업 히스토리와 컷인은 같은 확정값을 읽는다. 마지막 행동으로 끝난 과업은 보상 관측에서 줍는다
     const view = decision?.observation;
-    if (view && "promises" in view) {
-      for (const { god, rule, settled } of view.promises) {
+    if (view) {
+      const promises = "promises" in view
+        ? view.promises
+        : "questResult" in view && view.questResult ? [view.questResult] : [];
+      for (const { god, rule, current, target, settled } of promises) {
         const key = `${view.depth}:${god}:${rule}`;
         if (!settled || settledSeen.current.has(key)) continue;
         settledSeen.current.add(key);
         setJournal((all) => [...all, { god, rule, region: view.region, floor: view.floor, settled }]);
+        if (settled === "kept" && !questCutinsSeen.current.has(key)) {
+          questCutinsSeen.current.add(key);
+          speak(3, god, `과업 달성 · ${current} / ${target}`, godArt[`../../art/gods/${god}.webp`]);
+        }
       }
     }
   };
@@ -143,6 +152,7 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
     setResult(undefined);
     setJournal([]);
     settledSeen.current.clear();
+    questCutinsSeen.current.clear();
   };
 
   const start = (event: FormEvent<HTMLFormElement>) => {
@@ -178,8 +188,8 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
     if (choice === endTurnAction) playSound("turn-end", 0.3);
     const step = steps.current.next(choice);
     // 마지막 적은 다음 combat 관측 없이 곧장 보상/결과로 넘어가므로 CombatScreen의 퇴장 effect가 못 본다.
-    const leftWonCombat = (current.phase === "card" || current.phase === "target" || current.phase === "oracle")
-      && (step.done ? step.value.won : step.value.phase !== "card" && step.value.phase !== "target" && step.value.phase !== "oracle");
+    const leftWonCombat = (current.phase === "card" || current.phase === "target")
+      && (step.done ? step.value.won : step.value.phase !== "card" && step.value.phase !== "target");
     if (leftWonCombat) playSound("enemy-death", 0.45);
     setActions((all) => [...all, { type: current.phase, choice } as ReplayAction]);
     if (step.done) {
@@ -321,8 +331,11 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
         </Overlay>
       )}
       {overlay === "journal" && pending && (
-        <Overlay title="약속" onClose={() => setOverlay(undefined)}>
-          <JournalPanel active={"promises" in pending.observation ? pending.observation.promises : []} history={journal} />
+        <Overlay title="과업" onClose={() => setOverlay(undefined)}>
+          <JournalPanel
+            active={"promises" in pending.observation ? pending.observation.promises : pending.observation.quest ? [pending.observation.quest] : []}
+            history={journal}
+          />
         </Overlay>
       )}
       <AnimatePresence mode="wait" initial={false}>
@@ -371,12 +384,6 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
           )}
           {pending?.phase === "demand" && (
             <DemandScreen decision={pending} onAnswer={answer} />
-          )}
-          {pending?.phase === "bet_card" && (
-            <BetScreen decision={pending} onAnswer={answer} />
-          )}
-          {pending?.phase === "oracle" && (
-            <OracleScreen decision={pending} onAnswer={answer} />
           )}
           {screen === "result" && result && (
             <ResultScreen seed={seed} patrons={patrons} deck={deck} split={split} actions={actions} result={result} onReset={reset} />

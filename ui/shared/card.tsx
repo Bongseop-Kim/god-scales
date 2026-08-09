@@ -166,7 +166,7 @@ export function CardRow({ cards, options, onSelect, upgrade, value = ({ id }) =>
   onSelect: (choice: string) => void;
   /** 쉼터의 강화 고르기 하나 — 고를 수 있는 카드가 **강화 후 얼굴로** 선다. 못 고르는 칸은 지금 얼굴이다 */
   upgrade?: boolean;
-  /** 답이 카드 id가 아닌 자리 하나 — 승부 카드는 **덱 인덱스**로 답한다(같은 id 두 장을 갈라야 한다) */
+  /** 카드 id가 아닌 답이 필요하면 이 함수만 바꾼다 */
   value?: (card: CardView, index: number) => string;
 }) {
   return (
