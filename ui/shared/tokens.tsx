@@ -1,8 +1,11 @@
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import type { CSSProperties, ReactNode } from "react";
+import type { EnemyAction } from "../../core/combat.ts";
+import { favorBoundaries } from "../../core/favor.ts";
+import { graceMilestones } from "../../core/grace.ts";
 import { harmfulTokens } from "../../core/rules.ts";
 import type { PassiveName, TokenName, Tokens } from "../../core/state.ts";
-import { Icon } from "./icon.tsx";
+import { Icon, type IconName } from "./icon.tsx";
 
 /**
  * 전용 픽셀 아이콘 13종(P-57). 흰색 + 알파 원본을 `mask`로 쓰고 색은 `--token-color`가 칠한다 —
@@ -58,6 +61,26 @@ const passiveStyle: Record<PassiveName, { name: string; text: string }> = {
 export const tokenName = (token: TokenName) => tokenStyle[token].name;
 export const passiveName = (passive: PassiveName) => passiveStyle[passive].name;
 
+/** 적 머리 위 의도와 사전이 같은 아이콘 변환을 쓴다 */
+export const intentBits = (action?: EnemyAction): [IconName, number | undefined][] => {
+  const bits: [IconName, number | undefined][] = [];
+  if (action?.damage) bits.push(["damage", action.damage]);
+  if (action?.block) bits.push(["block", action.block]);
+  if (action?.heal) bits.push(["heal", action.heal]);
+  if (action?.token) bits.push([action.token, action.stacks ?? 1]);
+  if (action?.favor) bits.push(["favor", action.favor]);
+  return bits.length ? bits : [["idle", undefined]];
+};
+
+const intentStyle: { name: string; text: string; action?: EnemyAction }[] = [
+  { name: "공격", text: "플레이어에게 피해", action: { damage: 1 } },
+  { name: "방어", text: "자신이나 아군에게 방어", action: { block: 1 } },
+  { name: "회복", text: "자신이나 아군의 체력 회복", action: { heal: 1 } },
+  { name: "토큰", text: "플레이어나 자신·아군에게 토큰", action: { token: "shock" } },
+  { name: "호의", text: "두 후원 신의 호의 감소", action: { favor: -1 } },
+  { name: "대기", text: "이번 행동을 건너뜀" },
+];
+
 /**
  * 배지 하나를 읽는 문장. 배지마다 읽히면 적 하나가 문장 여섯이 되므로 컨테이너가 이것을 모아 한 번
  * 읽는다 — 적 버튼은 `aria-label`에, 플레이어 줄은 `role="img"`에 싣는다
@@ -87,11 +110,6 @@ function TokenBadge({ token, stacks = 1, still }: { token: TokenName; stacks?: n
       transition={still ? { duration: 0 } : appear}
       // 진영을 색에만 실으면 색각 이상에서 사라진다 — 해로움은 채움, 이로움은 빈 바탕이다
       className={`token-badge ${harmful ? "harmful" : "boon"} ${style.duration}`}
-      /**
-       * 스택 눈금(P-61) — 2 이상이면 배지 뒤에 한 겹, 4 이상이면 두 겹이 깔린다(CSS `box-shadow`).
-       * **세 단계뿐이다**: 겹은 「많다」를 말하는 눈금이고 정확한 수는 아래 숫자가 계속 든다
-       */
-      data-stacks={stacks >= 4 ? 4 : stacks >= 2 ? 2 : 1}
       style={{ "--token-color": style.color } as CSSProperties}
       title={`${style.name} — ${style.text} · ${durationText[style.duration]}`}
     >
@@ -125,7 +143,7 @@ export function TokenRow({ tokens, limit = 4 }: { tokens: Tokens; limit?: number
 }
 
 /**
- * 토큰 사전(P-53) — 13종을 한눈에. **데이터는 `tokenStyle` 하나에서** 만든다: 사전용 사본을 만들면
+ * 게임 사전의 토큰 목록(P-53) — 13종을 한눈에. **데이터는 `tokenStyle` 하나에서** 만든다: 사전용 사본을 만들면
  * 같은 사실에 두 경로다. 진영(빈 바탕/채움)·지속 띠는 배지가 이미 들고 있으므로 여기서 다시 말하지 않는다.
  * 셋째 목록(카드 기호, P-61)은 `card.tsx`의 것이라 **자식으로 받는다** — 여기서 import하면 순환이다
  */
@@ -182,6 +200,31 @@ export function TokenDictionary({ children }: { children?: ReactNode }) {
         </li>
       </ul>
       {children}
+      <h3>적 의도</h3>
+      <ul className="token-dict">
+        {intentStyle.map(({ name, text, action }) => (
+          <li key={name}>
+            <i className="passive-icon"><Icon name={intentBits(action)[0][0]} /></i>
+            <b>{name}</b>
+            <em>다음 행동</em>
+            <span>{text}</span>
+          </li>
+        ))}
+        <li>
+          <i className="passive-icon"><Icon name="omen" /></i>
+          <b>의도 감춤</b>
+          <em>알 수 없음</em>
+          <span>다음 행동을 공개하지 않음</span>
+        </li>
+      </ul>
+      <h3>신과 호의</h3>
+      <ul className="token-dict">
+        <li><i className="passive-icon"><Icon name="favor" /></i><b>헌신</b><em>{favorBoundaries.devotion}~100</em><span>신이 조우 시작과 개입 때 가장 강하게 돕습니다.</span></li>
+        <li><i className="passive-icon"><Icon name="favor" /></i><b>평온</b><em>{favorBoundaries.calm}~{favorBoundaries.devotion - 1}</em><span>신이 조우 시작과 개입 때 돕습니다.</span></li>
+        <li><i className="passive-icon"><Icon name="favor" /></i><b>분노</b><em>{favorBoundaries.anger}~{favorBoundaries.calm - 1}</em><span>신이 다른 후원 신 카드의 피해·방어·연쇄를 1 낮춥니다.</span></li>
+        <li><i className="passive-icon"><Icon name="favor" /></i><b>진노</b><em>0~{favorBoundaries.anger - 1}</em><span>신이 적으로 합류하고 플레이어를 방해합니다.</span></li>
+        <li><i className="passive-icon"><Icon name="seal" /></i><b>은총</b><em>은혜 {graceMilestones.join("·")}격</em><span>은총 수가 다음 은혜의 격을 정하며, 두 후원 신의 인장을 한 카드에 모으면 융합합니다.</span></li>
+      </ul>
     </div>
   );
 }

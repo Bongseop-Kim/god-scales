@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import iconSheet from "../art/icons.svg?raw";
 import cardDataJson from "../data/cards.json" with { type: "json" };
+import graceDataJson from "../data/graces.json" with { type: "json" };
 import { allCards, endTurnAction, runSteps, type CombatObservation, type Decision } from "../sim/engine.ts";
 import { run } from "../sim/engine.ts";
 import type { RunResult } from "../sim/report.ts";
@@ -11,7 +12,7 @@ import { bossLane, generateMap } from "../core/map.ts";
 import { upgraded, type Card } from "../core/rules.ts";
 import { App, patronPair, RunOpening } from "../ui/app.tsx";
 import { cardArtCandidates, cardGod, cardTag, particleStrip, type CardArtSource } from "../ui/shared/art-keys.ts";
-import { cardParticleOf, conditionLabel } from "../ui/shared/card.tsx";
+import { CardSigns, cardParticleOf, conditionLabel } from "../ui/shared/card.tsx";
 import { DemandScreen, GraceScreen, RestScreen } from "../ui/screens/choices.tsx";
 import { CombatScreen } from "../ui/screens/combat.tsx";
 import { replayPayload } from "../ui/shared/export.ts";
@@ -63,8 +64,8 @@ describe("browser replay export", () => {
     }
   });
 
-  it("explains every enemy passive icon in the token dictionary", () => {
-    const markup = renderToStaticMarkup(createElement(TokenDictionary));
+  it("explains every shipped symbol in the token dictionary", () => {
+    const markup = renderToStaticMarkup(createElement(TokenDictionary, undefined, createElement(CardSigns)));
     expect(unresolvedIcons(markup)).toEqual([]);
     for (const name of ["보호", "경화", "결계", "웅크림", "분노", "규합", "고조", "앙심"]) {
       expect(markup).toContain(`<b>${name}</b>`);
@@ -73,6 +74,13 @@ describe("browser replay export", () => {
     expect(markup).toContain("공격이 아닌 카드를 내면 광란 +스택");
     expect(markup).toContain("<b>훼방</b>");
     expect(markup).toContain("<b>파워</b>");
+    expect(markup).toContain("<b>사냥의 호흡</b>");
+    expect(markup).toContain("턴 시작");
+    expect(markup).toContain("피해 2 · 치명 1");
+    expect(markup).toContain("<b>의도 감춤</b>");
+    expect(markup).toContain("<b>헌신</b>");
+    expect(markup).toContain("<b>은총</b>");
+    expect(markup).toContain("내면 이 전투에서 사라짐");
   });
 
   it("renders every decision screen from its observation alone", () => {
@@ -149,6 +157,7 @@ describe("browser replay export", () => {
     // 진영은 색과 채움 둘로 간다 — 이로운 치명은 외곽, 해로운 출혈은 채움이다
     expect(markup).toContain("token-badge boon consume");
     expect(markup).toContain("token-badge harmful consume");
+    expect(markup).not.toContain("data-stacks");
     // 지속 셋: 가시는 전투 내내, 감전은 이번 턴
     expect(markup).toContain("token-badge boon combat");
     expect(markup).toContain("token-badge harmful turn");
@@ -161,6 +170,7 @@ describe("browser replay export", () => {
     // 파워는 스택을 센다 — 두 장 낸 것이 화면에 서야 한다
     expect(markup).toContain("광란의 문");
     expect(markup).toContain("×2");
+    expect(markup).toContain('aria-label="파워 턴 시작 광란의 문 광란 1 2개"');
     // 네 칸이 다 선다 — 적은 칸 1에 서고 나머지 셋은 빈 칸으로 자리를 지킨다
     expect(markup).toContain("칸 0 앞");
     expect(markup).toContain("칸 3 뒤");
@@ -498,6 +508,7 @@ describe("browser replay export", () => {
 
     expect(allCards).toHaveLength(cards.length);
     expect(markup.match(/class="game-card/g)).toHaveLength(cards.length);
+    expect(markup.match(/<em class="card-kind">소멸<\/em>/g)).toHaveLength(4);
     expect(markup.match(/aria-pressed/g)).toHaveLength(7);
     for (const name of ["전체", "제우스", "포세이돈", "아테나", "아레스", "아르테미스", "융합"]) expect(markup).toContain(name);
   });
@@ -534,8 +545,9 @@ describe("browser replay export", () => {
    * DSL 원문이 그대로 나가므로, 데이터에 여섯째 조건이 붙는 날 이 줄이 그것을 잡는다
    */
   it("names every shipped condition in Korean instead of printing the DSL", () => {
-    const shipped = new Set((cardDataJson as { effects: { when?: string }[] }[])
-      .flatMap(({ effects }) => effects.map(({ when }) => when).filter(Boolean) as string[]));
+    const shipped = new Set([cardDataJson, graceDataJson]
+      .flatMap((rows) => (rows as { effects: { when?: string }[] }[])
+        .flatMap(({ effects }) => effects.map(({ when }) => when).filter(Boolean) as string[])));
     expect(shipped.size).toBeGreaterThan(0);
     for (const when of shipped) expect(conditionLabel(when), when).not.toBe(when);
   });

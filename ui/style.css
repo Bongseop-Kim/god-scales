@@ -165,7 +165,7 @@ dialog.overlay::backdrop { background: rgba(9, 11, 17, .68); }
 /* 스크롤은 본문 세로 한 축만 갖는다 — 카드 줄은 넘치지 않고 다음 줄로 감긴다 */
 .overlay-body { overflow-x: hidden; overflow-y: auto; max-height: calc(100vh - 220px); }
 
-/* 토큰 사전 — 배지 38 + 이름 + 지속 + 효과 한 줄. 값은 전부 `tokenStyle`에서 온다 */
+/* 게임 사전 — 배지 38 + 이름 + 지속 + 효과 한 줄. 값은 전부 `tokenStyle`에서 온다 */
 .token-dictionaries { display: grid; gap: 10px; }
 .token-dictionaries h3 { margin: 8px 0 0; color: #c6a969; font-size: .9rem; }
 .token-dict { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
@@ -174,6 +174,9 @@ dialog.overlay::backdrop { background: rgba(9, 11, 17, .68); }
 .token-dict span { color: #b9bdc9; }
 .token-dict .passive-icon { display: grid; width: 38px; height: 38px; place-items: center; border: 1px solid #75658c; border-radius: 8px; color: #d1b9f0; background: #211d2c; }
 .token-dict .passive-icon .icon { width: 20px; height: 20px; }
+/* 파워 이름·트리거는 한 덩어리다 — 효과 설명만 남은 폭에서 감긴다 */
+.power-dict li { grid-template-columns: 38px 100px 96px 1fr; }
+.power-dict :is(b, em) { white-space: nowrap; }
 /**
  * 셋째 목록 — 카드 면의 기호(P-61). 두 칸이다: 기호 하나 + 문구. **그림은 카드가 쓰는 클래스 그대로**라
  * 카드 면이 바뀌면 사전도 같이 바뀐다. 카드에서 절대 배치인 둘만 여기서 줄 안에 세운다
@@ -291,8 +294,8 @@ button:not(:disabled):hover { border-color: #c6a969; }
 .deck-slots .alien .game-card { opacity: .72; }
 .deck-slots .alien em { color: #c6a969; font-size: .68rem; font-style: normal; text-align: center; }
 /**
- * 토큰 배지. 38px 크기와 채널 넷은 그대로다 — 진영은 배경 채움·테두리, 지속은 밑변 띠,
- * 종류는 아이콘 색, 스택은 겹. 얇은 CSS 테두리라 아이콘을 가리지 않고 진영색이 바로 읽힌다
+ * 토큰 배지. 진영은 배경 채움·테두리, 지속은 밑변 띠, 종류는 아이콘 색, 스택은 우상단 숫자다.
+ * 얇은 CSS 테두리라 아이콘을 가리지 않고 진영색이 바로 읽힌다
  */
 .token-badge { position: relative; display: grid; width: 38px; height: 38px; padding-bottom: 3px; place-items: center; border: 2px solid currentColor; border-radius: 8px; background: #181c27; }
 /* 색만으로 진영을 말하면 색각 이상에서 사라진다 — 해로움은 채움, 이로움은 빈 바탕이다 */
@@ -307,13 +310,6 @@ button:not(:disabled):hover { border-color: #c6a969; }
 .token-badge.next::after { border-top-style: dashed; }
 .token-badge.combat::after { border-top-width: 3px; border-top-style: double; }
 /**
- * 스택 눈금 — 2 이상이면 뒤에 한 겹, 4 이상이면 두 겹. `.draw-pile i`(뽑을 더미)와 같은 `box-shadow`
- * 수법이라 DOM이 안 는다. **정확한 값은 계속 숫자가 든다** — 겹은 「많다」를 말하는 눈금이지 값이 아니다.
- * 흐름 밖이라 겹이 이웃 칩을 밀지 않는다(UI.md 제1규칙)
- */
-.token-badge[data-stacks="2"] { box-shadow: 3px 3px 0 -1px currentColor, 3px 3px 0 0 #11131a; }
-.token-badge[data-stacks="4"] { box-shadow: 3px 3px 0 -1px currentColor, 3px 3px 0 0 #11131a, 6px 6px 0 -1px currentColor, 6px 6px 0 0 #11131a; }
-/**
  * 아이콘 28개는 `art/icons.svg` 한 장에서 온다. **`display: none`으로 감추지 않는다** — 시트가 그
  * 안에 있으면 `<use>`가 못 그리는 브라우저가 있다. 0×0 + `overflow: hidden`이 같은 값에 안전하다
  */
@@ -326,8 +322,8 @@ button:not(:disabled):hover { border-color: #c6a969; }
  */
 .token-badge .token-icon { width: 22px; height: 22px; background: var(--token-color); mask: var(--token-icon) center / contain no-repeat; }
 /**
- * 겹이 우하단으로 자라므로 숫자는 **우상단**이다 — 아래에 두면 스택 2 이상에서 겹과 겹친다.
- * 진영색은 `.boon`·`.harmful`이 다시 적는다: 같은 요소에서 `background: currentColor`는 제 `color`를
+ * 정확한 스택은 **우상단 숫자 하나**가 든다. 진영색은 `.boon`·`.harmful`이 다시 적는다:
+ * 같은 요소에서 `background: currentColor`는 제 `color`를
  * 가리키므로 어둠 위의 어둠이 되어 **숫자가 안 보였다**(P-61에서 잡았다)
  */
 .token-badge small { position: absolute; right: -4px; top: -4px; display: grid; width: 17px; height: 17px; place-items: center; border: 1px solid #11131a; border-radius: 50%; color: #151821; font-size: .62rem; font-weight: 750; font-variant-numeric: tabular-nums; }
@@ -674,7 +670,7 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .cost-gem { position: absolute; top: 3px; left: 3px; display: grid; width: 26px; height: 26px; place-items: center; border: 1px solid color-mix(in srgb, var(--frame) 75%, transparent); border-radius: 50%; background: rgba(17, 19, 26, .88); font-size: 1rem; }
 /* 못 내는 이유가 **비용이나 사거리**일 때만 젬이 빨강이다 — 대상 선택 중은 손 전체가 물러난다(`.fan.aiming`) */
 .fan:not(.aiming) .game-card:disabled .cost-gem { border-color: #eb887d; color: #eb887d; }
-/* 예외만 적는다 — 149장 중 20장(파워 6 · 전체 14)이다. 배지 슬롯은 하나뿐이라 그 둘에 줬다 */
+/* 예외만 적는다 — 파워·전체·소멸이 배지 슬롯 하나를 나눠 쓴다 */
 .card-kind { position: absolute; top: 29px; right: 5px; padding: 1px 6px; border: 1px solid #4a5165; border-radius: 4px; background: rgba(17, 19, 26, .88); color: #d5d7de; font-size: .58rem; font-style: normal; }
 .card-seals { position: absolute; z-index: 1; top: 5px; right: 5px; display: flex; min-width: 22px; min-height: 22px; gap: 2px; justify-content: end; }
 .card-seals em, .seal-badge { display: grid; place-items: center; width: 20px; height: 20px; border: 1px solid var(--seal-color, #c6a969); border-radius: 50%; background: #171b25; color: var(--seal-color, #c6a969); }

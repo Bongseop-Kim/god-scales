@@ -6,7 +6,7 @@ import { GameCard } from "./card.tsx";
 import { godName, placeName } from "./header.tsx";
 
 /**
- * 토큰 사전·도움말·덱·약속·시작 덱 설정이 같은 셸 하나를 쓴다. **네이티브 `<dialog>`다** —
+ * 게임 사전·도움말·덱·약속·시작 덱 설정이 같은 셸 하나를 쓴다. **네이티브 `<dialog>`다** —
  * focus trap·Esc·backdrop이 공짜라 라이브러리가 없다. 열림 상태는 여는 쪽(App)이 들고,
  * 이 컴포넌트는 열려 있는 동안만 산다. 게임 상태는 그대로다 — 엔진은 답을 기다리는 중이라 멈출 것도 없다
  */

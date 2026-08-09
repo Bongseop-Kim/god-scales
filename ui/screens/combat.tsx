@@ -4,16 +4,16 @@ import type { CSSProperties, Ref } from "react";
 import { ENERGY_PER_TURN, MAX_SLOTS, type EnemyAction } from "../../core/combat.ts";
 import { favorInitial, favorStage, godEnemyId, intervenesOnTurn, turnsUntilIntervention, type FavorStage, type StageEffect } from "../../core/favor.ts";
 import { floorsPerRegion } from "../../core/map.ts";
-import type { PassiveName, Tokens, Trigger } from "../../core/state.ts";
+import type { PassiveName, Tokens } from "../../core/state.ts";
 import enemyDataJson from "../../data/enemies.json" with { type: "json" };
 import { endTurnAction, type CardView, type CombatDecision, type CombatObservation, type PromiseView } from "../../sim/engine.ts";
 import { particleStrip } from "../shared/art-keys.ts";
 import { Backdrop, backdropArt } from "../shared/backdrop.tsx";
-import { cardParticleOf, effectText, GameCard } from "../shared/card.tsx";
+import { cardParticleOf, effectText, GameCard, triggerLabels } from "../shared/card.tsx";
 import { playSprite, shake, speak } from "../shared/fx.ts";
 import { godArt, godLine, godName, godStageEffects, godStageText, stageName } from "../shared/header.tsx";
-import { Icon, type IconName } from "../shared/icon.tsx";
-import { passiveName, tokenName, tokenSummary, TokenRow } from "../shared/tokens.tsx";
+import { Icon } from "../shared/icon.tsx";
+import { intentBits, passiveName, tokenName, tokenSummary, TokenRow } from "../shared/tokens.tsx";
 import { playSound } from "../shared/sfx.ts";
 
 const spriteArt = import.meta.glob<string>("../../art/sprites/*.webp", { eager: true, query: "?url", import: "default" });
@@ -75,20 +75,6 @@ function intentLabel(action?: EnemyAction): string {
   ].filter(Boolean);
   return parts.length ? parts.join(" + ") : "대기";
 }
-
-/**
- * 머리 위 의도 — **아이콘 16 + 숫자만**이다(P-55). 문장형(«공격 7 + 방어 5»)은 `aria-label`과
- * hover 툴팁으로 물러났다. 순서는 `intentLabel`의 조각 순서와 같고, 의도를 감추는 적은 `omen` 하나다
- */
-const intentBits = (action?: EnemyAction): [IconName, number | undefined][] => {
-  const bits: [IconName, number | undefined][] = [];
-  if (action?.damage) bits.push(["damage", action.damage]);
-  if (action?.block) bits.push(["block", action.block]);
-  if (action?.heal) bits.push(["heal", action.heal]);
-  if (action?.token) bits.push([action.token, action.stacks ?? 1]);
-  if (action?.favor) bits.push(["favor", action.favor]);
-  return bits.length ? bits : [["idle", undefined]];
-};
 
 /** 칸 넷. **0이 앞**(병사와 가까운 쪽)이고 3이 뒤다 */
 const slots = Array.from({ length: MAX_SLOTS }, (_, slot) => slot);
@@ -688,11 +674,6 @@ function PromiseRow({ promises, onOpen }: { promises: PromiseView[]; onOpen?: ()
   );
 }
 
-/** 파워가 걸리는 훅 넷. 표가 `Trigger`를 다 덮으므로 훅을 새로 만들면 여기서 컴파일이 막힌다 */
-const triggerLabels: Record<Trigger, string> = {
-  turn_start: "턴 시작", turn_end: "턴 끝", on_play: "카드 낼 때", on_unblocked: "막히지 않은 피해",
-};
-
 function SabotageRow({ sabotages = [] }: { sabotages?: CombatObservation["sabotages"] }) {
   const label = sabotages.map(({ god, patron }) => `${godName(god)} 분노 · ${godName(patron)} 카드 −1`).join(" ");
   return (
@@ -740,7 +721,7 @@ function PowerRow({ powers }: { powers: CombatObservation["powers"] }) {
     else all.push({ ...power, count: 1 });
     return all;
   }, []);
-  const label = stacked.map(({ card, trigger, count }) => `${triggerLabels[trigger]} ${card.name}${count > 1 ? ` ${count}개` : ""}`).join(" ");
+  const label = stacked.map(({ card, trigger, count }) => `${triggerLabels[trigger]} ${card.name} ${effectText(card)}${count > 1 ? ` ${count}개` : ""}`).join(" ");
   return (
     // 빈 줄도 자리를 지킨다(min-height) — 첫 파워를 내는 순간 손패·버튼이 밀리면 안 된다. 빌 때는 SR에서 감춘다
     <span className="power-row" role="img" aria-label={`파워 ${label}`} aria-hidden={stacked.length ? undefined : true}>

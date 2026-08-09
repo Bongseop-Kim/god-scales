@@ -237,7 +237,7 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
   };
 
   /**
-   * 단축키(P-58) — D 덱 · J 약속 · T 토큰 사전 · ? 도움말 · E 턴 종료 · 1~9 카드.
+   * 단축키(P-58) — D 덱 · J 약속 · T 게임 사전 · ? 도움말 · E 턴 종료 · 1~9 카드.
    * Esc는 `<dialog>`가 이미 든다. 판정은 언제나 `latest`(최신 결정)와 `answer`의 options 검사로
    * 하므로 지나간 결정에 눌린 키는 조용히 무시된다 — 클릭과 같은 문이다
    */
@@ -344,7 +344,7 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
         <nav className="global-icons" aria-label="전역 메뉴">
           <button type="button" onClick={() => setOverlay("cards")}>전체 카드</button>
           <button type="button" aria-pressed={soundEnabled} onClick={toggleSound}>{soundEnabled ? "소리 켜짐" : "소리 꺼짐"}</button>
-          <button type="button" onClick={() => setOverlay("tokens")}>토큰</button>
+          <button type="button" onClick={() => setOverlay("tokens")}>사전</button>
           <button type="button" onClick={() => setOverlay("help")}>도움말</button>
         </nav>
       )}
@@ -373,9 +373,9 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
           </div>
         </Overlay>
       )}
-      {/* 제목만 「토큰과 기호」다(P-61) — 전역 버튼 라벨(「토큰」)과 단축키 `T`는 그대로다: 버튼 글자가 길어지면 우상단 줄의 폭이 흔들린다 */}
+      {/* 버튼은 짧은 「사전」, 제목은 범위를 드러내는 「게임 사전」이다. 내부 키는 기존 `tokens`를 그대로 쓴다 */}
       {overlay === "tokens" && (
-        <Overlay title="토큰과 기호" onClose={() => setOverlay(undefined)}><TokenDictionary><CardSigns /></TokenDictionary></Overlay>
+        <Overlay title="게임 사전" onClose={() => setOverlay(undefined)}><TokenDictionary><CardSigns /></TokenDictionary></Overlay>
       )}
       {overlay === "help" && (
         <Overlay title="도움말" onClose={() => setOverlay(undefined)}><HelpPanel /></Overlay>
