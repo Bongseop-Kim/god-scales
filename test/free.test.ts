@@ -103,6 +103,21 @@ describe("free starting deck", () => {
       expect(result.encounters, power.id).toBeGreaterThan(0);
     }
   });
+
+  it("observes turn-start power damage in the final frame", () => {
+    const steps = runSteps(5, undefined, ["artemis", "athena"], fill("card_artemis_23"));
+    let step = steps.next();
+    while (!step.done) {
+      const next = steps.next(step.value.bot);
+      if (!next.done && next.value.phase === "reward" && next.value.observation.finale?.hitSource === "power") {
+        expect(next.value.observation.finale.enemies).toEqual([]);
+        expect(next.value.observation.finale.hits.length).toBeGreaterThan(0);
+        return;
+      }
+      step = next;
+    }
+    throw new Error("expected a turn-start power finale");
+  });
 });
 
 /**

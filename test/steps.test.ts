@@ -112,6 +112,29 @@ describe("steppable engine", () => {
     expect(nextTurn.value.observation).toMatchObject({ turn: 2, hitSeq: 3, hitSource: "favor" });
   });
 
+  it("carries the final card and enemy hits without adding a decision", () => {
+    const steps = runSteps(1);
+    let step = steps.next();
+    let sawFinale = false;
+    while (!step.done) {
+      const current = step.value;
+      const next = steps.next(current.bot);
+      if ((current.phase === "card" || current.phase === "target") && !next.done && next.value.phase === "reward") {
+        const finale = next.value.observation.finale!;
+        expect(finale).toMatchObject({ hitSource: "attack", enemies: [] });
+        expect(finale.hitSeq).toBeGreaterThan(current.observation.hitSeq);
+        expect(finale.hand).toHaveLength(current.observation.hand.length - 1);
+        sawFinale = true;
+        break;
+      }
+      step = next;
+    }
+    expect(sawFinale).toBe(true);
+
+    const lost = run(1);
+    expect(lost.finale).toMatchObject({ hp: 0, hitSource: "enemy", hits: [{ id: "player" }] });
+  });
+
   it("derives the next automatic intervention from turns 2, 5, and 8", () => {
     expect([1, 2, 3, 4, 5].map(turnsUntilIntervention)).toEqual([1, 3, 2, 1, 3]);
   });

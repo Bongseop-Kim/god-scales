@@ -198,6 +198,7 @@ type EnemyView = { id: string; slot: number; span: number; hp: number; maxHp: nu
 type SealView = NonNullable<Card["seals"]>[number];
 export type CardView = { id: string; name: string; cost: number; target: Card["target"]; effects: Card["effects"]; reach?: string; weakened?: boolean; seals?: SealView[]; previewSeal?: SealView; fusesTo?: CardView };
 const cardView = ({ id, name, cost, target, effects, reach, seals }: Card): CardView => ({ id, name, cost, target, effects, ...(reach ? { reach } : {}), ...(seals?.length ? { seals } : {}) });
+export const allCards = cards.map((card) => ({ ...cardView(card), patron: card.patron, patronPair: card.patronPair }));
 /**
  * 자유 덱 편집기가 고를 수 있는 카드 124장을 신별로. **tier1 patron 카드뿐이다** — tier2 15장은
  * 보상이 주는 계단이고, 융합 10장은 `patron`이 없어 같은 줄에서 빠진다(은혜 둘을 모아 여는 자리다).
@@ -285,7 +286,7 @@ export type CombatObservation = RunView & {
   /** 지난 yield 이후 깎인 체력. `id`는 적 id 또는 `player` */
   hits: { id: string; amount: number }[];
   /** 같은 hits를 만든 주체. 피해 연출이 신의 개입을 병사의 공격으로 오인하지 않게 한다 */
-  hitSource?: "attack" | "card" | "favor" | "enemy";
+  hitSource?: "attack" | "card" | "power" | "favor" | "enemy";
   /** hits가 새로 생길 때마다 오른다 — UI가 같은 팝을 두 번 재생하지 않게 하는 열쇠 */
   hitSeq: number;
   /**
@@ -312,7 +313,7 @@ const questView = ({ demand, patron }: Quest, facts: Record<string, number> = {}
 };
 /** `text`는 그 층의 문장이다 — 지도 화면이 지금 어디 서 있는지 한 줄로 읽는다 */
 type MapObservation = RunView & { text: string };
-type RewardObservation = RunView & { cards: CardView[]; questResult?: PromiseView; questReward?: boolean };
+type RewardObservation = RunView & { cards: CardView[]; questResult?: PromiseView; questReward?: boolean; finale?: CombatObservation };
 /** 은혜 후보 하나. 선택한 tier의 효과가 그대로 대상 카드에 새겨진다. */
 type GraceOffer = { id: string; tier: number; text: string; effects: Card["effects"] };
 type GraceObservation = RunView & { god: string; tier: number; offer: GraceOffer[] };
@@ -346,6 +347,8 @@ type EncounterResult = {
   facts: Record<string, number>;
   /** 이 조우에서 꺾은 진노 신들. 화해(호의 회복)가 이 한 줄을 읽는다 */
   felled: string[];
+  /** 전투를 끝낸 행동까지 반영한 마지막 관측. 새 결정 없이 UI 아웃트로만 이어 받는다 */
+  finale: CombatObservation;
 };
 
 /** 카드 한 장을 목록에서 뺀다. 없으면 아무 일도 없다 — `splice(-1)`이 엉뚱한 장을 지우는 자리다 */
@@ -459,7 +462,9 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
   });
 
   while (state.combat.outcome === "ongoing") {
+    const beforeTurnStart = healthBar();
     startTurn(state, random);
+    recordHits(beforeTurnStart, "power");
     // 제우스의 축. 다른 넷과 같이 단조 비감소라 `demandSettled`가 그대로 돈다 — 한 턴 더 쓰면 굳는다
     facts.turns = state.combat.turn;
     // 전투 중 개입. `startTurn` **뒤**여야 방어 리셋(`core/combat.ts:73`) 뒤에 아테나의 방어가 살아남고,
@@ -541,9 +546,10 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
       blockAbsorbed += Math.max(0, block - state.combat.player.block);
     }
   }
+  const finale = observation();
   finishCombatFavor(state.favor, [...patrons], uses);
   const felled = state.combat.outcome === "victory" ? patrons.filter((god) => joined.includes(godEnemyId(god))) : [];
-  return { turns: state.combat.turn, blockBuilt, blockAbsorbed, targetSpread, cardsPlayed, facts, felled };
+  return { turns: state.combat.turn, blockBuilt, blockAbsorbed, targetSpread, cardsPlayed, facts, felled, finale };
 }
 
 /** 시작 호의의 총합. 배분은 이 하나를 둘로 나눈다 */
@@ -611,6 +617,7 @@ export function* runSteps(
   const demandOutcomes: Record<string, [number, number]> = {};
   /** 맵의 과업 노드에서 받은 단일 슬롯. 새 선택은 이 값 하나를 교체한다 */
   let quest: Quest | undefined;
+  let defeatFinale: CombatObservation | undefined;
   const view = (): RunView => ({ ...runView(state, patrons, deck, cardMap), ...(quest ? { quest: questView(quest) } : {}) });
 
   function* grantGrace(god: string): Generator<Decision, void, string> {
@@ -693,14 +700,14 @@ export function* runSteps(
     return { demand, patron };
   }
 
-  function* offerReward(nodeSeed: number, path: MapNodeType, questResult?: PromiseView): Generator<Decision, void, string> {
+  function* offerReward(nodeSeed: number, path: MapNodeType, questResult?: PromiseView, finale?: CombatObservation): Generator<Decision, void, string> {
     // 전투/셔플과 겹치지 않는 새 스트림이다. 겹치면 기존 replay 재생이 깨진다
     const offer = rewardOffer(createRng(seed * 1000 + nodeSeed), patrons, tier2Slots(path));
     const picked = yield {
       phase: "reward",
       options: [...offer, skipReward],
       bot: chooseReward(offer, cardMap, noise),
-      observation: { ...view(), cards: offer.map((id) => cardView(cardMap.get(id)!)), ...(questResult ? { questResult } : {}) },
+      observation: { ...view(), cards: offer.map((id) => cardView(cardMap.get(id)!)), ...(questResult ? { questResult } : {}), ...(finale ? { finale } : {}) },
     };
     if (picked !== skipReward && !offer.includes(picked)) throw new Error(`Invalid reward action: ${picked}`);
     if (picked) deck.push(picked);
@@ -814,13 +821,14 @@ export function* runSteps(
       // 편성 이름이 아니라 **자리**로 센다 — 층별 정책이 갈리는지 보려면 열이 층이어야 한다
       encounterOutcomes.push({ key: `${region}:${floor}:${path}`, cleared: state.combat.outcome === "victory", passives, devoted, hpLost: hpBefore - state.combat.player.hp });
       if (state.combat.outcome !== "victory") {
+        defeatFinale = result.finale;
         defeatContext = { region, floor, enemies: members.map(({ id }) => id), passives };
         favorCurve.push({ ...state.favor });
         hpCurve.push(state.combat.player.hp);
         break;
       }
       // 모든 승리는 기본 카드 보상을 먼저 받는다. 최종 판정은 저널이 놓치지 않도록 이 관측에도 싣는다
-      yield* offerReward(nodeSeed, path, questResult);
+      yield* offerReward(nodeSeed, path, questResult, result.finale);
       if (activeQuest && questResult?.settled === "kept") {
         resolveDemand(state.favor, activeQuest.patron, activeQuest.demand.reward);
         yield* offerQuestReward(activeQuest, nodeSeed, questResult);
@@ -837,7 +845,7 @@ export function* runSteps(
   // 런에서 가장 자주 고른 과업의 신 — 최빈값을 세는 데 정렬 한 줄이면 된다
   const conflictChoice = [...demandSides].sort((left, right) =>
     demandSides.filter((god) => god === right).length - demandSides.filter((god) => god === left).length)[0];
-  return { won, grid: state.map.grid, turns, log, favorCurve, encounters, restCount, hpCurve, pathChoices, restChoices, regionsCleared, grace: state.grace, scenario, enemyCounts, encounterOutcomes, defeatContext, targetSpread, blockBuilt, blockAbsorbed, fused: fusions > 0, actions, cardsPlayed, conflictChoice, demandOutcomes, pairing: patrons.join("+") };
+  return { won, grid: state.map.grid, turns, log, favorCurve, encounters, restCount, hpCurve, pathChoices, restChoices, regionsCleared, grace: state.grace, scenario, enemyCounts, encounterOutcomes, defeatContext, targetSpread, blockBuilt, blockAbsorbed, fused: fusions > 0, actions, cardsPlayed, conflictChoice, demandOutcomes, pairing: patrons.join("+"), ...(defeatFinale ? { finale: defeatFinale } : {}) };
 }
 
 /**

@@ -1,5 +1,5 @@
 import { AnimatePresence, m, useIsPresent, useReducedMotion } from "motion/react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, Ref } from "react";
 import { ENERGY_PER_TURN, MAX_SLOTS, type EnemyAction } from "../../core/combat.ts";
 import { favorInitial, favorStage, godEnemyId, intervenesOnTurn, turnsUntilIntervention, type FavorStage, type StageEffect } from "../../core/favor.ts";
@@ -142,20 +142,39 @@ function AimArrow({ from }: { from: React.RefObject<HTMLDivElement | null> }) {
 export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }: {
   seed: number;
   decision: CombatDecision;
-  outro?: "won" | "lost";
+  outro?: { kind: "won" | "lost"; finale: CombatObservation };
   onAnswer: (choice: string) => void;
   /** 약속 칩 클릭이 저널(P-53)을 연다 — 오버레이 상태는 App이 든다 */
   onOpenJournal?: () => void;
 }) {
   const reducedMotion = useReducedMotion();
-  const { phase, options, observation: view } = decision;
-  const targeting = phase === "target";
-  const enemies = outro === "won" ? [] : view.enemies;
+  const { phase, options } = decision;
+  const view = outro?.finale ?? decision.observation;
+  const targeting = !outro && phase === "target";
+  const previousEnemies = useRef(decision.observation.enemies);
+  const [impactLanded, setImpactLanded] = useState(false);
+  const finalAttack = !!outro && view.hitSource === "attack" && view.hits.some(({ id }) => id !== "player");
+  // 한 렌더는 마지막 hits를 기존 배우에게 건넨다. 돌진만 impact까지 기다리고 나머지는 effect 직후 퇴장한다.
+  const enemies = outro && !impactLanded ? previousEnemies.current : view.enemies;
   const transition = reducedMotion ? { duration: 0 } : pop;
   const enemySide = useRef<HTMLDivElement>(null);
   const playerSide = useRef<HTMLDivElement>(null);
   /** 타겟팅 화살표의 출발점 — 무대 카드가 선 자리 */
   const stageRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!outro) {
+      previousEnemies.current = decision.observation.enemies;
+      setImpactLanded(false);
+      return;
+    }
+    if (!finalAttack || reducedMotion) {
+      setImpactLanded(true);
+      return;
+    }
+    const timer = setTimeout(() => setImpactLanded(true), impactAt);
+    return () => clearTimeout(timer);
+  }, [decision, outro, finalAttack, reducedMotion]);
 
   /** 무대에 선 적 하나의 판. `data-enemy`가 그 열쇠다 — 적마다 ref를 다는 대신이다 */
   const enemyNode = (id: string) => enemySide.current?.querySelector<HTMLElement>(`[data-enemy="${id}"]`);
@@ -189,6 +208,8 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
   useEffect(() => {
     const start = view.turn === 1;
     if (!start && !intervenesOnTurn(view.turn)) return;
+    // turn_start 파워가 전투를 끝내면 같은 턴의 개입은 실행되지 않았다.
+    if (!start && outro && view.hitSource === "power") return;
     const hook = start ? "on_encounter_start" : "on_turn_start";
     const timers: ReturnType<typeof setTimeout>[] = [];
     view.patrons.forEach((god, index) => {
@@ -250,7 +271,7 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
     played.current = null;
     const source = particleArt[`../../art/particle/${cardParticleOf(card.id)}.webp`];
     if (source && !reducedMotion) for (const host of hostsFor(card.target, aimed.current)) void playSprite(host, source, "spark");
-  }, [decision]);
+  }, [decision, outro]);
 
   /**
    * 확정·찢기·화해 셋은 **한 번만** 말한다. 셋 다 관측이 실어 온 사실을 보고 갈리므로 화면이 규칙을
@@ -281,7 +302,7 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
       once(`${view.depth}:felled:${god}`, () => speak(3, god, godLine(god, "reconcile", view.depth), godArt[`../../art/gods/${god}.webp`]));
     }
     godsOnBoard.current = onBoard;
-  }, [decision]);
+  }, [decision, outro]);
 
   /**
    * 피격 연출(P-58) — 맞은 쪽 흰 플래시 220ms + 셰이크 4px, 때린 쪽은 대상 앞까지 돌진한다.
@@ -394,7 +415,7 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
 
   useEffect(() => {
     if (!outro || reducedMotion) return;
-    sweepBanner(outro === "won" ? "승리" : "패배");
+    sweepBanner(outro.kind === "won" ? "승리" : "패배");
   }, [outro]);
 
   // 무대에 선 카드는 손패에서 빠진다 — 엔진은 target을 받은 뒤에 카드를 버리므로 아직 `hand`에 있다
@@ -402,7 +423,7 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
   const keys = handKeys(view.hand);
   const fan = view.hand.map((card, index) => ({ card, key: keys[index] })).filter((_, index) => index !== staged);
   /** 낼 수 있는 카드가 남았는가 — 에너지 젬 맥동(P-58)의 조건. 0이면 무채색(P-55) */
-  const canPlay = phase === "card" && options.some((option) => option !== endTurnAction);
+  const canPlay = !outro && phase === "card" && options.some((option) => option !== endTurnAction);
   /** 이름이 데이터에서 오므로 조사를 문장에 박을 수 없다 — 받침이 있으면 「이」다 */
   const guardName = guarded ? enemyInfo.get(guarded.by)?.name ?? guarded.by : "";
   const guardLine = guardName && `${guardName}${(guardName.charCodeAt(guardName.length - 1) - 0xac00) % 28 ? "이" : "가"} 대신 맞았습니다.`;
@@ -411,7 +432,7 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
     <>
       {/* 무대가 곧 배경이다(P-55) — .55로 살리고, 대상 선택 중에는 .35로 물러난다. 프롭 3겹 5개 */}
       <Backdrop src={backdropArt(view.region, view.floor === floorsPerRegion ? "boss" : "combat")} region={view.region} seed={seed + view.depth} tone={targeting ? "aim" : "stage"} />
-      <div className="shell run combat-stage" data-outro={outro}>
+      <div className="shell run combat-stage" data-outro={outro?.kind}>
       {/* 약속·파워 칩 — 상태 바 바로 아래 좌측, 판보다 먼저 읽힌다(P-55 §5) */}
       <div className="board-chips">
         <PromiseRow promises={view.promises} onOpen={onOpenJournal} />
@@ -426,7 +447,7 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
         * `popLayout`이 퇴장 중인 적을 흐름에서 뺀다. ref는 개입 파티클의 `hostsFor`가 쓴다
         */}
       <div className={`stage-field${targeting ? " aiming" : ""}`} ref={enemySide}>
-        <PlayerActor view={view} outro={outro} popDelay={impactDelay / 1000} reducedMotion={!!reducedMotion} ref={playerSide} />
+        <PlayerActor view={view} outro={outro?.kind} popDelay={impactDelay / 1000} reducedMotion={!!reducedMotion} ref={playerSide} />
         <AnimatePresence initial={false} mode="popLayout">
           {slots.map((slot) => {
             const enemy = enemies.find((candidate) => candidate.slot === slot);

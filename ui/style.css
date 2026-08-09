@@ -190,6 +190,7 @@ dialog.overlay::backdrop { background: rgba(9, 11, 17, .68); }
 
 /* 덱 오버레이 — 한 줄 6장, 세로 스크롤. 정렬·필터 없음 */
 .overlay-deck { display: flex; flex-wrap: wrap; gap: 8px; }
+.card-catalog .god-legend { margin-bottom: 16px; }
 
 /* 약속 저널 — 진행 중 → 지킴 → 깨짐. 줄은 전투 화면의 `.promise`와 같은 얼굴이다 */
 .journal { display: grid; gap: 16px; }

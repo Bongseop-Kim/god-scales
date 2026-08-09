@@ -3,7 +3,7 @@ import { AnimatePresence, LazyMotion, domMax, m, useReducedMotion } from "motion
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, FormEvent } from "react";
 import type { GodId } from "../core/rules.ts";
-import { deckSize, endTurnAction, favorPool, gods, ruleDeck, runSteps, type CardView, type Decision, type PatronPair } from "../sim/engine.ts";
+import { allCards, deckSize, endTurnAction, favorPool, gods, ruleDeck, runSteps, type CardView, type CombatObservation, type Decision, type PatronPair } from "../sim/engine.ts";
 import type { ReplayAction } from "../sim/replay.ts";
 import type { RunResult } from "../sim/report.ts";
 import { DemandScreen, GraceScreen, RestScreen } from "./screens/choices.tsx";
@@ -16,7 +16,7 @@ import { RewardScreen } from "./screens/reward.tsx";
 import { FullscreenButton, IntroScreen, SetupScreen } from "./screens/setup.tsx";
 import { godArt, godLine, godName, StatusBar } from "./shared/header.tsx";
 import { speak } from "./shared/fx.ts";
-import { DeckPanel, HelpPanel, JournalPanel, Overlay, type PromiseRecord } from "./shared/overlay.tsx";
+import { CardCatalog, DeckPanel, HelpPanel, JournalPanel, Overlay, type PromiseRecord } from "./shared/overlay.tsx";
 import { musicForScreen, playSound, sound } from "./shared/sfx.ts";
 import { TokenDictionary } from "./shared/tokens.tsx";
 import { particleStrip } from "./shared/art-keys.ts";
@@ -25,7 +25,7 @@ import "./style.css";
 
 type Steps = Generator<Decision, RunResult, string>;
 /** 오버레이 다섯. 열림 상태는 여기(App)가 든다 — URL·저장에 싣지 않으므로 새로고침하면 닫힌 상태다 */
-type OverlayKind = "tokens" | "help" | "deck" | "journal" | "restart";
+type OverlayKind = "tokens" | "help" | "cards" | "deck" | "journal" | "restart";
 
 /** 화면 전환 애니메이션의 key. 여기 없는 phase는 이름 그대로 자기 화면이다 */
 const screens: Partial<Record<Decision["phase"], string>> = { path: "map", rest_card: "rest", grace_card: "grace", card: "combat", target: "combat" };
@@ -110,7 +110,7 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
   const [soundEnabled, setSoundEnabled] = useState(sound.enabled);
   const [overlay, setOverlay] = useState<OverlayKind>();
   const [fusion, setFusion] = useState<{ source: CardView; result: CardView; patrons: PatronPair }>();
-  const [outro, setOutro] = useState<"won" | "lost">();
+  const [outro, setOutro] = useState<{ kind: "won" | "lost"; finale: CombatObservation }>();
   /** 지킴·깨짐 히스토리. `actions` 배열과 같은 꼴의 표시용 누적이지 게임 상태가 아니다 */
   const [journal, setJournal] = useState<PromiseRecord[]>([]);
   /** 같은 확정을 두 번 쌓지 않는다 — `settled`는 확정 뒤에도 매 관측에 그대로 실려 온다 */
@@ -210,15 +210,16 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
     }
     if (choice === endTurnAction) playSound("turn-end", 0.3);
     const step = steps.current.next(choice);
-    // 마지막 적은 다음 combat 관측 없이 곧장 보상/결과로 넘어가므로 CombatScreen의 퇴장 effect가 못 본다.
+    // 마지막 적은 다음 combat 결정 없이 곧장 보상/결과로 넘어가므로 그 행동의 마지막 관측을 아웃트로가 든다.
     const leftWonCombat = (current.phase === "card" || current.phase === "target")
       && (step.done ? step.value.won : step.value.phase !== "card" && step.value.phase !== "target");
     const leftLostCombat = (current.phase === "card" || current.phase === "target") && step.done && !step.value.won;
-    if (leftWonCombat) playSound("enemy-death", 0.45);
     setActions((all) => [...all, { type: current.phase, choice } as ReplayAction]);
     if (leftWonCombat || leftLostCombat) {
+      const finale = step.done ? step.value.finale : step.value.phase === "reward" ? step.value.observation.finale : undefined;
+      if (!finale) throw new Error("Combat ended without a finale observation");
       latest.current = null;
-      setOutro(leftWonCombat ? "won" : "lost");
+      setOutro({ kind: leftWonCombat ? "won" : "lost", finale });
       outroTimer.current = window.setTimeout(() => {
         leavingCombatOutro.current = true;
         setOutro(undefined);
@@ -341,6 +342,7 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
         */}
       {screen !== "opening" && (
         <nav className="global-icons" aria-label="전역 메뉴">
+          <button type="button" onClick={() => setOverlay("cards")}>전체 카드</button>
           <button type="button" aria-pressed={soundEnabled} onClick={toggleSound}>{soundEnabled ? "소리 켜짐" : "소리 꺼짐"}</button>
           <button type="button" onClick={() => setOverlay("tokens")}>토큰</button>
           <button type="button" onClick={() => setOverlay("help")}>도움말</button>
@@ -377,6 +379,11 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
       )}
       {overlay === "help" && (
         <Overlay title="도움말" onClose={() => setOverlay(undefined)}><HelpPanel /></Overlay>
+      )}
+      {overlay === "cards" && (
+        <Overlay wide title={`전체 카드 ${allCards.length}장`} onClose={() => setOverlay(undefined)}>
+          <CardCatalog />
+        </Overlay>
       )}
       {overlay === "deck" && pending && (
         <Overlay wide title={`덱 ${pending.observation.deck.length}장`} onClose={() => setOverlay(undefined)}>

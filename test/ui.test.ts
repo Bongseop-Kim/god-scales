@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import iconSheet from "../art/icons.svg?raw";
 import cardDataJson from "../data/cards.json" with { type: "json" };
-import { endTurnAction, runSteps, type Decision } from "../sim/engine.ts";
+import { allCards, endTurnAction, runSteps, type CombatObservation, type Decision } from "../sim/engine.ts";
 import { run } from "../sim/engine.ts";
 import type { RunResult } from "../sim/report.ts";
 import type { ReplayAction } from "../sim/replay.ts";
@@ -16,7 +16,7 @@ import { DemandScreen, GraceScreen, RestScreen } from "../ui/screens/choices.tsx
 import { CombatScreen } from "../ui/screens/combat.tsx";
 import { replayPayload } from "../ui/shared/export.ts";
 import { StatusBar } from "../ui/shared/header.tsx";
-import { HelpPanel } from "../ui/shared/overlay.tsx";
+import { CardCatalog, HelpPanel } from "../ui/shared/overlay.tsx";
 import { musicForScreen, playSound, sound } from "../ui/shared/sfx.ts";
 import { MapPanel, MapScreen } from "../ui/screens/map.tsx";
 import { RewardScreen } from "../ui/screens/reward.tsx";
@@ -178,10 +178,11 @@ describe("browser replay export", () => {
     expect(bar).toContain("헌신 70 / 평온 30 / 분노 10");
     expect(bar).toContain("은총 3");
 
-    const lost = renderToStaticMarkup(createElement(CombatScreen, { seed: 1, decision, outro: "lost", onAnswer: () => {} }));
-    const won = renderToStaticMarkup(createElement(CombatScreen, { seed: 1, decision, outro: "won", onAnswer: () => {} }));
+    const finale = (decision as unknown as { observation: CombatObservation }).observation;
+    const lost = renderToStaticMarkup(createElement(CombatScreen, { seed: 1, decision, outro: { kind: "lost", finale: { ...finale, hp: 0 } }, onAnswer: () => {} }));
+    const won = renderToStaticMarkup(createElement(CombatScreen, { seed: 1, decision, outro: { kind: "won", finale: { ...finale, enemies: [] } }, onAnswer: () => {} }));
     expect(lost).toContain('class="player-actor" data-pose="death"');
-    expect(won).not.toContain('data-enemy="enemy_under_guardian"');
+    expect(won).toContain('data-outro="won"');
   });
 
   /** 과업과 자동 개입의 두 줄은 전투 관측만으로 그린다 */
@@ -465,6 +466,7 @@ describe("browser replay export", () => {
   it("renders the setup screen through React", () => {
     const markup = renderToStaticMarkup(createElement(App, { intro: false }));
 
+    expect(markup).toContain("전체 카드");
     expect(markup).toContain("후원할 신 둘 · 2/2");
     expect(markup).toContain("런 시작");
     // 시드 입력이 없다(P-56) — 재현은 `?seed=` URL과 반출 JSON이 든다
@@ -489,6 +491,15 @@ describe("browser replay export", () => {
     expect(markup).not.toContain("시작 호의 배분");
     // 편집기는 한 방향 문이 아니다 — 조합을 하나로 줄여 슬롯을 비운 사람이 여기로 돌아온다
     expect(markup).not.toContain("규칙 덱으로");
+  });
+
+  it("shows every card in the card catalog", () => {
+    const markup = renderToStaticMarkup(createElement(CardCatalog));
+
+    expect(allCards).toHaveLength(cards.length);
+    expect(markup.match(/class="game-card/g)).toHaveLength(cards.length);
+    expect(markup.match(/aria-pressed/g)).toHaveLength(7);
+    for (const name of ["전체", "제우스", "포세이돈", "아테나", "아레스", "아르테미스", "융합"]) expect(markup).toContain(name);
   });
 
   it("shows both selected gods before entering the run", () => {
