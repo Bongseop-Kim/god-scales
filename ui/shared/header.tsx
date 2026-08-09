@@ -81,10 +81,17 @@ export function FavorMeter({ god, value, grace }: { god: string; value: number; 
    */
   const seen = useRef(stage);
   const crossed = seen.current !== stage;
+  /**
+   * 직전 값과의 차 — 변화가 있는 렌더에서만 칩이 뜬다. `crossed`와 같은 패턴이라 같은 한계를 진다:
+   * 값이 그대로인 다음 렌더가 칩을 지운다. 그것이 곧 수명이다 — 타이머·상태 없이 오래된 칩이 안 남는다
+   */
+  const seenValue = useRef(value);
+  const delta = value - seenValue.current;
   useEffect(() => {
     // 미터가 펄스하는 그 프레임에 신이 말한다 — 단계가 바뀌면 그 신이 다음에 할 일이 통째로 바뀐다
     if (crossed) speak(2, god, godLines(god, "cross", value, stage));
     seen.current = stage;
+    seenValue.current = value;
   });
   const { start, turn } = godStageText(god, stage);
   const stageText = [stageName[stage], start, turn].filter(Boolean).join(" · ");
@@ -97,6 +104,8 @@ export function FavorMeter({ god, value, grace }: { god: string; value: number; 
     >
       <small>{godName(god)}</small>
       <b>{value} · {stageName[stage]}</b>
+      {/* 변화량 오버레이 — absolute 층이라 판을 안 민다(UI.md). 손실은 진노색: 방향이 색만으로 읽혀야 한다 */}
+      {delta !== 0 && <span key={value} className={`delta${delta < 0 ? " loss" : ""}`} aria-hidden="true">{delta > 0 ? `+${delta}` : delta}</span>}
       {/* 은총은 슬롯 표시와 다른 사실이다 — 받은 **수**(다음 은혜의 tier·합성 전제)고 슬롯은 걸린 것이다 */}
       {grace > 0 && <em>은총 {grace}</em>}
       <span className="meter">

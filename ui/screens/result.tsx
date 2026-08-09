@@ -3,7 +3,6 @@ import type { PatronPair } from "../../sim/engine.ts";
 import type { ReplayAction } from "../../sim/replay.ts";
 import type { RunResult } from "../../sim/report.ts";
 import { Backdrop, hero, Prop } from "../shared/backdrop.tsx";
-import { GameCard } from "../shared/card.tsx";
 import { downloadReplay } from "../shared/export.ts";
 import { godName } from "../shared/header.tsx";
 import { MapPanel, takenLanes } from "./map.tsx";
@@ -21,8 +20,6 @@ export function ResultScreen({ seed, patrons, deck, split, actions, result, onRe
 }) {
   const finalFavor = result.favorCurve.at(-1) ?? {};
   const reached = Math.min(mapDepth, result.hpCurve.length - 1);
-  // 런을 끝낸 **마지막** 세 장이다 — 마지막 전투의 그림이라 걸어온 길 바로 아래 선다
-  const recentCards = [...new Set(result.cardsPlayed)].slice(-3);
   return (
     <>
       <Backdrop src={hero(result.won ? "win" : "loss")} tone="hero" />
@@ -48,9 +45,6 @@ export function ResultScreen({ seed, patrons, deck, split, actions, result, onRe
         {["underworld", "surface"].map((region) => (
           <MapPanel key={region} grid={result.grid} region={region} taken={takenLanes(result.grid, result.pathChoices, reached)} />
         ))}
-      </div>
-      <div className="used-cards">
-        {recentCards.map((cardId) => <GameCard key={cardId} cardId={cardId} />)}
       </div>
       {/* 반출은 개발·검증용 보조 행동이라 `.ghost`로 물러난다(P-65). 지우지 않는 이유: `tools/e2e.ts`가
           이 버튼으로 「반출 → CLI 재생 동치」를 증명한다 — 가리는 것과 없애는 것은 다르다 */}

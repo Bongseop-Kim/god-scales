@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import cardData from "../data/cards.json" with { type: "json" };
 import achievements from "../data/achievements.json" with { type: "json" };
 import { deckOk, deckSize, favorPool, gods, ruleDeck, run, runSteps, startableCards, type PatronPair } from "../sim/engine";
+import { reachSlots } from "../core/targeting";
 import { readReplay, type ReplayFile } from "../sim/replay";
 import { replayPayload } from "../ui/shared/export";
 
@@ -26,6 +27,14 @@ it("keeps every achievement setup valid", () => {
     expect(achievement.deck, achievement.id).toHaveLength(deckSize);
     const allowed = new Set(achievement.pair.flatMap((god) => startableCards[god as keyof typeof startableCards].map(({ id }) => id)));
     expect(achievement.deck.every((id) => allowed.has(id)), achievement.id).toBe(true);
+    // 모든 칸(0–3)의 적을 칠 공격 카드가 있어야 한다 — 빠진 칸의 적만 남으면 전투가 막힌다
+    const covered = new Set(achievement.deck.flatMap((id) => {
+      const card = cardData.find((candidate) => candidate.id === id)!;
+      // 태그가 아니라 실제 타격 여부로 본다 — 「젖은 상처」처럼 power여도 적을 치는 카드가 있다
+      const attacks = card.target !== "self" && card.effects.some(({ op }) => op === "damage");
+      return attacks ? reachSlots("reach" in card ? card.reach : undefined) : [];
+    }));
+    expect([...covered].sort(), achievement.id).toEqual([0, 1, 2, 3]);
   }
 });
 

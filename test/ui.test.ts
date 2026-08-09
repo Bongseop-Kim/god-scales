@@ -256,7 +256,7 @@ describe("browser replay export", () => {
     expect(deflected).toMatch(/<span class="deflected"><svg[^>]*>.*?#icon-deflect.*?<\/svg><\/span><\/span>/s);
   });
 
-  it("shows three chosen-god cards with the completed task result", () => {
+  it("allows skipping three chosen-god cards with the completed task result", () => {
     const offer = cards.filter(({ patron }) => patron === "athena").slice(0, 3);
     const decision = {
       phase: "reward",
@@ -273,18 +273,17 @@ describe("browser replay export", () => {
     expect(markup).toContain("과업 달성 · 아테나");
     expect(markup).toContain("5 / 8");
     expect(markup.match(/class="game-card/g)).toHaveLength(3);
-    expect(markup).not.toContain("건너뛰기");
+    expect(markup).toContain("건너뛰기");
   });
 
-  it("draws grace on the card frame without seal badges", () => {
+  it("draws applied grace on the card frame without seal badges", () => {
     const card = {
       ...cards[0],
       seals: [{ patron: "zeus", text: "번개", effects: [{ op: "damage", value: 1 }] }],
-      previewSeal: { patron: "athena", text: "방벽", effects: [{ op: "block", value: 1 }] },
     } as never;
     const markup = renderToStaticMarkup(createElement(GameCard, { cardId: cards[0].id, card }));
     expect(markup).toContain("--seal-a:var(--zeus)");
-    expect(markup).toContain("--seal-b:color-mix(in srgb, var(--athena) 55%, transparent)");
+    expect(markup).toContain("--seal-b:#6b7185");
     expect(markup).not.toContain("card-seals");
   });
 

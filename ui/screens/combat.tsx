@@ -204,32 +204,34 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
     if (!start && !intervenesOnTurn(view.turn)) return;
     const hook = start ? "on_encounter_start" : "on_turn_start";
     const timers: ReturnType<typeof setTimeout>[] = [];
+    const speaker = view.patrons
+      .filter((god) => godStageEffects(god, favorStage(view.favor[god] ?? favorInitial), hook).length)
+      .reduce<string | undefined>((best, god) => best === undefined || (view.favor[god] ?? favorInitial) > (view.favor[best] ?? favorInitial) ? god : best, undefined);
     view.patrons.forEach((god, index) => {
       const stage = favorStage(view.favor[god] ?? favorInitial);
       const text = godStageText(god, stage)[start ? "start" : "turn"];
       const effects = godStageEffects(god, stage, hook);
       if (!effects.length) return;
       timers.push(setTimeout(() => {
-        /**
-         * 조우 시작은 말(L2)이고 개입 턴은 자막(L1)이다:
-         * 런당 49회 뜨는 자리를 화면 중앙에 2초씩 세우면 전투가 아니라 낭독이 된다
-         */
-        const foes = start && (stage === "devotion" || stage === "calm")
-          ? godFoeLines(god, view.enemies.map(({ id }) => id), view.depth)
-          : [];
-        speak(start ? 2 : 1, god, foes.length ? foes : godLines(god, start ? "encounter" : "intervene", start ? view.depth : view.turn, stage));
+        /** 조우 시작은 상단 자막(L2), 런당 약 49회인 개입 턴은 우측 피드(L1)다 */
+        if (god === speaker) {
+          const foes = start && (stage === "devotion" || stage === "calm")
+            ? godFoeLines(god, view.enemies.map(({ id }) => id), view.depth)
+            : [];
+          speak(start ? 2 : 1, god, foes.length ? foes : godLines(god, start ? "encounter" : "intervene", start ? view.depth : view.turn, stage), start ? undefined : godArt[`../../art/gods/${god}.webp`]);
+        }
         // 「신이 적으로 합류」는 판이 뒤집히는 사건이라 800ms 페이드로 지나가면 안 된다 — 신 일러가 선다
         const joinEffect = effects.find(({ op }) => op === "join");
         const source = joinEffect ? godArt[`../../art/gods/${god}.webp`] : fxArt[`../../art/fx/${stage}.webp`];
-        if (text && source) void playSprite(document.body, source, "cut", { god, stage, text: `${godName(god)} · ${stageName[stage]} — ${text}` });
+        if (god === speaker && text && source) void playSprite(document.body, source, "cut", { god, stage, title: `${godName(god)} · ${stageName[stage]}`, text });
         /**
-         * 합류는 외침(L3)이다. **모든 컷인이 끝난 뒤**에 낸다 — 같이 내면 L3의 어두운 배경이 「무엇을
-         * 했는가」를 덮어 버린다. 신을 버려 놓고 그 신이 판 건너편에 서는 순간이라 스치면 안 된다
+         * 합류는 외침(L3)이다. **마지막 개입 HUD까지 끝난 뒤**에 낸다 — 신을 버려 놓고 그 신이 판
+         * 건너편에 서는 순간이라 다른 정보와 겹쳐 스치면 안 된다
          */
         if (joinEffect) {
           const joined = joinEffect.god ?? god;
           // 이 타이머도 `timers`에 든다 — 안 걷으면 화면·조우가 바뀐 뒤 묵은 외침이 선다
-          timers.push(setTimeout(() => speak(3, joined, godLines(joined, "join", view.depth), godArt[`../../art/gods/${joined}.webp`]), (view.patrons.length - index) * 1700));
+          timers.push(setTimeout(() => speak(3, joined, godLines(joined, "join", view.depth), godArt[`../../art/gods/${joined}.webp`]), (view.patrons.length - index - 1) * 1700 + 3000));
         }
         if (reducedMotion) return;
         timers.push(setTimeout(() => {

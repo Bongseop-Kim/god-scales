@@ -86,6 +86,7 @@ describe("demands", () => {
     let chosen = false;
     let baseFavor: number | undefined;
     let taskReward = false;
+    let deckSizeBeforeSkip = 0;
     while (!step.done && !taskReward) {
       const decision = step.value;
       let answer = decision.bot;
@@ -101,15 +102,19 @@ describe("demands", () => {
         } else {
           expect(baseFavor).toBeDefined();
           expect(decision.observation.favor.zeus).toBe(baseFavor! + zeus.reward.favor);
-          expect(decision.options).toHaveLength(3);
-          expect(decision.options).not.toContain("");
+          expect(decision.options).toHaveLength(4);
+          expect(decision.options).toContain("");
           expect(decision.observation.cards.every(({ id }) => id.startsWith("card_zeus_"))).toBe(true);
+          deckSizeBeforeSkip = decision.observation.deck.length;
+          answer = "";
           taskReward = true;
         }
       }
       step = steps.next(answer);
     }
     expect(taskReward).toBe(true);
+    expect(step.done).toBe(false);
+    if (!step.done) expect(step.value.observation.deck).toHaveLength(deckSizeBeforeSkip);
   });
 
   it("gives no extra reward when the task fails", () => {

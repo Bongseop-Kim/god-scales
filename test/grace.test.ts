@@ -39,6 +39,7 @@ describe("grace", () => {
     if (grace.done || grace.value.phase !== "grace") throw new Error("expected grace");
     const cardStep = steps.next(grace.value.bot);
     if (cardStep.done || cardStep.value.phase !== "grace_card") throw new Error("expected grace card");
+    expect(cardStep.value.observation.deck).not.toContainEqual(expect.objectContaining({ previewSeal: expect.anything() }));
     const duplicate = cardStep.value.options.find((id) => cardStep.value.observation.deck.filter((card) => card.id === id).length > 1)!;
     const before = cardStep.value.observation.deck.filter(({ id }) => id === duplicate).length;
     const next = steps.next(duplicate);
