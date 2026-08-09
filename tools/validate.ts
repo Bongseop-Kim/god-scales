@@ -3,12 +3,12 @@ import { join } from "node:path";
 import { MAX_SLOTS } from "../core/combat.ts";
 import { demandEnemies, factName } from "../core/demands.ts";
 import { favorBoundaries, godEnemyId, lineTriggers, stagedLineTriggers } from "../core/favor.ts";
-import { graceMilestones, graceSlots } from "../core/grace.ts";
+import { graceMilestones } from "../core/grace.ts";
 import { floorsPerRegion } from "../core/map.ts";
 import { conditionPatterns, enemyOnlyTokens, harmfulTokens, MAX_UPGRADE, selfTokens } from "../core/rules.ts";
 import { passiveNames, triggers, type Passives } from "../core/state.ts";
 import { fullReach, reachOk, reachSlots } from "../core/targeting.ts";
-import { cardTier, expectedValue, graceBand, graceValue, isValueAllowed, mitigationTokens, mitigationValue, slotCards, tokenWeights } from "./value.ts";
+import { cardTier, expectedValue, isValueAllowed, mitigationTokens, mitigationValue, tokenWeights } from "./value.ts";
 
 export type FailureKey = "schema" | "dsl_parse" | "token_scope" | "fusion_scope" | "demand_axis" | "duplicate" | "value_outlier" | "pool_ratio" | "passive_coverage" | "map_layout" | "slot_scope" | "line_coverage";
 type Item = Record<string, unknown>;
@@ -28,17 +28,17 @@ type Enemy = Item & {
   groups?: { id: string; with: string[] }[];
 };
 type MapSlot = Item & { id: string; region: string; floor: number; text: string; groups: Partial<Record<"combat" | "elite", string[]>> };
-type Grace = Item & { id: string; patron: string; slot: string; tier: number; text: string; effects: Effect[] };
+type Grace = Item & { id: string; patron: string; tier: number; text: string; effects: Effect[] };
 
 const required: Record<string, string[]> = {
   card: ["id", "name", "cost", "target", "effects", "tags"],
   // `region`은 여기 없다 — 신 적은 지역을 갖지 않으므로 아래 `schemaFailure`가 tier와 함께 본다
   enemy: ["id", "name", "tier", "role", "hp", "intent_visible", "pattern", "pattern_mode"],
   demand: ["id", "patron", "text", "condition", "reward", "axis", "polarity", "min_enemies"],
-  // `lines`는 여기 없다 — 아래 `godLineFailure`가 트리거 아홉을 세므로 「없다」도 거기서 걸린다
+  // `lines`는 여기 없다 — 아래 `godLineFailure`가 트리거 열을 세므로 「없다」도 거기서 걸린다
   god: ["id", "name", "tokens", "ops", "rivals", "demands"],
   map: ["id", "region", "floor", "text", "groups"],
-  grace: ["id", "patron", "slot", "tier", "text", "effects"],
+  grace: ["id", "patron", "tier", "text", "effects"],
 };
 
 const readData = <T>(name: string): T[] => {
@@ -97,7 +97,6 @@ function schemaFailure(item: Item, kind: string): boolean {
   if (kind === "grace") {
     const grace = item as Grace;
     return !gods[grace.patron]
-      || !(graceSlots as readonly string[]).includes(grace.slot)
       || !(graceMilestones as readonly number[]).includes(grace.tier)
       || grace.effects.some((effect) => typeof effect?.op !== "string");
   }
@@ -185,34 +184,25 @@ function tokenScopeFailure(card: Card): boolean {
 }
 
 /**
- * 은혜는 카드의 `target`을 탄다 — 자기 `target`을 갖지 않는다. 그래서 **적을 향하는 효과는 `attack`
- * 슬롯만** 쓸 수 있다: 방어·유틸·토큰 슬롯에는 `target: self` 카드가 각각 30·34·11장 있고, 거기
- * 붙은 `damage`와 해로운 토큰은 `executeCard`가 **플레이어에게** 돌린다(픽스처 09와 같은 자리다).
- *
- * `chain`도 막는다 — `loadCards`가 대상 enemy를 요구하므로 광역 공격 카드에 붙으면 낼 때마다 던진다
+ * 인장은 어느 카드에도 새길 수 있다. 여기서는 공용 op만 허용하고 토큰은 그 신의 어휘만 지킨다.
  */
 function graceScopeFailure(grace: Grace): boolean {
   const vocabulary = gods[grace.patron];
   return grace.effects.some(({ op, token }) =>
     !commonOps.includes(op)
-    || (token !== undefined && !vocabulary.tokens.includes(token))
-    || (grace.slot !== "attack" && (op === "damage" || (token !== undefined && (harmfulTokens as ReadonlySet<string>).has(token)))));
+    || (token !== undefined && !vocabulary.tokens.includes(token)));
 }
 
-/** 은혜를 신의 풀에 얹을 때 쓰는 카드 꼴. 효과값에 슬롯 장수를 곱해 두므로 `expectedValue`가 곧 환산값이다 */
-const graceAsCard = (grace: Grace): Card => {
-  const cards = slotCards[grace.slot] ?? 0;
-  const scale = (amount?: number) => (amount === undefined ? undefined : amount * cards);
-  return {
+/** 은혜를 신의 풀에 얹을 때 쓰는 카드 꼴. 인장 하나는 카드 한 장에 붙는다. */
+const graceAsCard = (grace: Grace): Card => ({
     id: grace.id,
     name: grace.id,
     patron: grace.patron,
     cost: 1,
     target: "enemy",
     tags: [],
-    effects: grace.effects.map((effect) => ({ ...effect, value: scale(effect.value), stacks: scale(effect.stacks) })),
-  };
-};
+    effects: grace.effects,
+  });
 
 function fusionFailure(card: Card): boolean {
   if (!card.patron_pair) return false;
@@ -223,8 +213,7 @@ function fusionFailure(card: Card): boolean {
 }
 
 /**
- * 조건 하나짜리 요구의 규칙 넷. 임계·보상·대가 단조 셋은 두 단이 없어진 자리에서 같이 사라졌다
- * (P-59) — 판돈은 데이터가 아니라 내기표가 들고, 「걸 만한가」는 조합 승률 하한이 이미 잡는다
+ * 조건 하나짜리 과업의 규칙 넷. 가치는 조합 승률 하한 하나가 잡는다.
  */
 function demandFailure(demand: Demand): boolean {
   if (!axes.includes(demand.axis)) return true;
@@ -234,7 +223,7 @@ function demandFailure(demand: Demand): boolean {
   if (!(parsed[1] in factName)) return true;
   // 비교자가 곧 polarity다 — `-`는 유지형(`<=`), `+`는 달성형(`>=`·`>`). 어긋나면 화면과 판정이 갈린다
   if ((parsed[2] === "<=") !== (demand.polarity === "-")) return true;
-  // 지킬 수 없는 약속을 안 띄우는 눈금. 조우 크기 하한이 조건과 어긋나면 `askBet`이 못 거른다
+  // 지킬 수 없는 과업을 안 띄우는 눈금. 조우 크기 하한이 조건과 어긋나면 엔진이 판정할 수 없다
   if (demandEnemies(demand.condition, demand.min_enemies) !== demand.min_enemies) return true;
   // 지켜도 아무것도 안 들어오는 조건은 결정이 아니다
   return !(demand.reward?.favor ?? 0);
@@ -404,7 +393,7 @@ function groupStrength(groupId: string, enemies: Enemy[]): Strength | undefined 
  * **`hp` 두 줄은 옮겼다** — `[40,90]` → `[40,72]` · `[90,200]` → `[70,110]`. 계획은 「조우 총 체력을
  * 지금 자리에 남긴다」였는데 실측이 그것을 되돌렸다: 총 체력을 유지하면 4인 조우가 **두 배로 길어지고**
  * 쌓은 방어가 버려져 `block_efficiency`가 밴드 아래로 내려가며, 누적 칩 피해가 헌신을 무너뜨려
- * 은혜 슬롯이 1을 못 넘는다. 두 지표를 다 지키는 자리는 「한 턴 피해는 그대로, 조우 총 체력은 절반」
+ * 은혜 누계가 1을 못 넘는다. 두 지표를 다 지키는 자리는 「한 턴 피해는 그대로, 조우 총 체력은 절반」
  * 하나뿐이었다(측정은 reviews/41-pack.md의 격자). 하한도 같이 내린 것은 `floorCeiling`이 1층 상한을
  * 밴드 가운데로 잡기 때문이다 — 하한을 두고 상한만 내리면 1층에 놓을 편성이 하나도 없다
  */
@@ -519,7 +508,7 @@ function poolRejects(cards: Card[], graces: Grace[]): Set<string> {
     /**
      * 은혜도 완화 비율에 들어간다 — P-22의 상한(0.30)이 카드 풀에만 걸려 있으면 신이 완화를 은혜로
      * 옮겨 통과하면서 더 강해진다(R-22의 아테나가 그 자리였다). 장당 기대값 평균에는 넣지 않는다:
-     * 은혜는 장수가 아니라 슬롯 하나라 평균의 분모가 아니다
+     * 은혜는 덱 카드가 아니라 런 중 얻는 인장이라 평균의 분모가 아니다
      */
     let boons = graces.filter((grace) => grace.patron === god && grace.tier === graceRatioTier).map(graceAsCard);
     // 신당 24~33장이다. 10장 미만은 풀이 아니라 후보 묶음이므로 재지 않는다
@@ -571,9 +560,6 @@ function failureFor(item: Item, cards: Card[], enemies: Enemy[]): FailureKey | u
   if (kind === "grace") {
     const grace = item as Grace;
     if (graceScopeFailure(grace)) return "token_scope";
-    const [low, high] = graceBand(grace.tier);
-    const value = graceValue(grace.effects, slotCards[grace.slot] ?? 0);
-    if (value < low || value > high) return "value_outlier";
   }
   return undefined;
 }
@@ -659,8 +645,7 @@ export function validateItems(items: Item[], basePool: Card[] = []): { accepted:
   const unplaced_groups = enemies.flatMap(({ groups }) => (groups ?? []).map(({ id }) => id)).filter((id) => !placed.has(id));
   /**
    * 3택1이 서지 않는 `신:tier`. 후보가 셋보다 적으면 화면이 두 칸짜리 「선택」을 띄운다 —
-   * `passive_coverage`와 같은 자리라 반려가 아니라 목록이다(탓할 항목이 없다). 슬롯 넷이 매 tier마다
-   * 다 찰 필요는 없다: 신당 슬롯 셋이면 그것으로 3택1이 선다
+   * `passive_coverage`와 같은 자리라 반려가 아니라 목록이다(탓할 항목이 없다). 신당 셋이면 3택1이 선다
    */
   const grace_coverage = items.some((item) => kindOf(item) === "grace")
     ? Object.keys(gods).flatMap((god) => graceMilestones.flatMap((tier) =>

@@ -1,9 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { CSSProperties, ReactNode } from "react";
-import { betDeposit } from "../../core/demands.ts";
-import { favorBoundaries } from "../../core/favor.ts";
-import { restHealing } from "../../core/map.ts";
-import { deckSize, type CardView, type PromiseView } from "../../sim/engine.ts";
+import { interventionEveryTurns } from "../../core/favor.ts";
+import type { CardView, PromiseView } from "../../sim/engine.ts";
 import { GameCard } from "./card.tsx";
 import { godName, placeName } from "./header.tsx";
 
@@ -44,20 +42,10 @@ export function Overlay({ title, wide, action, onClose, children }: {
   );
 }
 
-/**
- * 도움말 여섯 항목 — P-54가 걷어낼 상주 설명문들의 새 집이다. 문장은 **기존 화면 것을 그대로 옮겼다**
- * (새로 쓰면 새로 검수해야 한다). 값 셋(경계·회복량·덱 크기)은 코드에서 읽는다 — 여기 박으면
- * 규칙이 바뀔 때 도움말만 옛 자리에 남는다
- */
+/** 과업과 개입만 설명한다. 수치는 규칙에서 읽어 화면만 옛값에 남지 않게 한다 */
 const helpItems: [string, string][] = [
-  ["목표", "두 신의 호의를 관리하며 지하에서 지상까지 12층을 돌파하세요. 갈림길·카드·대상·보상·휴식·은혜·요구를 전부 당신이 고릅니다. 룰 봇이 대신 정하는 것은 없습니다."],
-  ["저울", `호의 ${favorBoundaries.devotion} 이상은 헌신, ${favorBoundaries.calm} 이상은 평온, ${favorBoundaries.anger} 이상은 분노, 그 아래는 진노입니다. 저울은 한 조우에 한 번 기웁니다. 합은 그대로고 한쪽이 오르면 반대쪽이 그만큼 내려갑니다 — 거절할 「거절」은 없습니다.`],
-  ["은혜", "은혜는 카드 한 장이 아니라 그 슬롯의 모든 카드에 붙습니다. 슬롯당 하나이고, 바꿔도 tier는 남습니다."],
-  ["내기표", "두 신이 이번 전투의 조건을 하나씩 냅니다. 하나를 고르면 상대 신의 호의가 그 자리에서 내려가고, 지키면 고른 신의 호의가 오릅니다."],
-  ["승부 카드", `조건 위에 덱의 한 장을 더 겁니다. 판돈은 이번 전투의 카드 보상과 최대 체력 ${betDeposit}입니다. 그 카드로 마지막 적을 처치하면 판돈이 돌아오고 그 한 장이 강화됩니다.`],
-  ["관망", "아무 편도 들지 않습니다. 판돈이 없고 카드 보상은 그대로 받습니다."],
-  ["쉼터", `체력을 ${restHealing} 회복하거나 카드를 지웁니다. 얇은 덱이 핵심 카드를 더 자주 뽑습니다. 강화는 같은 카드 두 장 중 한 장만 키웁니다.`],
-  ["시작 덱", `시작 덱은 언제나 ${deckSize}장입니다. 전투 보상에서 카드를 한 장 덱에 넣습니다 — 덱을 얇게 두려면 건너뛰세요. 조합 밖 신의 카드도 넣을 수 있지만 그 신의 호의는 아무것도 움직이지 않습니다.`],
+  ["과업", "맵의 과업 칸에서 다음 판정 가능한 전투의 조건을 고릅니다. 달성한 뒤 전투에서 이기면 호의와 과업 카드 한 장을 추가로 얻습니다."],
+  ["개입", `두 신이 2턴째부터 ${interventionEveryTurns}턴마다 현재 호의 단계에 맞춰 자동으로 행동합니다.`],
 ];
 
 export function HelpPanel() {
@@ -79,12 +67,10 @@ export function DeckPanel({ deck }: { deck: CardView[] }) {
   );
 }
 
-/** 확정된 약속 하나. 값은 App이 관측 스트림에서 수집한 표시용 누적이지 게임 상태가 아니다 */
+/** 확정된 과업 하나. 값은 App이 관측 스트림에서 수집한 표시용 누적이지 게임 상태가 아니다 */
 export type PromiseRecord = { god: string; rule: string; region: string; floor: number; settled: "kept" | "broken" };
 
-const settledName = { kept: "지킴", broken: "깨짐" } as const;
-
-/** 약속 저널 — 진행 중 → 지킴 → 깨짐 세 그룹. 진행 중은 지금 관측의 `promises` 그대로다 */
+/** 과업 저널 — 진행 중 → 달성 → 미달성 세 그룹 */
 export function JournalPanel({ active, history }: { active: PromiseView[]; history: PromiseRecord[] }) {
   const ongoing = active.filter(({ settled }) => !settled);
   const groups: [string, ReactNode[]][] = [
@@ -94,7 +80,7 @@ export function JournalPanel({ active, history }: { active: PromiseView[]; histo
       </p>
     ))],
     ...(["kept", "broken"] as const).map((outcome): [string, ReactNode[]] => [
-      settledName[outcome],
+      outcome === "kept" ? "달성" : "미달성",
       history.filter(({ settled }) => settled === outcome).map(({ god, rule, region, floor }, index) => (
         <p key={`${god}:${rule}:${index}`} className={`promise ${outcome}`} style={{ "--god-color": `var(--${god})` } as CSSProperties}>
           <b>{godName(god)}</b><span>{rule}</span><em>{placeName({ region, floor })}</em>

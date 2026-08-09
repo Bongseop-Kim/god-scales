@@ -48,16 +48,6 @@
           }
         ]
       },
-      "anger": {
-        "on_turn_start": [
-          {
-            "op": "apply_token",
-            "token": "shock",
-            "stacks": 1,
-            "target": "self"
-          }
-        ]
-      },
       "wrath": {
         "on_encounter_start": [
           {
@@ -158,6 +148,9 @@
       ],
       "reconcile": [
         "됐네! 그 정도면 들어줄 만하지."
+      ],
+      "fuse": [
+        "둘이 만났군. 하늘을 갈라 보게!"
       ]
     }
   },
@@ -205,15 +198,6 @@
             "op": "heal",
             "value": 1,
             "target": "self"
-          }
-        ]
-      },
-      "anger": {
-        "on_turn_start": [
-          {
-            "op": "heal",
-            "value": 1,
-            "target": "enemy"
           }
         ]
       },
@@ -316,6 +300,9 @@
       ],
       "reconcile": [
         "이제야 숨을 고르는군."
+      ],
+      "fuse": [
+        "두 물길이 만났군. 어디까지 휩쓸까?"
       ]
     }
   },
@@ -363,15 +350,6 @@
             "op": "block",
             "value": 1,
             "target": "self"
-          }
-        ]
-      },
-      "anger": {
-        "on_turn_start": [
-          {
-            "op": "heal",
-            "value": 3,
-            "target": "enemy"
           }
         ]
       },
@@ -474,6 +452,9 @@
       ],
       "reconcile": [
         "이 정도면 다시 이야기해 볼 만하네요."
+      ],
+      "fuse": [
+        "두 수가 맞았어요. 이제 판을 뒤집으세요."
       ]
     }
   },
@@ -519,15 +500,6 @@
           {
             "op": "damage",
             "value": 1,
-            "target": "enemy"
-          }
-        ]
-      },
-      "anger": {
-        "on_turn_start": [
-          {
-            "op": "heal",
-            "value": 2,
             "target": "enemy"
           }
         ]
@@ -631,6 +603,9 @@
       ],
       "reconcile": [
         "잘 싸웠어. 그건 인정하지."
+      ],
+      "fuse": [
+        "둘이 붙었군. 더 크게 터뜨려."
       ]
     }
   },
@@ -674,15 +649,6 @@
           {
             "op": "damage",
             "value": 1,
-            "target": "enemy"
-          }
-        ]
-      },
-      "anger": {
-        "on_turn_start": [
-          {
-            "op": "heal",
-            "value": 2,
             "target": "enemy"
           }
         ]
@@ -786,6 +752,9 @@
       ],
       "reconcile": [
         "다시 세기로 하자."
+      ],
+      "fuse": [
+        "둘이 하나가 됐네. 이제 같이 쏘자."
       ]
     }
   }

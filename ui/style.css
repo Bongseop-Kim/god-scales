@@ -343,12 +343,14 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
  * 상단 상태 바(P-54) — `RunHeader`(h1 + 「시드 N」)를 대체한다. **셸 밖 fixed**라 화면 전환에
  * 흔들리지 않고, `zoom`은 스스로 진다 — 폭을 `100vw / fit`으로 벌려 좁은 창에서도 전폭이다
  */
-.status-bar { position: fixed; top: 0; left: 0; z-index: 2; width: calc(100vw / var(--fit, 1)); height: 40px; background: rgba(9, 11, 17, .78); zoom: var(--fit, 1); }
+.status-bar { position: fixed; top: 0; left: 0; z-index: 2; width: calc(100vw / var(--fit, 1)); height: 68px; background: rgba(9, 11, 17, .78); zoom: var(--fit, 1); }
 /* 내용은 셸과 같은 1040 정렬 — 좌 체력·방어 · 중 호의 미터 둘 · 우 위치·턴/덱과 덱·약속 버튼 */
-.status-bar > div { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; width: 1040px; height: 100%; margin: 0 auto; font-size: .78rem; color: #9298aa; }
+.status-bar > div { display: grid; grid-template-columns: 1fr auto 1fr; grid-template-rows: 40px 28px; align-items: center; column-gap: 16px; width: 1040px; height: 100%; margin: 0 auto; font-size: .78rem; color: #9298aa; }
 .status-bar .vitals { display: flex; align-items: center; gap: 12px; white-space: nowrap; }
 .status-bar b { color: #f4efe5; font-variant-numeric: tabular-nums; }
 .status-bar .whereabouts { display: flex; align-items: center; justify-content: end; gap: 10px; white-space: nowrap; }
+.status-bar .active-quest { grid-column: 1 / -1; margin: 0; overflow: hidden; color: #c6a969; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+.status-bar .active-quest.empty { visibility: hidden; }
 .status-bar :is(.vitals, .whereabouts) button { padding: 2px 9px; border-radius: 5px; font-size: .72rem; }
 /* 미터 둘은 40px 바 안에 눕는다 — 전투 패널의 타일 꼴(테두리·2행)을 여기서 편다 */
 .status-bar .favor-row { display: flex; gap: 18px; }
@@ -358,15 +360,14 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
  * 런 화면의 셸 — 상단 바(40) 아래 남은 높이의 세로 중앙에 콘텐츠가 선다(P-54 §4).
  * `100vh`는 `zoom`만큼 짧아지므로 나눈다(`.setup`과 같은 이유)
  */
-.shell.run { display: grid; align-content: center; min-height: calc(100vh / var(--fit, 1)); padding: 40px 0 0; }
+.shell.run { display: grid; align-content: center; min-height: calc(100vh / var(--fit, 1)); padding: 68px 0 0; }
 /**
- * 약속 줄. **머리글 바로 아래, 판 위다** — 요구를 수락하고 들어온 전투에서 무엇을 약속했는지가
- * 화면에 하나도 없던 자리라 판보다 먼저 읽혀야 한다. 두 줄까지 온다(`omen`이 걸어 둔 것이 하나 더)
+ * 과업 줄. **머리글 바로 아래, 판 위다** — 판보다 먼저 읽혀야 한다. 단일 슬롯이라 한 줄만 온다.
  */
 .promise-row { display: grid; gap: 6px; margin-bottom: 16px; }
 .run-layout .promise-row { grid-column: 1 / -1; }
 /**
- * 한 단짜리 결정 패널(쉼터·보상·은혜·요구·신탁)은 680 중앙이다(P-54 §3) — 1040 전폭이면 선택지
+ * 한 단짜리 결정 패널(쉼터·보상·은혜·과업)은 680 중앙이다(P-54 §3) — 1040 전폭이면 선택지
  * 버튼이 화면 끝까지 늘어난다. 예외 하나: 쉼터의 카드 고르기(`wide`)만 전폭 — 덱 전체가 깔린다.
  * 케니 9-slice는 청동으로 미리 물들인 사본을 쓴다 — 원본은 흰 알파라 `filter`로 틴트하면 내용까지 물든다
  */
@@ -378,48 +379,33 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 /* 규칙 줄은 신 이름과 다른 무게다 — 이름은 누가 걸었는지고 이 줄은 무엇을 재는지다 */
 .promise span { flex: 1; color: #949aad; }
 .promise em { font-style: normal; font-variant-numeric: tabular-nums; }
-/* 예치한 최대 체력 — 판돈이라 규칙 줄과 현재값 사이에 선다. 값이 안 바뀌므로 폭이 흔들리지 않는다 */
-.promise .stake { flex: none; padding: 2px 8px; border-radius: 6px; background: rgba(198, 169, 105, .16); color: #c6a969; font-style: normal; font-size: .78rem; }
 /* 확정된 약속은 색이 신에서 결과로 넘어간다 — 그 뒤로는 값이 안 바뀌므로 현재값도 같이 죽는다 */
 .promise.kept { border-color: #6cc39b; color: #9de0c7; }
 .promise.broken { border-color: #4a5062; color: #757b8b; text-decoration: line-through; }
 .promise.broken span, .promise.kept span { color: inherit; }
-/**
- * 내기표(P-59) — 다섯 줄이 **언제나** 선다. 미선택 값도 `—` 한 글자를 세워 자리를 남기므로 조건을
- * 고르든 카드를 붙이든 아래가 당겨 올라오지 않는다(UI.md 제1규칙). 라벨 폭도 고정이다
- */
-.bet-sheet { display: grid; gap: 6px; margin: 4px 0 0; padding: 14px 16px; border: 1px solid #303648; border-radius: 10px; background: rgba(13, 16, 24, .6); font-size: .82rem; }
-.bet-sheet > div { display: grid; grid-template-columns: 78px 1fr; align-items: baseline; gap: 10px; }
-.bet-sheet dt { color: #7f8698; }
-.bet-sheet dd { margin: 0; color: #5c6274; }
-/* 채워진 칸만 340ms 한 번 들어온다 — 움직이는 것은 transform과 opacity뿐이다(UI.md) */
-.bet-sheet dd.filled { color: #d5d7de; animation: bet-fill .34s cubic-bezier(.23, 1, .32, 1); }
-@keyframes bet-fill { from { opacity: 0; transform: translateY(6px); } }
-/**
- * 승부 정산 — 카드 두 장이 화살표를 사이에 두고 선다. 입력을 막지 않고 한 번만 재생한다.
- * 자리는 카드 높이가 잡으므로 뒤집기가 꺼져도 3택1이 안 밀린다
- */
-.bet-settled { display: grid; gap: 10px; justify-items: center; margin-bottom: 16px; }
-.bet-settled > b { color: #c6a969; font-size: .82rem; letter-spacing: .12em; }
-.bet-settled > div { display: flex; align-items: center; gap: 14px; }
-.bet-settled em { color: #7f8698; font-style: normal; }
-.bet-settled .game-card:last-child { animation: bet-flip .34s cubic-bezier(.23, 1, .32, 1); }
-@keyframes bet-flip { from { opacity: .2; transform: rotateY(90deg); } }
+.quest-result { display: flex; align-items: center; gap: 10px; margin: 0 0 16px; padding: 8px 14px; border-left: 4px solid #6cc39b; background: rgba(21, 25, 35, .86); color: #9de0c7; }
+.quest-result span { flex: 1; color: #b8c8c1; }
+.quest-result em { font-style: normal; font-variant-numeric: tabular-nums; }
 /* 칸 사이는 격자 gap 하나로만 띈다 — 여덟 화면이 같은 간격을 쓰는 자리다 */
 .decision-panel .hint { margin-top: 0; }
 /* `position`은 파티클이 쓴다 — `.fx.spark`가 이 칸 가운데에 서려면 여기가 기준이어야 한다 */
 .map-panel, .decision-panel, .summary-grid article { position: relative; padding: 24px; border: 1px solid #303648; border-radius: 14px; background: rgba(21, 25, 35, .86); }
 .map-panel ol { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.map-panel li { display: grid; grid-template-columns: 40px repeat(3, 1fr); align-items: center; gap: 8px; }
+.map-panel li { display: grid; grid-template-columns: repeat(3, 1fr); align-items: center; gap: 8px; }
+/* 층 번호는 화면에서 지웠다 — 남은 글자는 시작 줄의 「시작/지하에서」뿐이라 칸 위에 통째로 선다 */
+.map-panel .start small { grid-column: 1 / -1; }
 .map-panel li small { color: #757b8b; font-size: .78rem; }
 .map-columns { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
 /* `padding`·`background`를 여기서 끄는 이유는 경로 화면의 칸이 `<button>`이라서다 — 안 끄면 12px 패딩이 딸려온다 */
 .map-node { position: relative; display: grid; height: 30px; padding: 0; place-items: center; border: 1px solid #303648; border-radius: 8px; background: none; color: #969cad; font-size: .84rem; font-style: normal; }
 /**
- * 병사가 지금 서 있는 칸. 16×16 마커는 그 크기가 곧 파일 크기라 확대하지 않는다(`art/ui/marker.md`).
- * 의사요소가 아니라 **진짜 요소인** 이유는 `layoutId`가 그것을 칸 사이로 옮기기 때문이다
+ * 병사가 지금 서 있는 칸. 원본은 700×952 그대로라 화면 크기는 여기서만 정한다(`art/ui/marker.md`) —
+ * 3:4 상자에 `contain`이라 어느 크기에서도 안 늘어난다.
+ * 의사요소가 아니라 **진짜 요소인** 이유는 `layoutId`가 그것을 칸 사이로 옮기기 때문이다.
+ * 가운데 정렬은 `inset: 0` + `margin: auto`다 — `transform`으로 옮기면 `layout` 애니메이션이
+ * 같은 속성을 덮어써서 이동 중에 마커가 튄다
  */
-.map-node .marker { position: absolute; top: -7px; right: -7px; width: 16px; height: 16px; background: url(../art/ui/marker.png) 0 0 / 16px 16px no-repeat; }
+.map-node .marker { position: absolute; inset: 0; margin: auto; width: 18px; height: 24px; background: url(../art/ui/marker.png) center / contain no-repeat; }
 .map-node.empty { border-color: transparent; }
 /**
  * 잠긴 칸. 열린 셋만 또렷하고, 이동 중에는 그 셋도 여기 걸린다.
@@ -434,8 +420,6 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .map-node.boss { border-color: #b2495f; color: #f28fa4; }
 /* 열린 갈래 셋. 청동 2px + 바깥 발광이 「여기가 지금 고를 자리」를 말한다 */
 .map-node.open { box-shadow: 0 0 0 2px #c6a969 inset, 0 0 14px rgba(198, 169, 105, .38); }
-/* hover는 밝기만 — 크기·여백을 바꿔 이웃 칸을 밀지 않는다(UI.md). 테두리 색은 `button:hover`가 든다 */
-.map-node.open:not(:disabled):hover { filter: brightness(1.3); }
 .decision-panel { display: grid; align-content: start; gap: 12px; }
 .choice { display: grid; grid-template-columns: 48px 1fr; gap: 2px 14px; padding: 18px; text-align: left; }
 /* 못 고르는 칸도 서되 죽는다 — 멀쩡해 보이는데 눌러도 조용한 버튼은 고장으로 읽힌다(UI.md) */
@@ -446,11 +430,11 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .choice b { align-self: end; }
 .choice small { color: #949aad; }
 /**
- * 요구 조건 한 줄. 신의 문장 **아래**에 따로 선다 — 시적인 문장이 조건을 대신하고 있었고 대신하지
+ * 과업 조건 한 줄. 신의 문장 **아래**에 따로 선다 — 시적인 문장이 조건을 대신하고 있었고 대신하지
  * 못했다(「여덟이다」가 무엇의 여덟인지 화면이 말하지 않았다). 합치지 않는 것이 이 줄의 전부다
  */
 .choice .rule { display: block; margin: 4px 0; color: #c6a969; font-style: normal; font-variant-numeric: tabular-nums; }
-/* 요구 화면의 신. 글자만 있던 화면에 **누가 말하는지**를 세운다 — 일러 다섯은 이미 있다 */
+/* 과업 화면의 신. 글자만 있던 화면에 **누가 말하는지**를 세운다 — 일러 다섯은 이미 있다 */
 .god-say { display: grid; grid-template-columns: 84px 1fr; align-items: center; gap: 14px; padding: 12px 16px; border-left: 4px solid var(--god-color); border-radius: 10px; background: rgba(12, 14, 20, .6); }
 /* 일러 다섯은 전부 1024×1536이다 — 비율로 자리를 먼저 잡아야 로드되는 순간 선택지들이 안 밀린다 */
 .god-say img { width: 84px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 8px; }
@@ -464,16 +448,14 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
  * 폭 760px은 오른쪽 패널이 없어져 통째로 남은 1040px을 쓰는 크기다(P-63) — 520px은 반을 배경에
  * 내주고 있었다. 그릇은 결정 화면 여섯과 같은 케니 청동 9-slice다
  */
-.map-panel.walkable { width: min(760px, 100%); margin: 0 auto; border: 12px solid transparent; border-radius: 0; border-image: url(../art/kenney/panel-border-007-bronze.png) 16 / 12px round; image-rendering: pixelated; }
-/* 「지하에서」 넉 자가 40px에서 접힌다 */
-.map-panel.walkable li { grid-template-columns: 64px repeat(3, 1fr); }
+.map-panel.walkable { width: min(760px, 100%); margin: 0 auto; }
 .map-panel.walkable li small { white-space: nowrap; }
 .map-panel.walkable .map-node { height: 72px; gap: 1px; }
 .map-panel.walkable .map-node .icon { width: 28px; height: 28px; }
 /* 이름이 아이콘 아래 칸 안에 선다 — 갈래 이름은 위치가 말하므로 `aria-label`에만 남는다 */
 .map-panel.walkable .map-node b { font-size: .74rem; font-weight: 600; }
-/* 마커 32px은 16×16 원본의 **정수 2배**다 — 그래서 픽셀이 안 뭉갠다(위 `image-rendering: pixelated`) */
-.map-panel.walkable .map-node .marker { top: -14px; right: -14px; width: 32px; height: 32px; background-size: 32px 32px; }
+/* 경로 화면의 마커는 결과 화면의 두 배다 — 72px 칸 안에서 이만해야 병사가 병사로 읽힌다 */
+.map-panel.walkable .map-node .marker { width: 36px; height: 48px; }
 /* 마커의 집. 종류가 없고 안 눌린다 — 저승 1층과 지상 1층에서만 선다 */
 .map-panel .start .map-node { border-style: dashed; }
 
@@ -486,6 +468,7 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 /* 약속·파워 칩 — 상태 바에서 한 뼘 띄운 좌측. 판보다 먼저 읽힌다. 빈 줄도 자리를 지킨다(UI.md) */
 .board-chips { display: grid; justify-items: start; gap: 6px; min-height: 34px; margin-top: 14px; }
 .board-chips .promise-row { margin-bottom: 0; }
+.intervention-count { padding: 2px 8px; border: 1px solid #5c6b8a; border-radius: 999px; background: rgba(92, 107, 138, .16); color: #cbd5ea; font-size: .72rem; font-variant-numeric: tabular-nums; }
 .stage-field { position: relative; min-height: 360px; }
 /**
  * 배우의 네 행을 위에서 아래로 고정한다. 칩은 마지막 행에서만 아래로 늘어나므로 상태가 몇 개든
@@ -613,11 +596,10 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .power-row { display: flex; flex-wrap: wrap; gap: 6px; min-height: 22px; }
 .power-row em { padding: 2px 8px; border: 1px solid #5c6b8a; border-radius: 999px; background: rgba(92, 107, 138, .16); color: #cbd5ea; font-size: .72rem; font-style: normal; }
 .power-row em b { margin-left: 4px; color: #fff; }
+.sabotage-row em { border-color: #a65f5a; background: rgba(166, 95, 90, .18); color: #f0aaa1; }
 /* 보상·카드 제거가 쓰는 줄. **부채꼴은 손패만이다**(`.fan`) — 3택1은 고르는 격자지 손이 아니다 */
 .hand { display: flex; flex-wrap: wrap; gap: 8px; }
 .hand .game-card:disabled { opacity: .45; }
-.reward-pages { display: flex; align-items: center; justify-content: center; gap: 12px; }
-.reward-pages span { color: #9298aa; font-variant-numeric: tabular-nums; }
 /**
  * 부채꼴. **호를 계산하지 않는다** — `transform-origin`을 카드 아래로 내리면 회전 하나가 호를 만든다.
  * `--i`(인덱스)와 `--n`(손패 수)만 React가 넣고 기하는 전부 여기 있다. 두 겹인 이유는 `ui/motion.css`에 있다
@@ -679,6 +661,8 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .game-card[data-god="athena"] { --frame: var(--athena); }
 .game-card[data-god="ares"] { --frame: var(--ares); }
 .game-card[data-god="artemis"] { --frame: var(--artemis); }
+.game-card.weakened { background: #26191c; box-shadow: inset 0 0 0 1px rgba(235, 136, 125, .28); }
+.game-card.weakened small { color: #eb887d; }
 /* 이름은 캡션이다 — 효과 숫자가 카드에서 제일 큰 글자다. 이름 최대 7자라 자를 것이 없다 */
 .game-card small { display: block; margin-top: 2px; color: #9298aa; font-size: .78rem; line-height: 1.3; }
 .game-card:disabled { cursor: default; border-color: #3c4256; }
@@ -690,7 +674,33 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 /* 못 내는 이유가 **비용이나 사거리**일 때만 젬이 빨강이다 — 대상 선택 중은 손 전체가 물러난다(`.fan.aiming`) */
 .fan:not(.aiming) .game-card:disabled .cost-gem { border-color: #eb887d; color: #eb887d; }
 /* 예외만 적는다 — 149장 중 20장(파워 6 · 전체 14)이다. 배지 슬롯은 하나뿐이라 그 둘에 줬다 */
-.card-kind { position: absolute; top: 5px; right: 5px; padding: 1px 6px; border: 1px solid #4a5165; border-radius: 4px; background: rgba(17, 19, 26, .88); color: #d5d7de; font-size: .58rem; font-style: normal; }
+.card-kind { position: absolute; top: 29px; right: 5px; padding: 1px 6px; border: 1px solid #4a5165; border-radius: 4px; background: rgba(17, 19, 26, .88); color: #d5d7de; font-size: .58rem; font-style: normal; }
+.card-seals { position: absolute; z-index: 1; top: 5px; right: 5px; display: flex; min-width: 22px; min-height: 22px; gap: 2px; justify-content: end; }
+.card-seals em, .seal-badge { display: grid; place-items: center; width: 20px; height: 20px; border: 1px solid var(--seal-color, #c6a969); border-radius: 50%; background: #171b25; color: var(--seal-color, #c6a969); }
+.card-seals .icon { width: 14px; height: 14px; }
+.card-seals .preview { opacity: .55; }
+.fusion-preview { display: block; color: #f1d277; font-style: normal; }
+.fusion-scene { position: fixed; z-index: 3; inset: 0; display: grid; grid-template-columns: 1fr 220px 1fr; place-items: center; border: 0; background: rgba(4, 5, 9, .9); color: #fff; }
+.fusion-scene figure { position: relative; margin: 0; filter: drop-shadow(0 0 28px var(--god-color)); }
+.fusion-scene figure:first-of-type { animation: fusion-left .8s both; }
+.fusion-scene figure:last-of-type { animation: fusion-right .8s both; }
+.fusion-god { width: min(30vw, 300px); max-height: 70vh; object-fit: cover; }
+.fusion-particle { position: absolute; inset: 35% -10%; overflow: hidden; mix-blend-mode: screen; }
+.fusion-particle img { position: absolute; top: 50%; left: 0; width: 400%; max-width: none; transform: translateY(-50%); animation: fusion-strip .8s steps(4, jump-end) both; }
+.fusion-cards { position: relative; width: var(--card-w); }
+.fusion-cards::after { content: ""; position: absolute; inset: -30px; background: #fff; pointer-events: none; animation: fusion-flash 1.2s both; }
+.fusion-cards > span { display: block; }
+.fusion-before { animation: fusion-before 1.2s both; }
+.fusion-after { position: absolute; inset: 0; animation: fusion-after 1.2s both; }
+.fusion-cards strong { display: flex; justify-content: center; gap: 6px; margin-top: 16px; color: #f1d277; }
+.fusion-cards strong .icon { width: 20px; height: 20px; }
+@keyframes fusion-before { 0%, 42% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(.8); } }
+@keyframes fusion-after { 0%, 42% { opacity: 0; transform: scale(.8); } 70%, 100% { opacity: 1; transform: scale(1.12); } }
+@keyframes fusion-left { from { opacity: 0; transform: translateX(-80px); } to { opacity: 1; transform: none; } }
+@keyframes fusion-right { from { opacity: 0; transform: translateX(80px); } to { opacity: 1; transform: none; } }
+@keyframes fusion-strip { from { transform: translate(0, -50%); } to { transform: translate(-100%, -50%); } }
+@keyframes fusion-flash { 0%, 48%, 62%, 100% { opacity: 0; } 54% { opacity: .9; } }
+@media (prefers-reduced-motion: reduce) { .fusion-scene figure, .fusion-particle img { animation: none; } .fusion-cards::after, .fusion-before { display: none; } .fusion-after { animation: none; opacity: 1; transform: none; } }
 /**
  * 등급 칩. 이름 줄 앞에 서는 이유는 배지 슬롯이 이미 파워·전체의 것이고 **등급은 그 둘과 직교**라
  * 자리를 다투면 하나가 사라진다. 신 색(`--frame`)을 쓰지만 글자가 뜻을 다 들고 있다 — tier1(124장)에는 없다
@@ -729,6 +739,7 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .card-art > span { color: rgba(255, 255, 255, .28); font-size: 2rem; }
 .card-art.missing img { display: none; }
 .actions { display: flex; align-items: center; gap: 10px; margin-top: 20px; }
+.restart-actions { justify-content: flex-end; }
 /* 주요 행동은 왼쪽 끝, 물러난 반출은 오른쪽 끝 — 둘이 붙어 서면 강등이 안 읽힌다 */
 .actions .ghost { margin-left: auto; }
 

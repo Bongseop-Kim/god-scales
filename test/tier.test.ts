@@ -48,13 +48,10 @@ describe("tier2 reward slots", () => {
    * 표에 있다). 갈래 종류는 관측의 격자에서 읽고, **갈래는 봇에게 안 맡긴다** — `choosePath`는 체력을
    * 보고 고르므로 30시드를 돌려도 정예를 한 번도 안 밟는다.
    *
-   * **신을 꺾은 조우는 갈래와 무관하게 셋이다**(P-47) — 판 위에서 실제로 정예였다. 그래서 판에 신이
-   * 섰던 조우는 갈래가 아니라 `god` 칸으로 센다: 안 가르면 「일반 전투는 0」이 진노를 만난 자리에서
-   * 흔들려 규칙이 둘 다 안 서게 된다
+   * 신을 꺾어도 갈래의 보상 규칙은 바뀌지 않는다. `god` 칸은 그 일반 전투를 따로 확인한다.
    */
   it("gives normal combat none and elite and boss all three", () => {
     const counts = new Map<string, Set<number>>();
-    // 30 → 65: 카드 보상이 판돈이 된 뒤로(P-59) 정예만 밟는 이 드라이버가 지상 보스까지 못 간다 — 65시드가 여섯 자리를 다 밟는다
     for (let seed = 1; seed <= 65; seed += 1) {
       const steps = runSteps(seed);
       let step = steps.next();
@@ -62,7 +59,7 @@ describe("tier2 reward slots", () => {
       while (!step.done) {
         if (step.value.phase === "path") sawGod = false;
         if (step.value.phase === "card") sawGod ||= step.value.observation.enemies.some(({ id }) => id.startsWith("enemy_god_"));
-        if (step.value.phase === "reward" && !step.value.observation.quest) {
+        if (step.value.phase === "reward" && !step.value.observation.questReward) {
           const { depth, lane, grid, region } = step.value.observation;
           const key = sawGod ? "god" : `${region}:${grid[depth][lane]}`;
           const tier2 = step.value.options.filter((id) => tierOf.get(id) === 2).length;
@@ -73,8 +70,19 @@ describe("tier2 reward slots", () => {
         step = steps.next(elite ?? step.value.bot);
       }
     }
-    // 진노 신을 꺾은 조우는 정예 대우다 — 65시드가 그 자리를 실제로 밟는다
-    expect(counts.get("god")).toEqual(new Set([3]));
+    // 진노 신은 시작 호의로 직접 세운다 — 우연히 그 단계까지 내려가는 시드를 찾는 것은 규칙 검증이 아니다
+    const wrath = runSteps(1, undefined, undefined, undefined, 100);
+    let step = wrath.next();
+    let sawGod = false;
+    while (!step.done) {
+      if (step.value.phase === "card") sawGod ||= step.value.observation.enemies.some(({ id }) => id.startsWith("enemy_god_"));
+      if (step.value.phase === "reward" && sawGod && !step.value.observation.questReward) {
+        counts.set("god", new Set([step.value.options.filter((id) => tierOf.get(id) === 2).length]));
+        break;
+      }
+      step = wrath.next(step.value.bot);
+    }
+    expect(counts.get("god")).toEqual(new Set([0]));
     expect(counts.get("underworld:combat")).toEqual(new Set([0]));
     expect(counts.get("surface:combat")).toEqual(new Set([0]));
     expect(counts.get("surface:elite")).toEqual(new Set([3]));

@@ -1,14 +1,12 @@
 import { nonRivalDemandPenalty, rivalDemandPenalty, shiftFavor } from "./favor.ts";
-import type { GameState } from "./state.ts";
 
 export const demandAxes = ["target_spread", "damage_taken", "turn_economy", "token_load"] as const;
 export type DemandAxis = (typeof demandAxes)[number];
 export type PenaltyKey = "rival_18" | "non_rival_9" | "none";
-/** 지키면 들어오는 것. **호의 하나뿐이다** — 카드 보상과 승부 카드 강화는 판돈 표가 들고 데이터가 아니다 */
+/** 지키면 들어오는 것. **호의 하나뿐이다** — 카드 보상은 엔진이 과업 보상으로 고정한다 */
 export type DemandReward = { favor: number };
 /**
- * 신 하나가 내는 조건 하나. 두 단(수락·시련)은 없앴다 (P-59) — 갈림은 한 신의 두 값이 아니라
- * **경쟁하는 두 신**이고, 판돈은 데이터가 아니라 내기표가 든다
+ * 신 하나가 내는 과업 조건 하나. 과업 노드는 후원 신 둘 중 하나를 고른다.
  */
 export type Demand = {
   id: string;
@@ -28,12 +26,6 @@ export type Demand = {
 export type DemandOffer = { action: string; god: string; other: string; text: string; rule: string; reward: DemandReward; penalty: number };
 
 /**
- * 승부 카드를 걸 때 내려놓는 최대 체력. **판돈이지 대가가 아니다** — 지키면 상한이 그대로 돌아오고
- * 못 지키면 영구히 잃는다. 데이터가 아니라 상수인 이유는 다섯 신이 같은 저울을 쓰기 때문이다
- */
-export const betDeposit = 8;
-
-/**
  * core는 data/*.json을 읽지 않는다(호출자가 넘긴다). 이 한 벌만 예외로 상수인데, demandPenalty를
  * 부르는 모든 자리에 신 데이터를 실어보내는 것보다 싸다 — data/gods.json과 같은지는 테스트가 고정한다
  */
@@ -42,7 +34,7 @@ export const pairKey = (left: string, right: string) => [left, right].sort().joi
 
 /**
  * 그 조건이 서려면 조우에 적이 몇 있어야 하는가. `target_spread`의 `>=`만 조우 크기를 요구하고 나머지는
- * 요구의 하한을 그대로 쓴다 — 게이트(`demandFailure`)와 엔진(`askDemand`)이 같은 한 줄을 읽는다
+ * 과업의 하한을 그대로 쓴다 — 게이트(`demandFailure`)와 엔진이 같은 한 줄을 읽는다
  */
 export const demandEnemies = (condition: string, fallback: number): number =>
   Number(condition.match(/hit_targets_in_turn >= (\d+)/)?.[1] ?? fallback);
@@ -54,21 +46,8 @@ export function demandPenalty(patron: string, other: string): { amount: number; 
 }
 
 /**
- * 판돈을 **지금** 내려놓는다 — 내기를 확정하는 순간 최대 체력이 실제로 내려가고, 그래서 승부 카드가
- * 「걸었다」는 말을 갖는다. 바닥은 1이므로 **실제로 빠진 양**을 돌려준다: 성공했을 때 되돌리는 것이
- * 그 값이라야 상한이 조용히 늘어나는 자리가 없다
- */
-export function payDeposit(state: GameState, amount: number): number {
-  const roof = state.combat.player.maxHp;
-  state.combat.player.maxHp = Math.max(1, roof - amount);
-  state.combat.player.hp = Math.min(state.combat.player.hp, state.combat.player.maxHp);
-  return roof - state.combat.player.maxHp;
-}
-
-/**
  * 편을 드는 순간 **상대는 이미 기분이 상한다.** 선불이라 지키든 못 지키든 이미 나간 값이고, 그래서
- * 내기표가 「받을까 말까」가 아니라 계산이 된다 — 옛 시련의 선불 대가가 서던 자리를 그대로 잇는다.
- * 관망에는 이 줄이 없다: 아무 편도 안 들었으므로 아무도 안 상한다 (P-59)
+ * 과업을 고르는 결정이 된다. 지나가면 아무 편도 안 들었으므로 이 줄도 없다.
  */
 export function takeSide(favor: Record<string, number>, patron: string, other: string): PenaltyKey {
   const penalty = demandPenalty(patron, other);
@@ -78,7 +57,7 @@ export function takeSide(favor: Record<string, number>, patron: string, other: s
 
 /**
  * 지킨 조건만 넘어온다(`reward`가 없으면 관망이거나 못 지킨 것이다) — 지키지 못한 약속은 아무것도
- * 주지 않는다. 실패 벌금은 만들지 않는다 (R-5). 판돈(카드 보상·최대 체력)은 엔진이 든다
+ * 주지 않는다. 실패 벌금은 만들지 않는다 (R-5).
  */
 export function resolveDemand(favor: Record<string, number>, patron: string, reward?: DemandReward): void {
   if (reward?.favor) shiftFavor(favor, patron, reward.favor);

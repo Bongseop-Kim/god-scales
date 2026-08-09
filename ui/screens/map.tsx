@@ -8,12 +8,12 @@ import { Icon } from "../shared/icon.tsx";
 import { playSound } from "../shared/sfx.ts";
 
 const laneName = ["왼쪽", "가운데", "오른쪽"];
-const nodeLabel: Record<MapNodeType, string> = { combat: "전투", elite: "정예", rest: "쉼터", omen: "예고", boss: "보스" };
+const nodeLabel: Record<MapNodeType, string> = { combat: "전투", elite: "정예", rest: "쉼터", omen: "과업", boss: "보스" };
 const nodeDetail: Record<MapNodeType, string> = {
   combat: "보상을 노리고 위험을 감수합니다.",
   elite: "더 강한 편성입니다. 보상은 전투와 같습니다.",
   rest: "체력을 회복하거나 카드를 지웁니다.",
-  omen: "신이 한 번 더 조건을 겁니다. 무엇인지는 들어가야 압니다.",
+  omen: "다음 판정 가능한 전투의 과업을 고릅니다.",
   boss: "지역의 끝입니다.",
 };
 
@@ -115,13 +115,11 @@ export function MapPanel({ grid, region, open, here, taken = [], onEnter }: {
           const row = grid[depth] ?? [];
           return (
             <li key={depth}>
-              <small>{mapSlot(depth).floor}층</small>
               {Array.from({ length: laneCount }, (_, lane) => {
                 const type = row[lane];
                 const option = open?.depth === depth ? open.options.find((choice) => choice.startsWith(`${lane}:`)) : undefined;
                 const className = `map-node${type ? ` ${type}` : " empty"}${taken[depth] === lane ? " current" : ""}${standing(depth, lane) ? " here" : ""}${option ? " open" : ""}`;
-                // 읽는 그림에서는 칸이 16px 아이콘 하나다 — 이름은 `title`이 든다. `omen`도 「예고」까지는
-                // 말한다: 감추는 것은 종류가 아니라 그 안의 내용이다
+                // 읽는 그림에서는 칸이 16px 아이콘 하나다 — 이름은 `title`이 든다
                 if (!onEnter || !type) {
                   return (
                     <i className={className} key={lane} title={type ? nodeLabel[type] : undefined}>

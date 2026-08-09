@@ -12,12 +12,9 @@ export type ReplayAction =
   | { type: "rest"; choice: RestChoice }
   | { type: "rest_card"; choice: string }
   | { type: "grace"; choice: string }
-  /** 고른 신의 id 또는 `"reject"`(관망). 두 신이 조건을 하나씩 내므로 답이 곧 이름이다 (P-59) */
+  | { type: "grace_card"; choice: string }
+  /** 과업을 맡길 신의 id 또는 `"reject"`(지나간다) */
   | { type: "demand"; choice: string }
-  /** 승부 카드의 **덱 인덱스** 또는 `"single"`(이대로 건다) */
-  | { type: "bet_card"; choice: string }
-  /** `"obey"`(따른다) · `"refuse"`(내 손으로 선다). 옛 로그에는 없다 — 없으면 봇이 대신 답한다 */
-  | { type: "oracle"; choice: "obey" | "refuse" }
   /** `choice: ""`는 건너뛰기다. 기록하지 않으면 재생 때 봇이 대신 한 장 집는다 */
   | { type: "reward"; choice: string };
 /**

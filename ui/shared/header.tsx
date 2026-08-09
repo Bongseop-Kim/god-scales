@@ -1,16 +1,16 @@
 import { useEffect, useRef } from "react";
 import type { CSSProperties } from "react";
-import { favorBoundaries, favorInitial, favorStage, interventionEveryTurns, type FavorGod, type FavorStage, type LineTrigger, type StageEffect, type StageHook } from "../../core/favor.ts";
+import { favorBoundaries, favorInitial, favorStage, type FavorGod, type FavorStage, type LineTrigger, type StageEffect, type StageHook } from "../../core/favor.ts";
 import godDataJson from "../../data/gods.json" with { type: "json" };
 import type { RunView } from "../../sim/engine.ts";
 import { effectText } from "./card.tsx";
 import { speak } from "./fx.ts";
 
-/** 트리거 아홉은 `core/favor.ts`의 한 벌이다 — 게이트(`tools/validate.ts`)가 같은 것을 센다 */
+/** 트리거 열은 `core/favor.ts`의 한 벌이다 — 게이트(`tools/validate.ts`)가 같은 것을 센다 */
 type GodLines = Partial<Record<LineTrigger, string[] | Partial<Record<FavorStage, string[]>>>>;
 const gods = godDataJson as (FavorGod & { name: string; lines: GodLines })[];
 const godNames = new Map(gods.map(({ id, name }) => [id, name]));
-/** 신 일러 다섯. 요구·컷인·발화가 같은 다섯 장을 쓴다 — 이름과 같은 자리에서 나눠 준다 */
+/** 신 일러 다섯. 과업·컷인·발화가 같은 다섯 장을 쓴다 — 이름과 같은 자리에서 나눠 준다 */
 export const godArt = import.meta.glob<string>("../../art/gods/*.webp", { eager: true, query: "?url", import: "default" });
 const godLines = new Map(gods.map(({ id, lines }) => [id, lines]));
 
@@ -34,11 +34,6 @@ export const stageName: Record<FavorStage, string> = { devotion: "헌신", calm:
 /** 개입의 대상. 신은 대상을 효과마다 갖는다 — 카드와 달라서 `effectText`의 「전체 ·」를 쓸 수 없다 */
 const stageTargets = { self: "나에게", enemy: "적 하나에게", all_enemies: "적 전체에게" } as const;
 
-/**
- * 그 신이 이 단계에서 하는 일 — 조우 시작 것과 **매 턴** 것을 나눠 준다. 네 단계가 다 개입하므로
- * (P-34) 평온·분노도 빈 문자열이 아니다. 진노가 무엇을 할지 모르면 미터의 경고색이 「나쁘다」까지만
- * 말하고 끝난다
- */
 /**
  * 그 신이 이 단계·이 훅에서 하는 일. **문장도 파티클도 여기 하나에서 읽는다** — 화면이
  * `data/gods.json`을 두 경로로 읽으면 컷인 문장과 파티클이 다른 개입을 그린다
@@ -81,7 +76,7 @@ export function FavorMeter({ god, value, grace }: { god: string; value: number; 
     seen.current = stage;
   });
   const { start, turn } = godStageText(god, stage);
-  const stageText = [stageName[stage], start && `조우 시작에 ${start}`, turn && `${interventionEveryTurns}턴마다 ${turn}`].filter(Boolean).join(" · ");
+  const stageText = [stageName[stage], start, turn].filter(Boolean).join(" · ");
   return (
     <div
       className={`favor ${stage}${crossed ? " crossed" : ""}`}
@@ -134,8 +129,11 @@ export function StatusBar({ view, turn, block, onOverlay, onRestart }: {
         <span className="whereabouts">
           {placeName(view)}{turn !== undefined && ` · ${turn}턴`}
           <button type="button" onClick={() => onOverlay("deck")}>덱 {view.deck.length}</button>
-          <button type="button" onClick={() => onOverlay("journal")}>약속</button>
+          <button type="button" onClick={() => onOverlay("journal")}>과업</button>
         </span>
+        <p className={`active-quest${view.quest ? "" : " empty"}`}>
+          {view.quest ? `진행 중인 과업 · ${godName(view.quest.god)} · ${view.quest.rule}` : "진행 중인 과업"}
+        </p>
       </div>
     </header>
   );

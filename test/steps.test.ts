@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import cardData from "../data/cards.json" with { type: "json" };
 import godData from "../data/gods.json" with { type: "json" };
-import { oracleSwing } from "../core/favor";
+import { turnsUntilIntervention } from "../core/favor";
 import { cardLevel } from "../core/rules";
 import { endTurnAction, gods, run, runSteps, type Decision } from "../sim/engine";
 import type { ReplayAction } from "../sim/replay";
@@ -11,8 +11,8 @@ const pickPath = (decision: Decision, type: string) => decision.options.find((op
 
 describe("steppable engine", () => {
   it("stops at every decision phase", () => {
-    // 예고가 영구 퀘스트가 된 뒤 열 종류를 전부 지나는 첫 시드는 2다
-    const steps = runSteps(2);
+    // 아홉 종류를 전부 지나는 시드가 92다
+    const steps = runSteps(92);
     const seen = new Set<string>();
     let step = steps.next();
     while (!step.done) {
@@ -21,7 +21,7 @@ describe("steppable engine", () => {
       const answer = step.value.phase === "path" ? pickPath(step.value, "rest") : step.value.phase === "rest" ? "remove" : step.value.bot;
       step = steps.next(answer);
     }
-    expect(seen).toEqual(new Set(["path", "card", "target", "rest", "rest_card", "reward", "grace", "demand", "bet_card", "oracle"]));
+    expect(seen).toEqual(new Set(["path", "card", "target", "rest", "rest_card", "reward", "grace", "grace_card", "demand"]));
   });
 
   /**
@@ -46,19 +46,16 @@ describe("steppable engine", () => {
     }
   });
 
-  it("offers three of that god's graces, each on a distinct slot", () => {
+  it("offers three graces and then the deck cards to seal", () => {
     const patrons = new Set(["zeus", "athena"]);
     /**
      * 「덱 N장」이 정말 지금 덱을 세는지 본다. 시작 덱 배치는 여기에 적지 않는다 — 그러면 엔진의
      * 사본이 된다. 지도 관측이 이미 덱을 그대로 실어 오므로 마지막 것을 든다
      */
-    let deck: string[] = [];
-    const steps = runSteps(1);
+    const steps = runSteps(4);
     let step = steps.next();
     while (!step.done && step.value.phase !== "grace") {
       // 보상은 지도 관측 **뒤에** 덱을 늘린다 — 그 사이에 집은 카드를 얹어야 은혜 화면과 같은 덱이다
-      if (step.value.phase === "path" || step.value.phase === "rest") deck = step.value.observation.deck.map(({ id }) => id);
-      if (step.value.phase === "reward" && step.value.bot) deck.push(step.value.bot);
       step = steps.next(step.value.bot);
     }
     if (step.done || step.value.phase !== "grace") throw new Error("expected a grace decision");
@@ -67,14 +64,12 @@ describe("steppable engine", () => {
     expect(patrons.has(god)).toBe(true);
     expect([2, 4, 6]).toContain(tier);
     expect(offer).toHaveLength(3);
-    expect(new Set(offer.map(({ slot }) => slot)).size).toBe(3);
     for (const grace of offer) {
       expect(grace.id.startsWith(`grace_${god}_`), grace.id).toBe(true);
       expect(grace.effects.length).toBeGreaterThan(0);
-      // 「덱 N장」은 지금 덱의 그 태그 카드 수다 — 은혜가 몇 장에 붙는지가 결정의 근거다
-      // 덱에는 `+N` 붙은 id가 섞여 있다 — base로 되돌리지 않으면 강화된 카드가 태그 없이 세어진다
-      expect(grace.cards).toBe(deck.filter((id) => cardData.find((card) => card.id === cardLevel(id).base)?.tags.includes(grace.slot)).length);
     }
+    const cardStep = steps.next(step.value.bot);
+    expect(cardStep.done || cardStep.value.phase).toBe("grace_card");
   });
 
   it("driving it with bot defaults equals run()", () => {
@@ -89,9 +84,9 @@ describe("steppable engine", () => {
 
   it("reports the damage of the previous decision once", () => {
     const steps = runSteps(1);
-    // 요구는 전투 앞에서 물으므로 첫 결정이 카드가 아니다 — 카드 결정까지 봇 답으로 넘긴다
+    // 첫 전투는 과업 없이 시작하고 카드 결정으로 바로 들어간다
     let first = steps.next();
-    while (!first.done && first.value.phase !== "card") first = steps.next(first.value.bot);
+    if (!first.done && first.value.phase === "path") first = steps.next(first.value.bot);
     if (first.done || first.value.phase !== "card") throw new Error("expected a card decision");
     expect(first.value.observation.hits).toEqual([]);
 
@@ -111,34 +106,14 @@ describe("steppable engine", () => {
     expect(hit.amount).toBe(Math.round((struck.maxHp - struck.hp) * 10) / 10);
     expect(after.value.observation.hitSeq).toBe(1);
     expect(after.value.observation.hitSource).toBe("attack");
-    // 같은 피해가 두 번 튀지 않도록 seq는 새 피해에서만 오른다. 턴을 넘기면 피해 뭉치가 **둘** 생긴다 —
-    // 적의 공격(2)과 2턴 시작의 신 개입(3)이다. 개입을 안 세면 화면이 그 피해를 못 튀긴다 (P-34).
-    // 신탁이 그 **사이**에 선다(P-46): 개입 앞이라 ±12가 넘긴 단계로 그 턴의 개입이 터진다
-    const oracle = steps.next(endTurnAction);
-    if (oracle.done || oracle.value.phase !== "oracle") throw new Error("expected an oracle decision");
-    expect(oracle.value.observation.hitSeq).toBe(2);
-    expect(oracle.value.observation.hitSource).toBe("enemy");
-    expect(steps.next(oracle.value.bot).value).toMatchObject({ observation: { hitSeq: 3, hitSource: "favor" } });
+    // 턴을 넘기면 적의 공격 뒤 2턴 개입이 자동으로 이어지고, 다음 카드 결정에 마지막 피해가 실린다
+    const nextTurn = steps.next(endTurnAction);
+    if (nextTurn.done || nextTurn.value.phase !== "card") throw new Error("expected the next card decision");
+    expect(nextTurn.value.observation).toMatchObject({ turn: 2, hitSeq: 3, hitSource: "favor" });
   });
 
-  /**
-   * 신탁은 **저울이다** — 합이 그대로고 한쪽이 오르면 반대쪽이 그만큼 내려간다. 이 한 줄이 「한쪽만
-   * 올리는 수도꼭지」와 갈라 준다: 그쪽은 봇이 언제나 공짜인 쪽만 눌러 승률이 통째로 올라간다
-   * (실측 0.457 → 0.755, reviews/46-presence.md). 첫 신탁만 본다 — 0·100에 붙으면 `shiftFavor`가 자른다
-   */
-  it("tilts favor by the swing in both directions and keeps the sum", () => {
-    for (const answer of ["obey", "refuse"]) {
-      const steps = runSteps(1);
-      let step = steps.next();
-      while (!step.done && step.value.phase !== "oracle") step = steps.next(step.value.bot);
-      if (step.done || step.value.phase !== "oracle") throw new Error("expected an oracle decision");
-      const { god, other, favor } = step.value.observation;
-      const next = steps.next(answer);
-      if (next.done) throw new Error("expected a decision after the oracle");
-      const after = next.value.observation.favor;
-      expect(after[god] - favor[god], answer).toBe(answer === "obey" ? oracleSwing : -oracleSwing);
-      expect(after[god] + after[other], answer).toBe(favor[god] + favor[other]);
-    }
+  it("derives the next automatic intervention from turns 2, 5, and 8", () => {
+    expect([1, 2, 3, 4, 5].map(turnsUntilIntervention)).toEqual([1, 3, 2, 1, 3]);
   });
 
   it("adds the reward pick to the deck and honors a scripted skip", () => {

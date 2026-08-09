@@ -10,12 +10,13 @@ import type { ReplayAction } from "../sim/replay.ts";
 import { bossLane, generateMap } from "../core/map.ts";
 import { upgraded, type Card } from "../core/rules.ts";
 import { App, patronPair, RunOpening } from "../ui/app.tsx";
-import { cardArtCandidates, type CardArtSource } from "../ui/shared/art-keys.ts";
-import { conditionLabel } from "../ui/shared/card.tsx";
-import { BetScreen, DemandScreen, GraceScreen, OracleScreen, RestScreen } from "../ui/screens/choices.tsx";
+import { cardArtCandidates, cardGod, cardTag, particleStrip, type CardArtSource } from "../ui/shared/art-keys.ts";
+import { cardParticleOf, conditionLabel } from "../ui/shared/card.tsx";
+import { DemandScreen, GraceScreen, RestScreen } from "../ui/screens/choices.tsx";
 import { CombatScreen } from "../ui/screens/combat.tsx";
 import { replayPayload } from "../ui/shared/export.ts";
 import { StatusBar } from "../ui/shared/header.tsx";
+import { HelpPanel } from "../ui/shared/overlay.tsx";
 import { musicForScreen, playSound, sound } from "../ui/shared/sfx.ts";
 import { MapPanel, MapScreen } from "../ui/screens/map.tsx";
 import { RewardScreen } from "../ui/screens/reward.tsx";
@@ -53,6 +54,15 @@ function playByHand(seed: number, pick: (decision: Decision) => string): { resul
  * dev 서버와 Aside 브라우저가 필요해 vitest에 들어가지 않는다
  */
 describe("browser replay export", () => {
+  it("gives every card branch and god a distinct particle strip", () => {
+    expect(new Set(Object.values(particleStrip).flatMap(Object.values)).size).toBe(20);
+    for (const card of cards as (Card & CardArtSource)[]) {
+      const tag = cardTag(card);
+      const god = cardGod(card);
+      if (tag && god) expect(cardParticleOf(card.id)).toBe(particleStrip[tag][god]);
+    }
+  });
+
   it("explains every enemy passive icon in the token dictionary", () => {
     const markup = renderToStaticMarkup(createElement(TokenDictionary));
     expect(unresolvedIcons(markup)).toEqual([]);
@@ -61,6 +71,8 @@ describe("browser replay export", () => {
     }
     expect(markup).toContain("스택마다 사거리 안 아군의 단일 대상 피해를 대신 받음");
     expect(markup).toContain("공격이 아닌 카드를 내면 광란 +스택");
+    expect(markup).toContain("<b>훼방</b>");
+    expect(markup).toContain("<b>파워</b>");
   });
 
   it("renders every decision screen from its observation alone", () => {
@@ -73,14 +85,13 @@ describe("browser replay export", () => {
       rest_card: (decision) => createElement(RestScreen, { decision, onAnswer: () => {} }),
       reward: (decision) => createElement(RewardScreen, { decision, onAnswer: () => {} }),
       grace: (decision) => createElement(GraceScreen, { decision, onAnswer: () => {} }),
+      grace_card: (decision) => createElement(GraceScreen, { decision, onAnswer: () => {} }),
       demand: (decision) => createElement(DemandScreen, { decision, onAnswer: () => {} }),
-      bet_card: (decision) => createElement(BetScreen, { decision, onAnswer: () => {} }),
-      oracle: (decision) => createElement(OracleScreen, { decision, onAnswer: () => {} }),
     };
     const seen = new Set<string>();
     // 배포 조합이 아닌 아레스+아르테미스로 돈다 — 상태 바가 상수라면 여기서 "제우스"가 나온다.
-    // 시드 4 → 5: 여덟 화면을 다 지나는 시드다 (P-31의 파워로 시드 4가 갈림길 전에 끝났다)
-    const steps = runSteps(5, undefined, ["ares", "artemis"]);
+    // 자동 개입 계약에서 여덟 화면을 다 지나는 시드다
+    const steps = runSteps(45, undefined, ["ares", "artemis"]);
     let step = steps.next();
     while (!step.done) {
       const { phase, bot } = step.value;
@@ -163,30 +174,29 @@ describe("browser replay export", () => {
     // 단계 펄스는 **경계를 넘는 순간에만** 돈다 — 첫 렌더에 붙으면 미터 둘이 번쩍인다
     expect(bar).not.toContain("crossed");
     // 진노는 이제 신을 적으로 부른다 — `join`이 「나에게 join 0」으로 읽히면 화면이 거짓말을 한다
-    expect(bar).toContain("진노 · 조우 시작에 나에게 감전 2 · 제우스가 적으로 합류");
+    expect(bar).toContain("진노 · 나에게 감전 2 · 제우스가 적으로 합류 · 나에게 감전 2");
     expect(bar).toContain("헌신 70 / 평온 30 / 분노 10");
     expect(bar).toContain("은총 3");
+
+    const lost = renderToStaticMarkup(createElement(CombatScreen, { seed: 1, decision, outro: "lost", onAnswer: () => {} }));
+    const won = renderToStaticMarkup(createElement(CombatScreen, { seed: 1, decision, outro: "won", onAnswer: () => {} }));
+    expect(lost).toContain('class="player-actor" data-pose="death"');
+    expect(won).not.toContain('data-enemy="enemy_under_guardian"');
   });
 
-  /**
-   * 약속이 전투 화면에 산다. 셋을 한꺼번에 잰다 — **무엇을**(사람 말 조건) · **얼마나**(현재값/목표) ·
-   * **지금 어떤지**(미정 · 지킴 · 깨짐). 확정 둘은 `settled`가 색과 취소선을 가른다
-   */
-  it("draws the promise, its progress, and whether it is already settled", () => {
+  /** 과업과 자동 개입의 두 줄은 전투 관측만으로 그린다 */
+  it("draws the promise and its progress", () => {
     const decision = {
       phase: "card",
       options: [],
       bot: endTurnAction,
       observation: {
         depth: 3, lane: 1, region: "underworld", floor: 4, hp: 44, maxHp: 92,
-        patrons: ["zeus", "athena"], grid: [], favor: { zeus: 50, athena: 50 }, grace: {},
+        patrons: ["zeus", "athena"], grid: [], deck: [], favor: { zeus: 50, athena: 50 }, grace: {},
         turn: 5, block: 0, energy: 3, draw: 4, tokens: {}, hand: [], powers: [], enemies: [],
         hits: [], hitSeq: 0, guarded: [],
-        promises: [
-          { god: "athena", text: "여덟이다.", rule: "이 조우에서 잃은 체력 8 이하", current: 5, target: 8 },
-          { god: "zeus", text: "둘은 맞아야 한다.", rule: "한 턴에 맞힌 적 2 이상", current: 2, target: 2, settled: "kept" },
-          { god: "ares", text: "스물여섯.", rule: "이 조우에서 잃은 체력 26 초과", current: 4, target: 26, settled: "broken" },
-        ],
+        quest: { god: "athena", text: "여덟이다.", rule: "이 조우에서 잃은 체력 8 이하", current: 5, target: 8 },
+        promises: [{ god: "athena", text: "여덟이다.", rule: "이 조우에서 잃은 체력 8 이하", current: 5, target: 8 }],
       },
     } as never;
     const markup = renderToStaticMarkup(createElement(CombatScreen, { seed: 1, decision, onAnswer: () => {} }));
@@ -195,12 +205,41 @@ describe("browser replay export", () => {
     expect(markup).toContain("이 조우에서 잃은 체력 8 이하");
     expect(markup).not.toContain("damage_taken");
     expect(markup).toContain("5 / 8");
-    // 미정·지킴·깨짐 셋이 다른 얼굴이다
-    expect(markup).toContain("class=\"promise\"");
-    expect(markup).toContain("promise kept");
-    expect(markup).toContain("promise broken");
+    // 단일 과업만 선다 — quest와 promises가 같은 과업을 들고 있어도 한 번만 그린다
+    expect(markup.match(/class="promise"/g)).toHaveLength(1);
+    expect(markup).toContain("과업 · 아테나");
+    expect(markup).toContain("개입 · 3턴 뒤");
     // 신의 문장은 사라지지 않는다 — 규칙 줄이 그것을 **대신하지 않는다**
     expect(markup).toContain("여덟이다.");
+    const bar = renderToStaticMarkup(createElement(StatusBar, { view: (decision as { observation: unknown }).observation, onOverlay: () => {}, onRestart: () => {} } as never));
+    expect(bar).toContain("진행 중인 과업 · 아테나 · 이 조우에서 잃은 체력 8 이하");
+  });
+
+  it("shows three chosen-god cards with the completed task result", () => {
+    const offer = cards.filter(({ patron }) => patron === "athena").slice(0, 3);
+    const decision = {
+      phase: "reward",
+      options: offer.map(({ id }) => id),
+      bot: offer[0].id,
+      observation: {
+        depth: 3, lane: 1, region: "underworld", floor: 4, hp: 44, maxHp: 92,
+        patrons: ["zeus", "athena"], grid: [], deck: [], favor: { zeus: 50, athena: 62 }, grace: {}, cards: offer,
+        questReward: true,
+        questResult: { god: "athena", text: "여덟이다.", rule: "이 조우에서 잃은 체력 8 이하", current: 5, target: 8, settled: "kept" },
+      },
+    } as never;
+    const markup = renderToStaticMarkup(createElement(RewardScreen, { decision, onAnswer: () => {} }));
+    expect(markup).toContain("과업 달성 · 아테나");
+    expect(markup).toContain("5 / 8");
+    expect(markup.match(/class="game-card/g)).toHaveLength(3);
+    expect(markup).not.toContain("건너뛰기");
+  });
+
+  it("explains only tasks and automatic interventions", () => {
+    const markup = renderToStaticMarkup(createElement(HelpPanel));
+    expect(markup.match(/<dt>/g)).toHaveLength(2);
+    expect(markup).toContain("<dt>과업</dt>");
+    expect(markup).toContain("<dt>개입</dt>");
   });
 
   /**
@@ -324,6 +363,26 @@ describe("browser replay export", () => {
     expect(markup).toContain('aria-label="작은 번개+1 · 1 에너지 · ▮▮▮▮ 전체 · 피해 12"');
   });
 
+  it("shows sabotage in the reserved row and on the weakened card", () => {
+    const base = cards.find(({ id }) => id === "card_athena_01")!;
+    const weakened = { ...base, effects: [{ ...base.effects[0], value: 3 }, base.effects[1]], weakened: true };
+    const decision = {
+      phase: "card", options: [base.id, endTurnAction], bot: endTurnAction,
+      observation: {
+        depth: 1, lane: 1, region: "underworld", floor: 1, hp: 50, maxHp: 92,
+        patrons: ["zeus", "athena"], grid: [], favor: { zeus: 29, athena: 71 }, grace: {}, deck: [],
+        turn: 1, block: 0, energy: 3, draw: 4, tokens: {}, powers: [], hand: [weakened],
+        sabotages: [{ god: "zeus", patron: "athena" }], enemies: [], hits: [], hitSeq: 0, guarded: [], promises: [],
+      },
+    } as never;
+    const markup = renderToStaticMarkup(createElement(CombatScreen, { seed: 1, decision, onAnswer: () => {} }));
+
+    expect(markup).toContain("제우스 분노 · 아테나 카드 −1");
+    expect(markup).toContain("분노한 제우스의 훼방 — 아테나 카드의 피해·방어·연쇄 −1 · 제우스 호의가 평온으로 돌아오면 해제");
+    expect(markup).toContain('class="game-card weakened"');
+    expect(markup).toContain('<s>4</s><b class="down">3</b>');
+  });
+
   /**
    * 쉼터의 강화 후보는 **고른 뒤와 같은 얼굴**로 선다 — 값은 `upgraded` 하나가 만들고,
    * e2e가 읽는 `data-card`·`data-cost`·`data-damage` 셋은 덱에 실제로 있는 카드의 것 그대로다
@@ -442,6 +501,7 @@ describe("browser replay export", () => {
     expect(markup.match(/autoplay/gi)).toHaveLength(2);
     expect(markup.match(/muted/gi)).toHaveLength(2);
     expect(markup.match(/playsinline/gi)).toHaveLength(2);
+    expect(markup).toContain('<button class="opening-skip" type="button" aria-label="영상 건너뛰기"></button>');
     expect(Object.keys(import.meta.glob("../art/gods/*.mp4")).map((path) => path.replace(/^.*\//, "")).sort()).toEqual([
       "ares.mp4", "artemis.mp4", "athena.mp4", "poseidon.mp4", "zeus.mp4",
     ]);
@@ -498,24 +558,24 @@ describe("browser replay export", () => {
     // 갈림길은 쉼터로, 휴식은 제거로, 요구는 수락으로 고정하고 첫 카드 한 장만 봇과 다르게 낸다.
     // 전투를 내내 봇 반대로 고르면 은총 마일스톤에 닿기 전에 죽는다 — 요구가 조건 판정을 받게 된 뒤로는
     // 호의가 천천히 올라서 300개 시드 안에 그런 런이 없다.
-    // 예고가 영구 퀘스트가 된 뒤 열 종류를 다 지나는 첫 자리는 2다. 단언은 그대로다
+    // 아홉 종류를 다 지나는 자리가 92다
     let diverged = false;
-    const { result: browser, actions } = playByHand(2, (decision) => {
+    const { result: browser, actions } = playByHand(92, (decision) => {
       const { phase, options, bot } = decision;
       if (phase === "path") return pickPath(decision, "rest");
       if (phase === "rest") return "remove";
-      // 답이 신의 이름이다(P-59) — 첫 제안을 고르고 승부 카드는 봇에게 맡긴다
+      // 답이 신의 이름이다 — 첫 제안을 고른다
       if (phase === "demand") return options[0];
       if (phase !== "card" || diverged) return bot;
       const other = options.find((option) => option !== bot && option !== endTurnAction);
       diverged = Boolean(other);
       return other ?? bot;
     });
-    const replay = replayPayload(2, actions, ["zeus", "athena"]);
+    const replay = replayPayload(92, actions, ["zeus", "athena"]);
     const cli = run(replay.seed, undefined, replay.actions, replay.patrons);
 
     // 반출에 사람이 고른 아홉 종류가 전부 있어야 한다 — 빠지면 재생 때 봇이 대신 채운다
-    for (const type of ["path", "card", "target", "rest", "rest_card", "reward", "grace", "demand", "bet_card", "oracle"]) {
+    for (const type of ["path", "card", "target", "rest", "rest_card", "reward", "grace", "grace_card", "demand"]) {
       expect(actions.some((action) => action.type === type), type).toBe(true);
     }
     expect({ won: cli.won, floors: cli.hpCurve.length - 1, favor: cli.favorCurve.at(-1), cards: cli.cardsPlayed }).toEqual({

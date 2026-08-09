@@ -2,18 +2,18 @@
 
 [R-45](../../reviews/45-fx.md) · [원본 규칙](../README.md) · [R-50](../../reviews/50-fx-sprites.md) · **상태 4프레임 스트립 배포 중 · R-50 완료**
 
-**기준 원본** `art/_src/fx/calm.png` 1536×1024 · **run** `art/_src/sprite-runs/fx_calm/` · **배포본** `art/fx/calm.webp` 4프레임 가로 스트립 6144×960, WebP 손실 q90 + `alpha-quality 100`.
+**기준 원본** `art/_src/fx/calm.png` 1586×992 · **run** `art/_src/sprite-runs/fx_calm/` · **배포본** `art/fx/calm.webp` 4프레임 가로 스트립 6144×960, WebP 손실 q90 + `alpha-quality 100`.
 
 **화면** 1440×900 CSS 전체를 덮는 컷인. `ui/fx.ts`의 `playSprite`가 500ms 원샷 `steps(4)`로 넘긴다 — 재생 코드는 R-50.
 
-**생성** `sprite-gen` component-row 파이프라인. `base_image`가 기준 원본이고 아래 프롬프트는 그 원본의 것이다. 셀 `rect 1536×960`, 크로마 마젠타 `#ff00ff`, YCbCr 크로마 제거. **팔레트 고정·아웃라인·`pixel_unfake` 없음** — 픽셀 아트가 아니라 부드러운 빛이다.
+**생성** `sprite-gen` component-row 파이프라인. `base_image`가 기준 원본이고 아래 프롬프트는 그 원본의 것이다. 셀 `rect 1536×960`, 자동 선택된 녹색 크로마, YCbCr 제거. **팔레트 고정·아웃라인·`pixel_unfake` 없음** — 픽셀 아트가 아니라 부드러운 빛이다.
 
 ## 동작 (sprite-gen states)
 
 ```json
 "play": {
   "frames": 4, "fps": 8, "loop": false,
-  "action": "four-frame one-shot breath: frame 1 the edge halo at rest; frames 2 and 3 the thin band along the top, left and right edges brightens very slightly and thickens by a hair; frame 4 it settles back near rest. Nothing radiates inward, bursts or streaks; the entire centre and the whole lower half stay completely empty in every frame. This is the quietest of the four overlays — the motion must read as one slow breath, not an event."
+  "action": "four-frame one-shot breath: three ivory highlights on one hair-thin warm-grey line brighten and thicken by a hair, then settle. The centre and lower 80 percent stay empty."
 }
 ```
 

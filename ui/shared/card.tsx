@@ -6,7 +6,7 @@ import { fullReach, reachSlots } from "../../core/targeting.ts";
 import cardDataJson from "../../data/cards.json" with { type: "json" };
 import type { CardView } from "../../sim/engine.ts";
 import { cardTier } from "../../tools/value.ts";
-import { cardArtCandidates, cardGod, cardTag, type CardArtSource } from "./art-keys.ts";
+import { cardArtCandidates, cardGod, cardTag, particleStrip, type CardArtSource } from "./art-keys.ts";
 import { Icon, type IconName } from "./icon.tsx";
 import { playSound } from "./sfx.ts";
 import { tokenName } from "./tokens.tsx";
@@ -38,8 +38,12 @@ const cardFace = new Map((cardDataJson as unknown as (Card & CardArtSource)[]).m
  */
 const tierNames: Record<number, string> = { 2: "상급", 3: "융합" };
 
-/** 카드를 낼 때 튀는 파티클의 태그. 전투 화면이 이걸로 `art/particle/`을 고른다 */
-export const cardTagOf = (cardId: string): string | undefined => cardFace.get(cardLevel(cardId).base)?.tag;
+/** 카드를 낼 때 튀는 파티클. 모르는 신은 그 갈래의 첫 그림으로 떨어진다 */
+export const cardParticleOf = (cardId: string): string | undefined => {
+  const face = cardFace.get(cardLevel(cardId).base);
+  const strip = face?.tag && particleStrip[face.tag];
+  return strip && (strip[face?.god ?? ""] ?? Object.values(strip)[0]);
+};
 const opLabels: Record<string, string> = {
   damage: "피해",
   block: "방어",
@@ -134,6 +138,8 @@ export const CardSigns = () => (
       <li><span className="sign"><em className="card-kind">전체</em></span><span>사거리 안 모든 적</span></li>
       <li><span className="sign">{Object.values(tierNames).map((name) => <em key={name} className="card-tier">{name}</em>)}</span><span>카드 등급</span></li>
       <li><span className="sign"><em className="card-up">+1</em></span><span>쉼터에서 올린 강화 단계</span></li>
+      <li><span className="sign seal-badge"><Icon name="seal" /></span><span>신의 은혜를 이 카드에 새긴 인장</span></li>
+      <li><span className="sign"><em className="card-tier">융합</em></span><span>두 후원 신의 인장이 만나 바뀐 카드</span></li>
       <li><span className="sign card-fx"><em><Icon name="damage" /><s>6</s><b className="up">11</b></em></span><span>카드에 적힌 값과 지금 나갈 값</span></li>
       <li><span className="sign card-fx"><em className="cond"><Icon name="damage" /><b>6</b></em></span><span>조건이 맞을 때만 붙는 효과</span></li>
     </ul>
@@ -162,7 +168,7 @@ export function CardRow({ cards, options, onSelect, upgrade, value = ({ id }) =>
   onSelect: (choice: string) => void;
   /** 쉼터의 강화 고르기 하나 — 고를 수 있는 카드가 **강화 후 얼굴로** 선다. 못 고르는 칸은 지금 얼굴이다 */
   upgrade?: boolean;
-  /** 답이 카드 id가 아닌 자리 하나 — 승부 카드는 **덱 인덱스**로 답한다(같은 id 두 장을 갈라야 한다) */
+  /** 카드 id가 아닌 답이 필요하면 이 함수만 바꾼다 */
   value?: (card: CardView, index: number) => string;
 }) {
   return (
@@ -231,13 +237,19 @@ export function GameCard({ cardId, card, boost, upgrade, disabled, onSelect }: {
    * 그릴 카드. 미리보기는 **같은 규칙 함수**(`upgraded`)를 부르므로 재구현이 아니다 —
    * `data-*` 셋은 아래에서 그대로 덱에 있는 카드의 값을 싣는다(e2e 계약)
    */
-  const shown: CardView | undefined = upgrade && face ? upgraded(face.base, level + 1) : card;
+  const shown: CardView | undefined = upgrade && face
+    ? (() => {
+      const raised = upgraded(face.base, level + 1);
+      return { ...raised, effects: [...raised.effects, ...(card?.seals?.flatMap(({ effects }) => effects) ?? [])], seals: card?.seals };
+    })()
+    : card;
   const shownLevel = upgrade ? level + 1 : level;
   const source = face?.art;
   const [missing, setMissing] = useState(!source);
   // 예외만 적는다 — 149장 중 20장이다(파워 6 · 전체 14, 데이터상 안 겹친다). 슬롯이 하나뿐이다
   const kind = face?.power ? "파워" : shown?.target === "all_enemies" ? "전체" : undefined;
-  const label = shown && cardCaption(shown, boost);
+  const seals = [...(shown?.seals ?? []), ...(shown?.previewSeal ? [shown.previewSeal] : [])];
+  const label = shown && `${cardCaption(shown, boost)}${seals.length ? ` · 인장 ${seals.map(({ text }) => text).join(", ")}` : ""}`;
   const body = (
     <>
       <div className={`card-art${missing ? " missing" : ""}`}>
@@ -245,12 +257,22 @@ export function GameCard({ cardId, card, boost, upgrade, disabled, onSelect }: {
         <span aria-hidden="true">⚖</span>
       </div>
       {shown && <b className="cost-gem">{shown.cost}</b>}
+      <span className="card-seals">
+        {seals.map((seal, index) => (
+          <em
+            key={`${seal.patron}-${index}`}
+            className={shown?.previewSeal === seal ? "preview" : undefined}
+            style={{ "--seal-color": `var(--${seal.patron})` } as React.CSSProperties}
+            title={`${seal.text} · ${effectText({ target: shown?.target ?? "enemy", effects: seal.effects })}`}
+          ><Icon name="seal" /></em>
+        ))}
+      </span>
       {kind && <em className="card-kind">{kind}</em>}
       {shown && (
         <span className="card-fx">
           {/* 사거리는 마스크를 적은 26장에만 선다 — 기본값(네 칸 전부)에 그리면 같은 뜻의 두 번째 표기다 */}
           {shown.reach && <em className="card-reach" title={reachText(shown.reach)}>{reachBars(shown.reach)}</em>}
-          {/* 원래 값은 원문에서 읽는다. 은혜는 **뒤에 잇는다**(`cardEffects`) — 앞에서부터 인덱스로 맞고 뒤에 남는 것이 은혜다 */}
+          {/* 원래 값은 원문에서 읽는다. 은혜는 뒤에 잇고 훼방은 값을 낮춘다(`cardEffects`) — 앞에서부터 인덱스로 맞고 뒤에 남는 것이 은혜다 */}
           {shown.effects.map((effect, index) => (
             <Effect key={index} effect={effect} written={effectNumber(face?.base.effects[index] ?? effect)} boost={boost} />
           ))}
@@ -263,6 +285,7 @@ export function GameCard({ cardId, card, boost, upgrade, disabled, onSelect }: {
         {shownLevel > 0 && <em className="card-up">+{shownLevel}</em>}
         {/* 이름은 원문이다 — `+N`은 배지가 들었으므로 캡션에서 뗀다(이름 최대 7자 규칙이 여기서 닫힌다) */}
         {face?.name ?? card?.name ?? cardId}
+        {shown?.fusesTo && <em className="fusion-preview">융합 · {shown.fusesTo.name}</em>}
       </small>
     </>
   );
@@ -270,7 +293,7 @@ export function GameCard({ cardId, card, boost, upgrade, disabled, onSelect }: {
   return onSelect
     ? (
       <button
-        className="game-card"
+        className={`game-card${card?.weakened ? " weakened" : ""}`}
         type="button"
         data-card={cardId}
         data-god={face?.god}
@@ -284,5 +307,5 @@ export function GameCard({ cardId, card, boost, upgrade, disabled, onSelect }: {
         {body}
       </button>
     )
-    : <article className="game-card" data-card={cardId} data-god={face?.god} aria-label={label}>{body}</article>;
+    : <article className={`game-card${card?.weakened ? " weakened" : ""}`} data-card={cardId} data-god={face?.god} aria-label={label}>{body}</article>;
 }

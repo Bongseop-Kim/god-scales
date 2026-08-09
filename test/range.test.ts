@@ -16,7 +16,7 @@ import { canReachTarget, livingInReach, reachOk, reachSlots } from "../core/targ
 import { validateItems } from "../tools/validate";
 import { reachText } from "../ui/shared/card";
 
-const wrap = (combat: CombatState): GameState => ({ seed: 1, combat, favor: {}, grace: {}, graceSlots: {}, map: { depth: 0, lane: 1, grid: [], completed: [] } });
+const wrap = (combat: CombatState): GameState => ({ seed: 1, combat, favor: {}, grace: {}, map: { depth: 0, lane: 1, grid: [], completed: [] } });
 const dummy = (id: string, hp = 30): EnemyDefinition => ({ id, hp, pattern: [{ block: 1 }] });
 const strike = (reach?: string, effects: Card["effects"] = [{ op: "damage", value: 6 }]): Card =>
   ({ id: "strike", name: "타격", patron: "ares", cost: 1, target: "enemy", effects, tags: ["attack"], ...(reach ? { reach } : {}) });

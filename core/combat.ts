@@ -276,7 +276,6 @@ export function runCombat(
     combat: createCombat(seed, deck, enemyList),
     favor: {},
     grace: {},
-    graceSlots: {},
     // 전투 하나만 돌리므로 격자는 비어 있다 — 여기서 지도를 읽는 코드는 없다
     map: { depth: 0, lane: bossLane, grid: [], completed: [] },
   };

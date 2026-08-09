@@ -7,7 +7,7 @@ import sheet from "../../art/icons.svg?raw";
  * 아무 일도 안 일어난다 — 경고도 없다. 여기서 컴파일이 막히고, 시트 쪽 28개는 `tools/art.ts`가 센다
  */
 type IntentKind = "damage" | "block" | "heal" | "token" | "favor" | "idle";
-export type IconName = TokenName | PassiveName | MapNodeType | IntentKind;
+export type IconName = TokenName | PassiveName | MapNodeType | IntentKind | "seal";
 
 /**
  * 시트를 **같은 문서 안에** 심는다. `<use href="파일.svg#id">`처럼 외부 파일을 가리키면 요청이 한 번

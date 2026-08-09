@@ -6,7 +6,7 @@
     "chroma_mode": "ycbcr",
     "segmentation": "projection"
   },
-  "run_dir": "/Users/gimbongseob/git/god-scales/art/_src/sprite-runs/fx_devotion",
+  "run_dir": "/Users/gimbongseob/git/god-scales/art/_src/sprite-runs/.regen-fx/fx_devotion",
   "cell": {
     "shape": "rect",
     "width": 1536,
@@ -23,49 +23,49 @@
       0
     ],
     "selection": "auto",
-    "score": 305.0,
-    "min_subject_distance": 296.75,
+    "score": 340.43,
+    "min_subject_distance": 338.62,
     "background": {
       "mode": "flat",
-      "hex": "#F80BF1",
+      "hex": "#FA04F4",
       "rgb": [
-        248,
-        11,
-        241
+        250,
+        4,
+        244
       ],
       "opaque_border_fraction": 1.0,
-      "border_coverage": 0.85,
+      "border_coverage": 0.94,
       "enclosed_background_pixels": 0,
       "enclosed_material_pixels": 0,
-      "subject_pixels": 3493
+      "subject_pixels": 3759
     },
     "candidates": [
       {
         "name": "magenta",
         "hex": "#FF00FF",
-        "score": 75.4,
-        "min_subject_distance": 66.16,
+        "score": 64.75,
+        "min_subject_distance": 60.14,
         "clears_erase_radius": false
       },
       {
         "name": "green",
         "hex": "#00FF00",
-        "score": 305.0,
-        "min_subject_distance": 296.75,
+        "score": 340.43,
+        "min_subject_distance": 338.62,
         "clears_erase_radius": true
       },
       {
         "name": "cyan",
         "hex": "#00FFFF",
-        "score": 255.51,
-        "min_subject_distance": 253.4,
+        "score": 254.14,
+        "min_subject_distance": 253.37,
         "clears_erase_radius": true
       },
       {
         "name": "blue",
         "hex": "#004DFF",
-        "score": 253.18,
-        "min_subject_distance": 251.71,
+        "score": 250.57,
+        "min_subject_distance": 248.57,
         "clears_erase_radius": true
       }
     ],
@@ -85,48 +85,48 @@
       "frame_records": [
         {
           "index": 0,
-          "nontransparent_pixels": 38059,
+          "nontransparent_pixels": 29934,
           "bbox": [
-            579,
-            399,
-            957,
-            561
+            647,
+            363,
+            889,
+            596
           ],
           "edge_pixels": 0,
           "chroma_adjacent_pixels": 0
         },
         {
           "index": 1,
-          "nontransparent_pixels": 57963,
+          "nontransparent_pixels": 44094,
           "bbox": [
-            577,
-            357,
-            958,
-            603
+            630,
+            327,
+            905,
+            632
           ],
           "edge_pixels": 0,
           "chroma_adjacent_pixels": 0
         },
         {
           "index": 2,
-          "nontransparent_pixels": 87413,
+          "nontransparent_pixels": 64614,
           "bbox": [
-            577,
-            299,
-            959,
-            660
+            611,
+            281,
+            924,
+            678
           ],
           "edge_pixels": 0,
           "chroma_adjacent_pixels": 0
         },
         {
           "index": 3,
-          "nontransparent_pixels": 133804,
+          "nontransparent_pixels": 92775,
           "bbox": [
-            576,
-            210,
-            960,
-            749
+            591,
+            226,
+            944,
+            734
           ],
           "edge_pixels": 0,
           "chroma_adjacent_pixels": 0

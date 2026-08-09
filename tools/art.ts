@@ -10,7 +10,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { regions } from "../core/map.ts";
 import { tokenNames } from "../core/state.ts";
 import { godDecks } from "../sim/engine.ts";
-import { artRegion, backdropName, tagParticle, type CardArtSource } from "../ui/shared/art-keys.ts";
+import { artRegion, backdropName, particleStrip, type CardArtSource } from "../ui/shared/art-keys.ts";
 import { iconIds } from "./icons.ts";
 
 type CardData = CardArtSource & { name: string; effects: { op: string; value?: number; token?: string; stacks?: number }[] };
@@ -52,7 +52,7 @@ const checks = [
       ...missingFrom(frame, ["card-frame", "dialogue"]),
       ...missingFrom(marker, ["marker"]),
       // 커서·파티클·아이콘은 제작 83개가 아니다(Kenney CC0 · game-icons.net CC BY). 쓰는 것만 이름을 잠근다
-      ...missingFrom(particle, Object.values(tagParticle)),
+      ...missingFrom(particle, Object.values(particleStrip).flatMap(Object.values)),
       ...missingFrom(cursor, ["tile_0026", "tile_0134", "tile_0015"]),
       ...missingFrom(symbols, iconIds),
     ],

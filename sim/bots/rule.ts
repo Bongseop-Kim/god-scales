@@ -1,23 +1,24 @@
 import { actors, type EnemyDefinition } from "../../core/combat.ts";
-import type { Grace, GraceHeld } from "../../core/grace.ts";
+import type { Grace } from "../../core/grace.ts";
 import { floorsPerRegion, type MapGrid } from "../../core/map.ts";
 import type { Card } from "../../core/rules.ts";
 import type { CombatState } from "../../core/state.ts";
 import { canReachTarget, livingInReach } from "../../core/targeting.ts";
-import { betDeposit, demandPenalty, type DemandOffer } from "../../core/demands.ts";
-import { favorBoundaries, favorInitial, favorStage, oracleSwing, type FavorStage } from "../../core/favor.ts";
+import { demandPenalty, type DemandOffer } from "../../core/demands.ts";
+import { favorBoundaries, favorInitial } from "../../core/favor.ts";
 import { expectedValue, graceValue, powerTurns, tokenWeights } from "../../tools/value.ts";
 
 /**
  * v5: `choosePath`가 「쉴까 말까」가 아니라 갈래를 고른다(P-27). 입력과 반환이 통째로 달라 옛 판과
  * 같은 결정을 낼 수가 없다 — 이때만 판을 올린다. v4는 토큰 값을 게이트 표에서 읽고 요구 답이 조건
  * 판정을 전제로 바뀐 판이었고, P-31의 파워 배수는 옛 입력에서 한 자리도 다르지 않아 v4를 유지했다
- * v6: 은총이 「카드 한 장 고르기」에서 「은혜 슬롯 3택1」이 됐다(P-28) — 고르는 것 자체가 다르다
+ * v6: 은총이 「카드 한 장 고르기」에서 「은혜 3택1」이 됐다(P-28) — 고르는 것 자체가 다르다
  * v7: 요구 답이 둘에서 셋이 됐다(P-29) — `chooseDemandAnswer`의 입력과 반환이 통째로 다르다
  * v8: 판에 칸이 넷 생겼다(P-35) — `chooseTarget`이 사거리 안에서만 고르고 `cardValue`의 광역 배수가
  *     사거리 안의 산 적 수다. 같은 손패에서 다른 카드가 나온다
+ * v9: 은혜 뒤 인장을 새길 카드를 고른다(P-70) — 융합 진행을 먼저, 없으면 비용이 큰 카드를 고른다
  */
-export const botPolicyVersion = "v8";
+export const botPolicyVersion = "v9";
 
 /**
  * 확률 ε로 합법수를 무작위로 고른다. 실력을 낮춘 두 번째 열(`승률(ε)`)을 만들어 조합마다 결정이
@@ -164,18 +165,21 @@ export function chooseReward(options: string[], cards: ReadonlyMap<string, Card>
 }
 
 /**
- * 은혜는 지금 덱의 그 태그 카드 수만큼 곱해져 들어간다 — 게이트가 쓰는 환산(`graceValue`)을 그대로
- * 쓴다. 이미 찬 슬롯을 고르는 것은 **차액**만 얻는 것이라 그만큼 깎는다: 그래서 빈 슬롯이 먼저 차고,
- * tier가 올라 차액이 커지면 그때 같은 슬롯을 다시 부어 깊게 간다.
- *
- * `offer`는 그 슬롯에서 걸릴 tier의 줄로 들어온다(`graceOffer`) — 차액을 여기서 다시 풀지 않는다
+ * 은혜 효과 하나의 기대값만 비교한다. 대상 카드는 다음 결정에서 융합 우선·비용 순으로 고른다.
  */
-export function chooseGrace(offer: Grace[], held: GraceHeld, slotCards: Record<string, number>): string | undefined {
-  const gain = (grace: Grace) => {
-    const cards = slotCards[grace.slot] ?? 0;
-    return graceValue(grace.effects, cards) - graceValue(held[grace.slot]?.effects ?? [], cards);
-  };
-  return [...offer].sort((left, right) => gain(right) - gain(left) || (left.id < right.id ? -1 : 1))[0]?.id;
+export function chooseGrace(offer: Grace[]): string | undefined {
+  return [...offer].sort((left, right) => graceValue(right.effects) - graceValue(left.effects) || left.id.localeCompare(right.id))[0]?.id;
+}
+
+/** 다른 후원 신의 인장이 있으면 즉시 융합하고, 아니면 가장 비싼 후보를 키운다. */
+export function chooseGraceCard(options: string[], cards: ReadonlyMap<string, Card>, god: string): string | undefined {
+  return [...options].sort((left, right) => {
+    const a = cards.get(left);
+    const b = cards.get(right);
+    if (!a || !b) return Number(Boolean(b)) - Number(Boolean(a));
+    const fusion = Number(b.seals?.some(({ patron }) => patron !== god)) - Number(a.seals?.some(({ patron }) => patron !== god));
+    return fusion || b.cost - a.cost || left.localeCompare(right);
+  })[0];
 }
 
 /**
@@ -191,34 +195,6 @@ export function chooseDemandAnswer(offers: DemandOffer[], favor: Record<string, 
     (favor[other] ?? favorInitial) + demandPenalty(god, other).amount >= favorBoundaries.anger;
   const safe = offers.filter(affordable);
   return (safe.find(({ god }) => god === preferred) ?? safe[0])?.action ?? "reject";
-}
-
-/**
- * 승부 카드 한 장. **기대값이 가장 큰 후보**다 — 보상 3택1과 같은 표를 쓴다(`chooseReward`): 확정
- * 강화 한 단은 그 덱에서 제일 자주 도는 카드에 붙는 것이 언제나 맞다.
- *
- * 걸지 말지의 문턱은 `choosePath`·`chooseRest`와 같은 「반피」다 — 예치를 내고도 반피가 남아야 건다.
- * 문턱이 없으면 봇이 조우마다 최대 체력을 8씩 내려놓고 카드 보상까지 잃어 나선이 된다
- */
-export function chooseBetCard(candidates: { index: number; id: string }[], cards: ReadonlyMap<string, Card>, hp: number, maxHp: number, deposit = betDeposit): string {
-  if (!candidates.length || hp - deposit < maxHp * 0.5) return "single";
-  const best = chooseReward(candidates.map(({ id }) => id), cards);
-  return String(candidates.find(({ id }) => id === best)!.index);
-}
-
-/** 단계의 서열. 저울이 어느 쪽으로 기울어야 나은지는 **두 신의 단계 합**이 정한다 */
-const stageRank: Record<FavorStage, number> = { wrath: 0, anger: 1, calm: 2, devotion: 3 };
-
-/**
- * 신탁 2택. 저울이라 한쪽을 올리면 반대쪽이 내려간다 — **거절할 「거절」이 없다**(`chooseDemandAnswer`와
- * 갈리는 자리다). 그래서 판정은 「받을까 말까」가 아니라 **어느 쪽으로 기울일까**고, 눈금은 기운
- * 뒤의 두 단계 합 하나다: 헌신은 개입이 순이득이고 진노는 신이 적으로 서므로 서열이 곧 값이다.
- * 동점이면 묻는 신 쪽이다 — 결정론이어야 재생이 선다
- */
-export function chooseOracle(favor: Record<string, number>, god: string, other: string): string {
-  const worth = (tilt: number) =>
-    stageRank[favorStage((favor[god] ?? favorInitial) + tilt)] + stageRank[favorStage((favor[other] ?? favorInitial) - tilt)];
-  return worth(oracleSwing) >= worth(-oracleSwing) ? "obey" : "refuse";
 }
 
 export function chooseCard(

@@ -3,10 +3,10 @@
   "engine": "component-row",
   "engine_revision": "9d4ecaf5ab56",
   "extract_args": {
-    "chroma_mode": "rgb",
+    "chroma_mode": "ycbcr",
     "segmentation": "projection"
   },
-  "run_dir": "/Users/gimbongseob/git/god-scales/art/_src/sprite-runs/fx_calm",
+  "run_dir": "/Users/gimbongseob/git/god-scales/art/_src/sprite-runs/.regen-fx/fx_calm",
   "cell": {
     "shape": "rect",
     "width": 1536,
@@ -23,46 +23,53 @@
       0
     ],
     "selection": "auto",
-    "score": 399.36,
-    "min_subject_distance": 356.66,
+    "score": 337.2,
+    "min_subject_distance": 337.2,
     "background": {
-      "mode": "heterogeneous",
+      "mode": "flat",
+      "hex": "#F70CEC",
+      "rgb": [
+        247,
+        12,
+        236
+      ],
       "opaque_border_fraction": 1.0,
-      "border_coverage": 0.451,
-      "note": "border ring is not a flat fill (largest color covers 45% of it, needs 75%); no background pixels were excluded, so candidate distances may be skewed by the background",
-      "subject_pixels": 42788
+      "border_coverage": 1.0,
+      "enclosed_background_pixels": 0,
+      "enclosed_material_pixels": 0,
+      "subject_pixels": 5
     },
     "candidates": [
       {
         "name": "magenta",
         "hex": "#FF00FF",
-        "score": 20.62,
-        "min_subject_distance": 19.8,
-        "clears_erase_radius": false
+        "score": 221.79,
+        "min_subject_distance": 221.79,
+        "clears_erase_radius": true
       },
       {
         "name": "green",
         "hex": "#00FF00",
-        "score": 399.36,
-        "min_subject_distance": 356.66,
+        "score": 337.2,
+        "min_subject_distance": 337.2,
         "clears_erase_radius": true
       },
       {
         "name": "cyan",
         "hex": "#00FFFF",
-        "score": 312.96,
-        "min_subject_distance": 253.42,
+        "score": 255.6,
+        "min_subject_distance": 255.6,
         "clears_erase_radius": true
       },
       {
         "name": "blue",
         "hex": "#004DFF",
-        "score": 250.38,
-        "min_subject_distance": 247.21,
+        "score": 292.23,
+        "min_subject_distance": 292.23,
         "clears_erase_radius": true
       }
     ],
-    "selection_reason": "highest 1st-percentile subject distance among the 3 candidate(s) clearing the 96 erase radius"
+    "selection_reason": "highest 1st-percentile subject distance among the 4 candidate(s) clearing the 96 erase radius"
   },
   "rows": [
     {
@@ -78,48 +85,48 @@
       "frame_records": [
         {
           "index": 0,
-          "nontransparent_pixels": 42278,
+          "nontransparent_pixels": 1323,
           "bbox": [
-            567,
-            266,
-            968,
-            693
+            639,
+            471,
+            896,
+            488
           ],
           "edge_pixels": 0,
           "chroma_adjacent_pixels": 0
         },
         {
           "index": 1,
-          "nontransparent_pixels": 55512,
+          "nontransparent_pixels": 1950,
           "bbox": [
-            557,
-            261,
-            979,
-            698
+            637,
+            469,
+            899,
+            491
           ],
           "edge_pixels": 0,
           "chroma_adjacent_pixels": 0
         },
         {
           "index": 2,
-          "nontransparent_pixels": 67822,
+          "nontransparent_pixels": 2524,
           "bbox": [
-            549,
-            258,
-            986,
-            702
+            629,
+            468,
+            906,
+            492
           ],
           "edge_pixels": 0,
-          "chroma_adjacent_pixels": 1
+          "chroma_adjacent_pixels": 0
         },
         {
           "index": 3,
-          "nontransparent_pixels": 57043,
+          "nontransparent_pixels": 1375,
           "bbox": [
-            560,
-            262,
-            975,
-            698
+            638,
+            471,
+            897,
+            488
           ],
           "edge_pixels": 0,
           "chroma_adjacent_pixels": 0

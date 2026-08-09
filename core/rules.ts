@@ -1,5 +1,5 @@
-import type { GraceSlot } from "./grace.ts";
 import { drawCards } from "./deck.ts";
+import { favorInitial, favorStage } from "./favor.ts";
 import { tokenNames, type ActorState, type CombatState, type GameState, type TokenName, type Tokens, type Trigger } from "./state.ts";
 import { livingInReach, reachSlots, resolveChainTargets, resolveTargets, type Target } from "./targeting.ts";
 
@@ -35,6 +35,8 @@ export type Card = {
   cost: number;
   target: Target;
   effects: Effect[];
+  /** 카드에 새긴 인장. 효과도 같은 순서로 `effects` 뒤에 붙는다. */
+  seals?: { id: string; patron: GodId; tier: number; text: string; effects: Effect[] }[];
   tags: Tag[];
   /** `power` 태그가 붙은 카드만 갖는다 — 즉시 실행하지 않고 이 훅에 등록한다 */
   trigger?: Trigger;
@@ -69,15 +71,30 @@ const scaledOps = new Set<Op>(["damage", "block", "heal", "chain"]);
  * 장만 업그레이드된 상태를 병행 맵으로는 표현할 수 없다
  */
 export function cardLevel(id: string): { base: string; level: number } {
-  const plus = id.lastIndexOf("+");
-  return plus < 0 ? { base: id, level: 0 } : { base: id.slice(0, plus), level: Number(id.slice(plus + 1)) };
+  const match = id.match(/\+(\d+)$/);
+  const seal = id.indexOf("@");
+  return { base: id.slice(0, seal < 0 ? match?.index ?? id.length : seal), level: Number(match?.[1] ?? 0) };
+}
+
+export const cardSealIds = (id: string): { id: string; tier: number }[] => {
+  const stem = id.replace(/\+\d+$/, "");
+  return stem.split("@").slice(1).map((seal) => {
+    const split = seal.lastIndexOf(".");
+    if (split < 1 || !/^\d+$/.test(seal.slice(split + 1))) throw new Error(`Invalid sealed card: ${id}`);
+    return { id: seal.slice(0, split), tier: Number(seal.slice(split + 1)) };
+  });
+};
+
+export function sealId(id: string, seal: { id: string; tier: number }): string {
+  const suffix = id.match(/\+\d+$/)?.[0] ?? "";
+  return `${id.slice(0, id.length - suffix.length)}@${seal.id}.${seal.tier}${suffix}`;
 }
 
 /** 한 단 올린 id. 상한을 넘기면 던진다 — 고를 수 있는 것을 거르는 쪽은 호출자다 */
 export function upgradeId(id: string): string {
-  const { base, level } = cardLevel(id);
+  const { level } = cardLevel(id);
   if (level >= MAX_UPGRADE) throw new Error(`Card is already at max upgrade: ${id}`);
-  return `${base}+${level + 1}`;
+  return `${id.replace(/\+\d+$/, "")}+${level + 1}`;
 }
 
 /** 레벨만큼 ×1.4 올림을 되풀이한다. 5 → 7 → 10, 11 → 16 → 23 */
@@ -367,15 +384,24 @@ export function firePowers(state: GameState, trigger: Trigger, enemyId?: string,
 }
 
 /**
- * 이 카드가 실제로 내는 효과 — 카드의 것 + 그 카드의 태그에 걸린 은혜의 것. 태그가 곧 슬롯이라
- * 공격 카드 한 장이 아니라 **공격 행동 전체**가 바뀐다. 태그가 둘이면 은혜도 둘 붙는다.
+ * 이 카드가 실제로 내는 효과. 인장 효과는 파생 카드가 이미 자기 효과 뒤에 들고, 여기서는 현재 호의의
+ * 훼방만 적용한다.
  *
  * 세는 쪽(`sim/engine.ts`의 토큰·방어 집계)도 같은 목록을 읽는다 — 화면에 붙은 토큰을 요구가
  * 세지 않으면 그게 두 번째 진실이다
  */
 export function cardEffects(state: GameState, card: Card): Effect[] {
-  const graced = card.tags.flatMap((tag) => state.graceSlots[tag as GraceSlot]?.effects ?? []);
-  return graced.length ? [...card.effects, ...graced] : card.effects;
+  if (!cardSaboteur(state, card.patron)) return card.effects;
+  return card.effects.map((effect) => effect.value !== undefined && ["damage", "block", "chain"].includes(effect.op)
+    ? { ...effect, value: Math.max(1, effect.value - 1) }
+    : effect);
+}
+
+/** 이 신의 카드를 무디게 하는 다른 후원 신. 현재 호의만 읽으므로 평온 복귀와 동시에 사라진다. */
+export function cardSaboteur(state: GameState, patron?: GodId): GodId | undefined {
+  if (!patron) return undefined;
+  return (Object.keys(state.favor) as GodId[]).find((god) => god !== patron
+    && ["anger", "wrath"].includes(favorStage(state.favor[god] ?? favorInitial)));
 }
 
 export function executeCard(state: GameState, card: Card, enemyId?: string, deckCards?: Card[], random: () => number = () => 0): void {

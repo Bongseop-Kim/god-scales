@@ -40,7 +40,7 @@ export type StageEffect = Effect & { target: "self" | "enemy" | "all_enemies" };
  */
 export type StageHook = "on_encounter_start" | "on_turn_start";
 /**
- * 매 턴 훅이 터지는 주기. **1이 아니다** — 조우가 5.8턴이라 매 턴 개입은 한 조우에 여섯 번이고,
+ * 매 턴 훅이 터지는 주기. **1이 아니다** — 조우가 6.65턴이라 매 턴 개입은 한 조우에 여섯 번이고,
  * 4000런 대신 1200런 층화로 재보면 그 값이 밴드를 깬다:
  *
  * | 주기 | 승률(층화) | 저휴식 클리어(기본 조합 500런) |
@@ -55,20 +55,18 @@ export type StageHook = "on_encounter_start" | "on_turn_start";
  */
 export const interventionEveryTurns = 3;
 export const intervenesOnTurn = (turn: number): boolean => turn % interventionEveryTurns === 2;
-/**
- * 신탁이 미는 크기. **경계 12 이내에서 시작했을 때만 단계를 넘긴다** — 50:50에서 시작한 런은 신탁
- * 하나로 62나 38에 서서 아무 경계도 못 넘고, 65나 40처럼 경계 근처에서 출발해야 그 조우의 개입 얼굴이
- * 바뀐다. 배분(`favorPool`)이 출발점을 정하고 신탁이 런 중에 미는 것이 축을 나눠 갖는 방식이다.
- * 조우당 한 번이라 한 조우 안 왕복도 없다
- */
-export const oracleSwing = 12;
+/** 지금 턴의 개입은 이미 적용됐다. 다음 2·5·8…턴까지 남은 턴만 파생한다 */
+export function turnsUntilIntervention(turn: number): number {
+  for (let wait = 1; wait <= interventionEveryTurns; wait += 1) if (intervenesOnTurn(turn + wait)) return wait;
+  return interventionEveryTurns;
+}
 export type FavorGod = { id: string; stage_effects: Partial<Record<FavorStage, Partial<Record<StageHook, StageEffect[]>>>> };
 /**
- * 신이 말하는 자리 아홉(`data/gods.json`의 `lines`). 셋은 단계로 갈리고 여섯은 한 벌이다 —
+ * 신이 말하는 자리 열(`data/gods.json`의 `lines`). 셋은 단계로 갈리고 일곱은 한 벌이다 —
  * 갈리는 셋이 조우마다 뜨는 것들이고(조우 시작 · 개입 턴 · 단계 경계) 나머지는 사건이라 그 자리에
  * 단계가 없다. 게이트(`tools/validate.ts`)와 화면(`ui/header.tsx`)이 같은 이 한 벌을 읽는다
  */
-export const lineTriggers = ["encounter", "intervene", "cross", "demand_offer", "demand_kept", "demand_broken", "tear", "join", "reconcile"] as const;
+export const lineTriggers = ["encounter", "intervene", "cross", "demand_offer", "demand_kept", "demand_broken", "tear", "join", "reconcile", "fuse"] as const;
 export type LineTrigger = (typeof lineTriggers)[number];
 export const stagedLineTriggers: readonly LineTrigger[] = ["encounter", "intervene", "cross"];
 /**
@@ -101,8 +99,7 @@ export function shiftFavor(favor: Record<string, number>, god: string, amount: n
  * 조우당 신별 상한. **5를 그대로 둔다.** 5는 감쇠 −3보다 커서 호의가 조우마다 +2씩 구조적으로 오르고,
  * 그래서 P-30이 이 상한을 다이얼로 후보에 올렸다 — 4000런으로 재고 되돌렸다:
  *
- * - 3 (표류 0): 진노 0.005 → 0.012인데 **합성률 0.047 → 0.003.** `canFuse`는 조합 둘 다 70을 요구하고,
- *   요구는 patron만 올리고 상대를 내린다 — 표류가 0이면 둘이 같이 70에 서는 일이 사라진다
+ * - 3 (표류 0): 진노 0.005 → 0.012였지만 은혜 도달이 크게 줄었다.
  * - 2 (표류 −1): 진노 0.047(목표 0.05도 못 넘는다)에 아테나 은총 1096 → 174
  *
  * 둘 다 목표를 못 넘으면서 다른 콘텐츠를 끈다. 진노 도달은 P-29의 시련 대가로 연다 — reviews/30-intervention.md

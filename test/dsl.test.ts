@@ -15,7 +15,6 @@ const state = (): GameState => ({
   seed: 1,
   favor: { zeus: 70, poseidon: 20 },
   grace: {},
-  graceSlots: {},
   map: { depth: 0, lane: 1, grid: [], completed: [] },
   combat: {
     turn: 3,
@@ -54,6 +53,7 @@ describe("DSL operators", () => {
 
   it("routes beneficial effects on mixed fusion cards to the player", () => {
     const combat = state();
+    combat.favor = { zeus: 50, poseidon: 50 };
     executeCard(combat, card("enemy", [{ op: "damage", value: 4 }, { op: "block", value: 3 }, { op: "apply_token", token: "bulwark", stacks: 2 }]), "a");
     expect(combat.combat.enemies[0]).toMatchObject({ hp: 16, block: 0, tokens: {} });
     expect(combat.combat.player).toMatchObject({ block: 3, tokens: { bulwark: 2 } });
@@ -61,10 +61,12 @@ describe("DSL operators", () => {
 
   it("chains only to secondary enemies", () => {
     const combat = state();
+    combat.favor = { zeus: 50, poseidon: 50 };
     executeCard(combat, card("enemy", [{ op: "chain", value: 4 }]), "a");
     expect(combat.combat.enemies.map(({ hp }) => hp)).toEqual([20, 16, 16]);
 
     const solo = state();
+    solo.favor = { zeus: 50, poseidon: 50 };
     solo.combat.enemies.splice(1);
     expect(() => executeCard(solo, card("enemy", [{ op: "chain", value: 4 }]), "a")).not.toThrow();
     expect(solo.combat.enemies[0].hp).toBe(20);
