@@ -35,11 +35,6 @@ export const stageName: Record<FavorStage, string> = { devotion: "헌신", calm:
 const stageTargets = { self: "나에게", enemy: "적 하나에게", all_enemies: "적 전체에게" } as const;
 
 /**
- * 그 신이 이 단계에서 하는 일 — 조우 시작 것과 **매 턴** 것을 나눠 준다. 네 단계가 다 개입하므로
- * (P-34) 평온·분노도 빈 문자열이 아니다. 진노가 무엇을 할지 모르면 미터의 경고색이 「나쁘다」까지만
- * 말하고 끝난다
- */
-/**
  * 그 신이 이 단계·이 훅에서 하는 일. **문장도 파티클도 여기 하나에서 읽는다** — 화면이
  * `data/gods.json`을 두 경로로 읽으면 컷인 문장과 파티클이 다른 개입을 그린다
  */

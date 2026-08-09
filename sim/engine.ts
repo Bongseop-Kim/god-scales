@@ -11,7 +11,7 @@ import { demandEnemies, demandPenalty, demandSatisfied, demandSettled, parseCond
 import { graceOffer, graceSlots, graceTier, takeGrace, type Grace, type GraceSlot } from "../core/grace.ts";
 import { advanceMap, bossLane, enemyDamageScale, enterNode, floorsPerRegion, generateMap, laneCount, mapDepth, mapSlot, reachableLanes, takeRest, type MapGrid, type MapNodeType } from "../core/map.ts";
 import { canFuse } from "../core/fusion.ts";
-import { cardEffects, cardLevel, MAX_UPGRADE, upgraded, type Card, type GodId } from "../core/rules.ts";
+import { cardEffects, cardLevel, cardSaboteur, MAX_UPGRADE, upgraded, type Card, type GodId } from "../core/rules.ts";
 import { canReachTarget, livingInReach } from "../core/targeting.ts";
 import type { CombatOutcome, GameState, Passives, Tokens, Trigger } from "../core/state.ts";
 import { chooseCard, chooseDemandAnswer, chooseGrace, choosePath, chooseRest, chooseRestCard, chooseReward, chooseTarget } from "./bots/rule.ts";
@@ -101,10 +101,9 @@ export const skipReward = "";
  * `depth`를 안 읽으므로 지역이 늘어도 안 바뀐다 — 저승이 tier1뿐인 것은 이제 **저승에 정예 편성이 없다**는
  * 사실이 든다(`data/map.json`). 저승에 정예를 놓으면 이 규칙이 아니라 그 편성이 등급을 옮긴다
  *
- * **노드 종류는 안 바꾼다** — 지도의 칸은 지도가 정하고 진노는 지도가 모르는 일이다. 신을 꺾은 조우가
- * 인자 하나로 정예 대우를 받는다: 판 위에서 실제로 정예였다
+ * **노드 종류는 안 바꾼다** — 지도의 칸은 지도가 정한다. 일반 전투는 진노 신이 섰더라도 일반 보상이다.
  */
-const tier2Slots = (path: MapNodeType, felledGod = false): number => (felledGod || path === "elite" || path === "boss" ? 3 : 0);
+const tier2Slots = (path: MapNodeType): number => (path === "elite" || path === "boss" ? 3 : 0);
 /** 테스트가 부른다 — 자리 수보다 후보가 적을 때 던지는 가드는 배포 데이터로는 못 만드는 상황이다 */
 export function rewardOffer(random: () => number, patrons: readonly string[], tier2 = 0): string[] {
   const offer: string[] = [];
@@ -197,7 +196,7 @@ const godEnemies = enemyData.filter(({ tier }) => tier === "god").map(enemyDefin
  */
 type EnemyView = { id: string; slot: number; span: number; hp: number; maxHp: number; block: number; tokens: Tokens; passives: Passives; intent?: EnemyAction };
 /** UI가 data/cards.json을 따로 읽으면 두 번째 진실이 된다 — 카드는 엔진이 준 것만 그린다 */
-export type CardView = { id: string; name: string; cost: number; target: Card["target"]; effects: Card["effects"]; reach?: string };
+export type CardView = { id: string; name: string; cost: number; target: Card["target"]; effects: Card["effects"]; reach?: string; weakened?: boolean };
 const cardView = ({ id, name, cost, target, effects, reach }: Card): CardView => ({ id, name, cost, target, effects, ...(reach ? { reach } : {}) });
 /**
  * 자유 덱 편집기가 고를 수 있는 카드 124장을 신별로. **tier1 patron 카드뿐이다** — tier2 15장은
@@ -266,6 +265,8 @@ export type CombatObservation = RunView & {
   energy: number;
   draw: number;
   hand: CardView[];
+  /** 분노 이하인 신이 다른 후원 신의 카드를 무디게 한다. 현재 호의에서 매 관측마다 파생한다. */
+  sabotages: { god: GodId; patron: GodId }[];
   /** 전투 내내 매 턴 일한다 — 화면에 없으면 몇 장 냈는지 플레이어가 세고 있어야 한다 */
   powers: PowerView[];
   enemies: EnemyView[];
@@ -332,7 +333,7 @@ type EncounterResult = {
    * 과업 데이터의 조건 DSL과 같은 키다.
    */
   facts: Record<string, number>;
-  /** 이 조우에서 꺾은 진노 신들. 화해(호의 회복)와 정예 대우 보상이 이 한 줄을 읽는다 */
+  /** 이 조우에서 꺾은 진노 신들. 화해(호의 회복)가 이 한 줄을 읽는다 */
   felled: string[];
 };
 
@@ -420,7 +421,12 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
     // 카드가 화면에서 거짓말을 하고, 그러면 화면만 보고 턴을 계산할 수 없다. 낼 때 도는 목록과 같다
     hand: state.combat.hand.map((id) => {
       const card = cardMap.get(id)!;
-      return { ...cardView(card), effects: cardEffects(state, card) };
+      const weakened = !!cardSaboteur(state, card.patron);
+      return { ...cardView(card), effects: cardEffects(state, card), ...(weakened ? { weakened } : {}) };
+    }),
+    sabotages: patrons.flatMap((patron) => {
+      const god = cardSaboteur(state, patron);
+      return god ? [{ god, patron }] : [];
     }),
     powers: state.combat.powers.map(({ trigger, card }) => ({ trigger, card: cardView(card) })),
     // 칸을 실어 보낸다 — 살아 있는 적만 보내면 화면이 남은 적이 앞뒤 어디였는지 그릴 수 없다
@@ -665,9 +671,9 @@ export function* runSteps(
     return { demand, patron };
   }
 
-  function* offerReward(nodeSeed: number, path: MapNodeType, felledGod = false, questResult?: PromiseView): Generator<Decision, void, string> {
+  function* offerReward(nodeSeed: number, path: MapNodeType, questResult?: PromiseView): Generator<Decision, void, string> {
     // 전투/셔플과 겹치지 않는 새 스트림이다. 겹치면 기존 replay 재생이 깨진다
-    const offer = rewardOffer(createRng(seed * 1000 + nodeSeed), patrons, tier2Slots(path, felledGod));
+    const offer = rewardOffer(createRng(seed * 1000 + nodeSeed), patrons, tier2Slots(path));
     const picked = yield {
       phase: "reward",
       options: [...offer, skipReward],
@@ -772,7 +778,7 @@ export function* runSteps(
       }
       /**
        * 꺾으면 화해한다 — 호의가 평온 하한으로 돌아가므로 그 신은 다음 조우에 다시 서지 않는다.
-       * 개입이 진노(적 회복·신 합류)에서 평온(작은 도움)으로 바뀌는 것이 이 조우의 가장 큰 보상이다.
+       * 개입이 진노(신 합류)에서 평온(작은 도움)으로 바뀌는 것이 이 조우의 가장 큰 보상이다.
        * 감쇠 한 줄이 아니라 값을 **놓는다**: 「진노 이전으로」가 아니라 「휴전선까지」다
        */
       for (const god of result.felled) state.favor[god] = wrathReconcileFavor;
@@ -792,7 +798,7 @@ export function* runSteps(
         break;
       }
       // 모든 승리는 기본 카드 보상을 먼저 받는다. 최종 판정은 저널이 놓치지 않도록 이 관측에도 싣는다
-      yield* offerReward(nodeSeed, path, result.felled.length > 0, questResult);
+      yield* offerReward(nodeSeed, path, questResult);
       if (activeQuest && questResult?.settled === "kept") {
         resolveDemand(state.favor, activeQuest.patron, activeQuest.demand.reward);
         yield* offerQuestReward(activeQuest, nodeSeed, questResult);

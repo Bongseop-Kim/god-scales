@@ -71,6 +71,8 @@ describe("browser replay export", () => {
     }
     expect(markup).toContain("스택마다 사거리 안 아군의 단일 대상 피해를 대신 받음");
     expect(markup).toContain("공격이 아닌 카드를 내면 광란 +스택");
+    expect(markup).toContain("<b>훼방</b>");
+    expect(markup).toContain("<b>파워</b>");
   });
 
   it("renders every decision screen from its observation alone", () => {
@@ -353,6 +355,26 @@ describe("browser replay export", () => {
     expect(markup).toContain('<em class="card-up">+1</em>');
     expect(markup).toContain(">작은 번개</small>");
     expect(markup).toContain('aria-label="작은 번개+1 · 1 에너지 · ▮▮▮▮ 전체 · 피해 12"');
+  });
+
+  it("shows sabotage in the reserved row and on the weakened card", () => {
+    const base = cards.find(({ id }) => id === "card_athena_01")!;
+    const weakened = { ...base, effects: [{ ...base.effects[0], value: 3 }, base.effects[1]], weakened: true };
+    const decision = {
+      phase: "card", options: [base.id, endTurnAction], bot: endTurnAction,
+      observation: {
+        depth: 1, lane: 1, region: "underworld", floor: 1, hp: 50, maxHp: 92,
+        patrons: ["zeus", "athena"], grid: [], favor: { zeus: 29, athena: 71 }, grace: {}, deck: [],
+        turn: 1, block: 0, energy: 3, draw: 4, tokens: {}, powers: [], hand: [weakened],
+        sabotages: [{ god: "zeus", patron: "athena" }], enemies: [], hits: [], hitSeq: 0, guarded: [], promises: [],
+      },
+    } as never;
+    const markup = renderToStaticMarkup(createElement(CombatScreen, { seed: 1, decision, onAnswer: () => {} }));
+
+    expect(markup).toContain("제우스 분노 · 아테나 카드 −1");
+    expect(markup).toContain("분노한 제우스의 훼방 — 아테나 카드의 피해·방어·연쇄 −1 · 제우스 호의가 평온으로 돌아오면 해제");
+    expect(markup).toContain('class="game-card weakened"');
+    expect(markup).toContain('<s>4</s><b class="down">3</b>');
   });
 
   /**

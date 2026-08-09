@@ -48,9 +48,7 @@ describe("tier2 reward slots", () => {
    * 표에 있다). 갈래 종류는 관측의 격자에서 읽고, **갈래는 봇에게 안 맡긴다** — `choosePath`는 체력을
    * 보고 고르므로 30시드를 돌려도 정예를 한 번도 안 밟는다.
    *
-   * **신을 꺾은 조우는 갈래와 무관하게 셋이다**(P-47) — 판 위에서 실제로 정예였다. 그래서 판에 신이
-   * 섰던 조우는 갈래가 아니라 `god` 칸으로 센다: 안 가르면 「일반 전투는 0」이 진노를 만난 자리에서
-   * 흔들려 규칙이 둘 다 안 서게 된다
+   * 신을 꺾어도 갈래의 보상 규칙은 바뀌지 않는다. `god` 칸은 그 일반 전투를 따로 확인한다.
    */
   it("gives normal combat none and elite and boss all three", () => {
     const counts = new Map<string, Set<number>>();
@@ -84,7 +82,7 @@ describe("tier2 reward slots", () => {
       }
       step = wrath.next(step.value.bot);
     }
-    expect(counts.get("god")).toEqual(new Set([3]));
+    expect(counts.get("god")).toEqual(new Set([0]));
     expect(counts.get("underworld:combat")).toEqual(new Set([0]));
     expect(counts.get("surface:combat")).toEqual(new Set([0]));
     expect(counts.get("surface:elite")).toEqual(new Set([3]));

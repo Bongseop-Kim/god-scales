@@ -153,6 +153,21 @@ export function TokenDictionary({ children }: { children?: ReactNode }) {
           </li>
         ))}
       </ul>
+      <h3>전투 상태</h3>
+      <ul className="token-dict">
+        <li>
+          <i className="passive-icon">−1</i>
+          <b>훼방</b>
+          <em>호의 단계</em>
+          <span>분노한 신이 다른 후원 신 카드의 피해·방어·연쇄를 1 낮춤 · 분노한 신의 호의가 평온으로 돌아오면 해제</span>
+        </li>
+        <li>
+          <i className="passive-icon">P</i>
+          <b>파워</b>
+          <em>지속 효과</em>
+          <span>손을 떠난 뒤 전투 내내 지정된 때마다 일함</span>
+        </li>
+      </ul>
       {children}
     </div>
   );

@@ -1,5 +1,6 @@
 import type { GraceSlot } from "./grace.ts";
 import { drawCards } from "./deck.ts";
+import { favorInitial, favorStage } from "./favor.ts";
 import { tokenNames, type ActorState, type CombatState, type GameState, type TokenName, type Tokens, type Trigger } from "./state.ts";
 import { livingInReach, reachSlots, resolveChainTargets, resolveTargets, type Target } from "./targeting.ts";
 
@@ -367,15 +368,26 @@ export function firePowers(state: GameState, trigger: Trigger, enemyId?: string,
 }
 
 /**
- * 이 카드가 실제로 내는 효과 — 카드의 것 + 그 카드의 태그에 걸린 은혜의 것. 태그가 곧 슬롯이라
- * 공격 카드 한 장이 아니라 **공격 행동 전체**가 바뀐다. 태그가 둘이면 은혜도 둘 붙는다.
+ * 이 카드가 실제로 내는 효과 — 카드의 것 + 그 카드의 태그에 걸린 은혜의 것, 그리고 현재 호의의 훼방.
+ * 태그가 곧 슬롯이라 공격 카드 한 장이 아니라 **공격 행동 전체**가 바뀐다. 태그가 둘이면 은혜도 둘 붙는다.
  *
  * 세는 쪽(`sim/engine.ts`의 토큰·방어 집계)도 같은 목록을 읽는다 — 화면에 붙은 토큰을 요구가
  * 세지 않으면 그게 두 번째 진실이다
  */
 export function cardEffects(state: GameState, card: Card): Effect[] {
   const graced = card.tags.flatMap((tag) => state.graceSlots[tag as GraceSlot]?.effects ?? []);
-  return graced.length ? [...card.effects, ...graced] : card.effects;
+  const effects = graced.length ? [...card.effects, ...graced] : card.effects;
+  if (!cardSaboteur(state, card.patron)) return effects;
+  return effects.map((effect) => effect.value !== undefined && ["damage", "block", "chain"].includes(effect.op)
+    ? { ...effect, value: Math.max(1, effect.value - 1) }
+    : effect);
+}
+
+/** 이 신의 카드를 무디게 하는 다른 후원 신. 현재 호의만 읽으므로 평온 복귀와 동시에 사라진다. */
+export function cardSaboteur(state: GameState, patron?: GodId): GodId | undefined {
+  if (!patron) return undefined;
+  return (Object.keys(state.favor) as GodId[]).find((god) => god !== patron
+    && ["anger", "wrath"].includes(favorStage(state.favor[god] ?? favorInitial)));
 }
 
 export function executeCard(state: GameState, card: Card, enemyId?: string, deckCards?: Card[], random: () => number = () => 0): void {

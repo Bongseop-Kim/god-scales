@@ -254,7 +254,7 @@ export function GameCard({ cardId, card, boost, upgrade, disabled, onSelect }: {
         <span className="card-fx">
           {/* 사거리는 마스크를 적은 26장에만 선다 — 기본값(네 칸 전부)에 그리면 같은 뜻의 두 번째 표기다 */}
           {shown.reach && <em className="card-reach" title={reachText(shown.reach)}>{reachBars(shown.reach)}</em>}
-          {/* 원래 값은 원문에서 읽는다. 은혜는 **뒤에 잇는다**(`cardEffects`) — 앞에서부터 인덱스로 맞고 뒤에 남는 것이 은혜다 */}
+          {/* 원래 값은 원문에서 읽는다. 은혜는 뒤에 잇고 훼방은 값을 낮춘다(`cardEffects`) — 앞에서부터 인덱스로 맞고 뒤에 남는 것이 은혜다 */}
           {shown.effects.map((effect, index) => (
             <Effect key={index} effect={effect} written={effectNumber(face?.base.effects[index] ?? effect)} boost={boost} />
           ))}
@@ -274,7 +274,7 @@ export function GameCard({ cardId, card, boost, upgrade, disabled, onSelect }: {
   return onSelect
     ? (
       <button
-        className="game-card"
+        className={`game-card${card?.weakened ? " weakened" : ""}`}
         type="button"
         data-card={cardId}
         data-god={face?.god}
@@ -288,5 +288,5 @@ export function GameCard({ cardId, card, boost, upgrade, disabled, onSelect }: {
         {body}
       </button>
     )
-    : <article className="game-card" data-card={cardId} data-god={face?.god} aria-label={label}>{body}</article>;
+    : <article className={`game-card${card?.weakened ? " weakened" : ""}`} data-card={cardId} data-god={face?.god} aria-label={label}>{body}</article>;
 }

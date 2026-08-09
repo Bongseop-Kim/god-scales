@@ -179,8 +179,7 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
    * 판을 흔드는 자리다(`core/favor.ts`의 `on_encounter_start`·`on_turn_start`) — 화면에 아무 표시가
    * 없으면 체력이 왜 깎였는지 플레이어가 모른다.
    *
-   * **데이터가 있는 신만 선다.** 「조우 시작에는 극단 둘만」이던 옛 규칙은 평온이 그 자리에서 아무것도
-   * 안 하던 시절의 것이다(P-46 §5가 채웠다) — 빈 문장이 곧 「이 신은 지금 아무 일도 안 한다」다.
+   * **데이터가 있는 신만 선다.** 분노는 상시 훼방이 벌이므로 개입 턴에는 침묵한다.
    * 겹침은 큐가 아니라 **순서**로 푼다: 신 하나씩 320ms 어긋난다
    */
   useEffect(() => {
@@ -191,14 +190,14 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
     view.patrons.forEach((god, index) => {
       const stage = favorStage(view.favor[god] ?? favorInitial);
       const text = godStageText(god, stage)[start ? "start" : "turn"];
+      const effects = godStageEffects(god, stage, hook);
+      if (!effects.length) return;
       timers.push(setTimeout(() => {
         /**
-         * **말은 판을 안 흔들어도 나온다** — 컷인은 「무엇을 했는가」라 데이터가 없으면 빈 문장이지만,
-         * 아무것도 안 하는 단계에도 신은 말한다. 조우 시작은 말(L2)이고 개입 턴은 자막(L1)이다:
+         * 조우 시작은 말(L2)이고 개입 턴은 자막(L1)이다:
          * 런당 49회 뜨는 자리를 화면 중앙에 2초씩 세우면 전투가 아니라 낭독이 된다
          */
         speak(start ? 2 : 1, god, godLine(god, start ? "encounter" : "intervene", start ? view.depth : view.turn, stage));
-        const effects = godStageEffects(god, stage, hook);
         // 「신이 적으로 합류」는 판이 뒤집히는 사건이라 800ms 페이드로 지나가면 안 된다 — 신 일러가 선다
         const joinEffect = effects.find(({ op }) => op === "join");
         const source = joinEffect ? godArt[`../../art/gods/${god}.webp`] : fxArt[`../../art/fx/${stage}.webp`];
@@ -388,6 +387,7 @@ export function CombatScreen({ seed, decision, onAnswer, onOpenJournal }: {
       <div className="board-chips">
         <PromiseRow promises={view.promises} onOpen={onOpenJournal} />
         <span className="intervention-count">개입 · {turnsUntilIntervention(view.turn)}턴 뒤</span>
+        <SabotageRow sabotages={view.sabotages} />
         <PowerRow powers={view.powers} />
       </div>
 
@@ -643,6 +643,19 @@ function PromiseRow({ promises, onOpen }: { promises: PromiseView[]; onOpen?: ()
 const triggerLabels: Record<Trigger, string> = {
   turn_start: "턴 시작", turn_end: "턴 끝", on_play: "카드 낼 때", on_unblocked: "막히지 않은 피해",
 };
+
+function SabotageRow({ sabotages = [] }: { sabotages?: CombatObservation["sabotages"] }) {
+  const label = sabotages.map(({ god, patron }) => `${godName(god)} 분노 · ${godName(patron)} 카드 −1`).join(" ");
+  return (
+    <span className="power-row sabotage-row" role="status" aria-label={label} aria-hidden={sabotages.length ? undefined : true}>
+      {sabotages.map(({ god, patron }) => (
+        <em key={`${god}-${patron}`} title={`분노한 ${godName(god)}의 훼방 — ${godName(patron)} 카드의 피해·방어·연쇄 −1 · ${godName(god)} 호의가 평온으로 돌아오면 해제`}>
+          {godName(god)} 분노 · {godName(patron)} 카드 −1
+        </em>
+      ))}
+    </span>
+  );
+}
 
 /**
  * 병사 — 적과 같은 눈금이다(P-55): 고정된 스프라이트, 발밑 체력 바 140×16, 그 아래 상태 칩.

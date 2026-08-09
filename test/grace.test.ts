@@ -80,6 +80,28 @@ describe("grace", () => {
     expect(cardEffects(state, card)).toEqual([...card.effects, ...shock.effects, ...block.effects]);
   });
 
+  it("weakens only the other patron's damage, block, and chain until calm", () => {
+    const state = {
+      seed: 1,
+      combat: createCombat(1, [], []),
+      favor: { zeus: 29, athena: 71 },
+      grace: {},
+      graceSlots: {},
+      map: { depth: 0, lane: 1, grid: [], completed: [] },
+    } as GameState;
+    const athena: Card = {
+      id: "athena", name: "athena", patron: "athena", cost: 1, target: "enemy", tags: [],
+      effects: [
+        { op: "damage", value: 2 }, { op: "block", value: 1 }, { op: "chain", value: 1 },
+        { op: "draw", value: 2 }, { op: "energy", value: 2 }, { op: "heal", value: 2 },
+      ],
+    };
+    expect(cardEffects(state, athena).map(({ value }) => value)).toEqual([1, 1, 1, 2, 2, 2]);
+    expect(cardEffects(state, { ...athena, patron: "zeus" })).toBe(athena.effects);
+    state.favor.zeus = 30;
+    expect(cardEffects(state, athena)).toBe(athena.effects);
+  });
+
   it("excludes scenario runs from the base win rate", () => {
     const scenario = summarize(simulate(20, "grace_6"));
     expect([scenario.runs, scenario.scenario_runs, scenario.grace_milestones[6]]).toEqual([0, 20, 1]);

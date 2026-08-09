@@ -48,16 +48,6 @@
           }
         ]
       },
-      "anger": {
-        "on_turn_start": [
-          {
-            "op": "apply_token",
-            "token": "shock",
-            "stacks": 1,
-            "target": "self"
-          }
-        ]
-      },
       "wrath": {
         "on_encounter_start": [
           {
@@ -205,15 +195,6 @@
             "op": "heal",
             "value": 1,
             "target": "self"
-          }
-        ]
-      },
-      "anger": {
-        "on_turn_start": [
-          {
-            "op": "heal",
-            "value": 1,
-            "target": "enemy"
           }
         ]
       },
@@ -366,15 +347,6 @@
           }
         ]
       },
-      "anger": {
-        "on_turn_start": [
-          {
-            "op": "heal",
-            "value": 3,
-            "target": "enemy"
-          }
-        ]
-      },
       "wrath": {
         "on_encounter_start": [
           {
@@ -523,15 +495,6 @@
           }
         ]
       },
-      "anger": {
-        "on_turn_start": [
-          {
-            "op": "heal",
-            "value": 2,
-            "target": "enemy"
-          }
-        ]
-      },
       "wrath": {
         "on_encounter_start": [
           {
@@ -674,15 +637,6 @@
           {
             "op": "damage",
             "value": 1,
-            "target": "enemy"
-          }
-        ]
-      },
-      "anger": {
-        "on_turn_start": [
-          {
-            "op": "heal",
-            "value": 2,
             "target": "enemy"
           }
         ]

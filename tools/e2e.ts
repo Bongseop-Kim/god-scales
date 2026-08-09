@@ -34,8 +34,10 @@ if (!deckOk(freeDeck)) throw new Error(`${freeCard} is no longer a startable tie
  * 900개 중 **18개**가 완주하며 열 phase를 다 지난다 — 218이 가장 짧고(246결정) 559·81·129가 다음이다.
  * 218 → 32: `askQuest`가 이미 걸린 신을 후보에서 빼자(같은 신의 퀘스트 둘) 218이 12층에서 죽는다.
  * 900개 중 71개가 완주한다 — 32가 가장 짧고(239결정) 575·369·279가 다음이다
+ * P-69에서 384 → 623: 훼방과 분노 개입 삭제가 384의 은혜 획득을 막았다.
+ * 1000개 중 3개가 완주하며 여덟 phase를 다 지난다 — 623이 가장 짧고(317결정) 807·260이 다음이다
  */
-const seed = 384;
+const seed = 623;
 const phases = ["path", "card", "target", "rest", "rest_card", "reward", "grace", "demand"];
 
 /**
