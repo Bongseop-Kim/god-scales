@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { MAX_SLOTS } from "../../core/combat.ts";
 import { attackPreview, cardLevel, upgraded, type Card } from "../../core/rules.ts";
-import type { Tokens } from "../../core/state.ts";
+import type { Tokens, Trigger } from "../../core/state.ts";
 import { fullReach, reachSlots } from "../../core/targeting.ts";
 import cardDataJson from "../../data/cards.json" with { type: "json" };
 import type { CardView } from "../../sim/engine.ts";
@@ -13,7 +13,7 @@ import { tokenName } from "./tokens.tsx";
 
 const cardArt = import.meta.glob<string>("../../art/cards/*.webp", { eager: true, query: "?url", import: "default" });
 /**
- * 그림·프레임색·파티클·이름·파워는 **값이 아니라 종류**라 `data/cards.json`에서 직접 읽는다 — 엔진의
+ * 그림·신 분류·파티클·이름·파워는 **값이 아니라 종류**라 `data/cards.json`에서 직접 읽는다 — 엔진의
  * `CardView`는 값만 싣는다(`sim/engine.ts:130`). 적 이름을 `data/enemies.json`에서 읽는 자리와 같다.
  * 179개 id와 그림 179장의 이름 규칙은 `ui/art-keys.ts`에 있고 `tools/art.ts`가 같은 것을 쓴다
  */
@@ -24,6 +24,7 @@ const cardFace = new Map((cardDataJson as unknown as (Card & CardArtSource)[]).m
   name: card.name,
   // 파워의 정본은 `power` 태그다(`core/rules.ts:292`) — `trigger`는 그 태그가 붙은 카드만 갖는다
   power: (card.tags ?? []).includes("power"),
+  exhaust: (card.tags ?? []).includes("exhaust"),
   // 등급 규칙은 게이트와 같은 함수다 — 두 벌이면 「게이트는 상급인데 화면은 아니다」가 생긴다
   tier: cardTier(card),
   /**
@@ -83,8 +84,15 @@ const conditionText: Record<string, string> = {
   "block(self) >= 8": "내 방어 8 이상",
   "block(self) >= 10": "내 방어 10 이상",
   "block(self) >= 12": "내 방어 12 이상",
+  "turn > 3": "4턴부터",
+  "enemy_count() >= 2": "적 둘 이상",
 };
 export const conditionLabel = (when: string): string => conditionText[when] ?? when;
+
+/** 파워가 걸리는 훅 넷. 카드 사전과 전투 칩이 같은 말을 쓴다 */
+export const triggerLabels: Record<Trigger, string> = {
+  turn_start: "턴 시작", turn_end: "턴 끝", on_play: "카드 낼 때", on_unblocked: "막히지 않은 피해",
+};
 
 type CardEffect = CardView["effects"][number];
 /** 효과 한 조각이 세우는 숫자. 토큰만 스택이고 나머지는 값이다 */
@@ -122,7 +130,7 @@ export const reachText = (reach = fullReach): string =>
   `${reachBars(reach)} ${reachNames[reach] ?? `칸 ${reachSlots(reach).join("·")}`}`;
 
 /**
- * 카드 면 기호의 범례(P-61) — 토큰 사전의 셋째 목록이고 `TokenDictionary`가 자식으로 받는다.
+ * 카드 면 기호의 범례(P-61) — 게임 사전의 셋째 목록이고 `TokenDictionary`가 자식으로 받는다.
  * 토큰 열셋과 적 능력 여덟은 사전에 있었는데 **카드 면의 기호는 어디에도 설명이 없었다.**
  * 그림은 카드가 쓰는 클래스·함수를 그대로 세운다 — 설명용 사본을 그리면 카드가 바뀔 때 사전만 옛 얼굴이다
  */
@@ -132,16 +140,33 @@ export const CardSigns = () => (
     <ul className="token-dict sign-dict">
       <li><span className="sign"><b className="cost-gem">2</b></span><span>이 카드를 내는 데 드는 에너지</span></li>
       <li><span className="sign"><em className="card-reach">{reachBars("0")}</em></span><span>닿는 칸 — 채운 칸의 적만 대상</span></li>
-      <li><span className="sign card-fx"><Icon name="damage" /><Icon name="block" /><Icon name="heal" /></span><span>그 효과의 값</span></li>
+      <li><span className="sign card-fx"><Icon name="damage" /><Icon name="block" /><Icon name="heal" /></span><span>피해·방어·회복의 값</span></li>
       <li><span className="sign card-fx"><em><Icon name="shock" /><b>2</b></em></span><span>붙일 토큰과 스택</span></li>
+      <li><span className="sign card-fx"><em>{opLabels.draw}<b>2</b></em></span><span>덱에서 손으로 가져올 카드 수</span></li>
+      <li><span className="sign card-fx"><em>{opLabels.energy}<b>2</b></em></span><span>이번 턴에 더 쓸 에너지</span></li>
+      <li><span className="sign card-fx"><em className="harm">{opLabels.self_damage}<b>2</b></em></span><span>내가 받는 피해</span></li>
+      <li><span className="sign card-fx"><em>{opLabels.favor_shift}<b>1</b></em></span><span>적힌 신의 호의 상승</span></li>
+      <li><span className="sign card-fx"><em>{opLabels.chain}<b>2</b></em></span><span>인접 칸에 추가 타격</span></li>
       <li><span className="sign"><em className="card-kind">파워</em></span><span>손을 떠나 전투 내내 매 턴 발동</span></li>
       <li><span className="sign"><em className="card-kind">전체</em></span><span>사거리 안 모든 적</span></li>
+      <li><span className="sign"><em className="card-kind">소멸</em></span><span>내면 이 전투에서 사라짐</span></li>
       <li><span className="sign">{Object.values(tierNames).map((name) => <em key={name} className="card-tier">{name}</em>)}</span><span>카드 등급</span></li>
       <li><span className="sign"><em className="card-up">+1</em></span><span>쉼터에서 올린 강화 단계</span></li>
-      <li><span className="sign seal-badge"><Icon name="seal" /></span><span>신의 은혜를 이 카드에 새긴 인장</span></li>
+      <li><span className="sign seal-frame" aria-hidden="true" /><span>테두리 색으로 새긴 신의 은혜</span></li>
       <li><span className="sign"><em className="card-tier">융합</em></span><span>두 후원 신의 인장이 만나 바뀐 카드</span></li>
       <li><span className="sign card-fx"><em><Icon name="damage" /><s>6</s><b className="up">11</b></em></span><span>카드에 적힌 값과 지금 나갈 값</span></li>
       <li><span className="sign card-fx"><em className="cond"><Icon name="damage" /><b>6</b></em></span><span>조건이 맞을 때만 붙는 효과</span></li>
+    </ul>
+    <h3>파워</h3>
+    <ul className="token-dict power-dict">
+      {(cardDataJson as unknown as Card[]).filter(({ tags }) => tags.includes("power")).map((card) => (
+        <li key={card.id}>
+          <i className="passive-icon">P</i>
+          <b>{card.name}</b>
+          <em>{triggerLabels[card.trigger!]}</em>
+          <span>{effectText(card)}</span>
+        </li>
+      ))}
     </ul>
   </>
 );
@@ -230,7 +255,7 @@ export function GameCard({ cardId, card, boost, upgrade, disabled, onSelect }: {
   disabled?: boolean;
   onSelect?: () => void;
 }) {
-  // 업그레이드본은 `card_zeus_12+1`이다 — 그림·프레임색·등급은 base의 것이고 `+N`은 배지가 든다
+  // 업그레이드본은 `card_zeus_12+1`이다 — 그림·신 분류·등급은 base의 것이고 `+N`은 배지가 든다
   const { base, level } = cardLevel(cardId);
   const face = cardFace.get(base);
   /**
@@ -246,10 +271,17 @@ export function GameCard({ cardId, card, boost, upgrade, disabled, onSelect }: {
   const shownLevel = upgrade ? level + 1 : level;
   const source = face?.art;
   const [missing, setMissing] = useState(!source);
-  // 예외만 적는다 — 149장 중 20장이다(파워 6 · 전체 14, 데이터상 안 겹친다). 슬롯이 하나뿐이다
-  const kind = face?.power ? "파워" : shown?.target === "all_enemies" ? "전체" : undefined;
+  // 예외만 적는다 — 배지 슬롯 하나를 파워·전체·소멸이 나눠 쓴다(데이터상 서로 안 겹친다)
+  const kind = face?.power ? "파워" : shown?.target === "all_enemies" ? "전체" : face?.exhaust ? "소멸" : undefined;
   const seals = [...(shown?.seals ?? []), ...(shown?.previewSeal ? [shown.previewSeal] : [])];
   const label = shown && `${cardCaption(shown, boost)}${seals.length ? ` · 인장 ${seals.map(({ text }) => text).join(", ")}` : ""}`;
+  const sealColor = (index: number) => {
+    const seal = seals[index];
+    if (!seal) return "#6b7185";
+    return shown?.previewSeal === seal ? `color-mix(in srgb, var(--${seal.patron}) 55%, transparent)` : `var(--${seal.patron})`;
+  };
+  const frameStyle = { "--seal-a": sealColor(0), "--seal-b": sealColor(1) } as React.CSSProperties;
+  const sealTitle = seals.map(({ text, effects }) => `${text} · ${effectText({ target: shown?.target ?? "enemy", effects })}`).join("\n") || undefined;
   const body = (
     <>
       <div className={`card-art${missing ? " missing" : ""}`}>
@@ -257,20 +289,10 @@ export function GameCard({ cardId, card, boost, upgrade, disabled, onSelect }: {
         <span aria-hidden="true">⚖</span>
       </div>
       {shown && <b className="cost-gem">{shown.cost}</b>}
-      <span className="card-seals">
-        {seals.map((seal, index) => (
-          <em
-            key={`${seal.patron}-${index}`}
-            className={shown?.previewSeal === seal ? "preview" : undefined}
-            style={{ "--seal-color": `var(--${seal.patron})` } as React.CSSProperties}
-            title={`${seal.text} · ${effectText({ target: shown?.target ?? "enemy", effects: seal.effects })}`}
-          ><Icon name="seal" /></em>
-        ))}
-      </span>
       {kind && <em className="card-kind">{kind}</em>}
       {shown && (
         <span className="card-fx">
-          {/* 사거리는 마스크를 적은 26장에만 선다 — 기본값(네 칸 전부)에 그리면 같은 뜻의 두 번째 표기다 */}
+          {/* 공격 카드는 모두 의도한 사거리를 직접 보여 준다 */}
           {shown.reach && <em className="card-reach" title={reachText(shown.reach)}>{reachBars(shown.reach)}</em>}
           {/* 원래 값은 원문에서 읽는다. 은혜는 뒤에 잇고 훼방은 값을 낮춘다(`cardEffects`) — 앞에서부터 인덱스로 맞고 뒤에 남는 것이 은혜다 */}
           {shown.effects.map((effect, index) => (
@@ -300,6 +322,8 @@ export function GameCard({ cardId, card, boost, upgrade, disabled, onSelect }: {
         data-cost={card?.cost}
         data-damage={card && cardDamage(card)}
         aria-label={label}
+        title={sealTitle}
+        style={frameStyle}
         disabled={disabled}
         onMouseEnter={() => playSound("card-place-4", 0.12)}
         onClick={() => { playSound("card-slide-6", 0.35); onSelect(); }}
@@ -307,5 +331,5 @@ export function GameCard({ cardId, card, boost, upgrade, disabled, onSelect }: {
         {body}
       </button>
     )
-    : <article className={`game-card${card?.weakened ? " weakened" : ""}`} data-card={cardId} data-god={face?.god} aria-label={label}>{body}</article>;
+    : <article className={`game-card${card?.weakened ? " weakened" : ""}`} data-card={cardId} data-god={face?.god} aria-label={label} title={sealTitle} style={frameStyle}>{body}</article>;
 }

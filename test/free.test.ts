@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import cardData from "../data/cards.json" with { type: "json" };
+import achievements from "../data/achievements.json" with { type: "json" };
 import { deckOk, deckSize, favorPool, gods, ruleDeck, run, runSteps, startableCards, type PatronPair } from "../sim/engine";
 import { readReplay, type ReplayFile } from "../sim/replay";
 import { replayPayload } from "../ui/shared/export";
@@ -10,6 +11,23 @@ import { replayPayload } from "../ui/shared/export";
 const pairs = gods.flatMap((left, index) => gods.slice(index + 1).map((right) => [left, right] as PatronPair));
 const startable = Object.values(startableCards).flat();
 const fill = (id: string) => Array.from({ length: deckSize }, () => id);
+
+it("keeps every achievement setup valid", () => {
+  expect(new Set(achievements.map(({ id }) => id)).size).toBe(achievements.length);
+  expect(new Set(achievements.map(({ name }) => name)).size).toBe(achievements.length);
+  expect(new Set(achievements.flatMap(({ pair }) => pair))).toEqual(new Set(gods));
+  for (const achievement of achievements) {
+    const [left, right] = achievement.pair;
+    expect(gods, achievement.id).toContain(left);
+    expect(gods, achievement.id).toContain(right);
+    expect(right, achievement.id).not.toBe(left);
+    expect(achievement.split, achievement.id).toBeGreaterThanOrEqual(0);
+    expect(achievement.split, achievement.id).toBeLessThanOrEqual(favorPool);
+    expect(achievement.deck, achievement.id).toHaveLength(deckSize);
+    const allowed = new Set(achievement.pair.flatMap((god) => startableCards[god as keyof typeof startableCards].map(({ id }) => id)));
+    expect(achievement.deck.every((id) => allowed.has(id)), achievement.id).toBe(true);
+  }
+});
 
 /** 파일은 신뢰 경계다 — `readReplay`를 진짜 파일로 지난다. `deckOk`만 부르면 그 경계를 안 지난다 */
 function readWritten(replay: unknown): ReplayFile {
@@ -102,6 +120,21 @@ describe("free starting deck", () => {
       const result = run(5, undefined, [], ["zeus", "athena"], fill(power.id));
       expect(result.encounters, power.id).toBeGreaterThan(0);
     }
+  });
+
+  it("observes turn-start power damage in the final frame", () => {
+    const steps = runSteps(5, undefined, ["artemis", "athena"], fill("card_artemis_23"));
+    let step = steps.next();
+    while (!step.done) {
+      const next = steps.next(step.value.bot);
+      if (!next.done && next.value.phase === "reward" && next.value.observation.finale?.hitSource === "power") {
+        expect(next.value.observation.finale.enemies).toEqual([]);
+        expect(next.value.observation.finale.hits.length).toBeGreaterThan(0);
+        return;
+      }
+      step = next;
+    }
+    throw new Error("expected a turn-start power finale");
   });
 });
 

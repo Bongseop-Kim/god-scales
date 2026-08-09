@@ -1,12 +1,12 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { interventionEveryTurns } from "../../core/favor.ts";
-import type { CardView, PromiseView } from "../../sim/engine.ts";
+import { allCards, gods, type CardView, type PromiseView } from "../../sim/engine.ts";
 import { GameCard } from "./card.tsx";
 import { godName, placeName } from "./header.tsx";
 
 /**
- * 토큰 사전·도움말·덱·약속·시작 덱 설정이 같은 셸 하나를 쓴다. **네이티브 `<dialog>`다** —
+ * 게임 사전·도움말·덱·약속·시작 덱 설정이 같은 셸 하나를 쓴다. **네이티브 `<dialog>`다** —
  * focus trap·Esc·backdrop이 공짜라 라이브러리가 없다. 열림 상태는 여는 쪽(App)이 들고,
  * 이 컴포넌트는 열려 있는 동안만 산다. 게임 상태는 그대로다 — 엔진은 답을 기다리는 중이라 멈출 것도 없다
  */
@@ -63,6 +63,32 @@ export function DeckPanel({ deck }: { deck: CardView[] }) {
   return (
     <div className="overlay-deck">
       {deck.map((card, index) => <GameCard key={`${card.id}-${index}`} cardId={card.id} card={card} />)}
+    </div>
+  );
+}
+
+const cardFilters = ["all", ...gods, "fusion"];
+
+export function CardCatalog() {
+  const [filter, setFilter] = useState("all");
+  const shown = filter === "all" ? allCards : allCards.filter((card) => filter === "fusion" ? card.patronPair : card.patron === filter);
+  return (
+    <div className="card-catalog">
+      <div className="god-legend" role="group" aria-label="카드 필터">
+        {cardFilters.map((kind) => (
+          <button
+            key={kind}
+            type="button"
+            aria-pressed={filter === kind}
+            style={{ "--god-color": kind === "all" ? "#c6a969" : kind === "fusion" ? "#d1b9f0" : `var(--${kind})` } as CSSProperties}
+            onClick={() => setFilter(kind)}
+          >
+            <i />
+            {kind === "all" ? "전체" : kind === "fusion" ? "융합" : godName(kind)}
+          </button>
+        ))}
+      </div>
+      <DeckPanel deck={shown} />
     </div>
   );
 }

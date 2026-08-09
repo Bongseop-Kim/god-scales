@@ -7,6 +7,8 @@ import type { RestChoice } from "./replay.ts";
 
 export type RunResult = {
   won: boolean;
+  /** 패배를 끝낸 행동까지 반영한 마지막 전투 관측. 결과 통계와 replay에는 쓰지 않는다 */
+  finale?: import("./engine.ts").CombatObservation;
   /** 이 런의 격자. 결과 화면이 걸어온 길을 그린다 — 시드로 다시 풀면 같은 사실에 두 경로가 생긴다 */
   grid: MapGrid;
   turns: number;

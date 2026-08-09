@@ -1,0 +1,102 @@
+[
+  {
+    "id": "storm_current", "name": "폭풍 해류", "pair": ["zeus", "poseidon"], "split": 50,
+    "text": "번개와 파도를 고르게 섞어 공격과 방어를 모두 챙깁니다.",
+    "deck": ["card_zeus_01", "card_zeus_01", "card_zeus_02", "card_zeus_02", "card_zeus_03", "card_poseidon_01", "card_poseidon_01", "card_poseidon_01", "card_poseidon_02", "card_poseidon_03"]
+  },
+  {
+    "id": "thunder_tide", "name": "천둥 해일", "pair": ["zeus", "poseidon"], "split": 75,
+    "text": "감전과 침수를 한꺼번에 쌓아 전장을 크게 흔듭니다.",
+    "deck": ["card_zeus_23", "card_zeus_23", "card_zeus_07", "card_zeus_07", "card_zeus_06", "card_poseidon_07", "card_poseidon_07", "card_poseidon_17", "card_poseidon_17", "card_poseidon_12"]
+  },
+  {
+    "id": "lightning_phalanx", "name": "번개 방진", "pair": ["zeus", "athena"], "split": 50,
+    "text": "번개로 틈을 열고 성벽으로 반격할 시간을 법니다.",
+    "deck": ["card_zeus_01", "card_zeus_01", "card_zeus_02", "card_zeus_02", "card_zeus_03", "card_athena_02", "card_athena_02", "card_athena_02", "card_athena_01", "card_athena_04"]
+  },
+  {
+    "id": "aegis_strike", "name": "아이기스 낙뢰", "pair": ["zeus", "athena"], "split": 20,
+    "text": "성벽과 반사를 겹친 뒤 축적한 번개를 터뜨립니다.",
+    "deck": ["card_zeus_30", "card_zeus_30", "card_zeus_06", "card_zeus_23", "card_athena_17", "card_athena_17", "card_athena_24", "card_athena_24", "card_athena_23", "card_athena_04"]
+  },
+  {
+    "id": "storm_blood", "name": "폭풍과 피", "pair": ["zeus", "ares"], "split": 60,
+    "text": "번개로 태우고 광란으로 밀어붙입니다.",
+    "deck": ["card_zeus_01", "card_zeus_01", "card_zeus_02", "card_zeus_06", "card_zeus_03", "card_ares_01", "card_ares_01", "card_ares_01", "card_ares_02", "card_ares_04"]
+  },
+  {
+    "id": "overcharge_frenzy", "name": "과충전 광란", "pair": ["zeus", "ares"], "split": 80,
+    "text": "자해와 과충전을 받아들이고 짧은 전투에 모든 힘을 겁니다.",
+    "deck": ["card_zeus_11", "card_zeus_11", "card_zeus_30", "card_zeus_30", "card_zeus_04", "card_ares_03", "card_ares_03", "card_ares_02", "card_ares_02", "card_ares_24"]
+  },
+  {
+    "id": "lightning_hunt", "name": "번개 사냥", "pair": ["zeus", "artemis"], "split": 50,
+    "text": "연쇄 번개와 표식으로 여러 적을 빠르게 정리합니다.",
+    "deck": ["card_zeus_01", "card_zeus_07", "card_zeus_02", "card_zeus_02", "card_zeus_03", "card_artemis_01", "card_artemis_01", "card_artemis_01", "card_artemis_10", "card_artemis_14"]
+  },
+  {
+    "id": "thousand_targets", "name": "천 개의 표적", "pair": ["zeus", "artemis"], "split": 75,
+    "text": "표식을 늘어놓고 끝없이 갈라지는 번개로 모두를 노립니다.",
+    "deck": ["card_zeus_23", "card_zeus_23", "card_zeus_23", "card_zeus_07", "card_zeus_07", "card_artemis_01", "card_artemis_01", "card_artemis_09", "card_artemis_14", "card_artemis_23"]
+  },
+  {
+    "id": "tide_wall", "name": "밀물의 성벽", "pair": ["poseidon", "athena"], "split": 55,
+    "text": "파도로 적을 적시고 성벽을 쌓아 버팁니다.",
+    "deck": ["card_poseidon_01", "card_poseidon_01", "card_poseidon_02", "card_poseidon_07", "card_poseidon_03", "card_athena_02", "card_athena_02", "card_athena_02", "card_athena_01", "card_athena_24"]
+  },
+  {
+    "id": "deep_fortress", "name": "심해 요새", "pair": ["poseidon", "athena"], "split": 20,
+    "text": "두꺼운 방어와 지속 효과로 전투를 길게 끌고 갑니다.",
+    "deck": ["card_poseidon_11", "card_poseidon_11", "card_poseidon_22", "card_poseidon_22", "card_poseidon_17", "card_athena_17", "card_athena_17", "card_athena_24", "card_athena_24", "card_athena_25"]
+  },
+  {
+    "id": "blood_wave", "name": "피의 파도", "pair": ["poseidon", "ares"], "split": 50,
+    "text": "파도로 버티면서 출혈과 광란을 차근차근 쌓습니다.",
+    "deck": ["card_poseidon_01", "card_poseidon_01", "card_poseidon_02", "card_poseidon_02", "card_poseidon_03", "card_ares_01", "card_ares_01", "card_ares_01", "card_ares_10", "card_ares_04"]
+  },
+  {
+    "id": "raging_berserker", "name": "격랑의 광전사", "pair": ["poseidon", "ares"], "split": 25,
+    "text": "방어를 덜어내고 침수와 출혈로 빠르게 승부합니다.",
+    "deck": ["card_poseidon_07", "card_poseidon_07", "card_poseidon_17", "card_poseidon_12", "card_poseidon_24", "card_ares_06", "card_ares_06", "card_ares_24", "card_ares_02", "card_ares_31"]
+  },
+  {
+    "id": "moon_current", "name": "달빛 해류", "pair": ["poseidon", "artemis"], "split": 55,
+    "text": "파도로 숨을 고르고 표식이 쌓인 적을 골라냅니다.",
+    "deck": ["card_poseidon_01", "card_poseidon_01", "card_poseidon_02", "card_poseidon_02", "card_poseidon_03", "card_artemis_01", "card_artemis_01", "card_artemis_01", "card_artemis_10", "card_artemis_03"]
+  },
+  {
+    "id": "deep_mark", "name": "심해의 표식", "pair": ["poseidon", "artemis"], "split": 70,
+    "text": "침수와 표식의 지속 효과만 남겨 적을 서서히 잠식합니다.",
+    "deck": ["card_poseidon_17", "card_poseidon_17", "card_poseidon_07", "card_poseidon_07", "card_poseidon_12", "card_artemis_09", "card_artemis_09", "card_artemis_14", "card_artemis_14", "card_artemis_23"]
+  },
+  {
+    "id": "bronze_war", "name": "청동 전쟁", "pair": ["athena", "ares"], "split": 55,
+    "text": "성벽으로 피해를 줄이고 출혈로 꾸준히 압박합니다.",
+    "deck": ["card_athena_02", "card_athena_02", "card_athena_01", "card_athena_01", "card_athena_04", "card_ares_01", "card_ares_01", "card_ares_01", "card_ares_10", "card_ares_04"]
+  },
+  {
+    "id": "thorn_frenzy", "name": "가시 광란", "pair": ["athena", "ares"], "split": 25,
+    "text": "가시와 광란을 겹쳐 맞을수록 거세지는 전투를 만듭니다.",
+    "deck": ["card_athena_18", "card_athena_18", "card_athena_24", "card_athena_24", "card_athena_17", "card_ares_02", "card_ares_02", "card_ares_10", "card_ares_22", "card_ares_24"]
+  },
+  {
+    "id": "shield_moon", "name": "방패와 달빛", "pair": ["athena", "artemis"], "split": 50,
+    "text": "성벽 뒤에서 표식을 쌓고 급소를 노립니다.",
+    "deck": ["card_athena_02", "card_athena_02", "card_athena_01", "card_athena_01", "card_athena_24", "card_artemis_01", "card_artemis_01", "card_artemis_01", "card_artemis_10", "card_artemis_14"]
+  },
+  {
+    "id": "counter_hunt", "name": "반격의 사냥", "pair": ["athena", "artemis"], "split": 75,
+    "text": "반격을 준비한 뒤 표식이 선 적부터 정확히 쓰러뜨립니다.",
+    "deck": ["card_athena_18", "card_athena_18", "card_athena_24", "card_athena_24", "card_athena_17", "card_artemis_09", "card_artemis_09", "card_artemis_14", "card_artemis_14", "card_artemis_23"]
+  },
+  {
+    "id": "blood_hunt", "name": "피의 사냥", "pair": ["ares", "artemis"], "split": 55,
+    "text": "출혈과 표식을 함께 쌓아 상처 난 적을 추격합니다.",
+    "deck": ["card_ares_01", "card_ares_01", "card_ares_10", "card_ares_10", "card_ares_04", "card_artemis_01", "card_artemis_01", "card_artemis_01", "card_artemis_10", "card_artemis_03"]
+  },
+  {
+    "id": "red_moon", "name": "붉은 달", "pair": ["ares", "artemis"], "split": 85,
+    "text": "출혈과 표식에 모든 자리를 내주고 회복 없이 몰아칩니다.",
+    "deck": ["card_ares_06", "card_ares_06", "card_ares_09", "card_ares_09", "card_ares_24", "card_artemis_09", "card_artemis_09", "card_artemis_14", "card_artemis_14", "card_artemis_23"]
+  }
+]

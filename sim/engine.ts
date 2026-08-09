@@ -129,6 +129,7 @@ type EnemyData = {
   tier: "normal" | "boss" | "god";
   role: string;
   hp: number;
+  size?: 1 | 2 | 3 | 4;
   passives?: Passives;
   pattern: { op: string; value?: number; token?: import("../core/state.ts").TokenName; stacks?: number; repeat?: number; target?: EnemyAction["target"] }[];
   /** `with`의 순서가 칸 1·2·3이다. 빈 칸은 못 적는다 — 편성은 언제나 칸 0부터 붙여 채운다 */
@@ -140,6 +141,7 @@ function enemyDefinition(enemy: EnemyData): EnemyDefinition {
   return {
     id: enemy.id,
     hp: enemy.hp,
+    size: enemy.size,
     passives: enemy.passives,
     // 난이도는 피해에만 걸린다 — 회복·토큰까지 긁으면 enemyDamageScale이 조우 밴드와 다른 눈금이 된다
     pattern: enemy.pattern.map((effect) => ({
@@ -164,9 +166,8 @@ function encounter(seed: number, region: string, floor: number, type: MapNodeTyp
     const bosses = enemyData.filter((enemy) => enemy.region === region && enemy.tier === "boss");
     const boss = bosses[seed % bosses.length];
     if (!boss) throw new Error(`${region}: no boss`);
-    // 보스는 칸 0·1 두 칸을 차지한다 — 사거리 `1`·`01`·`12` 카드가 보스전에서 처음으로 산다.
-    // 칸 2·3은 빈다: 부하를 붙이면 보스 층 편성 데이터·밴드·재측정이 통째로 딸려온다
-    return [{ ...enemyDefinition(boss), size: 2 }];
+    // 보스 크기는 적 데이터가 정한다 — 여기서 다시 적으면 데이터와 실제 조우가 어긋난다
+    return [enemyDefinition(boss)];
   }
   const candidates = mapSlots.get(`${region}:${floor}`)?.groups[type === "elite" ? "elite" : "combat"] ?? [];
   if (!candidates.length) throw new Error(`${region} ${floor}: no ${type} group`);
@@ -198,6 +199,7 @@ type EnemyView = { id: string; slot: number; span: number; hp: number; maxHp: nu
 type SealView = NonNullable<Card["seals"]>[number];
 export type CardView = { id: string; name: string; cost: number; target: Card["target"]; effects: Card["effects"]; reach?: string; weakened?: boolean; seals?: SealView[]; previewSeal?: SealView; fusesTo?: CardView };
 const cardView = ({ id, name, cost, target, effects, reach, seals }: Card): CardView => ({ id, name, cost, target, effects, ...(reach ? { reach } : {}), ...(seals?.length ? { seals } : {}) });
+export const allCards = cards.map((card) => ({ ...cardView(card), patron: card.patron, patronPair: card.patronPair }));
 /**
  * 자유 덱 편집기가 고를 수 있는 카드 124장을 신별로. **tier1 patron 카드뿐이다** — tier2 15장은
  * 보상이 주는 계단이고, 융합 10장은 `patron`이 없어 같은 줄에서 빠진다(은혜 둘을 모아 여는 자리다).
@@ -265,7 +267,7 @@ export type RunView = {
   favor: Record<string, number>;
   grace: Record<string, number>;
   deck: CardView[];
-  /** 맵에서 들고 있는 과업. 판정할 수 없는 전투에서는 전투 관측에 싣지 않는다 */
+  /** 맵에서 들고 있는 과업. 판정할 수 없는 전투에서도 이월 상태를 보여 준다 */
   quest?: PromiseView;
 };
 /** 등록된 파워 하나. 카드를 그대로 실어 화면이 효과문을 손패와 같은 `effectText`로 그린다 */
@@ -282,10 +284,10 @@ export type CombatObservation = RunView & {
   /** 전투 내내 매 턴 일한다 — 화면에 없으면 몇 장 냈는지 플레이어가 세고 있어야 한다 */
   powers: PowerView[];
   enemies: EnemyView[];
-  /** 지난 yield 이후 깎인 체력. `id`는 적 id 또는 `player` */
-  hits: { id: string; amount: number }[];
+  /** 지난 yield 이후 깎인 체력, 흡수한 방어, 되받아침. `id`는 적 id 또는 `player` */
+  hits: { id: string; amount: number; blocked?: number; deflected?: true }[];
   /** 같은 hits를 만든 주체. 피해 연출이 신의 개입을 병사의 공격으로 오인하지 않게 한다 */
-  hitSource?: "attack" | "card" | "favor" | "enemy";
+  hitSource?: "attack" | "card" | "power" | "favor" | "enemy";
   /** hits가 새로 생길 때마다 오른다 — UI가 같은 팝을 두 번 재생하지 않게 하는 열쇠 */
   hitSeq: number;
   /**
@@ -304,7 +306,7 @@ export type CombatObservation = RunView & {
  * 과업 한 줄. `current`·`settled`는 `facts`와 조건에서 **계산된다** — 상태를 따로 들면 그것이
  * 사실과 어긋날 자리가 생기고, `facts`는 이미 단조라 계산이 언제나 맞다(`core/demands.ts`).
  */
-export type PromiseView = { god: string; text: string; rule: string; current: number; target: number; settled?: "kept" | "broken" };
+export type PromiseView = { god: string; text: string; rule: string; current: number; target: number; settled?: "kept" | "broken"; deferred?: boolean };
 type Quest = { demand: Demand; patron: GodId };
 const questView = ({ demand, patron }: Quest, facts: Record<string, number> = {}): PromiseView => {
   const { fact, target } = parseCondition(demand.condition);
@@ -312,7 +314,7 @@ const questView = ({ demand, patron }: Quest, facts: Record<string, number> = {}
 };
 /** `text`는 그 층의 문장이다 — 지도 화면이 지금 어디 서 있는지 한 줄로 읽는다 */
 type MapObservation = RunView & { text: string };
-type RewardObservation = RunView & { cards: CardView[]; questResult?: PromiseView; questReward?: boolean };
+type RewardObservation = RunView & { cards: CardView[]; questResult?: PromiseView; questReward?: boolean; finale?: CombatObservation };
 /** 은혜 후보 하나. 선택한 tier의 효과가 그대로 대상 카드에 새겨진다. */
 type GraceOffer = { id: string; tier: number; text: string; effects: Card["effects"] };
 type GraceObservation = RunView & { god: string; tier: number; offer: GraceOffer[] };
@@ -346,6 +348,8 @@ type EncounterResult = {
   facts: Record<string, number>;
   /** 이 조우에서 꺾은 진노 신들. 화해(호의 회복)가 이 한 줄을 읽는다 */
   felled: string[];
+  /** 전투를 끝낸 행동까지 반영한 마지막 관측. 새 결정 없이 UI 아웃트로만 이어 받는다 */
+  finale: CombatObservation;
 };
 
 /** 카드 한 장을 목록에서 뺀다. 없으면 아무 일도 없다 — `splice(-1)`이 엉뚱한 장을 지우는 자리다 */
@@ -354,7 +358,7 @@ const drop = (cards: string[], id: string): void => {
   if (at >= 0) cards.splice(at, 1);
 };
 
-function* playEncounter(state: GameState, seed: number, deck: string[], cardMap: Map<string, Card>, lineup: Lineup, log: string[], patrons: PatronPair, noise: () => number, quest?: Quest): Generator<Decision, EncounterResult, string> {
+function* playEncounter(state: GameState, seed: number, deck: string[], cardMap: Map<string, Card>, lineup: Lineup, log: string[], patrons: PatronPair, noise: () => number, quest?: Quest, deferred = false): Generator<Decision, EncounterResult, string> {
   /** **판과 사전을 갈라 둔다** — 사전에는 신 적 다섯이 미리 들어 있고 판에는 편성만 선다 */
   const enemyMap = new Map([...lineup, ...godEnemies].map((enemy) => [enemy.id, enemy]));
   const random = createRng(seed);
@@ -392,14 +396,26 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
   let turnTargets = new Set<string>();
   let turnTokens = 0;
   const healthBar = () => [["player", state.combat.player.hp] as const, ...state.combat.enemies.map(({ id, hp: enemyHp }) => [id, enemyHp] as const)];
+  const defenseBar = () => new Map([
+    ["player", { block: state.combat.player.block, deflect: state.combat.player.tokens.deflect ?? 0 }] as const,
+    ...state.combat.enemies.map(({ id, block, tokens }) => [id, { block, deflect: tokens.deflect ?? 0 }] as const),
+  ]);
   /** 카드일 때만 맞은 적을 센다 — 출혈 도트와 신의 개입은 이번 턴에 "친" 것이 아니다 */
-  const recordHits = (before: (readonly [string, number])[], source: NonNullable<CombatObservation["hitSource"]>) => {
+  const recordHits = (before: (readonly [string, number])[], source: NonNullable<CombatObservation["hitSource"]>, defenseBefore?: ReturnType<typeof defenseBar>) => {
     const now = new Map(healthBar());
+    const defenseNow = defenseBar();
     const damage = before.flatMap(([id, hp]) => {
       const lost = hp - (now.get(id) ?? hp);
-      return lost > 0 ? [{ id, amount: Math.round(lost * 10) / 10 }] : [];
+      const prior = defenseBefore?.get(id);
+      const current = defenseNow.get(id);
+      const spent = Math.max(0, (prior?.block ?? 0) - (current?.block ?? 0));
+      const deflected = prior !== undefined && prior.deflect > (current?.deflect ?? 0);
+      return lost > 0 || spent > 0 || deflected
+        ? [{ id, amount: Math.round(lost * 10) / 10, ...(spent > 0 ? { blocked: spent } : {}), ...(deflected ? { deflected: true as const } : {}) }]
+        : [];
     });
     for (const { id, amount } of damage) {
+      if (amount <= 0) continue;
       if (id === "player") facts.damage_taken += amount;
       else if (source === "attack" || source === "card") turnTargets.add(id);
     }
@@ -416,6 +432,7 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
   /** 과업을 지금 사실로 다시 푼다. 확정값은 단조 사실에서 나와 같은 전투 안에서 뒤집히지 않는다 */
   const promiseViews = (): PromiseView[] => {
     if (!quest) return [];
+    if (deferred) return [{ ...questView(quest), deferred: true }];
     const { fact, target } = parseCondition(quest.demand.condition);
     const settled = demandSettled(quest.demand.condition, facts);
     return [{ god: quest.patron, text: quest.demand.text, rule: ruleText(quest.demand.condition), current: facts[fact as keyof typeof facts] ?? 0, target, ...(settled ? { settled } : {}) }];
@@ -459,7 +476,9 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
   });
 
   while (state.combat.outcome === "ongoing") {
+    const beforeTurnStart = healthBar();
     startTurn(state, random);
+    recordHits(beforeTurnStart, "power");
     // 제우스의 축. 다른 넷과 같이 단조 비감소라 `demandSettled`가 그대로 돈다 — 한 턴 더 쓰면 굳는다
     facts.turns = state.combat.turn;
     // 전투 중 개입. `startTurn` **뒤**여야 방어 리셋(`core/combat.ts:73`) 뒤에 아테나의 방어가 살아남고,
@@ -507,8 +526,9 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
       blockBuilt += played.reduce((sum, effect) => sum + (effect.op === "block" && !effect.when ? effect.value ?? 0 : 0), 0);
       targetSpread.push(card.target === "all_enemies" || played.some(({ op }) => op === "chain") ? "multi" : "single");
       const beforeCard = healthBar();
+      const defenseBefore = defenseBar();
       playCard(state, cardMap, cardId, target, random);
-      recordHits(beforeCard, card.tags.includes("attack") ? "attack" : "card");
+      recordHits(beforeCard, card.tags.includes("attack") ? "attack" : "card", defenseBefore);
       // 조건 없는 토큰만 센다 — `when`이 걸린 효과는 붙었는지 여기서 알 수 없으므로 세지 않는다
       const applied = played.reduce((sum, effect) => sum + (effect.op === "apply_token" && !effect.when ? effect.stacks ?? 1 : 0), 0);
       facts.tokens_applied += applied;
@@ -536,14 +556,16 @@ function* playEncounter(state: GameState, seed: number, deck: string[], cardMap:
     if (state.combat.outcome === "ongoing") {
       const block = state.combat.player.block;
       const beforeTurn = healthBar();
+      const defenseBefore = defenseBar();
       endTurn(state, enemyMap, random);
-      recordHits(beforeTurn, "enemy");
+      recordHits(beforeTurn, "enemy", defenseBefore);
       blockAbsorbed += Math.max(0, block - state.combat.player.block);
     }
   }
+  const finale = observation();
   finishCombatFavor(state.favor, [...patrons], uses);
   const felled = state.combat.outcome === "victory" ? patrons.filter((god) => joined.includes(godEnemyId(god))) : [];
-  return { turns: state.combat.turn, blockBuilt, blockAbsorbed, targetSpread, cardsPlayed, facts, felled };
+  return { turns: state.combat.turn, blockBuilt, blockAbsorbed, targetSpread, cardsPlayed, facts, felled, finale };
 }
 
 /** 시작 호의의 총합. 배분은 이 하나를 둘로 나눈다 */
@@ -611,6 +633,7 @@ export function* runSteps(
   const demandOutcomes: Record<string, [number, number]> = {};
   /** 맵의 과업 노드에서 받은 단일 슬롯. 새 선택은 이 값 하나를 교체한다 */
   let quest: Quest | undefined;
+  let defeatFinale: CombatObservation | undefined;
   const view = (): RunView => ({ ...runView(state, patrons, deck, cardMap), ...(quest ? { quest: questView(quest) } : {}) });
 
   function* grantGrace(god: string): Generator<Decision, void, string> {
@@ -693,14 +716,14 @@ export function* runSteps(
     return { demand, patron };
   }
 
-  function* offerReward(nodeSeed: number, path: MapNodeType, questResult?: PromiseView): Generator<Decision, void, string> {
+  function* offerReward(nodeSeed: number, path: MapNodeType, questResult?: PromiseView, finale?: CombatObservation): Generator<Decision, void, string> {
     // 전투/셔플과 겹치지 않는 새 스트림이다. 겹치면 기존 replay 재생이 깨진다
     const offer = rewardOffer(createRng(seed * 1000 + nodeSeed), patrons, tier2Slots(path));
     const picked = yield {
       phase: "reward",
       options: [...offer, skipReward],
       bot: chooseReward(offer, cardMap, noise),
-      observation: { ...view(), cards: offer.map((id) => cardView(cardMap.get(id)!)), ...(questResult ? { questResult } : {}) },
+      observation: { ...view(), cards: offer.map((id) => cardView(cardMap.get(id)!)), ...(questResult ? { questResult } : {}), ...(finale ? { finale } : {}) },
     };
     if (picked !== skipReward && !offer.includes(picked)) throw new Error(`Invalid reward action: ${picked}`);
     if (picked) deck.push(picked);
@@ -786,10 +809,10 @@ export function* runSteps(
       /** 이 조우가 무엇을 요구했는지. `--aura-matrix`가 개입의 부호를 여기서 갈라 읽는다 */
       const passives = [...new Set(members.flatMap(({ passives: own }) => Object.keys(own ?? {})))].sort();
       const devoted = patrons.filter((god) => favorStage(state.favor[god] ?? favorInitial) === "devotion");
-      // 적이 모자라 판정할 수 없으면 HUD에도 싣지 않고 다음 전투까지 그대로 넘긴다
+      // 적이 모자라 판정할 수 없으면 이월로 보여 주고 다음 전투까지 그대로 넘긴다
       const activeQuest = quest && demandEnemies(quest.demand.condition, quest.demand.min_enemies) <= members.length ? quest : undefined;
       const hpBefore = state.combat.player.hp;
-      const result = yield* playEncounter(state, seed * 100 + nodeSeed, deck, cardMap, lineup, log, patrons, noise, activeQuest);
+      const result = yield* playEncounter(state, seed * 100 + nodeSeed, deck, cardMap, lineup, log, patrons, noise, quest, !!quest && !activeQuest);
       const questResult = activeQuest
         ? { ...questView(activeQuest, result.facts), settled: demandSatisfied(activeQuest.demand.condition, result.facts) ? "kept" as const : "broken" as const }
         : undefined;
@@ -814,13 +837,14 @@ export function* runSteps(
       // 편성 이름이 아니라 **자리**로 센다 — 층별 정책이 갈리는지 보려면 열이 층이어야 한다
       encounterOutcomes.push({ key: `${region}:${floor}:${path}`, cleared: state.combat.outcome === "victory", passives, devoted, hpLost: hpBefore - state.combat.player.hp });
       if (state.combat.outcome !== "victory") {
+        defeatFinale = result.finale;
         defeatContext = { region, floor, enemies: members.map(({ id }) => id), passives };
         favorCurve.push({ ...state.favor });
         hpCurve.push(state.combat.player.hp);
         break;
       }
       // 모든 승리는 기본 카드 보상을 먼저 받는다. 최종 판정은 저널이 놓치지 않도록 이 관측에도 싣는다
-      yield* offerReward(nodeSeed, path, questResult);
+      yield* offerReward(nodeSeed, path, questResult, result.finale);
       if (activeQuest && questResult?.settled === "kept") {
         resolveDemand(state.favor, activeQuest.patron, activeQuest.demand.reward);
         yield* offerQuestReward(activeQuest, nodeSeed, questResult);
@@ -837,7 +861,7 @@ export function* runSteps(
   // 런에서 가장 자주 고른 과업의 신 — 최빈값을 세는 데 정렬 한 줄이면 된다
   const conflictChoice = [...demandSides].sort((left, right) =>
     demandSides.filter((god) => god === right).length - demandSides.filter((god) => god === left).length)[0];
-  return { won, grid: state.map.grid, turns, log, favorCurve, encounters, restCount, hpCurve, pathChoices, restChoices, regionsCleared, grace: state.grace, scenario, enemyCounts, encounterOutcomes, defeatContext, targetSpread, blockBuilt, blockAbsorbed, fused: fusions > 0, actions, cardsPlayed, conflictChoice, demandOutcomes, pairing: patrons.join("+") };
+  return { won, grid: state.map.grid, turns, log, favorCurve, encounters, restCount, hpCurve, pathChoices, restChoices, regionsCleared, grace: state.grace, scenario, enemyCounts, encounterOutcomes, defeatContext, targetSpread, blockBuilt, blockAbsorbed, fused: fusions > 0, actions, cardsPlayed, conflictChoice, demandOutcomes, pairing: patrons.join("+"), ...(defeatFinale ? { finale: defeatFinale } : {}) };
 }
 
 /**

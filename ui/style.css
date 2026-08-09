@@ -73,9 +73,14 @@
 html { overflow: clip; color-scheme: dark; }
 body { margin: 0; min-width: 320px; min-height: 100vh; user-select: none; -webkit-user-select: none; }
 img { -webkit-user-drag: none; }
+.size-gate { display: none; }
+@media (max-width: 1199px), (max-height: 719px) {
+  /* 판 전체를 대체하므로 voice(4) 위에 선다. 닫는 길은 지원 크기로 창을 키우는 것이다(UI.md). */
+  .size-gate { position: fixed; inset: 0; z-index: 5; display: grid; place-items: center; background: radial-gradient(circle at 50% -20%, #28304a, #11131a 50%) #11131a; }
+}
 /* 시드 입력만 예외다 — **Chrome은 `<input>`을 예외로 안 둔다.** 그러면 사람이 시드를 골라 지울 수 없다 */
 input { user-select: text; }
-button, input { font: inherit; }
+button, input, select { font: inherit; }
 button { color: inherit; cursor: pointer; }
 
 /**
@@ -156,6 +161,7 @@ dialog.overlay {
   background: rgba(17, 19, 26, .96);
 }
 dialog.overlay.wide { width: 920px; }
+dialog.overlay:has(.achievement-picker) { width: 1100px; }
 /* 배경 68% 어둡게 — 게임은 그대로 서 있다(엔진은 답을 기다리는 중이라 멈출 것도 없다) */
 dialog.overlay::backdrop { background: rgba(9, 11, 17, .68); }
 .overlay-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
@@ -165,7 +171,7 @@ dialog.overlay::backdrop { background: rgba(9, 11, 17, .68); }
 /* 스크롤은 본문 세로 한 축만 갖는다 — 카드 줄은 넘치지 않고 다음 줄로 감긴다 */
 .overlay-body { overflow-x: hidden; overflow-y: auto; max-height: calc(100vh - 220px); }
 
-/* 토큰 사전 — 배지 38 + 이름 + 지속 + 효과 한 줄. 값은 전부 `tokenStyle`에서 온다 */
+/* 게임 사전 — 배지 38 + 이름 + 지속 + 효과 한 줄. 값은 전부 `tokenStyle`에서 온다 */
 .token-dictionaries { display: grid; gap: 10px; }
 .token-dictionaries h3 { margin: 8px 0 0; color: #c6a969; font-size: .9rem; }
 .token-dict { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
@@ -174,6 +180,9 @@ dialog.overlay::backdrop { background: rgba(9, 11, 17, .68); }
 .token-dict span { color: #b9bdc9; }
 .token-dict .passive-icon { display: grid; width: 38px; height: 38px; place-items: center; border: 1px solid #75658c; border-radius: 8px; color: #d1b9f0; background: #211d2c; }
 .token-dict .passive-icon .icon { width: 20px; height: 20px; }
+/* 파워 이름·트리거는 한 덩어리다 — 효과 설명만 남은 폭에서 감긴다 */
+.power-dict li { grid-template-columns: 38px 100px 96px 1fr; }
+.power-dict :is(b, em) { white-space: nowrap; }
 /**
  * 셋째 목록 — 카드 면의 기호(P-61). 두 칸이다: 기호 하나 + 문구. **그림은 카드가 쓰는 클래스 그대로**라
  * 카드 면이 바뀌면 사전도 같이 바뀐다. 카드에서 절대 배치인 둘만 여기서 줄 안에 세운다
@@ -190,6 +199,7 @@ dialog.overlay::backdrop { background: rgba(9, 11, 17, .68); }
 
 /* 덱 오버레이 — 한 줄 6장, 세로 스크롤. 정렬·필터 없음 */
 .overlay-deck { display: flex; flex-wrap: wrap; gap: 8px; }
+.card-catalog .god-legend { margin-bottom: 16px; }
 
 /* 약속 저널 — 진행 중 → 지킴 → 깨짐. 줄은 전투 화면의 `.promise`와 같은 얼굴이다 */
 .journal { display: grid; gap: 16px; }
@@ -246,10 +256,23 @@ h2 { font-weight: 500; }
 /* 디바이더 — 청동 그라데이션이 위→아래로 흐른다(2.6s). 줄인 모션에서는 정지 */
 .god-divider { width: 2px; margin: 16px 7px; background: linear-gradient(180deg, transparent, #c6a969 50%, transparent) 0 0 / 100% 300%; animation: divider-flow 2.6s linear infinite; }
 @keyframes divider-flow { to { background-position: 0 300%; } }
+/* 업적 — 왼쪽 네이티브 목록, 오른쪽 호의·덱 미리보기 */
+.achievement-picker { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 18px; min-height: min(548px, calc(100vh - 260px)); }
+.achievement-list { width: 100%; height: min(548px, calc(100vh - 260px)); padding: 5px; color: #d5d7de; border: 1px solid #454c5f; border-radius: 8px; background: #171b25; }
+.achievement-list option { padding: 5px 8px; border-radius: 4px; }
+.achievement-detail { min-width: 0; }
+.achievement-detail > header { min-height: 52px; }
+.achievement-detail > header span { display: flex; align-items: center; gap: 7px; }
+.achievement-detail > header b { margin-right: auto; color: #f0d694; font-size: 1rem; }
+.achievement-detail > header i { width: 9px; height: 9px; border-radius: 50%; background: var(--god-color); box-shadow: 0 0 12px var(--god-color); }
+.achievement-detail > header p { margin: 6px 0 0; color: #9298aa; font-size: .8rem; }
+.achievement-detail .split-field { max-width: none; margin: 10px 0 0; }
+.achievement-detail .deck-slots { margin-bottom: 0; }
+.achievement-actions { justify-content: flex-end; }
 /* 하단 한 줄 — 런 시작은 중앙 CTA, 덱 설정은 오른쪽 보조 행동 */
 .setup-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; width: 100%; margin-top: 18px; }
 .setup-row .primary { grid-column: 2; min-width: 180px; padding: 14px 28px; font-size: 1.05rem; }
-.deck-editor-trigger { grid-column: 3; grid-row: 1; justify-self: end; }
+.setup-tools { grid-column: 3; grid-row: 1; display: flex; justify-self: end; gap: 8px; }
 /**
  * 배분 슬라이더. **저울이므로 라벨이 양 끝이고 트랙이 그 사이다** — 한 숫자가 둘을 정한다는 것이
  * 그림으로 서야 한다. 눈금 셋(70·30·10)은 React가 `favorBoundaries`에서 넣는다
@@ -290,8 +313,8 @@ button:not(:disabled):hover { border-color: #c6a969; }
 .deck-slots .alien .game-card { opacity: .72; }
 .deck-slots .alien em { color: #c6a969; font-size: .68rem; font-style: normal; text-align: center; }
 /**
- * 토큰 배지. 38px 크기와 채널 넷은 그대로다 — 진영은 배경 채움·테두리, 지속은 밑변 띠,
- * 종류는 아이콘 색, 스택은 겹. 얇은 CSS 테두리라 아이콘을 가리지 않고 진영색이 바로 읽힌다
+ * 토큰 배지. 진영은 배경 채움·테두리, 지속은 밑변 띠, 종류는 아이콘 색, 스택은 우상단 숫자다.
+ * 얇은 CSS 테두리라 아이콘을 가리지 않고 진영색이 바로 읽힌다
  */
 .token-badge { position: relative; display: grid; width: 38px; height: 38px; padding-bottom: 3px; place-items: center; border: 2px solid currentColor; border-radius: 8px; background: #181c27; }
 /* 색만으로 진영을 말하면 색각 이상에서 사라진다 — 해로움은 채움, 이로움은 빈 바탕이다 */
@@ -306,13 +329,6 @@ button:not(:disabled):hover { border-color: #c6a969; }
 .token-badge.next::after { border-top-style: dashed; }
 .token-badge.combat::after { border-top-width: 3px; border-top-style: double; }
 /**
- * 스택 눈금 — 2 이상이면 뒤에 한 겹, 4 이상이면 두 겹. `.draw-pile i`(뽑을 더미)와 같은 `box-shadow`
- * 수법이라 DOM이 안 는다. **정확한 값은 계속 숫자가 든다** — 겹은 「많다」를 말하는 눈금이지 값이 아니다.
- * 흐름 밖이라 겹이 이웃 칩을 밀지 않는다(UI.md 제1규칙)
- */
-.token-badge[data-stacks="2"] { box-shadow: 3px 3px 0 -1px currentColor, 3px 3px 0 0 #11131a; }
-.token-badge[data-stacks="4"] { box-shadow: 3px 3px 0 -1px currentColor, 3px 3px 0 0 #11131a, 6px 6px 0 -1px currentColor, 6px 6px 0 0 #11131a; }
-/**
  * 아이콘 28개는 `art/icons.svg` 한 장에서 온다. **`display: none`으로 감추지 않는다** — 시트가 그
  * 안에 있으면 `<use>`가 못 그리는 브라우저가 있다. 0×0 + `overflow: hidden`이 같은 값에 안전하다
  */
@@ -325,8 +341,8 @@ button:not(:disabled):hover { border-color: #c6a969; }
  */
 .token-badge .token-icon { width: 22px; height: 22px; background: var(--token-color); mask: var(--token-icon) center / contain no-repeat; }
 /**
- * 겹이 우하단으로 자라므로 숫자는 **우상단**이다 — 아래에 두면 스택 2 이상에서 겹과 겹친다.
- * 진영색은 `.boon`·`.harmful`이 다시 적는다: 같은 요소에서 `background: currentColor`는 제 `color`를
+ * 정확한 스택은 **우상단 숫자 하나**가 든다. 진영색은 `.boon`·`.harmful`이 다시 적는다:
+ * 같은 요소에서 `background: currentColor`는 제 `color`를
  * 가리키므로 어둠 위의 어둠이 되어 **숫자가 안 보였다**(P-61에서 잡았다)
  */
 .token-badge small { position: absolute; right: -4px; top: -4px; display: grid; width: 17px; height: 17px; place-items: center; border: 1px solid #11131a; border-radius: 50%; color: #151821; font-size: .62rem; font-weight: 750; font-variant-numeric: tabular-nums; }
@@ -528,6 +544,8 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 
 /* 피해 팝 — 체력 바 위에서 떠오른다 */
 .damage-pop { position: absolute; inset: auto auto 46% 58%; color: #ffb4a6; font-size: 1.5rem; text-shadow: 0 2px 10px #11131a; pointer-events: none; }
+.damage-pop .blocked { display: inline-flex; align-items: center; color: #9de0c7; }
+.damage-pop .deflected { display: inline-flex; align-items: center; color: var(--athena); }
 
 /**
  * 하단 — 좌 에너지 젬·뽑을 카드, 중앙 무대 카드 + 손패 부채꼴, 우 턴 종료(케니 160×46).
@@ -654,13 +672,8 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
  * 청동 프레임은 **무채색 한 장**이다(`art/ui/card-frame.md`). 신별로 다섯 장을 안 그린 이유가 여기다 —
  * 마스크로 실루엣만 쓰고 색은 진영색 변수가 든다. 카드가 화면에서 약 105px이라 파일도 256px이다
  */
-.game-card { position: relative; width: var(--card-w); padding: 8px; border: 1px solid color-mix(in srgb, var(--frame) 45%, transparent); border-radius: 9px; background: #171b25; text-align: left; --frame: #c6a969; }
-.game-card::before { content: ""; position: absolute; inset: -1px; background: var(--frame); mask: url(../art/ui/card-frame.webp) center / 100% 100% no-repeat; pointer-events: none; }
-.game-card[data-god="zeus"] { --frame: var(--zeus); }
-.game-card[data-god="poseidon"] { --frame: var(--poseidon); }
-.game-card[data-god="athena"] { --frame: var(--athena); }
-.game-card[data-god="ares"] { --frame: var(--ares); }
-.game-card[data-god="artemis"] { --frame: var(--artemis); }
+.game-card { position: relative; width: var(--card-w); padding: 8px; border: 1px solid color-mix(in srgb, var(--frame) 45%, transparent); border-radius: 9px; background: #171b25; text-align: left; --frame: #6b7185; --seal-a: #6b7185; --seal-b: #6b7185; }
+.game-card::before { content: ""; position: absolute; inset: -1px; background: conic-gradient(from 135deg, var(--seal-a) 0 50%, var(--seal-b) 0); mask: url(../art/ui/card-frame.webp) center / 100% 100% no-repeat; pointer-events: none; }
 .game-card.weakened { background: #26191c; box-shadow: inset 0 0 0 1px rgba(235, 136, 125, .28); }
 .game-card.weakened small { color: #eb887d; }
 /* 이름은 캡션이다 — 효과 숫자가 카드에서 제일 큰 글자다. 이름 최대 7자라 자를 것이 없다 */
@@ -671,23 +684,21 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
  * 아니라 고정 자리의 원이다(Slay the Spire · Hearthstone · MTG가 다 같은 자리를 쓴다). 값은 1·2·3뿐이다
  */
 .cost-gem { position: absolute; top: 3px; left: 3px; display: grid; width: 26px; height: 26px; place-items: center; border: 1px solid color-mix(in srgb, var(--frame) 75%, transparent); border-radius: 50%; background: rgba(17, 19, 26, .88); font-size: 1rem; }
-/* 못 내는 이유가 **비용이나 사거리**일 때만 젬이 빨강이다 — 대상 선택 중은 손 전체가 물러난다(`.fan.aiming`) */
-.fan:not(.aiming) .game-card:disabled .cost-gem { border-color: #eb887d; color: #eb887d; }
-/* 예외만 적는다 — 149장 중 20장(파워 6 · 전체 14)이다. 배지 슬롯은 하나뿐이라 그 둘에 줬다 */
+/* 못 내는 이유가 비용이면 젬, 사거리면 사거리 칸이 빨강이다. 대상 선택 중은 손 전체가 물러난다. */
+.fan:not(.aiming) [data-why="energy"] .cost-gem { border-color: #eb887d; color: #eb887d; }
+.fan:not(.aiming) [data-why="reach"] .card-reach { color: #eb887d; }
+/* 예외만 적는다 — 파워·전체·소멸이 배지 슬롯 하나를 나눠 쓴다 */
 .card-kind { position: absolute; top: 29px; right: 5px; padding: 1px 6px; border: 1px solid #4a5165; border-radius: 4px; background: rgba(17, 19, 26, .88); color: #d5d7de; font-size: .58rem; font-style: normal; }
-.card-seals { position: absolute; z-index: 1; top: 5px; right: 5px; display: flex; min-width: 22px; min-height: 22px; gap: 2px; justify-content: end; }
-.card-seals em, .seal-badge { display: grid; place-items: center; width: 20px; height: 20px; border: 1px solid var(--seal-color, #c6a969); border-radius: 50%; background: #171b25; color: var(--seal-color, #c6a969); }
-.card-seals .icon { width: 14px; height: 14px; }
-.card-seals .preview { opacity: .55; }
+.seal-frame { width: 24px; height: 30px; border: 3px solid; border-image: conic-gradient(from 135deg, var(--zeus) 0 50%, #6b7185 0) 1; }
 .fusion-preview { display: block; color: #f1d277; font-style: normal; }
-.fusion-scene { position: fixed; z-index: 3; inset: 0; display: grid; grid-template-columns: 1fr 220px 1fr; place-items: center; border: 0; background: rgba(4, 5, 9, .9); color: #fff; }
-.fusion-scene figure { position: relative; margin: 0; filter: drop-shadow(0 0 28px var(--god-color)); }
+.fusion-scene { position: fixed; z-index: 3; inset: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: minmax(0, 220px) auto; gap: 24px 80px; place-content: center; place-items: center; border: 0; background: rgba(4, 5, 9, .9); color: #fff; }
+.fusion-scene figure { position: relative; align-self: end; margin: 0; filter: drop-shadow(0 0 28px var(--god-color)); }
 .fusion-scene figure:first-of-type { animation: fusion-left .8s both; }
 .fusion-scene figure:last-of-type { animation: fusion-right .8s both; }
-.fusion-god { width: min(30vw, 300px); max-height: 70vh; object-fit: cover; }
+.fusion-god { width: min(16vw, 160px); max-height: 34vh; object-fit: cover; }
 .fusion-particle { position: absolute; inset: 35% -10%; overflow: hidden; mix-blend-mode: screen; }
 .fusion-particle img { position: absolute; top: 50%; left: 0; width: 400%; max-width: none; transform: translateY(-50%); animation: fusion-strip .8s steps(4, jump-end) both; }
-.fusion-cards { position: relative; width: var(--card-w); }
+.fusion-cards { position: relative; grid-column: 1 / -1; align-self: start; width: var(--card-w); }
 .fusion-cards::after { content: ""; position: absolute; inset: -30px; background: #fff; pointer-events: none; animation: fusion-flash 1.2s both; }
 .fusion-cards > span { display: block; }
 .fusion-before { animation: fusion-before 1.2s both; }
@@ -703,12 +714,12 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 @media (prefers-reduced-motion: reduce) { .fusion-scene figure, .fusion-particle img { animation: none; } .fusion-cards::after, .fusion-before { display: none; } .fusion-after { animation: none; opacity: 1; transform: none; } }
 /**
  * 등급 칩. 이름 줄 앞에 서는 이유는 배지 슬롯이 이미 파워·전체의 것이고 **등급은 그 둘과 직교**라
- * 자리를 다투면 하나가 사라진다. 신 색(`--frame`)을 쓰지만 글자가 뜻을 다 들고 있다 — tier1(124장)에는 없다
+ * 자리를 다투면 하나가 사라진다. 회색 프레임색을 쓰지만 글자가 뜻을 다 들고 있다 — tier1(124장)에는 없다
  */
 .card-tier { margin-right: 4px; padding: 0 4px; border: 1px solid color-mix(in srgb, var(--frame) 70%, transparent); border-radius: 3px; color: var(--frame); font-size: .58rem; font-style: normal; }
 /**
  * 강화 배지. 등급 칩과 **같은 줄, 다른 슬롯**이다 — 등급은 카드가 태어난 계단이고 강화는 이 런에서
- * 키운 것이라 직교한다. 프레임색(`--frame`)은 안 쓴다: 그 색은 신의 것이고 이건 이로움(`--boon`)이다
+ * 키운 것이라 직교한다. 프레임색(`--frame`)은 안 쓴다: 그 색은 카드 경계이고 이건 이로움(`--boon`)이다
  */
 .card-up { margin-right: 4px; padding: 0 4px; border: 1px solid color-mix(in srgb, var(--boon) 60%, transparent); border-radius: 3px; color: var(--boon); font-size: .58rem; font-style: normal; }
 /* 카드의 본체. 아이콘은 `art/icons.svg` 28개에서 그대로 꺼낸다 — 적 머리 위 배지와 같은 글리프다 */
@@ -718,7 +729,7 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .card-fx em b { font-size: 1.05rem; font-weight: 750; font-variant-numeric: tabular-nums; }
 /**
  * 원래 적힌 값. **취소선 자체가 흑백에서도 남는 채널이라** 색은 거드는 쪽이다(R-26) — 오른 값은
- * 이로움(`--boon`), 내린 값(침수)은 경고색이다. 파랑(`--bane`)은 해로움이라 강조에 못 쓴다.
+ * 이로움(`--boon`), 내린 값(침수)은 해로움(`--bane`)이다.
  *
  * **선은 직접 긋는다** — 픽셀 서체(Galmuri11)의 `line-through`는 이 크기에서 아무것도 안 그린다.
  * 실측으로 확인한 자리고, 그대로 두면 남는 채널이 색 하나뿐이 된다
@@ -726,13 +737,13 @@ header > strong { color: #c6a969; font-size: 1.1rem; }
 .card-fx em s { position: relative; color: #7f869a; font-size: .72rem; text-decoration: none; }
 .card-fx em s::after { content: ""; position: absolute; inset: 50% -1px auto; height: 1px; background: currentColor; }
 .card-fx em b.up { color: var(--boon); }
-.card-fx em b.down { color: #eb887d; }
+.card-fx em b.down { color: var(--bane); }
 .card-fx .icon { width: 18px; height: 18px; }
 /* 내가 손해 보는 줄이다 */
 .card-fx .harm { color: #eb887d; }
 /* 조건부 효과는 물러난다 — 붙을지 아직 모르는 값이다. 문구는 `title`이 든다 */
 .card-fx .cond { opacity: .6; }
-/* 사거리는 마스크를 적은 26장에만 선다. 네 칸 그림은 `reachBars`가 만든다 */
+/* 공격 카드의 명시 사거리. 네 칸 그림은 `reachBars`가 만든다 */
 .card-reach { color: #7f869a; font-size: .66rem; letter-spacing: -1px; }
 .card-art { position: relative; display: grid; aspect-ratio: 4 / 3; margin-bottom: 6px; place-items: center; overflow: hidden; border-radius: 5px; background: linear-gradient(135deg, color-mix(in srgb, var(--zeus) 55%, #191d28), color-mix(in srgb, var(--athena) 55%, #191d28)); }
 .card-art img { position: absolute; width: 100%; height: 100%; object-fit: cover; }

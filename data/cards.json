@@ -5,6 +5,7 @@
     "patron": "zeus",
     "cost": 1,
     "target": "enemy",
+    "reach": "0123",
     "effects": [
       {
         "op": "damage",
@@ -37,6 +38,7 @@
     "patron": "zeus",
     "cost": 1,
     "target": "enemy",
+    "reach": "03",
     "effects": [
       {
         "op": "damage",
@@ -98,6 +100,7 @@
     "patron": "zeus",
     "cost": 1,
     "target": "enemy",
+    "reach": "03",
     "effects": [
       {
         "op": "damage",
@@ -142,6 +145,7 @@
     "patron": "zeus",
     "cost": 2,
     "target": "enemy",
+    "reach": "03",
     "effects": [
       {
         "op": "apply_token",
@@ -185,6 +189,7 @@
     "patron": "zeus",
     "cost": 1,
     "target": "enemy",
+    "reach": "03",
     "effects": [
       {
         "op": "damage",
@@ -206,6 +211,7 @@
     "patron": "zeus",
     "cost": 1,
     "target": "enemy",
+    "reach": "03",
     "effects": [
       {
         "op": "damage",
@@ -226,6 +232,7 @@
     "patron": "zeus",
     "cost": 2,
     "target": "enemy",
+    "reach": "03",
     "effects": [
       {
         "op": "damage",
@@ -279,6 +286,7 @@
     "patron": "zeus",
     "cost": 2,
     "target": "enemy",
+    "reach": "03",
     "effects": [
       {
         "op": "damage",
@@ -300,6 +308,7 @@
     "patron": "zeus",
     "cost": 2,
     "target": "enemy",
+    "reach": "03",
     "effects": [
       {
         "op": "damage",
@@ -321,6 +330,7 @@
     "patron": "zeus",
     "cost": 2,
     "target": "enemy",
+    "reach": "03",
     "effects": [
       {
         "op": "damage",
@@ -435,6 +445,7 @@
     "patron": "zeus",
     "cost": 1,
     "target": "enemy",
+    "reach": "03",
     "effects": [
       {
         "op": "damage",
@@ -499,6 +510,7 @@
     "patron": "zeus",
     "cost": 1,
     "target": "enemy",
+    "reach": "03",
     "effects": [
       {
         "op": "damage",
@@ -526,6 +538,7 @@
     "patron": "zeus",
     "cost": 1,
     "target": "enemy",
+    "reach": "03",
     "effects": [
       {
         "op": "damage",
@@ -548,6 +561,7 @@
     "patron": "zeus",
     "cost": 2,
     "target": "enemy",
+    "reach": "03",
     "effects": [
       {
         "op": "damage",
@@ -915,6 +929,7 @@
     "patron": "poseidon",
     "cost": 1,
     "target": "enemy",
+    "reach": "0123",
     "effects": [
       {
         "op": "damage",
@@ -1011,6 +1026,7 @@
     "patron": "poseidon",
     "cost": 2,
     "target": "enemy",
+    "reach": "012",
     "effects": [
       {
         "op": "apply_token",
@@ -1033,6 +1049,7 @@
     "patron": "poseidon",
     "cost": 2,
     "target": "enemy",
+    "reach": "012",
     "effects": [
       {
         "op": "apply_token",
@@ -1095,6 +1112,7 @@
     "patron": "poseidon",
     "cost": 3,
     "target": "enemy",
+    "reach": "012",
     "effects": [
       {
         "op": "damage",
@@ -1161,6 +1179,7 @@
     "patron": "poseidon",
     "cost": 1,
     "target": "enemy",
+    "reach": "012",
     "effects": [
       {
         "op": "damage",
@@ -1226,6 +1245,7 @@
     "patron": "poseidon",
     "cost": 1,
     "target": "enemy",
+    "reach": "012",
     "effects": [
       {
         "op": "damage",
@@ -1248,6 +1268,7 @@
     "patron": "poseidon",
     "cost": 1,
     "target": "enemy",
+    "reach": "012",
     "effects": [
       {
         "op": "damage",
@@ -1275,6 +1296,7 @@
     "patron": "poseidon",
     "cost": 2,
     "target": "enemy",
+    "reach": "012",
     "effects": [
       {
         "op": "apply_token",
@@ -1318,6 +1340,7 @@
     "patron": "poseidon",
     "cost": 3,
     "target": "all_enemies",
+    "reach": "012",
     "effects": [
       {
         "op": "apply_token",
@@ -1361,6 +1384,7 @@
     "patron": "athena",
     "cost": 1,
     "target": "enemy",
+    "reach": "0123",
     "effects": [
       {
         "op": "damage",
@@ -1383,6 +1407,7 @@
     "patron": "athena",
     "cost": 1,
     "target": "enemy",
+    "reach": "01",
     "effects": [
       {
         "op": "damage",
@@ -1445,6 +1470,7 @@
     "patron": "athena",
     "cost": 1,
     "target": "enemy",
+    "reach": "01",
     "effects": [
       {
         "op": "damage",
@@ -1466,6 +1492,7 @@
     "patron": "athena",
     "cost": 2,
     "target": "enemy",
+    "reach": "01",
     "effects": [
       {
         "op": "damage",
@@ -1550,6 +1577,7 @@
     "patron": "athena",
     "cost": 2,
     "target": "enemy",
+    "reach": "01",
     "effects": [
       {
         "op": "damage",
@@ -1615,6 +1643,7 @@
     "patron": "athena",
     "cost": 1,
     "target": "enemy",
+    "reach": "01",
     "effects": [
       {
         "op": "damage",
@@ -1683,6 +1712,7 @@
     "patron": "athena",
     "cost": 1,
     "target": "enemy",
+    "reach": "01",
     "effects": [
       {
         "op": "block",
@@ -1747,6 +1777,7 @@
     "patron": "athena",
     "cost": 3,
     "target": "enemy",
+    "reach": "01",
     "effects": [
       {
         "op": "damage",
@@ -1769,6 +1800,7 @@
     "patron": "ares",
     "cost": 1,
     "target": "enemy",
+    "reach": "01",
     "effects": [
       {
         "op": "damage",
@@ -1815,6 +1847,7 @@
     "patron": "ares",
     "cost": 1,
     "target": "enemy",
+    "reach": "0",
     "effects": [
       {
         "op": "damage",
@@ -1877,6 +1910,7 @@
     "patron": "ares",
     "cost": 2,
     "target": "enemy",
+    "reach": "0",
     "effects": [
       {
         "op": "apply_token",
@@ -1899,6 +1933,7 @@
     "patron": "ares",
     "cost": 2,
     "target": "enemy",
+    "reach": "0",
     "effects": [
       {
         "op": "damage",
@@ -1920,6 +1955,7 @@
     "patron": "ares",
     "cost": 1,
     "target": "enemy",
+    "reach": "0",
     "effects": [
       {
         "op": "damage",
@@ -1940,6 +1976,7 @@
     "patron": "ares",
     "cost": 2,
     "target": "all_enemies",
+    "reach": "01",
     "effects": [
       {
         "op": "apply_token",
@@ -2036,6 +2073,7 @@
     "patron": "ares",
     "cost": 1,
     "target": "enemy",
+    "reach": "0",
     "effects": [
       {
         "op": "damage",
@@ -2057,6 +2095,7 @@
     "patron": "ares",
     "cost": 2,
     "target": "enemy",
+    "reach": "0",
     "effects": [
       {
         "op": "damage",
@@ -2082,6 +2121,7 @@
     "patron": "ares",
     "cost": 2,
     "target": "enemy",
+    "reach": "0",
     "effects": [
       {
         "op": "damage",
@@ -2128,6 +2168,7 @@
     "patron": "ares",
     "cost": 1,
     "target": "enemy",
+    "reach": "0",
     "effects": [
       {
         "op": "damage",
@@ -2198,6 +2239,7 @@
     "patron": "ares",
     "cost": 3,
     "target": "all_enemies",
+    "reach": "01",
     "effects": [
       {
         "op": "apply_token",
@@ -2221,6 +2263,7 @@
     "patron": "artemis",
     "cost": 1,
     "target": "enemy",
+    "reach": "123",
     "effects": [
       {
         "op": "damage",
@@ -2290,6 +2333,7 @@
     "patron": "artemis",
     "cost": 1,
     "target": "enemy",
+    "reach": "23",
     "effects": [
       {
         "op": "damage",
@@ -2322,6 +2366,7 @@
     "patron": "artemis",
     "cost": 2,
     "target": "enemy",
+    "reach": "23",
     "effects": [
       {
         "op": "damage",
@@ -2424,6 +2469,7 @@
     "patron": "artemis",
     "cost": 2,
     "target": "all_enemies",
+    "reach": "23",
     "effects": [
       {
         "op": "apply_token",
@@ -2491,6 +2537,7 @@
     "patron": "artemis",
     "cost": 1,
     "target": "enemy",
+    "reach": "23",
     "effects": [
       {
         "op": "damage",
@@ -2539,6 +2586,7 @@
     "patron": "artemis",
     "cost": 2,
     "target": "enemy",
+    "reach": "23",
     "effects": [
       {
         "op": "damage",
@@ -2561,6 +2609,7 @@
     "patron": "artemis",
     "cost": 1,
     "target": "enemy",
+    "reach": "23",
     "effects": [
       {
         "op": "apply_token",
@@ -2613,6 +2662,7 @@
     "patron": "artemis",
     "cost": 3,
     "target": "enemy",
+    "reach": "23",
     "effects": [
       {
         "op": "damage",
@@ -2639,6 +2689,7 @@
     "patron": "artemis",
     "cost": 3,
     "target": "all_enemies",
+    "reach": "23",
     "effects": [
       {
         "op": "damage",
@@ -2936,6 +2987,7 @@
     "patron": "zeus",
     "cost": 2,
     "target": "enemy",
+    "reach": "0123",
     "effects": [
       {
         "op": "damage",
@@ -2958,6 +3010,7 @@
     "patron": "poseidon",
     "cost": 2,
     "target": "enemy",
+    "reach": "012",
     "effects": [
       {
         "op": "damage",
@@ -2981,6 +3034,7 @@
     "patron": "athena",
     "cost": 2,
     "target": "enemy",
+    "reach": "01",
     "effects": [
       {
         "op": "damage",
@@ -3003,6 +3057,7 @@
     "patron": "ares",
     "cost": 2,
     "target": "enemy",
+    "reach": "0",
     "effects": [
       {
         "op": "damage",
@@ -3024,6 +3079,7 @@
     "patron": "artemis",
     "cost": 2,
     "target": "enemy",
+    "reach": "23",
     "effects": [
       {
         "op": "damage",
@@ -3075,6 +3131,7 @@
     "tier": 2,
     "cost": 2,
     "target": "enemy",
+    "reach": "03",
     "effects": [
       {
         "op": "damage",
@@ -3103,6 +3160,7 @@
     "tier": 2,
     "cost": 3,
     "target": "all_enemies",
+    "reach": "0123",
     "effects": [
       {
         "op": "damage",
@@ -3127,6 +3185,7 @@
     "tier": 2,
     "cost": 3,
     "target": "all_enemies",
+    "reach": "012",
     "effects": [
       {
         "op": "damage",
@@ -3151,6 +3210,7 @@
     "tier": 2,
     "cost": 1,
     "target": "enemy",
+    "reach": "012",
     "effects": [
       {
         "op": "damage",
@@ -3173,6 +3233,7 @@
     "tier": 2,
     "cost": 2,
     "target": "enemy",
+    "reach": "012",
     "effects": [
       {
         "op": "damage",
@@ -3222,6 +3283,7 @@
     "tier": 2,
     "cost": 2,
     "target": "enemy",
+    "reach": "01",
     "effects": [
       {
         "op": "damage",
@@ -3279,6 +3341,7 @@
     "tier": 2,
     "cost": 1,
     "target": "enemy",
+    "reach": "0",
     "effects": [
       {
         "op": "damage",
@@ -3302,6 +3365,7 @@
     "tier": 2,
     "cost": 2,
     "target": "all_enemies",
+    "reach": "01",
     "effects": [
       {
         "op": "damage",
@@ -3326,6 +3390,7 @@
     "tier": 2,
     "cost": 1,
     "target": "enemy",
+    "reach": "0",
     "effects": [
       {
         "op": "damage",
@@ -3408,6 +3473,7 @@
     "tier": 2,
     "cost": 3,
     "target": "all_enemies",
+    "reach": "23",
     "effects": [
       {
         "op": "damage",
@@ -3453,6 +3519,7 @@
     "patron": "zeus",
     "cost": 1,
     "target": "enemy",
+    "reach": "03",
     "effects": [
       {
         "op": "damage",
@@ -3481,6 +3548,7 @@
     "patron": "zeus",
     "cost": 2,
     "target": "enemy",
+    "reach": "03",
     "effects": [
       {
         "op": "damage",
@@ -3524,6 +3592,7 @@
     "tier": 2,
     "cost": 0,
     "target": "enemy",
+    "reach": "03",
     "effects": [
       {
         "op": "damage",
@@ -3547,6 +3616,7 @@
     "tier": 2,
     "cost": 1,
     "target": "enemy",
+    "reach": "03",
     "effects": [
       {
         "op": "damage",
@@ -3592,6 +3662,7 @@
     "patron": "poseidon",
     "cost": 2,
     "target": "enemy",
+    "reach": "012",
     "effects": [
       {
         "op": "damage",
@@ -3614,6 +3685,7 @@
     "patron": "poseidon",
     "cost": 1,
     "target": "enemy",
+    "reach": "012",
     "effects": [
       {
         "op": "apply_token",
@@ -3661,6 +3733,7 @@
     "tier": 2,
     "cost": 2,
     "target": "enemy",
+    "reach": "012",
     "effects": [
       {
         "op": "damage",
@@ -3709,6 +3782,7 @@
     "patron": "athena",
     "cost": 2,
     "target": "enemy",
+    "reach": "01",
     "effects": [
       {
         "op": "damage",
@@ -3759,6 +3833,7 @@
     "patron": "athena",
     "cost": 2,
     "target": "all_enemies",
+    "reach": "01",
     "effects": [
       {
         "op": "damage",
@@ -3782,6 +3857,7 @@
     "tier": 2,
     "cost": 1,
     "target": "enemy",
+    "reach": "01",
     "effects": [
       {
         "op": "damage",
@@ -3838,6 +3914,7 @@
     "tier": 2,
     "cost": 1,
     "target": "enemy",
+    "reach": "01",
     "effects": [
       {
         "op": "damage",
@@ -3861,6 +3938,7 @@
     "patron": "ares",
     "cost": 1,
     "target": "enemy",
+    "reach": "0",
     "effects": [
       {
         "op": "damage",
@@ -3906,6 +3984,7 @@
     "patron": "ares",
     "cost": 2,
     "target": "all_enemies",
+    "reach": "01",
     "effects": [
       {
         "op": "damage",
@@ -3931,6 +4010,7 @@
     "tier": 2,
     "cost": 1,
     "target": "enemy",
+    "reach": "0",
     "effects": [
       {
         "op": "damage",
@@ -3984,6 +4064,7 @@
     "tier": 2,
     "cost": 1,
     "target": "enemy",
+    "reach": "0",
     "effects": [
       {
         "op": "damage",
@@ -4105,6 +4186,7 @@
     "tier": 2,
     "cost": 1,
     "target": "enemy",
+    "reach": "23",
     "effects": [
       {
         "op": "damage",
@@ -4129,6 +4211,7 @@
     "tier": 2,
     "cost": 0,
     "target": "enemy",
+    "reach": "23",
     "effects": [
       {
         "op": "damage",

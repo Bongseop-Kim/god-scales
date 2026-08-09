@@ -7,22 +7,33 @@ import { effectText } from "./card.tsx";
 import { speak } from "./fx.ts";
 
 /** 트리거 열은 `core/favor.ts`의 한 벌이다 — 게이트(`tools/validate.ts`)가 같은 것을 센다 */
-type GodLines = Partial<Record<LineTrigger, string[] | Partial<Record<FavorStage, string[]>>>>;
-const gods = godDataJson as (FavorGod & { name: string; lines: GodLines })[];
+type GodLines = Partial<Record<LineTrigger, string[] | Partial<Record<FavorStage, string[]>>>> & { foes?: Record<string, string[]> };
+const gods = godDataJson as unknown as (FavorGod & { name: string; lines: GodLines })[];
 const godNames = new Map(gods.map(({ id, name }) => [id, name]));
 /** 신 일러 다섯. 과업·컷인·발화가 같은 다섯 장을 쓴다 — 이름과 같은 자리에서 나눠 준다 */
 export const godArt = import.meta.glob<string>("../../art/gods/*.webp", { eager: true, query: "?url", import: "default" });
-const godLines = new Map(gods.map(({ id, lines }) => [id, lines]));
+const linesByGod = new Map(gods.map(({ id, lines }) => [id, lines]));
 
 /**
- * 그 자리에서 신이 하는 말. **난수를 안 당긴다** — `n % lines.length`고 `n`은 그 자리의 턴 수나
- * 조우 수다. 새 RNG 스트림을 만들면 대사를 켜는 것만으로 배포된 replay가 통째로 어긋난다(P-46 §6).
- * 빈 문자열이면 `speak`가 아무것도 안 띄운다 — 게이트가 빈 트리거를 이미 반려하므로 배포에는 없다
+ * 그 자리에서 신이 할 말의 후보 순서. **난수를 안 당긴다** — `n % lines.length`에서 시작해 한 바퀴
+ * 돌 뿐이다. 새 RNG 스트림을 만들면 대사를 켜는 것만으로 배포된 replay가 통째로 어긋난다(P-46 §6).
+ * 빈 배열이면 `speak`가 아무것도 안 띄운다 — 게이트가 빈 트리거를 이미 반려하므로 배포에는 없다
  */
-export function godLine(god: string, trigger: LineTrigger, n: number, stage?: FavorStage): string {
-  const held = godLines.get(god)?.[trigger];
+const rotate = (lines: readonly string[] | undefined, n: number): string[] => {
+  if (!lines?.length) return [];
+  const start = ((n % lines.length) + lines.length) % lines.length;
+  return [...lines.slice(start), ...lines.slice(0, start)];
+};
+
+export function godLines(god: string, trigger: LineTrigger, n: number, stage?: FavorStage): string[] {
+  const held = linesByGod.get(god)?.[trigger];
   const lines = Array.isArray(held) ? held : stage && held ? held[stage] : undefined;
-  return lines?.length ? lines[n % lines.length] : "";
+  return rotate(lines, n);
+}
+
+export function godFoeLines(god: string, enemies: string[], n: number): string[] {
+  const foes = linesByGod.get(god)?.foes;
+  return rotate(enemies.map((enemy) => foes?.[enemy]).find((lines) => lines?.length), n);
 }
 
 /** 이름만 데이터에서 온다. 순서는 엔진의 `gods`가 정본이다 — hex는 `ui/style.css`의 `--{id}`가 정본이다 */
@@ -72,7 +83,7 @@ export function FavorMeter({ god, value, grace }: { god: string; value: number; 
   const crossed = seen.current !== stage;
   useEffect(() => {
     // 미터가 펄스하는 그 프레임에 신이 말한다 — 단계가 바뀌면 그 신이 다음에 할 일이 통째로 바뀐다
-    if (crossed) speak(2, god, godLine(god, "cross", value, stage));
+    if (crossed) speak(2, god, godLines(god, "cross", value, stage));
     seen.current = stage;
   });
   const { start, turn } = godStageText(god, stage);

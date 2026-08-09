@@ -301,15 +301,29 @@ const helpsPlayer = ({ op, token }: Effect, target: string): boolean => {
  * 화면에서 안 보이므로 게이트가 아니면 아무도 못 잡는다. 단계 넷을 다 요구하는 이유도 같다:
  * 평온이 대부분의 조우인데 평온 줄이 없으면 신은 거의 언제나 말이 없다
  */
-function godLineFailure(god: Item): boolean {
+function godLineFailure(god: Item, enemies: Enemy[]): boolean {
   const lines = (god.lines ?? {}) as Record<string, unknown>;
-  const spoken = (held: unknown) => Array.isArray(held) && held.length > 0 && held.every((line) => typeof line === "string" && line.trim().length > 0);
-  return lineTriggers.some((trigger) => {
+  const minimums: Partial<Record<(typeof lineTriggers)[number], number>> = { encounter: 5, intervene: 8, cross: 3, tear: 4, join: 3, reconcile: 3, fuse: 3 };
+  const spoken = (held: unknown, minimum = 1) => Array.isArray(held) && held.length >= minimum && held.every((line) => typeof line === "string" && line.trim().length > 0);
+  if (lineTriggers.some((trigger) => {
     const held = lines[trigger];
-    if (!stagedLineTriggers.includes(trigger)) return !spoken(held);
+    if (!stagedLineTriggers.includes(trigger)) return !spoken(held, minimums[trigger]);
     const byStage = (held ?? {}) as Record<string, unknown>;
-    return Object.keys(favorBoundaries).some((stage) => !spoken(byStage[stage]));
-  });
+    return Object.keys(favorBoundaries).some((stage) => !spoken(byStage[stage], minimums[trigger]));
+  })) return true;
+
+  const foes = lines.foes;
+  if (foes !== undefined) {
+    if (!foes || typeof foes !== "object" || Array.isArray(foes)) return true;
+    const enemyIds = new Set(enemies.map(({ id }) => id));
+    if (Object.entries(foes).some(([enemy, held]) => !enemyIds.has(enemy) || !spoken(held, 3))) return true;
+  }
+
+  const all = (held: unknown): string[] => Array.isArray(held)
+    ? held.filter((line): line is string => typeof line === "string")
+    : held && typeof held === "object" ? Object.values(held).flatMap(all) : [];
+  const normalized = all(lines).map((line) => line.replace(/\s/g, ""));
+  return new Set(normalized).size !== normalized.length;
 }
 
 function stageValueFailure(god: Item): boolean {
@@ -552,7 +566,7 @@ function failureFor(item: Item, cards: Card[], enemies: Enemy[]): FailureKey | u
   if (kind === "demand" && demandFailure(item as Demand)) return "demand_axis";
   if (kind === "god" && stageEffectScopeFailure(item)) return "token_scope";
   if (kind === "god" && stageValueFailure(item)) return "value_outlier";
-  if (kind === "god" && godLineFailure(item)) return "line_coverage";
+  if (kind === "god" && godLineFailure(item, enemies)) return "line_coverage";
   if (kind === "enemy" && passiveFailure(item as Enemy)) return "passive_coverage";
   if (kind === "enemy" && slotFailure(item as Enemy, enemies)) return "slot_scope";
   if (kind === "enemy" && encounterThresholdFailure(item as Enemy, enemies)) return "value_outlier";

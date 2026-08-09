@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import demandData from "../data/demands.json" with { type: "json" };
 import godData from "../data/gods.json" with { type: "json" };
 import { demandEnemies, demandPenalty, demandSatisfied, demandSettled, pairKey, parseCondition, resolveDemand, rivals, ruleText, takeSide, type Demand } from "../core/demands";
-import { godLine } from "../ui/shared/header";
+import { godFoeLines, godLines } from "../ui/shared/header";
+import { nextSpokenLine, resetSpokenLines, speak } from "../ui/shared/fx";
 import { runSteps, simulateStratified, watchDemand } from "../sim/engine";
 import { summarize } from "../sim/report";
 import { validateItems } from "../tools/validate";
@@ -39,12 +40,12 @@ describe("demands", () => {
     expect(favor).toEqual({ zeus: 50 + athena.reward.favor, poseidon: 32 });
   });
 
-  it("keeps an ineligible task hidden through a boss and consumes it in the next eligible fight", () => {
+  it("shows an ineligible task as deferred through a boss and consumes it in the next eligible fight", () => {
     const steps = runSteps(4, undefined, ["poseidon", "athena"]);
     let step = steps.next();
     let chooseOnFloorFive = false;
     let chosen = false;
-    let hiddenAtBoss = false;
+    let deferredAtBoss = false;
     let retainedAfterBoss = false;
     let activeNext = false;
     let cleared = false;
@@ -62,9 +63,9 @@ describe("demands", () => {
         chosen = chooseOnFloorFive;
       }
       if (chosen && decision.phase === "card" && decision.observation.region === "underworld" && decision.observation.floor === 6) {
-        hiddenAtBoss = decision.observation.promises.length === 0 && decision.observation.quest === undefined;
+        deferredAtBoss = decision.observation.promises[0]?.deferred === true && decision.observation.quest?.god === "poseidon";
       }
-      if (hiddenAtBoss && decision.phase === "reward" && decision.observation.floor === 6) {
+      if (deferredAtBoss && decision.phase === "reward" && decision.observation.floor === 6) {
         retainedAfterBoss = decision.observation.quest?.god === "poseidon";
       }
       if (retainedAfterBoss && decision.phase === "card" && decision.observation.region === "surface") {
@@ -76,7 +77,7 @@ describe("demands", () => {
       }
       step = steps.next(answer);
     }
-    expect({ chosen, hiddenAtBoss, retainedAfterBoss, activeNext, cleared }).toEqual({ chosen: true, hiddenAtBoss: true, retainedAfterBoss: true, activeNext: true, cleared: true });
+    expect({ chosen, deferredAtBoss, retainedAfterBoss, activeNext, cleared }).toEqual({ chosen: true, deferredAtBoss: true, retainedAfterBoss: true, activeNext: true, cleared: true });
   });
 
   it("gives base reward first, then +12 favor and three cards from the completed task's god", () => {
@@ -112,7 +113,7 @@ describe("demands", () => {
   });
 
   it("gives no extra reward when the task fails", () => {
-    const steps = runSteps(5);
+    const steps = runSteps(11);
     let step = steps.next();
     let chosen = false;
     let taskRewards = 0;
@@ -205,21 +206,56 @@ describe("demands", () => {
   });
 
   /**
-   * 트리거 열에 신 다섯이 다 줄을 갖는다. **게이트가 이미 반려하지만** 화면이 읽는 경로(`godLine`)와
+   * 트리거 열에 신 다섯이 다 줄을 갖는다. **게이트가 이미 반려하지만** 화면이 읽는 경로(`godLines`)와
    * 게이트가 세는 경로가 갈릴 수 있다 — 여기서 그 둘을 같은 자리에 세운다. 고르는 것은 나머지 연산이다
    */
   it("말한다 — 트리거 열 × 단계 넷이 다 줄을 갖고 난수를 안 당긴다", () => {
     for (const { id } of godData) {
       for (const trigger of ["demand_offer", "demand_kept", "demand_broken", "tear", "join", "reconcile", "fuse"] as const) {
-        expect(godLine(id, trigger, 0).trim(), `${id}:${trigger}`).not.toBe("");
+        expect(godLines(id, trigger, 0)[0]?.trim(), `${id}:${trigger}`).not.toBe("");
       }
       for (const trigger of ["encounter", "intervene", "cross"] as const) {
         for (const stage of ["devotion", "calm", "anger", "wrath"] as const) {
-          expect(godLine(id, trigger, 0, stage).trim(), `${id}:${trigger}:${stage}`).not.toBe("");
+          expect(godLines(id, trigger, 0, stage)[0]?.trim(), `${id}:${trigger}:${stage}`).not.toBe("");
           // 같은 `n`이면 같은 줄이다 — 새 RNG 스트림이 끼면 대사를 켜는 것만으로 replay가 어긋난다
-          expect(godLine(id, trigger, 7, stage)).toBe(godLine(id, trigger, 7, stage));
+          expect(godLines(id, trigger, 7, stage)).toEqual(godLines(id, trigger, 7, stage));
         }
       }
+    }
+  });
+
+  it("대사 후보를 결정적으로 돌리고 적은 앞 칸 관계를 고른다", () => {
+    const zeus = godData.find(({ id }) => id === "zeus")!.lines.encounter.devotion;
+    expect(godLines("zeus", "encounter", 2, "devotion")).toEqual([...zeus.slice(2), ...zeus.slice(0, 2)]);
+
+    const foes = godData.find(({ id }) => id === "athena")!.lines.foes as unknown as Record<string, string[]>;
+    expect(godFoeLines("athena", ["enemy_under_zealot", "enemy_surface_support"], 1)[0]).toBe(foes.enemy_under_zealot[1]);
+    expect(godFoeLines("athena", ["enemy_under_brute"], 1)).toEqual([]);
+    expect(godLines("athena", "encounter", 1, "calm")).toHaveLength(5);
+  });
+
+  it("한 런에서 같은 신의 같은 문장을 반복하지 않는다", () => {
+    const candidates = ["첫 문장", "다음 문장"];
+    resetSpokenLines();
+    expect(nextSpokenLine("zeus", candidates)).toBe("첫 문장");
+    expect(nextSpokenLine("zeus", candidates)).toBe("다음 문장");
+    expect(nextSpokenLine("zeus", candidates)).toBe("");
+    expect(nextSpokenLine("poseidon", candidates)).toBe("첫 문장");
+    resetSpokenLines();
+    expect(nextSpokenLine("zeus", candidates)).toBe("첫 문장");
+  });
+
+  it("높은 발화에 막힌 후보는 사용하지 않는다", () => {
+    const original = Object.getOwnPropertyDescriptor(globalThis, "document");
+    Object.defineProperty(globalThis, "document", { configurable: true, value: { querySelectorAll: () => [{ dataset: { level: "3" } }] } });
+    try {
+      resetSpokenLines();
+      speak(2, "zeus", ["막힌 문장", "다음 문장"]);
+      expect(nextSpokenLine("zeus", ["막힌 문장", "다음 문장"])).toBe("막힌 문장");
+    } finally {
+      if (original) Object.defineProperty(globalThis, "document", original);
+      else delete (globalThis as { document?: Document }).document;
+      resetSpokenLines();
     }
   });
 

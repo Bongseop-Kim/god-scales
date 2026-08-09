@@ -3,7 +3,7 @@ import cardData from "../data/cards.json" with { type: "json" };
 import godData from "../data/gods.json" with { type: "json" };
 import { turnsUntilIntervention } from "../core/favor";
 import { cardLevel } from "../core/rules";
-import { endTurnAction, gods, run, runSteps, type Decision } from "../sim/engine";
+import { deckSize, endTurnAction, gods, run, runSteps, type Decision } from "../sim/engine";
 import type { ReplayAction } from "../sim/replay";
 
 /** 갈래는 이제 `"lane:type"`이다. 그 종류가 열려 있으면 고르고, 없으면 봇 답을 쓴다 */
@@ -11,8 +11,8 @@ const pickPath = (decision: Decision, type: string) => decision.options.find((op
 
 describe("steppable engine", () => {
   it("stops at every decision phase", () => {
-    // 아홉 종류를 전부 지나는 시드가 92다
-    const steps = runSteps(92);
+    // 아홉 종류를 전부 지나는 시드가 100이다
+    const steps = runSteps(100);
     const seen = new Set<string>();
     let step = steps.next();
     while (!step.done) {
@@ -52,7 +52,7 @@ describe("steppable engine", () => {
      * 「덱 N장」이 정말 지금 덱을 세는지 본다. 시작 덱 배치는 여기에 적지 않는다 — 그러면 엔진의
      * 사본이 된다. 지도 관측이 이미 덱을 그대로 실어 오므로 마지막 것을 든다
      */
-    const steps = runSteps(4);
+    const steps = runSteps(1);
     let step = steps.next();
     while (!step.done && step.value.phase !== "grace") {
       // 보상은 지도 관측 **뒤에** 덱을 늘린다 — 그 사이에 집은 카드를 얹어야 은혜 화면과 같은 덱이다
@@ -110,6 +110,73 @@ describe("steppable engine", () => {
     const nextTurn = steps.next(endTurnAction);
     if (nextTurn.done || nextTurn.value.phase !== "card") throw new Error("expected the next card decision");
     expect(nextTurn.value.observation).toMatchObject({ turn: 2, hitSeq: 3, hitSource: "favor" });
+  });
+
+  it("reports fully and partly blocked hits without mistaking the turn reset for one", () => {
+    const defendedTurn = (cardId: string, plays: number) => {
+      const steps = runSteps(1, undefined, ["poseidon", "athena"], Array.from({ length: deckSize }, () => cardId));
+      let step = steps.next();
+      while (!step.done && step.value.phase !== "card") step = steps.next(step.value.bot);
+      if (step.done || step.value.phase !== "card") throw new Error("expected a card decision");
+      const beforeSeq = step.value.observation.hitSeq;
+      for (let played = 0; played < plays; played += 1) step = steps.next(cardId);
+      if (step.done || step.value.phase !== "card") throw new Error("expected a card decision");
+      step = steps.next(endTurnAction);
+      if (step.done || step.value.phase !== "card") throw new Error("expected the next card decision");
+      return { beforeSeq, observation: step.value.observation };
+    };
+
+    const full = defendedTurn("card_poseidon_02", 2);
+    expect(full.observation).toMatchObject({ hitSeq: full.beforeSeq + 1, hitSource: "enemy", hits: [{ id: "player", amount: 0, blocked: 7 }] });
+    // 적 턴 뒤 남은 방어 5는 턴 시작에 리셋되지만 power 프레임의 가짜 hit/seq가 되지 않는다.
+    expect(full.observation.block).toBe(1);
+
+    const partial = defendedTurn("card_athena_13", 1);
+    expect(partial.observation.hits).toEqual([{ id: "player", amount: 2, blocked: 3 }]);
+  });
+
+  it("reports a deflect on its defender and the reflected hit on its attacker", () => {
+    const steps = runSteps(1, undefined, ["poseidon", "athena"], Array.from({ length: deckSize }, () => "card_poseidon_02"), 0);
+    let step = steps.next();
+    while (!step.done && step.value.phase !== "card") step = steps.next(step.value.bot);
+    if (step.done || step.value.phase !== "card") throw new Error("expected a card decision");
+    const beforeSeq = step.value.observation.hitSeq;
+    const attacker = step.value.observation.enemies.find(({ intent }) => intent?.damage)?.id;
+    if (!attacker) throw new Error("expected an attacking enemy");
+
+    expect(step.value.observation.tokens.deflect).toBe(1);
+    step = steps.next("card_poseidon_02");
+    if (step.done || step.value.phase !== "card") throw new Error("expected a card decision");
+    step = steps.next(endTurnAction);
+    if (step.done || step.value.phase !== "card") throw new Error("expected the next card decision");
+
+    expect(step.value.observation.hitSeq).toBe(beforeSeq + 1);
+    expect(step.value.observation.hitSource).toBe("enemy");
+    expect(step.value.observation.hits).toContainEqual(expect.objectContaining({ id: "player", amount: 0, deflected: true }));
+    expect(step.value.observation.hits.find(({ id }) => id === attacker)?.amount).toBeGreaterThan(0);
+  });
+
+  it("carries the final card and enemy hits without adding a decision", () => {
+    const steps = runSteps(1);
+    let step = steps.next();
+    let sawFinale = false;
+    while (!step.done) {
+      const current = step.value;
+      const next = steps.next(current.bot);
+      if ((current.phase === "card" || current.phase === "target") && !next.done && next.value.phase === "reward") {
+        const finale = next.value.observation.finale!;
+        expect(finale).toMatchObject({ hitSource: "attack", enemies: [] });
+        expect(finale.hitSeq).toBeGreaterThan(current.observation.hitSeq);
+        expect(finale.hand).toHaveLength(current.observation.hand.length - 1);
+        sawFinale = true;
+        break;
+      }
+      step = next;
+    }
+    expect(sawFinale).toBe(true);
+
+    const lost = run(8);
+    expect(lost.finale).toMatchObject({ hp: 0, hitSource: "enemy", hits: [{ id: "player" }] });
   });
 
   it("derives the next automatic intervention from turns 2, 5, and 8", () => {

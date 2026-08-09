@@ -37,8 +37,12 @@ export async function playSprite(host: HTMLElement, source: string, kind: "cut" 
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const still = label !== undefined && reduced;
   const fade = effect.animate(
-    still ? [{ opacity: 1 }, { opacity: 1 }] : [{ opacity: 0 }, { opacity: 1 }, { opacity: 0 }],
-    { duration: still ? 3000 : 800, easing: "cubic-bezier(0.23, 1, 0.32, 1)" },
+    still
+      ? [{ opacity: 1 }, { opacity: 1 }]
+      : label
+        ? [{ opacity: 0 }, { opacity: 1, offset: .12 }, { opacity: 1, offset: .75 }, { opacity: 0 }]
+        : [{ opacity: 0 }, { opacity: 1 }, { opacity: 0 }],
+    { duration: still ? 3000 : label ? 1600 : 800, easing: "cubic-bezier(0.23, 1, 0.32, 1)" },
   ).finished;
   const frames = strip && !reduced
     ? image.animate(
@@ -70,6 +74,18 @@ export function shake(distance: number, duration: number): void {
 export type VoiceLevel = 1 | 2 | 3;
 /** 머무는 시간. 자막은 짧고 외침은 길다 — 타이핑 애니메이션을 안 넣는 이유가 1.2초다 */
 const voiceHold: Record<VoiceLevel, number> = { 1: 1200, 2: 2000, 3: 3000 };
+const spokenLines = new Set<string>();
+
+export function resetSpokenLines(): void {
+  spokenLines.clear();
+}
+
+export function nextSpokenLine(god: string, text: string | readonly string[]): string {
+  const candidates = typeof text === "string" ? [text] : text;
+  const line = candidates.find((candidate) => candidate && !spokenLines.has(`${god}\0${candidate}`)) ?? "";
+  if (line) spokenLines.add(`${god}\0${line}`);
+  return line;
+}
 
 /**
  * 신이 한 마디 한다. **셋 다 입력을 받지 않는다** — 「클릭해서 넘기는 대화창」이면 `Decision`이 하나
@@ -79,12 +95,13 @@ const voiceHold: Record<VoiceLevel, number> = { 1: 1200, 2: 2000, 3: 3000 };
  * 겹치면 **큐가 아니라 순서**다 — 새 발화가 낮거나 같은 레벨을 지우고 선다(같은 자리에 두 장이 서면
  * 글자가 겹친다). 같은 레벨끼리는 호출자가 320ms 어긋나게 낸다(P-46의 컷인과 같은 규칙)
  */
-export function speak(level: VoiceLevel, god: string, text: string, portrait?: string): void {
-  if (!text) return;
+export function speak(level: VoiceLevel, god: string, text: string | readonly string[], portrait?: string): void {
   // 더 높은 레벨이 서 있으면 자막은 아예 안 뜬다 — 「높은 것이 낮은 것을 덮는다」의 나머지 절반이다
   for (const older of document.querySelectorAll<HTMLElement>(".voice")) {
     if (Number(older.dataset.level) > level) return;
   }
+  const selected = nextSpokenLine(god, text);
+  if (!selected) return;
   for (const older of document.querySelectorAll<HTMLElement>(".voice")) older.remove();
   const line = document.createElement("div");
   line.className = `voice l${level}`;
@@ -97,7 +114,7 @@ export function speak(level: VoiceLevel, god: string, text: string, portrait?: s
     line.append(image);
   }
   const body = document.createElement("b");
-  body.textContent = text;
+  body.textContent = selected;
   line.append(body);
   line.addEventListener("pointerdown", () => line.remove());
   document.body.append(line);

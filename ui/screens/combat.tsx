@@ -1,19 +1,19 @@
 import { AnimatePresence, m, useIsPresent, useReducedMotion } from "motion/react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, Ref } from "react";
 import { ENERGY_PER_TURN, MAX_SLOTS, type EnemyAction } from "../../core/combat.ts";
 import { favorInitial, favorStage, godEnemyId, intervenesOnTurn, turnsUntilIntervention, type FavorStage, type StageEffect } from "../../core/favor.ts";
 import { floorsPerRegion } from "../../core/map.ts";
-import type { PassiveName, Tokens, Trigger } from "../../core/state.ts";
+import type { PassiveName, Tokens } from "../../core/state.ts";
 import enemyDataJson from "../../data/enemies.json" with { type: "json" };
 import { endTurnAction, type CardView, type CombatDecision, type CombatObservation, type PromiseView } from "../../sim/engine.ts";
 import { particleStrip } from "../shared/art-keys.ts";
 import { Backdrop, backdropArt } from "../shared/backdrop.tsx";
-import { cardParticleOf, effectText, GameCard } from "../shared/card.tsx";
+import { cardParticleOf, effectText, GameCard, triggerLabels } from "../shared/card.tsx";
 import { playSprite, shake, speak } from "../shared/fx.ts";
-import { godArt, godLine, godName, godStageEffects, godStageText, stageName } from "../shared/header.tsx";
-import { Icon, type IconName } from "../shared/icon.tsx";
-import { passiveName, tokenName, tokenSummary, TokenRow } from "../shared/tokens.tsx";
+import { godArt, godFoeLines, godLines, godName, godStageEffects, godStageText, stageName } from "../shared/header.tsx";
+import { Icon } from "../shared/icon.tsx";
+import { intentBits, passiveName, passiveTitle, tokenName, tokenSummary, TokenRow } from "../shared/tokens.tsx";
 import { playSound } from "../shared/sfx.ts";
 
 const spriteArt = import.meta.glob<string>("../../art/sprites/*.webp", { eager: true, query: "?url", import: "default" });
@@ -40,10 +40,15 @@ const attackerStep = 520;
  * `delay`는 돌진·대신 맞기의 도착 시각 — 공격자가 닿기 전에 숫자가 뜨면 인과가 거꾸로 읽힌다
  */
 function DamagePop({ hits, id, seq, still, delay = 0 }: { hits: CombatObservation["hits"]; id: string; seq: number; still: boolean; delay?: number }) {
-  const amount = hits.find((hit) => hit.id === id)?.amount;
-  if (!amount) return null;
+  const hit = hits.find((item) => item.id === id);
+  if (!hit || (!hit.amount && !hit.blocked && !hit.deflected)) return null;
+  const label = <>
+    {hit.deflected && <><span className="deflected"><Icon name="deflect" /></span>{hit.blocked || hit.amount ? " " : null}</>}
+    {hit.blocked && <><span className="blocked"><Icon name="guard" />{hit.blocked}</span>{hit.amount ? " " : null}</>}
+    {hit.amount ? `-${hit.amount}` : null}
+  </>;
   return still
-    ? <span className="damage-pop" aria-hidden="true">-{amount}</span>
+    ? <span className="damage-pop" aria-hidden="true">{label}</span>
     : (
       <m.span
         key={seq}
@@ -53,7 +58,7 @@ function DamagePop({ hits, id, seq, still, delay = 0 }: { hits: CombatObservatio
         animate={{ opacity: [0, 1, 1, 0], scale: [0.7, 1.15, 1, 1], y: [0, -10, -16, -22] }}
         transition={{ ...damagePop, delay }}
       >
-        -{amount}
+        {label}
       </m.span>
     );
 }
@@ -75,20 +80,6 @@ function intentLabel(action?: EnemyAction): string {
   ].filter(Boolean);
   return parts.length ? parts.join(" + ") : "대기";
 }
-
-/**
- * 머리 위 의도 — **아이콘 16 + 숫자만**이다(P-55). 문장형(«공격 7 + 방어 5»)은 `aria-label`과
- * hover 툴팁으로 물러났다. 순서는 `intentLabel`의 조각 순서와 같고, 의도를 감추는 적은 `omen` 하나다
- */
-const intentBits = (action?: EnemyAction): [IconName, number | undefined][] => {
-  const bits: [IconName, number | undefined][] = [];
-  if (action?.damage) bits.push(["damage", action.damage]);
-  if (action?.block) bits.push(["block", action.block]);
-  if (action?.heal) bits.push(["heal", action.heal]);
-  if (action?.token) bits.push([action.token, action.stacks ?? 1]);
-  if (action?.favor) bits.push(["favor", action.favor]);
-  return bits.length ? bits : [["idle", undefined]];
-};
 
 /** 칸 넷. **0이 앞**(병사와 가까운 쪽)이고 3이 뒤다 */
 const slots = Array.from({ length: MAX_SLOTS }, (_, slot) => slot);
@@ -142,20 +133,39 @@ function AimArrow({ from }: { from: React.RefObject<HTMLDivElement | null> }) {
 export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }: {
   seed: number;
   decision: CombatDecision;
-  outro?: "won" | "lost";
+  outro?: { kind: "won" | "lost"; finale: CombatObservation };
   onAnswer: (choice: string) => void;
   /** 약속 칩 클릭이 저널(P-53)을 연다 — 오버레이 상태는 App이 든다 */
   onOpenJournal?: () => void;
 }) {
   const reducedMotion = useReducedMotion();
-  const { phase, options, observation: view } = decision;
-  const targeting = phase === "target";
-  const enemies = outro === "won" ? [] : view.enemies;
+  const { phase, options } = decision;
+  const view = outro?.finale ?? decision.observation;
+  const targeting = !outro && phase === "target";
+  const previousEnemies = useRef(decision.observation.enemies);
+  const [impactLanded, setImpactLanded] = useState(false);
+  const finalAttack = !!outro && view.hitSource === "attack" && view.hits.some(({ id }) => id !== "player");
+  // 한 렌더는 마지막 hits를 기존 배우에게 건넨다. 돌진만 impact까지 기다리고 나머지는 effect 직후 퇴장한다.
+  const enemies = outro && !impactLanded ? previousEnemies.current : view.enemies;
   const transition = reducedMotion ? { duration: 0 } : pop;
   const enemySide = useRef<HTMLDivElement>(null);
   const playerSide = useRef<HTMLDivElement>(null);
   /** 타겟팅 화살표의 출발점 — 무대 카드가 선 자리 */
   const stageRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!outro) {
+      previousEnemies.current = decision.observation.enemies;
+      setImpactLanded(false);
+      return;
+    }
+    if (!finalAttack || reducedMotion) {
+      setImpactLanded(true);
+      return;
+    }
+    const timer = setTimeout(() => setImpactLanded(true), impactAt);
+    return () => clearTimeout(timer);
+  }, [decision, outro, finalAttack, reducedMotion]);
 
   /** 무대에 선 적 하나의 판. `data-enemy`가 그 열쇠다 — 적마다 ref를 다는 대신이다 */
   const enemyNode = (id: string) => enemySide.current?.querySelector<HTMLElement>(`[data-enemy="${id}"]`);
@@ -184,9 +194,12 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
    * 없으면 체력이 왜 깎였는지 플레이어가 모른다.
    *
    * **데이터가 있는 신만 선다.** 분노는 상시 훼방이 벌이므로 개입 턴에는 침묵한다.
-   * 겹침은 큐가 아니라 **순서**로 푼다: 신 하나씩 320ms 어긋난다
+   * 겹침은 큐가 아니라 **순서**로 푼다: 앞 컷이 걷힌 뒤 다음 신이 선다
    */
   useEffect(() => {
+    // 전투가 끝났으면 컷인·셰이크를 새로 세우지 않는다 — turn_start 파워가 전투를 끝낸 개입도,
+    // outro 전환 시 dep 변화의 cleanup이 걷는 묵은 타이머도 이 한 줄이 막는다
+    if (outro) return;
     const start = view.turn === 1;
     if (!start && !intervenesOnTurn(view.turn)) return;
     const hook = start ? "on_encounter_start" : "on_turn_start";
@@ -201,35 +214,40 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
          * 조우 시작은 말(L2)이고 개입 턴은 자막(L1)이다:
          * 런당 49회 뜨는 자리를 화면 중앙에 2초씩 세우면 전투가 아니라 낭독이 된다
          */
-        speak(start ? 2 : 1, god, godLine(god, start ? "encounter" : "intervene", start ? view.depth : view.turn, stage));
+        const foes = start && (stage === "devotion" || stage === "calm")
+          ? godFoeLines(god, view.enemies.map(({ id }) => id), view.depth)
+          : [];
+        speak(start ? 2 : 1, god, foes.length ? foes : godLines(god, start ? "encounter" : "intervene", start ? view.depth : view.turn, stage));
         // 「신이 적으로 합류」는 판이 뒤집히는 사건이라 800ms 페이드로 지나가면 안 된다 — 신 일러가 선다
         const joinEffect = effects.find(({ op }) => op === "join");
         const source = joinEffect ? godArt[`../../art/gods/${god}.webp`] : fxArt[`../../art/fx/${stage}.webp`];
         if (text && source) void playSprite(document.body, source, "cut", { god, stage, text: `${godName(god)} · ${stageName[stage]} — ${text}` });
         /**
-         * 합류는 외침(L3)이다. **컷인이 끝난 뒤**에 낸다 — 같이 내면 L3의 어두운 배경이 「무엇을
+         * 합류는 외침(L3)이다. **모든 컷인이 끝난 뒤**에 낸다 — 같이 내면 L3의 어두운 배경이 「무엇을
          * 했는가」를 덮어 버린다. 신을 버려 놓고 그 신이 판 건너편에 서는 순간이라 스치면 안 된다
          */
         if (joinEffect) {
           const joined = joinEffect.god ?? god;
           // 이 타이머도 `timers`에 든다 — 안 걷으면 화면·조우가 바뀐 뒤 묵은 외침이 선다
-          timers.push(setTimeout(() => speak(3, joined, godLine(joined, "join", view.depth), godArt[`../../art/gods/${joined}.webp`]), 800));
+          timers.push(setTimeout(() => speak(3, joined, godLines(joined, "join", view.depth), godArt[`../../art/gods/${joined}.webp`]), (view.patrons.length - index) * 1700));
         }
         if (reducedMotion) return;
-        // 피해 개입은 화면이 흔들린다. 진노만 크게 — `.fx`와 같은 WAAPI라 새 의존이 없다
-        if (effects.some(({ op }) => op === "damage")) shake(stage === "wrath" ? 10 : 4, 200);
-        for (const effect of effects) {
-          const sprite = particleArt[`../../art/particle/${particleStrip[opParticle[effect.op]]?.[god]}.webp`];
-          for (const host of hostsFor(effect.target)) {
-            // 카드 파티클은 제자리에서 터지고 신의 것은 위에서 내려온다 — 한눈에 갈린다
-            if (effect.op === "damage" || effect.op === "block") void playSprite(host, fxArt["../../art/fx/strike.webp"], "spark");
-            if (sprite) void playSprite(host, sprite, "spark");
+        timers.push(setTimeout(() => {
+          // 피해 개입은 화면이 흔들린다. 진노만 크게 — `.fx`와 같은 WAAPI라 새 의존이 없다
+          if (effects.some(({ op }) => op === "damage")) shake(stage === "wrath" ? 10 : 4, 200);
+          for (const effect of effects) {
+            const sprite = particleArt[`../../art/particle/${particleStrip[opParticle[effect.op]]?.[god]}.webp`];
+            for (const host of hostsFor(effect.target)) {
+              // 카드 파티클은 제자리에서 터지고 신의 것은 위에서 내려온다 — 한눈에 갈린다
+              if (effect.op === "damage" || effect.op === "block") void playSprite(host, fxArt["../../art/fx/strike.webp"], "spark");
+              if (sprite) void playSprite(host, sprite, "spark");
+            }
           }
-        }
-      }, index * 320));
+        }, 200));
+      }, index * 1700));
     });
     return () => { for (const timer of timers) clearTimeout(timer); };
-  }, [view.turn]);
+  }, [view.turn, outro]);
 
   /**
    * 클릭은 언제나 「손 → 무대」 하나다. 즉발은 무대에 머무는 시간이 0인 경우고, 대상을 고르는 카드는
@@ -250,7 +268,7 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
     played.current = null;
     const source = particleArt[`../../art/particle/${cardParticleOf(card.id)}.webp`];
     if (source && !reducedMotion) for (const host of hostsFor(card.target, aimed.current)) void playSprite(host, source, "spark");
-  }, [decision]);
+  }, [decision, outro]);
 
   /**
    * 확정·찢기·화해 셋은 **한 번만** 말한다. 셋 다 관측이 실어 온 사실을 보고 갈리므로 화면이 규칙을
@@ -268,7 +286,7 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
     // 찢기는 이 게임에서 가장 말이 필요한 자리다 — 신을 버려 놓고 그 신의 번개를 쓴 순간이다
     if (view.torn) {
       const { god, seq } = view.torn;
-      once(`${view.depth}:torn:${seq}`, () => speak(3, god, godLine(god, "tear", seq), godArt[`../../art/gods/${god}.webp`]));
+      once(`${view.depth}:torn:${seq}`, () => speak(3, god, godLines(god, "tear", seq), godArt[`../../art/gods/${god}.webp`]));
     }
     /**
      * 화해 — 진노로 합류한 신이 판에서 사라지는 순간이다. 호의를 평온 하한으로 돌리는 것은 조우가
@@ -278,10 +296,10 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
     const onBoard = view.enemies.map(({ id }) => id).filter((id) => view.patrons.some((god) => godEnemyId(god) === id));
     for (const gone of godsOnBoard.current.filter((id) => !onBoard.includes(id))) {
       const god = view.patrons.find((patron) => godEnemyId(patron) === gone)!;
-      once(`${view.depth}:felled:${god}`, () => speak(3, god, godLine(god, "reconcile", view.depth), godArt[`../../art/gods/${god}.webp`]));
+      once(`${view.depth}:felled:${god}`, () => speak(3, god, godLines(god, "reconcile", view.depth), godArt[`../../art/gods/${god}.webp`]));
     }
     godsOnBoard.current = onBoard;
-  }, [decision]);
+  }, [decision, outro]);
 
   /**
    * 피격 연출(P-58) — 맞은 쪽 흰 플래시 220ms + 셰이크 4px, 때린 쪽은 대상 앞까지 돌진한다.
@@ -293,6 +311,8 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
   const prevEnemySlots = useRef(new Map(view.enemies.map(({ id, slot }) => [id, slot])));
   const enemyHits = view.hits.filter(({ id }) => id !== "player");
   const playerHit = view.hits.some(({ id }) => id === "player");
+  const blockedOnly = view.hits.every(({ amount }) => amount === 0);
+  const hitSound = guarded || blockedOnly || view.hits.some(({ deflected }) => deflected) ? "guard" : "hit";
   const impactDelay = !reducedMotion && (guarded || (view.hitSource === "attack" && enemyHits.length) || (view.hitSource === "enemy" && playerHit)) ? impactAt : 0;
   useEffect(() => {
     const attackers = prevAttackers.current;
@@ -300,7 +320,7 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
     const timers: ReturnType<typeof setTimeout>[] = [];
     if (reducedMotion) {
       if (view.hitSource === "attack" || view.hitSource === "enemy") playSound("attack", 0.35);
-      playSound(guarded ? "guard" : "hit", 0.5);
+      playSound(hitSound, 0.5);
     }
     if (enemyHits.some(({ id }) => !view.enemies.some((enemy) => enemy.id === id))) {
       timers.push(setTimeout(() => playSound("enemy-death", 0.45), impactDelay + 120));
@@ -336,12 +356,12 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
       ).finished.finally(() => mark.remove());
     }
     const impact = () => {
-      for (const { id } of view.hits) {
+      for (const { id, amount } of view.hits) {
         const node = id === "player" ? playerSide.current : enemyNode(id);
         pose(node, "hit", 300);
         node?.animate([{ filter: "brightness(2.2)" }, { filter: "brightness(1)" }], { duration: 220, easing: "ease-out" });
         // 나가 있는 지킴이는 안 흔든다 — 셰이크가 미끄러짐과 같은 `translate` 채널이라 제자리로 튕긴다
-        if (id !== guarded?.by) node?.animate([{ translate: "-4px 0" }, { translate: "4px 0" }, { translate: "0 0" }], { duration: 320, easing: "ease-in-out" });
+        if (amount > 0 && id !== guarded?.by) node?.animate([{ translate: "-4px 0" }, { translate: "4px 0" }, { translate: "0 0" }], { duration: 320, easing: "ease-in-out" });
       }
     };
     if (view.hitSource === "attack" && enemyHits.length) {
@@ -366,10 +386,10 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
           node?.animate([{ translate: "0 0" }, { translate: stop, offset: impactAt / attackerStep }, { translate: "0 0" }], { duration: attackerStep, delay: start, easing: "ease-in-out" });
         }
         timers.push(setTimeout(() => { pose(node, "attack", 350); playSound("attack", 0.35); }, start));
-        timers.push(setTimeout(() => { playSound("hit", 0.5); impact(); }, start + impactAt));
+        timers.push(setTimeout(() => { playSound(hitSound, 0.5); impact(); }, start + impactAt));
       });
     } else {
-      timers.push(setTimeout(() => { playSound(guarded ? "guard" : "hit", 0.5); impact(); }, impactDelay));
+      timers.push(setTimeout(() => { playSound(hitSound, 0.5); impact(); }, impactDelay));
     }
     return () => {
       for (const timer of timers) clearTimeout(timer);
@@ -394,7 +414,7 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
 
   useEffect(() => {
     if (!outro || reducedMotion) return;
-    sweepBanner(outro === "won" ? "승리" : "패배");
+    sweepBanner(outro.kind === "won" ? "승리" : "패배");
   }, [outro]);
 
   // 무대에 선 카드는 손패에서 빠진다 — 엔진은 target을 받은 뒤에 카드를 버리므로 아직 `hand`에 있다
@@ -402,7 +422,7 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
   const keys = handKeys(view.hand);
   const fan = view.hand.map((card, index) => ({ card, key: keys[index] })).filter((_, index) => index !== staged);
   /** 낼 수 있는 카드가 남았는가 — 에너지 젬 맥동(P-58)의 조건. 0이면 무채색(P-55) */
-  const canPlay = phase === "card" && options.some((option) => option !== endTurnAction);
+  const canPlay = !outro && phase === "card" && options.some((option) => option !== endTurnAction);
   /** 이름이 데이터에서 오므로 조사를 문장에 박을 수 없다 — 받침이 있으면 「이」다 */
   const guardName = guarded ? enemyInfo.get(guarded.by)?.name ?? guarded.by : "";
   const guardLine = guardName && `${guardName}${(guardName.charCodeAt(guardName.length - 1) - 0xac00) % 28 ? "이" : "가"} 대신 맞았습니다.`;
@@ -411,7 +431,7 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
     <>
       {/* 무대가 곧 배경이다(P-55) — .55로 살리고, 대상 선택 중에는 .35로 물러난다. 프롭 3겹 5개 */}
       <Backdrop src={backdropArt(view.region, view.floor === floorsPerRegion ? "boss" : "combat")} region={view.region} seed={seed + view.depth} tone={targeting ? "aim" : "stage"} />
-      <div className="shell run combat-stage" data-outro={outro}>
+      <div className="shell run combat-stage" data-outro={outro?.kind}>
       {/* 약속·파워 칩 — 상태 바 바로 아래 좌측, 판보다 먼저 읽힌다(P-55 §5) */}
       <div className="board-chips">
         <PromiseRow promises={view.promises} onOpen={onOpenJournal} />
@@ -426,7 +446,7 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
         * `popLayout`이 퇴장 중인 적을 흐름에서 뺀다. ref는 개입 파티클의 `hostsFor`가 쓴다
         */}
       <div className={`stage-field${targeting ? " aiming" : ""}`} ref={enemySide}>
-        <PlayerActor view={view} outro={outro} popDelay={impactDelay / 1000} reducedMotion={!!reducedMotion} ref={playerSide} />
+        <PlayerActor view={view} outro={outro?.kind} popDelay={impactDelay / 1000} reducedMotion={!!reducedMotion} ref={playerSide} />
         <AnimatePresence initial={false} mode="popLayout">
           {slots.map((slot) => {
             const enemy = enemies.find((candidate) => candidate.slot === slot);
@@ -464,11 +484,11 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
           */}
         <div className="resources">
           {/* 낼 수 있는 카드가 남으면 1.04 맥동, 에너지 0이면 무채색(P-58) — 정보는 숫자가 든다 */}
-          <span className={`energy-gem${view.energy === 0 ? " drained" : ""}${canPlay ? " ready" : ""}`} role="img" aria-label={`에너지 ${view.energy} / ${ENERGY_PER_TURN}`}>
+          <span className={`energy-gem${view.energy === 0 ? " drained" : ""}${canPlay ? " ready" : ""}`} role="img" aria-label={`에너지 ${view.energy} / ${ENERGY_PER_TURN}`} title={`에너지 ${view.energy} / ${ENERGY_PER_TURN}`}>
             {view.energy}
             <small aria-hidden="true">{ENERGY_PER_TURN}</small>
           </span>
-          <span className="draw-pile" role="img" aria-label={`뽑을 카드 ${view.draw}장`}>
+          <span className="draw-pile" role="img" aria-label={`뽑을 카드 ${view.draw}장`} title={`뽑을 카드 ${view.draw}장`}>
             <i aria-hidden="true" />
             <b>{view.draw}</b>
           </span>
@@ -511,7 +531,8 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
                 boost={view.tokens}
                 index={index}
                 transition={transition}
-                disabled={targeting || !options.includes(card.id)}
+                disabled={!!outro || targeting || !options.includes(card.id)}
+                why={outro || targeting || options.includes(card.id) ? undefined : card.cost > view.energy ? "energy" : "reach"}
                 onSelect={() => play(card.id)}
               />
             ))}
@@ -543,18 +564,20 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
  * 흐려지는 카드를 눌러도 아무 일이 안 일어나고, e2e 드라이버는 그것을 첫 후보로 골라 1초 헛돈다
  * (실측 78회 × 1초). 사라지는 중이면 누를 수 없다 — 적 버튼과 같은 이유, 같은 한 줄이다
  */
-function FanCard({ card, boost, index, transition, disabled, onSelect }: {
+function FanCard({ card, boost, index, transition, disabled, why, onSelect }: {
   card: CardView;
   /** 플레이어의 지금 토큰 — 카드 면이 「지금 누르면 나갈 값」을 세운다 */
   boost: Tokens;
   index: number;
   transition: { duration: number };
   disabled: boolean;
+  why?: "energy" | "reach";
   onSelect: () => void;
 }) {
   const present = useIsPresent();
   return (
     <m.div
+      data-why={why}
       style={{ "--i": index } as CSSProperties}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -631,7 +654,7 @@ function EnemyButton({ enemy, slot, hits, hitSeq, popDelay, enabled, reducedMoti
       {/* 발밑 칩 한 줄 — 방어·패시브·토큰. 자리를 예약해 첫 토큰에 이웃이 안 밀린다(UI.md) */}
       <span className="chips">
         {enemy.block > 0 && <em className="shield">방어 {enemy.block}</em>}
-        {passives.map(([id, stacks]) => <em key={id} className="passive"><Icon name={id} />{passiveName(id)} {stacks}</em>)}
+        {passives.map(([id, stacks]) => <em key={id} className="passive" title={passiveTitle(id)}><Icon name={id} />{passiveName(id)} {stacks}</em>)}
         <TokenRow tokens={enemy.tokens} />
       </span>
       <DamagePop hits={hits} id={enemy.id} seq={hitSeq} still={reducedMotion} delay={popDelay} />
@@ -647,7 +670,7 @@ function PromiseRow({ promises, onOpen }: { promises: PromiseView[]; onOpen?: ()
   if (!promises.length) return null;
   return (
     <div className="promise-row">
-      {promises.map(({ god, text, rule, current, target, settled }) => (
+      {promises.map(({ god, text, rule, current, target, settled, deferred }) => (
         // 칩이 버튼이다(P-55) — 누르면 약속 저널(P-53)이 열린다
         <button
           type="button"
@@ -660,17 +683,12 @@ function PromiseRow({ promises, onOpen }: { promises: PromiseView[]; onOpen?: ()
           <Icon name="favor" />
           <b>과업 · {godName(god)}</b>
           <span>{rule}</span>
-          <em>{current} / {target}</em>
+          <em>{deferred ? "이월" : `${current} / ${target}`}</em>
         </button>
       ))}
     </div>
   );
 }
-
-/** 파워가 걸리는 훅 넷. 표가 `Trigger`를 다 덮으므로 훅을 새로 만들면 여기서 컴파일이 막힌다 */
-const triggerLabels: Record<Trigger, string> = {
-  turn_start: "턴 시작", turn_end: "턴 끝", on_play: "카드 낼 때", on_unblocked: "막히지 않은 피해",
-};
 
 function SabotageRow({ sabotages = [] }: { sabotages?: CombatObservation["sabotages"] }) {
   const label = sabotages.map(({ god, patron }) => `${godName(god)} 분노 · ${godName(patron)} 카드 −1`).join(" ");
@@ -719,7 +737,7 @@ function PowerRow({ powers }: { powers: CombatObservation["powers"] }) {
     else all.push({ ...power, count: 1 });
     return all;
   }, []);
-  const label = stacked.map(({ card, trigger, count }) => `${triggerLabels[trigger]} ${card.name}${count > 1 ? ` ${count}개` : ""}`).join(" ");
+  const label = stacked.map(({ card, trigger, count }) => `${triggerLabels[trigger]} ${card.name} ${effectText(card)}${count > 1 ? ` ${count}개` : ""}`).join(" ");
   return (
     // 빈 줄도 자리를 지킨다(min-height) — 첫 파워를 내는 순간 손패·버튼이 밀리면 안 된다. 빌 때는 SR에서 감춘다
     <span className="power-row" role="img" aria-label={`파워 ${label}`} aria-hidden={stacked.length ? undefined : true}>
