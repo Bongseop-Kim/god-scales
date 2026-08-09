@@ -197,10 +197,11 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
    * 겹침은 큐가 아니라 **순서**로 푼다: 앞 컷이 걷힌 뒤 다음 신이 선다
    */
   useEffect(() => {
+    // 전투가 끝났으면 컷인·셰이크를 새로 세우지 않는다 — turn_start 파워가 전투를 끝낸 개입도,
+    // outro 전환 시 dep 변화의 cleanup이 걷는 묵은 타이머도 이 한 줄이 막는다
+    if (outro) return;
     const start = view.turn === 1;
     if (!start && !intervenesOnTurn(view.turn)) return;
-    // turn_start 파워가 전투를 끝내면 같은 턴의 개입은 실행되지 않았다.
-    if (!start && outro && view.hitSource === "power") return;
     const hook = start ? "on_encounter_start" : "on_turn_start";
     const timers: ReturnType<typeof setTimeout>[] = [];
     view.patrons.forEach((god, index) => {
@@ -246,7 +247,7 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
       }, index * 1700));
     });
     return () => { for (const timer of timers) clearTimeout(timer); };
-  }, [view.turn]);
+  }, [view.turn, outro]);
 
   /**
    * 클릭은 언제나 「손 → 무대」 하나다. 즉발은 무대에 머무는 시간이 0인 경우고, 대상을 고르는 카드는
@@ -530,8 +531,8 @@ export function CombatScreen({ seed, decision, outro, onAnswer, onOpenJournal }:
                 boost={view.tokens}
                 index={index}
                 transition={transition}
-                disabled={targeting || !options.includes(card.id)}
-                why={targeting || options.includes(card.id) ? undefined : card.cost > view.energy ? "energy" : "reach"}
+                disabled={!!outro || targeting || !options.includes(card.id)}
+                why={outro || targeting || options.includes(card.id) ? undefined : card.cost > view.energy ? "energy" : "reach"}
                 onSelect={() => play(card.id)}
               />
             ))}

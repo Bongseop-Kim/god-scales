@@ -40,8 +40,9 @@ for (const card of cards) {
   const before = snapshot(state);
   try {
     if (card.tags.includes("power")) {
-      combat.powers.push({ trigger: card.trigger!, card });
-      firePowers(state, card.trigger!, target, () => 0);
+      if (!card.trigger) throw new Error("power card without trigger");
+      combat.powers.push({ trigger: card.trigger, card });
+      firePowers(state, card.trigger, target, () => 0);
     } else executeCard(state, card, card.target === "enemy" ? target : undefined, cards, () => 0);
     if (snapshot(state) === before) noops.push(card.id);
   } catch (error) {

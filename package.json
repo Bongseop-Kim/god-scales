@@ -16,6 +16,7 @@
     "size": "node --experimental-strip-types tools/size.ts",
     "tune": "node --experimental-strip-types tools/tune.ts",
     "test": "vitest run",
+    "card-smoke": "node --experimental-strip-types tools/card-smoke.ts",
     "e2e": "node --experimental-strip-types tools/e2e.ts",
     "validate": "node --experimental-strip-types tools/validate.ts"
   },
