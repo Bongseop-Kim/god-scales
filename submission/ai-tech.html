@@ -188,17 +188,19 @@ table.tbl{border-collapse:collapse;width:100%;max-width:1020px;margin-top:26px;b
 <div class="slide active">
   <div class="a overline">NHN GAME X AI HACKATHON &middot; 사전 과제 &middot; AI 활용 기술 문서</div>
   <h1 class="a xl">신들의 저울</h1>
-  <div class="a sub">2026.08.04 ~ 08.10 &middot; 7일 &middot; 1인 &middot; <span class="mono">github.com/Bongseop-Kim/god-scales</span></div>
-  <div class="a sub" style="margin-top:8px">배포: <a class="mono hi" href="https://bongseop-kim.github.io/god-scales/">https://bongseop-kim.github.io/god-scales/</a></div>
-  <div class="a sub" style="margin-top:8px;color:#888">이 문서에 적힌 경로와 수치는 저장소에서 그대로 확인된다</div>
+  <div class="a sub">2026.08.04 ~ 08.10 &middot; 7일 &middot; 1인 개발</div>
+  <div class="a sub" style="display:flex;flex-direction:column;gap:9px;margin-top:18px">
+    <a class="mono hi" href="https://github.com/Bongseop-Kim/god-scales">GitHub &middot; github.com/Bongseop-Kim/god-scales</a>
+    <a class="mono hi" href="https://bongseop-kim.github.io/god-scales/">배포 &middot; bongseop-kim.github.io/god-scales</a>
+  </div>
 </div>
 
 <!-- 2 · 핵심 -->
 <div class="slide">
   <div class="a tag">Core</div>
-  <h2 class="a lg">7일, 혼자서 —<br>에셋 생성부터 밸런스까지 AI로</h2>
-  <p class="a body">음성, 스프라이트, 카드 일러스트, 배경, 신 일러스트까지 게임에 들어간 에셋 전부를 혼자 AI로 만들었다. 카드 <b>179장</b> &middot; 은혜 45종 &middot; 적 <b>19종</b> &middot; 신 조합 10개가 얽히는 덱빌딩은 나올 수 있는 시나리오를 사람 손으로 다 재볼 수 없는 규모라, 밸런스는 LLM과 봇 시뮬레이션 수만 런으로 맞췄다.</p>
-  <p class="a body">그래서 이 문서의 실제 주제는 검증이다 — <span class="hi">AI에게 시킨 모든 작업에 검증 단계를 붙인다</span>는 원칙 하나로 7일을 버텼다.</p>
+  <h2 class="a lg">7일, 혼자서<br>에셋 생성부터 밸런스까지 AI로</h2>
+  <p class="a body">음성, 스프라이트, 카드 일러스트, 배경, 신 일러스트까지 게임 에셋 전부를 AI로 만들었다. 사람이 모든 조합을 직접 시험할 수 없는 덱빌딩 밸런스는 LLM과 봇 시뮬레이션 수만 런으로 검증했다.</p>
+  <p class="a body"><span class="hi">AI가 만들고, 게이트가 판정하고, 실패 결과를 반영해 통과할 때까지 다시 돌렸다.</span></p>
 </div>
 
 <!-- 3 · 출처 -->
@@ -220,16 +222,16 @@ table.tbl{border-collapse:collapse;width:100%;max-width:1020px;margin-top:26px;b
 <!-- 4 · 숫자로 보는 7일 -->
 <div class="slide">
   <div class="a tag">Overview</div>
-  <h2 class="a lg">숫자로 보는 7일</h2>
+  <h2 class="a lg">7일 동안 남긴 데이터</h2>
   <div class="a stats">
     <div class="stat"><b>7일</b><span>기획→배포<br>전 과정 · 1인</span></div>
-    <div class="stat"><b>87건</b><span>plan 소비<br>= 리뷰 문서</span></div>
+    <div class="stat"><b>88건</b><span>plan 소비<br>= 리뷰 문서</span></div>
     <div class="stat"><b>133건</b><span>CodeRabbit 지적<br>PR 15개</span></div>
     <div class="stat"><b>204개</b><span>테스트<br>승률 게이트 포함</span></div>
     <div class="stat"><b>64,000</b><span>봇 시뮬 런<br>6회차</span></div>
     <div class="stat"><b>538개</b><span>AI 생성 에셋<br>이미지·음성·영상</span></div>
   </div>
-  <p class="a body" style="font-size:17px">두 신을 후원자로 모시고 12층을 오르는 덱빌딩 로그라이크. 카드 179 &middot; 은혜 45 &middot; 적 19 &middot; 신 5(조합 10) — 이 콘텐츠 전부가 아래에서 설명할 파이프라인의 산출물이다. 플레이: <span class="mono hi">bongseop-kim.github.io/god-scales</span></p>
+  <p class="a body" style="font-size:17px">두 신을 후원자로 모시고 12층을 오르는 덱빌딩 로그라이크. 아래 숫자는 7일 동안 쌓인 생성과 검증의 기록이다.</p>
 </div>
 
 <!-- 3A · AI 사용량 -->
@@ -240,29 +242,28 @@ table.tbl{border-collapse:collapse;width:100%;max-width:1020px;margin-top:26px;b
     <div class="cmp-col cmp-good">
       <div class="cmp-label">Codex &middot; god-scales</div>
       <div class="stats" style="grid-template-columns:repeat(2,1fr);gap:10px;margin-top:16px;max-width:none">
-        <div class="stat"><b>198.8M</b><span>총 토큰</span></div>
-        <div class="stat"><b>14</b><span>프로젝트 세션</span></div>
-        <div class="stat"><b>198.1M</b><span>입력 &middot; 캐시 187.4M</span></div>
-        <div class="stat"><b>674.6K</b><span>출력</span></div>
+        <div class="stat"><b>201.6M</b><span>총 토큰</span></div>
+        <div class="stat"><b>16</b><span>프로젝트 세션</span></div>
+        <div class="stat"><b>200.8M</b><span>입력 &middot; 캐시 190.0M</span></div>
+        <div class="stat"><b>699.2K</b><span>출력</span></div>
       </div>
-      <p style="margin-top:18px"><b class="mono">gpt-5.6-sol</b> 191.5M &middot; 96.3%</p>
+      <p style="margin-top:18px"><b class="mono">gpt-5.6-sol</b> 194.3M &middot; 96.4%</p>
       <p><span class="mono">gpt-5.6-terra</span> 5.84M &middot; <span class="mono">gpt-5.5</span> 1.32M</p>
       <p><span class="mono">gpt-5.4-mini</span> 121.8K</p>
     </div>
     <div class="cmp-col cmp-good">
       <div class="cmp-label">Claude &middot; god-scales</div>
       <div class="stats" style="grid-template-columns:repeat(2,1fr);gap:10px;margin-top:16px;max-width:none">
-        <div class="stat"><b>779.5M</b><span>총 토큰</span></div>
-        <div class="stat"><b>71</b><span>세션 · 서브에이전트 포함</span></div>
-        <div class="stat"><b>775.1M</b><span>입력 &middot; 캐시 읽기 764.2M</span></div>
-        <div class="stat"><b>4.34M</b><span>출력</span></div>
+        <div class="stat"><b>1.61B</b><span>총 토큰</span></div>
+        <div class="stat"><b>164</b><span>세션 · 서브에이전트 포함</span></div>
+        <div class="stat"><b>1.60B</b><span>입력 &middot; 캐시 읽기 1.57B</span></div>
+        <div class="stat"><b>8.92M</b><span>출력</span></div>
       </div>
-      <p style="margin-top:18px"><b class="mono">claude-opus-5</b> 707.9M &middot; 90.8%</p>
-      <p><span class="mono">claude-fable-5</span> 71.5M</p>
+      <p style="margin-top:18px"><b class="mono">claude-opus-5</b> 1.33B &middot; 82.7%</p>
+      <p><span class="mono">claude-fable-5</span> 277.4M</p>
       <p style="visibility:hidden">&nbsp;</p>
     </div>
   </div>
-  <p class="a caption">2026.08.10 KST 스냅샷. Codex는 Orca의 <span class="mono">god-scales</span> 워크트리 집계, Claude는 <span class="mono">~/.claude</span> 세션 로그 집계. Codex의 캐시 입력은 입력의 부분집합이라 총량에 다시 더하지 않았고, Claude의 캐시 읽기는 별도 항목이라 총량에 포함했다.</p>
 </div>
 
 <!-- 4 · 목차 -->
@@ -273,18 +274,18 @@ table.tbl{border-collapse:collapse;width:100%;max-width:1020px;margin-top:26px;b
     <div class="a toc-item"><div class="toc-n">01</div><div><div class="toc-t">LLM 하네스</div><div class="toc-s">plan·리뷰 워크플로 · 규범 문서 · AI 상호 리뷰</div></div></div>
     <div class="a toc-item"><div class="toc-n">02</div><div><div class="toc-t">콘텐츠 &middot; 검증 파이프라인</div><div class="toc-s">LLM이 만들고, 에이전트가 플레이하고, 게이트가 판정한다</div></div></div>
     <div class="a toc-item"><div class="toc-n">03</div><div><div class="toc-t">이미지 생성 파이프라인</div><div class="toc-s">프롬프트가 코드고, 실패담도 문서다</div></div></div>
-    <div class="a toc-item"><div class="toc-n">04</div><div><div class="toc-t">TTS 파이프라인</div><div class="toc-s">로컬 TTS 448줄, 그리고 남은 아쉬움</div></div></div>
+    <div class="a toc-item"><div class="toc-n">04</div><div><div class="toc-t">TTS 파이프라인</div><div class="toc-s">로컬 TTS 활용, 그리고 남은 아쉬움</div></div></div>
   </div>
 </div>
 
 <!-- 5 · 개요 -->
 <div class="slide">
   <div class="a tag">Overview</div>
-  <h2 class="a md">플랜에서 머지까지 — 게이트를 통과할 때까지 다시 실행한다</h2>
+  <h2 class="a md">실행 아키텍처 — LLM이 게이트를 통과할 때까지 스스로 반복한다</h2>
   <div class="a arch" style="max-width:980px">
     <img src="diagrams/overview.png" width="1536" height="1024" alt="AI 워크플로 — 플랜 작성, 파이프라인 실행, 게이트 판정을 거쳐 리뷰 작성, PR, 메인 머지로 끝난다. 게이트 미달 시 파이프라인을 재실행한다" style="display:block;width:100%;height:auto;max-height:56vh;object-fit:contain">
   </div>
-  <p class="a caption" style="margin-top:10px">보라 — 터미널에서 LLM이 만든다(1~4) · 하늘 — 게이트가 판정한다 · 회색 — GitHub(5~6). 게이트에 미달하면 원하는 결과가 나올 때까지 파이프라인을 재실행한다(루프 엔지니어링). 통과분만 리뷰 문서와 함께 PR로 나가고, 메인 머지로 한 플랜이 끝난다 — 다음 플랜은 새 세션이다. 구조 원본은 <span class="mono">submission/diagrams/overview.d2</span>, 최종 다이어그램은 <span class="mono">submission/diagrams/overview.png</span>이다.</p>
+  <p class="a caption" style="margin-top:10px">보라 — 터미널에서 LLM이 만든다(1~4) · 하늘 — 게이트가 판정한다 · 회색 — GitHub(5~6). 게이트에 미달하면 원하는 결과가 나올 때까지 파이프라인을 재실행한다(루프 엔지니어링). 통과분만 리뷰 문서와 함께 PR로 나가고, 메인 머지로 한 플랜이 끝난다</p>
 </div>
 
 <!-- 6 · §1 워크플로 -->
@@ -297,14 +298,15 @@ table.tbl{border-collapse:collapse;width:100%;max-width:1020px;margin-top:26px;b
   <ul class="a list" style="margin-top:28px">
     <li><span class="mono">plan</span>은 작업 메모가 아니라 이 저장소의 스펙이다 — 코드를 쓰기 전에 범위 · 완료 정의 · 검증 명령을 고정한다</li>
     <li>AI는 스펙을 코드와 데이터로 번역하고, 테스트와 게이트가 수락 여부를 판정한다 — 실패하면 구현을 고치며 성공 조건을 낮추지 않는다</li>
-    <li><span class="mono">review</span>는 감상이 아니라 스펙 대비 증거다 — 달성 · 미달 · 대가를 실측으로 남기고 <span class="mono">plan</span>을 삭제한 뒤, 통과한 결과만 커밋한다</li>
+    <li><span class="mono">review</span>는 감상이 아니라 스펙 대비 증거다 — 달성 · 미달 · 대가를 실측으로 남기고 <span class="mono">plan</span>을 <span class="mono">plans-done</span>으로 옮긴 뒤, 통과한 결과만 커밋한다</li>
   </ul>
+  <a class="a mono hi" style="margin-top:20px" href="https://github.com/Bongseop-Kim/god-scales/tree/main/plans-done">완료된 플랜 전체 &middot; github.com/Bongseop-Kim/god-scales/tree/main/plans-done</a>
 </div>
 
 <!-- 7 · §1 하네스 구조 -->
 <div class="slide" data-ch="01" id="harness">
-  <div class="a tag">Harness</div>
-  <h2 class="a md">규범 문서를 로드 시점으로 나눴다</h2>
+  <div class="a tag">Context Engineering</div>
+  <h2 class="a md"><span class="mono">CLAUDE.md</span>는 핵심만 — 세부 지침은 필요할 때 읽는다</h2>
   <div class="a arch" style="max-width:960px;margin-top:40px">
   <svg viewBox="0 0 920 240" role="img" aria-label="규범 문서 분리 구조 — CLAUDE.md와 AGENTS.md는 모든 턴에 로드되고, WRITING.md·UI.md·DEPLOY.md는 그 작업을 하는 턴에만 로드된다">
     <rect class="grp" x="8" y="18" width="904" height="90" rx="12"/>
@@ -331,7 +333,7 @@ table.tbl{border-collapse:collapse;width:100%;max-width:1020px;margin-top:26px;b
     <text class="s" x="757" y="209" text-anchor="middle">테스트 · 밸런스 하한 · 번들 무게 · E2E 게이트</text>
   </svg>
   </div>
-  <p class="a caption" style="margin-top:24px">두 번 이상 말하게 되는 것만 문서로 옮긴다 — 상시 로드는 <span class="mono">CLAUDE.md</span> 여섯 줄이 전부고, 한 곳만 고치면 이후 모든 작업에 적용된다.</p>
+  <p class="a caption" style="margin-top:24px">매번 필요한 핵심 규칙만 <span class="mono">CLAUDE.md</span>에 남겼다 — 글쓰기 · UI · 배포 지침은 해당 작업에서만 읽어 상시 컨텍스트를 작게 유지한다.</p>
 </div>
 
 <!-- 8 · §1 AI 상호 리뷰 -->
@@ -345,14 +347,14 @@ table.tbl{border-collapse:collapse;width:100%;max-width:1020px;margin-top:26px;b
   <div class="a shot" style="margin-top:20px;max-width:774px;background:#fff">
     <img src="shots/coderabbit.png" width="774" height="235" alt="PR #11에 CodeRabbit이 자동으로 단 리뷰 — Major: Restore the bundle size gate before marking P-57 as passed. 번들 4.42MiB가 4MiB 상한을 넘었다고 지적한다">
   </div>
-  <p class="a caption" style="margin-top:12px">PR #11의 실제 코멘트 — 리뷰 문서가 번들 상한 초과(4.42MiB &gt; 4MiB)를 넘어가려던 것을 잡았다.</p>
+  <p class="a caption" style="margin-top:12px">PR #11의 실제 코멘트</p>
 </div>
 
 <!-- 9 · §2 콘텐츠 파이프라인 -->
 <div class="slide" data-ch="02">
   <div class="a tag">Content Pipeline</div>
-  <h2 class="a md">카드 179장 · 적 19종 — 게임 데이터도 LLM이 만들었다</h2>
-  <p class="a body" style="font-size:16px;margin-top:10px">2장에서 말한 카드 179장이 여기서 나온다. 카드·적·요구·층 배치 같은 게임 데이터 자체를 LLM이 대량 생성했다. 생성물을 그대로 넣으면 스키마 오류 하나, 중복 한 장이 게임을 조용히 깨뜨리기 때문에 중간에 검증기 <span class="mono">validate.ts</span>를 세웠다 — 통과분만 게임에 들어가므로 <b>수백 개 데이터를 사람이 한 장씩 검수하지 않아도 된다</b>.</p>
+  <h2 class="a md">카드 179장 · 적 19종 — 게이트 통과까지 도는 루프를 설계했다</h2>
+  <p class="a body" style="font-size:16px;margin-top:10px">2장에서 말한 카드 179장이 여기서 나온다. 핵심은 LLM이 만들었다는 사실이 아니라 <b>통과 조건을 먼저 세운 것</b>이다. 검증기 <span class="mono">validate.ts</span>가 스키마 오류·중복·죽은 데이터를 걸러내고, 반려되면 그 사유를 프롬프트에 반영해 재생성한다 — 게이트를 통과할 때까지. 사람은 게이트를 설계하고, <b>수백 개 데이터를 한 장씩 검수하는 일은 루프가 대신한다</b>.</p>
   <div class="a arch" style="max-width:900px;margin-top:18px">
     <img src="diagrams/content-loop.png" width="1536" height="1024" alt="콘텐츠 생성 루프 — 중앙 상단의 prompts에서 왼쪽 아래 LLM 생성, 오른쪽 아래 validate.ts 검증으로 순환한다. 반려 사유는 프롬프트에 추가되고 통과분만 data에 진입한다" style="display:block;width:100%;height:auto;max-height:55vh;object-fit:contain">
   </div>
@@ -363,9 +365,9 @@ table.tbl{border-collapse:collapse;width:100%;max-width:1020px;margin-top:26px;b
 <div class="slide" data-ch="02" id="e2e">
   <div class="a tag">Browser Agent &middot; 실측</div>
   <h2 class="a md">브라우저 에이전트가 화면을 스스로 캡처하고 진단한다</h2>
-  <p class="a body" style="font-size:16px;margin-top:10px">DOM 검증만으로는 못 잡는 버그가 있다 — 요소가 DOM에는 멀쩡히 있어도 화면에서는 겹치거나 가려질 수 있다. 그래서 브라우저 에이전트가 조작·측정은 빠르고 결정론적인 <b>DOM</b>으로 하고, 사용자 눈에 보이는 최종 화면은 <b>스크린샷을 찍어 직접 판정</b>한다. HUD·화면 버그 대부분이 사람 눈에 닿기 전에 여기서 잡혔고, 같은 에이전트가 <b>게임 플레이</b>까지 한다 — 다음 장.</p>
+  <p class="a body" style="font-size:16px;margin-top:10px">DOM 검증만으로는 못 잡는 버그가 있다 — 요소가 DOM에는 멀쩡히 있어도 화면에서는 겹치거나 가려질 수 있다. 그래서 브라우저 에이전트가 조작·측정은 빠르고 결정론적인 <b>DOM</b>으로 하고, 사용자 눈에 보이는 최종 화면은 <b>스크린샷을 찍어 직접 판정</b>한다. HUD·화면 버그 대부분이 사람 눈에 닿기 전에 여기서 잡혔고, 같은 에이전트가 <b>게임 플레이</b>까지 한다.</p>
   <img class="a" src="shots/aside.webp" alt="왼쪽 패널에서 게임을 실행하고 오른쪽에서 캡처한 화면을 분석하며 버그를 잡는 장면" loading="lazy" style="display:block;width:100%;max-width:1060px;height:auto;max-height:60vh;object-fit:contain;margin-top:18px;border-radius:12px">
-  <p class="a caption">왼쪽에서 게임을 직접 조작해 「방어 4를 가진 적」 상황을 만들고, 오른쪽에서 캡처를 분석해 초록 방어량 4가 빨간 &minus;5 왼쪽에 뜨는지 판정하는 중 — 브라우저 조작은 <span class="mono">aside</span> CLI로 통일했다.</p>
+  <p class="a caption">왼쪽에서 게임을 직접 조작해 「방어 4를 가진 적」 상황을 만들고, 오른쪽에서 캡처를 분석해 초록 방어량 4가 빨간 &minus;5 왼쪽에 뜨는지 판정하는 중.</p>
 </div>
 
 <!-- 13 · §2 플레이 데이터 -->
@@ -426,8 +428,8 @@ table.tbl{border-collapse:collapse;width:100%;max-width:1020px;margin-top:26px;b
 <!-- 25 · 맺음 -->
 <div class="slide">
   <div class="a overline">맺음</div>
-  <h1 class="a xl">AI는 만들고,<br>게이트가 지켰다.</h1>
-  <p class="a body">7일 동안 AI는 코더이자 작가·화가·작곡가·성우·플레이테스터였고, 사람의 일은 <span class="hi">그 전부에 검증 단계를 붙이는 것</span>이었다. 프롬프트 원문·게이트 코드·회차 로그·리뷰 87건이 전부 저장소에 남아 있다 — 이 문서는 그 목차다.</p>
+  <h1 class="a xl">7일 동안 AI는 코더이자<br>작가·화가·작곡가·성우·플레이테스터였다.</h1>
+  <p class="a body">사람의 일은 <span class="hi">그 전부에 게이트를 세우는 것</span>이었다. 프롬프트 원문·게이트 코드·회차 로그·리뷰 88건이 전부 저장소에 남아 있다.</p>
   <div class="a sub"><span class="mono">github.com/Bongseop-Kim/god-scales</span> &middot; 플레이 <span class="mono">bongseop-kim.github.io/god-scales</span></div>
 </div>
 
