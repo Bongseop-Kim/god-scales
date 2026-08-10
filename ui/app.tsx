@@ -132,10 +132,12 @@ export function App({ intro: introAtStart = true, seed: fixedSeed }: {
   useEffect(() => {
     if (!fusion) return;
     playSound("chips-handle-4", 0.8);
-    speak(1, fusion.patrons[0], godLines(fusion.patrons[0], "fuse", seed));
-    const second = window.setTimeout(() => speak(1, fusion.patrons[1], godLines(fusion.patrons[1], "fuse", seed)), 320);
+    const god = fusion.patrons.reduce((best, patron) =>
+      (latest.current?.observation.favor[patron] ?? -Infinity) > (latest.current?.observation.favor[best] ?? -Infinity) ? patron : best,
+    );
+    speak(1, god, godLines(god, "fuse", seed), godArt[`../../art/gods/${god}.webp`]);
     const done = window.setTimeout(() => setFusion(undefined), reducedMotion ? 0 : 2500);
-    return () => { clearTimeout(second); clearTimeout(done); };
+    return () => clearTimeout(done);
   }, [fusion, seed]);
 
   const show = (decision?: Decision) => {

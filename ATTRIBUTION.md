@@ -1,8 +1,10 @@
 # 사용한 자산
 
-## 아이콘
+배포본에 실리는 자산의 상세 표(아이콘 28개 슬러그·저자 포함)는 [`public/ATTRIBUTION.md`](public/ATTRIBUTION.md)가 정본입니다. 이 파일은 저장소 쪽 요약입니다.
 
-현재 UI의 토큰과 노드 표시는 프로젝트에서 직접 만든 문자 기반 심벌입니다. 외부 아이콘 파일은 포함하지 않았습니다.
+## 아이콘 — game-icons.net (CC BY 3.0) 28개
+
+토큰 10 · 적 패시브 8 · 의도 5 · 지도 노드 5. 파일 28개가 아니라 `art/icons.svg` 한 장에 `<symbol>` 28개로 들어갑니다. Icons made by Lorc, Delapouite, Sbed, and Skoll (<https://game-icons.net>), [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/). 슬러그·저자 표는 `public/ATTRIBUTION.md`와 `tools/icons.ts`에 있습니다.
 
 ## UI
 
@@ -25,7 +27,14 @@ CC0이라 귀속 의무는 없습니다. 출처를 남기는 것은 예의이자
 
 ## 사운드
 
-없습니다. 무음으로 동작합니다.
+| 종류 | 자산 | 출처 · 라이선스 |
+|---|---|---|
+| 배경음악 2곡 | `audio/Beneath_the_Iron_Altar.m4a` · `Beneath_the_Golden_Banner.m4a` | Gemini로 프로젝트에서 직접 생성 |
+| 효과음 4개 | `chip-lay-3` · `card-slide-6` · `card-place-4` · `chips-handle-4` | [Kenney Casino Audio](https://kenney.nl/assets/casino-audio), CC0 1.0 |
+| 효과음 5개 | `turn-end` · `enemy-death` · `guard` · `attack` · `hit` | [Mixkit Sound Effects](https://mixkit.co/free-sound-effects/), [Sound Effects Free License](https://mixkit.co/license/#sfx) |
+| 신 대사 음성 | `audio/voice/*.m4a` | 로컬 [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS)(12Hz-1.7B-CustomVoice)로 프로젝트에서 직접 생성 — 파이프라인은 `tools/tts.py` |
+
+Kenney 효과음은 CC0이라 귀속 의무가 없지만 재수급 경로를 남깁니다.
 
 ## 폰트 — Galmuri11 (SIL OFL 1.1)
 

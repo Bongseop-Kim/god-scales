@@ -175,7 +175,8 @@ describe("steppable engine", () => {
     }
     expect(sawFinale).toBe(true);
 
-    const lost = run(8);
+    // v10(호의 진폭 확대)에서 시드 8이 이기게 됐다 — 봇이 지는 가장 작은 시드가 10이다
+    const lost = run(10);
     expect(lost.finale).toMatchObject({ hp: 0, hitSource: "enemy", hits: [{ id: "player" }] });
   });
 

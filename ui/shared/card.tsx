@@ -273,12 +273,12 @@ export function GameCard({ cardId, card, boost, upgrade, disabled, onSelect }: {
   const [missing, setMissing] = useState(!source);
   // 예외만 적는다 — 배지 슬롯 하나를 파워·전체·소멸이 나눠 쓴다(데이터상 서로 안 겹친다)
   const kind = face?.power ? "파워" : shown?.target === "all_enemies" ? "전체" : face?.exhaust ? "소멸" : undefined;
-  const seals = [...(shown?.seals ?? []), ...(shown?.previewSeal ? [shown.previewSeal] : [])];
+  const seals = shown?.seals ?? [];
   const label = shown && `${cardCaption(shown, boost)}${seals.length ? ` · 인장 ${seals.map(({ text }) => text).join(", ")}` : ""}`;
   const sealColor = (index: number) => {
     const seal = seals[index];
     if (!seal) return "#6b7185";
-    return shown?.previewSeal === seal ? `color-mix(in srgb, var(--${seal.patron}) 55%, transparent)` : `var(--${seal.patron})`;
+    return `var(--${seal.patron})`;
   };
   const frameStyle = { "--seal-a": sealColor(0), "--seal-b": sealColor(1) } as React.CSSProperties;
   const sealTitle = seals.map(({ text, effects }) => `${text} · ${effectText({ target: shown?.target ?? "enemy", effects })}`).join("\n") || undefined;

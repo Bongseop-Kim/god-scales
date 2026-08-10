@@ -64,9 +64,10 @@ function StageBar({ share, compact }: { share: Record<string, number>; compact?:
       {Object.entries(stageLabel).map(([stage, label]) => {
         const value = share[stage] ?? 0;
         return (
-          <div key={stage} className="stats-stageseg" style={{ flexGrow: Math.max(value, 0.001) }}>
+          <div key={stage} className="stats-stageseg" style={{ flexGrow: Math.max(value, 0.001) }} title={`${label} ${pct(value)}`} role="img" aria-label={`${label} ${pct(value)}`}>
             <i style={{ opacity: opacities[stage] }} />
-            {value >= 0.06 && <span>{label} {pct(value)}</span>}
+            {/* compact는 반폭 컬럼이라 좁은 세그먼트의 라벨이 이웃을 침범한다 — 못 담는 라벨은 title로만 */}
+            {value >= (compact ? 0.15 : 0.06) && <span>{label} {pct(value)}</span>}
           </div>
         );
       })}
@@ -204,7 +205,7 @@ export function StatsPage({ data }: { data: StatsPayload }) {
       <section>
         <h2>우호도의 움직임</h2>
         <p>스냅샷은 노드 사이에 찍힌다 — 전투 안에서 호의는 움직이지 않는다. 분포는 이봉이다:
-          가운데(+2 · 0 · −3)는 카드·감쇠 드리프트, 바깥(±12 이상)은 과업의 보상·비용이고 그 사이가 비어 있다.
+          가운데(+2 · 0 · −2 · −3 · −4 · −7)는 카드·감쇠·방치 드리프트, 바깥(±12 이상)은 과업의 보상·비용이고 그 사이가 비어 있다.
           단계 경계를 넘는 스텝은 {pct(favor.crossShare)}다.</p>
         <figure className="stats-panel">
           <figcaption><b>스냅샷 간 Δ호의</b> · {favor.steps.toLocaleString()}스텝 (런 × 후원 2)</figcaption>

@@ -1,12 +1,14 @@
+import { playVoice } from "./sfx.ts";
+
 /**
  * 컷인이 든 문장 한 줄. **그림은 「신이 뭔가 했다」까지만 말한다** — 무엇을 했는지, 도와준 건지
  * 방해한 건지는 이 줄이 든다. 신 색은 `--{id}`, 단계 색은 미터가 쓰는 `--stage-{단계}` 그대로다
  */
-export type CutLabel = { god: string; stage: string; text: string };
+export type CutLabel = { god: string; stage: string; title: string; text: string };
 
 /**
- * 한 장이나 4프레임 스트립을 0.8초 띄웠다 지운다. `kind`는 크기만 가른다 — `cut`은 화면 전체(개입 컷인·신 일러),
- * `spark`는 `host` 가운데 한 장(카드 파티클·개입이 때린 대상)이다. 파티클 엔진도 풀도 만들지 않는다
+ * 파티클은 0.8초, 컷인 그림은 1.6초 띄웠다 지운다. 개입 HUD는 그림과 갈라 3초 남는다.
+ * `kind`는 크기만 가른다 — `cut`은 화면 전체, `spark`는 `host` 가운데 한 장이다
  */
 export async function playSprite(host: HTMLElement, source: string, kind: "cut" | "spark" = "cut", label?: CutLabel): Promise<void> {
   const image = new Image();
@@ -23,27 +25,42 @@ export async function playSprite(host: HTMLElement, source: string, kind: "cut" 
   view.className = "fx-view";
   view.append(image);
   effect.append(view);
+  let caption: HTMLElement | undefined;
   if (label) {
+    const notice = document.createElement("span");
+    notice.className = "fx-caption";
+    notice.setAttribute("role", "status");
+    notice.style.setProperty("--god-color", `var(--${label.god})`);
+    const title = document.createElement("small");
+    title.textContent = label.title;
     const line = document.createElement("b");
-    line.style.setProperty("--god-color", `var(--${label.god})`);
     line.textContent = label.text;
-    effect.append(line);
+    notice.append(title, line);
+    effect.append(notice);
+    caption = notice;
   }
   host.append(effect);
   /**
-   * **문장은 애니메이션이 아니라 정보다.** 모션을 끄면 페이드 없이 3초 머문다 — 안 그러면 접근성
+   * **개입 HUD는 애니메이션이 아니라 정보다.** 모션을 끄면 페이드 없이 3초 머문다 — 안 그러면 접근성
    * 설정 하나가 「신이 무엇을 했는가」를 알 길을 통째로 지운다. 문장 없는 파티클은 여기 안 걸린다
    */
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const still = label !== undefined && reduced;
-  const fade = effect.animate(
-    still
-      ? [{ opacity: 1 }, { opacity: 1 }]
-      : label
-        ? [{ opacity: 0 }, { opacity: 1, offset: .12 }, { opacity: 1, offset: .75 }, { opacity: 0 }]
-        : [{ opacity: 0 }, { opacity: 1 }, { opacity: 0 }],
-    { duration: still ? 3000 : label ? 1600 : 800, easing: "cubic-bezier(0.23, 1, 0.32, 1)" },
-  ).finished;
+  const fade = label
+    ? Promise.all([
+      view.animate(
+        still ? [{ opacity: 1 }, { opacity: 1, offset: .999 }, { opacity: 0 }] : [{ opacity: 0 }, { opacity: 1, offset: .12 }, { opacity: 1, offset: .75 }, { opacity: 0 }],
+        { duration: 1600, easing: "cubic-bezier(0.23, 1, 0.32, 1)", fill: "forwards" },
+      ).finished,
+      caption!.animate(
+        still ? [{ opacity: 1 }, { opacity: 1 }] : [{ opacity: 0, transform: "translateX(8px)" }, { opacity: 1, transform: "none", offset: .1 }, { opacity: 1, transform: "none", offset: .88 }, { opacity: 0, transform: "translateX(8px)" }],
+        { duration: 3000, easing: "linear" },
+      ).finished,
+    ])
+    : effect.animate(
+      [{ opacity: 0 }, { opacity: 1 }, { opacity: 0 }],
+      { duration: 800, easing: "cubic-bezier(0.23, 1, 0.32, 1)" },
+    ).finished;
   const frames = strip && !reduced
     ? image.animate(
       [{ transform: "translate(0, -50%)" }, { transform: "translate(-100%, -50%)" }],
@@ -72,8 +89,10 @@ export function shake(distance: number, duration: number): void {
  * 5회가 같은 연출이면 하나는 피로하고 하나는 밋밋하다. 그 사이가 2단계로는 안 나온다
  */
 export type VoiceLevel = 1 | 2 | 3;
-/** 머무는 시간. 자막은 짧고 외침은 길다 — 타이핑 애니메이션을 안 넣는 이유가 1.2초다 */
-const voiceHold: Record<VoiceLevel, number> = { 1: 1200, 2: 2000, 3: 3000 };
+/** 화면을 가리지 않는 상단 발화(L2·L3)는 모두 읽을 시간 4초를 준다. */
+const voiceHold = 4000;
+/** 개입(L1)은 자막이 아니라 우측 알림 피드다 — 런당 ~49회라 짧게 스치고, 결과는 HP·칩에 남는다. */
+const hudHold = 3000;
 const spokenLines = new Set<string>();
 
 export function resetSpokenLines(): void {
@@ -92,8 +111,9 @@ export function nextSpokenLine(god: string, text: string | readonly string[]): s
  * 늘고 replay 형식이 바뀌고 봇이 그것에 답해야 하고 `npm run e2e`의 「반출 → CLI 재생 일치」가 깨진다.
  * 여기 클릭은 **넘기기만** 하고 기록되지 않는다: 화면 상태고 게임 상태가 아니다.
  *
- * 겹치면 **큐가 아니라 순서**다 — 새 발화가 낮거나 같은 레벨을 지우고 선다(같은 자리에 두 장이 서면
- * 글자가 겹친다). 같은 레벨끼리는 호출자가 320ms 어긋나게 낸다(P-46의 컷인과 같은 규칙)
+ * 겹치면 **큐가 아니라 순서**다 — 상단 배너(L2·L3)는 새 발화가 낮거나 같은 레벨을 지우고 선다(같은
+ * 자리에 두 장이 서면 글자가 겹친다). 우측 피드(L1)는 지우는 대신 최대 2장을 쌓는다 — 개입 2연타를
+ * 놓치지 않기 위해서다. 같은 레벨끼리는 호출자가 320ms 어긋나게 낸다(P-46의 컷인과 같은 규칙)
  */
 export function speak(level: VoiceLevel, god: string, text: string | readonly string[], portrait?: string): void {
   // 더 높은 레벨이 서 있으면 자막은 아예 안 뜬다 — 「높은 것이 낮은 것을 덮는다」의 나머지 절반이다
@@ -102,6 +122,11 @@ export function speak(level: VoiceLevel, god: string, text: string | readonly st
   }
   const selected = nextSpokenLine(god, text);
   if (!selected) return;
+  playVoice(god, selected);
+  if (level === 1) {
+    intervene(god, selected, portrait);
+    return;
+  }
   for (const older of document.querySelectorAll<HTMLElement>(".voice")) older.remove();
   const line = document.createElement("div");
   line.className = `voice l${level}`;
@@ -127,7 +152,45 @@ export function speak(level: VoiceLevel, god: string, text: string | readonly st
   void line.animate(
     still
       ? [{ opacity: 1 }, { opacity: 1 }]
-      : [{ opacity: 0 }, { opacity: 1, offset: 0.12 }, { opacity: 1, offset: 0.84 }, { opacity: 0 }],
-    { duration: voiceHold[level], easing: "linear" },
+      : [{ opacity: 0 }, { opacity: 1, offset: 0.06 }, { opacity: 1, offset: 0.92 }, { opacity: 0 }],
+    { duration: voiceHold, easing: "linear" },
   ).finished.then(() => line.remove());
+}
+
+/**
+ * 개입 한 줄이 우측 피드에 선다. 자막(대화)과 다른 문법이다 — 클릭도 안 받고(`pointer-events: none`)
+ * 놓쳐도 되는 알림이라, 연출을 꺼도 제 시간만큼 서 있기만 하면 정보가 안 사라진다
+ */
+function intervene(god: string, selected: string, portrait?: string): void {
+  let feed = document.querySelector<HTMLElement>(".god-hud");
+  if (!feed) {
+    feed = document.createElement("div");
+    feed.className = "god-hud";
+    document.body.append(feed);
+  }
+  const entry = document.createElement("div");
+  entry.style.setProperty("--god-color", `var(--${god})`);
+  if (portrait) {
+    const image = new Image();
+    image.src = portrait;
+    image.alt = "";
+    entry.append(image);
+  }
+  const body = document.createElement("b");
+  body.textContent = selected;
+  entry.append(body);
+  feed.prepend(entry);
+  while (feed.childElementCount > 2) feed.lastElementChild?.remove();
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  void entry.animate(
+    still
+      ? [{ opacity: 1 }, { opacity: 1 }]
+      : [
+          { opacity: 0, transform: "translateX(12px)" },
+          { opacity: 1, transform: "none", offset: 0.08 },
+          { opacity: 1, offset: 0.9 },
+          { opacity: 0 },
+        ],
+    { duration: hudHold, easing: "linear" },
+  ).finished.then(() => entry.remove());
 }

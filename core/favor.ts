@@ -3,8 +3,14 @@ import { addToken, dealDamage, type Effect } from "./rules.ts";
 import type { ActorState, GameState } from "./state.ts";
 
 export const favorInitial = 50;
-export const favorDecayPerEncounter = -3;
-export const favorNeglectPenalty = -2;
+export const favorDecayPerEncounter = -4;
+/**
+ * 휴식은 −3을 지킨다 — 전투와 같은 −4로 올리면 휴식 선호·과업 거절로 걷는 런(e2e의 사람 정책)이
+ * 2500시드에서 한 번도 헌신(70)에 닿지 못했다. 전투 감쇠는 상한합 +6이 같이 올라 상쇄되지만
+ * 휴식에는 벌 것이 없어서 감쇠 인상이 그대로 궤적을 깎는다
+ */
+export const favorRestDecay = -3;
+export const favorNeglectPenalty = -3;
 /** 요구 보상은 이제 단마다 다르다 — `data/demands.json`의 `tiers[].reward`가 든다 (P-29) */
 export const rivalDemandPenalty = -18;
 export const nonRivalDemandPenalty = -9;
@@ -23,8 +29,11 @@ export const favorBoundaries = { devotion: 70, calm: 30, anger: 10, wrath: 0 } a
  * v9: 값에 계단이 셋 생겼다(P-39) — 밴드가 tier1 `[4, 8)` · tier2 `[8, 10)` · tier3(융합) `[10, 13]`으로
  *     안 겹치게 갈리고, tier2 카드 15장이 지상부터만 보상에 뜬다(정예·보스는 세 자리 전부).
  *     융합 여덟 장이 tier3 하한 위로 올라갔다. 배포된 tier1 124장은 한 줄도 안 바뀌었다
+ * v10: 호의 진폭 확대 — 카드 +2(상한 3회)·전투 감쇠 −4·방치 −3, 휴식 감쇠는 −3 유지. 조우당
+ *      상한합 +6 − 감쇠 4 = 표류 +2로 P-30이 지킨 구조적 상승은 그대로 두고, 한 번의 변화만
+ *      커졌다(체감). 조합 승률 하한으로 재확인
  */
-export const globalParamVersion = "v9";
+export const globalParamVersion = "v10";
 
 export type FavorStage = keyof typeof favorBoundaries;
 export type FavorUses = Record<string, number>;
@@ -79,7 +88,7 @@ export const godEnemyId = (god: string): string => `enemy_god_${god}`;
  * **반복을 끊는 상태를 따로 만들지 않는다**: 반복의 원인이 호의였으므로 호의를 올리는 것이 곧
  * 반복을 끊는 것이다. 플래그를 두면 replay·화면·게이트가 그 플래그를 다 알아야 한다.
  *
- * 50이 아니라 평온의 **하한**이다 — 감쇠 −3이 열 조우 만에 다시 진노로 데려간다. 화해는 휴전이다
+ * 50이 아니라 평온의 **하한**이다 — 감쇠 −4가 여덟 조우 만에 다시 진노로 데려간다. 화해는 휴전이다
  */
 export const wrathReconcileFavor: number = favorBoundaries.calm;
 
@@ -96,17 +105,14 @@ export function shiftFavor(favor: Record<string, number>, god: string, amount: n
 }
 
 /**
- * 조우당 신별 상한. **5를 그대로 둔다.** 5는 감쇠 −3보다 커서 호의가 조우마다 +2씩 구조적으로 오르고,
- * 그래서 P-30이 이 상한을 다이얼로 후보에 올렸다 — 4000런으로 재고 되돌렸다:
- *
- * - 3 (표류 0): 진노 0.005 → 0.012였지만 은혜 도달이 크게 줄었다.
- * - 2 (표류 −1): 진노 0.047(목표 0.05도 못 넘는다)에 아테나 은총 1096 → 174
- *
- * 둘 다 목표를 못 넘으면서 다른 콘텐츠를 끈다. 진노 도달은 P-29의 시련 대가로 연다 — reviews/30-intervention.md
+ * 조우당 신별 상한. v10이 +1×5에서 **+2×3으로** 바꿨다 — 지키는 것은 크기가 아니라 **표류**다:
+ * 상한합(+6)이 감쇠(−4)보다 2 커서 호의가 조우마다 +2씩 구조적으로 오르는 P-30의 구조가 그대로다.
+ * 표류를 건드린 값들은 4000런에서 진노·은혜 도달을 같이 끄는 것이 측정돼 되돌렸다(reviews/30-intervention.md) —
+ * 그래서 다이얼은 표류가 아니라 한 번의 변화 크기다. 카드 한 장 +2, 감쇠 −4는 화면에서 보인다
  */
 export function recordCardFavor(favor: Record<string, number>, god: string, uses: FavorUses): void {
   uses[god] = (uses[god] ?? 0) + 1;
-  if (uses[god] <= 5) shiftFavor(favor, god, 1);
+  if (uses[god] <= 3) shiftFavor(favor, god, 2);
 }
 
 export function finishCombatFavor(favor: Record<string, number>, patrons: string[], uses: FavorUses): void {
@@ -114,7 +120,7 @@ export function finishCombatFavor(favor: Record<string, number>, patrons: string
 }
 
 export function finishRestFavor(favor: Record<string, number>, patrons: string[]): void {
-  for (const god of patrons) shiftFavor(favor, god, favorDecayPerEncounter);
+  for (const god of patrons) shiftFavor(favor, god, favorRestDecay);
 }
 
 function targets(state: GameState, target: StageEffect["target"]): ActorState[] {

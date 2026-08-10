@@ -1,5 +1,9 @@
 /* 통계 페이지 전용. 토큰(신 색·--boon·--bane·Galmuri11)은 style.css의 것을 그대로 쓴다 */
-.stats-page { max-width: 880px; margin: 0 auto; padding: 44px 20px 90px; display: flex; flex-direction: column; gap: 36px; user-select: text; -webkit-user-select: text; }
+/* 게임 루트는 `overflow: clip`이다(style.css) — 이 페이지는 긴 문서라 스크롤이 있어야 한다 */
+html { overflow: auto; }
+.stats-page { max-width: 880px; margin: 0 auto; padding: 44px 20px 90px; display: flex; flex-direction: column; gap: 36px; user-select: text; -webkit-user-select: text; word-break: keep-all; }
+/* 전역 `header`는 flex space-between이다(style.css) — 그대로 두면 제목·타일이 한 줄에 찌그러진다 */
+.stats-page header { display: block; margin-bottom: 0; }
 .stats-page h1 { font-size: clamp(2.2rem, 6vw, 3.4rem); margin-bottom: 10px; }
 .stats-page h2 { font-size: 1.15rem; margin-bottom: 6px; }
 .stats-page section { display: flex; flex-direction: column; gap: 14px; }

@@ -36,8 +36,13 @@ if (!deckOk(freeDeck)) throw new Error(`${freeCard} is no longer a startable tie
  * 900개 중 71개가 완주한다 — 32가 가장 짧고(239결정) 575·369·279가 다음이다
  * P-74에서 623 → 2132: 맵의 과업 다음 전투 보장과 전면 사거리화로 623이 은혜 화면을 지나지 않는다.
  * 과업은 화면만 지나고 거절하는 정책에서 2132가 아홉 phase를 전부 지나 완주한다.
+ * v10(호의 진폭 확대)에서 2132 → 312, 그리고 **배분 65:35로 시작한다**: 50:50으로는 이 정책이
+ * 20000시드에서 은혜 둘(인장 프레임 체크포인트)에 한 번도 못 닿는다 — 은혜는 배분 슬라이더가 여는
+ * 콘텐츠고, 그 레버를 쓰면 1000시드 중 9개가 완주한다. 312가 가장 짧다(278결정).
+ * 슬라이더 → 엔진 → 반출(replay.split) → CLI 재생까지 한 줄이 같이 증명된다
  */
-const seed = 2132;
+const seed = 312;
+const startingSplit = 65;
 const phases = ["path", "card", "target", "rest", "rest_card", "reward", "grace", "grace_card", "demand"];
 
 /**
@@ -88,6 +93,20 @@ const setup = await tab.evaluate(async () => {
     picked: [...document.querySelectorAll(picker + "[aria-pressed='true']")].map((el) => el.querySelector(".nameplate b").textContent.trim()),
     // 덱 편집기는 모달이므로 시작 화면은 한 눈금이다. 모달 본문만 스크롤을 허용한다
     tall: document.documentElement.scrollHeight > window.innerHeight };
+});
+
+// 본 런은 배분 ${startingSplit}로 시작한다 — 배분이 은혜(헌신 70)를 여는 레버다(위 시드 주석)
+await tab.evaluate(async () => {
+  const wait = () => new Promise((resolve) => setTimeout(resolve, 60));
+  document.querySelector(".deck-editor-trigger").click();
+  await wait();
+  const split = document.querySelector(".split-track input");
+  // React 제어 입력은 .value 직접 대입을 내부 트래커가 걸러 onChange가 안 뜬다 — 네이티브 setter로 넣는다
+  Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set.call(split, "${startingSplit}");
+  split.dispatchEvent(new Event("input", { bubbles: true }));
+  await wait();
+  document.querySelector(".overlay-actions button[aria-label='닫기']").click();
+  await wait();
 });
 
 await tab.click("form.setup button.primary");
@@ -259,12 +278,13 @@ const editor = await tab.evaluate(async () => {
   const submit = () => document.querySelector("form.setup button.primary");
   const slots = () => [...document.querySelectorAll(".deck-slots .game-card")];
   const ids = () => slots().map((el) => el.dataset.card);
-  // 편집기는 모달이다 — 시작 화면에는 버튼만 있고 호의 배분도 그 안에 있다
-  const hidden = !document.querySelector(".deck-editor") && !document.body.textContent.includes("시작 호의 배분");
+  // 편집기는 모달이다 — 시작 화면에는 버튼만 있고 호의 배분도 그 안에 있다.
+  // 배분의 표식은 슬라이더(.split-track)다 — 문구는 aria-label로 갔다(feat/voice)
+  const hidden = !document.querySelector(".deck-editor") && !document.querySelector(".split-track");
   document.querySelector(".deck-editor-trigger").click();
   await wait();
   const modal = document.querySelector("dialog.overlay[open]");
-  const moved = !!modal && modal.textContent.includes("시작 호의 배분");
+  const moved = !!modal && !!modal.querySelector(".split-track");
   const body = document.querySelector(".overlay-body");
   const singleScroll = getComputedStyle(document.querySelector(".deck-editor .hand")).overflowY === "visible"
     && getComputedStyle(body).overflowY === "auto" && getComputedStyle(body).overflowX === "hidden";
@@ -376,7 +396,8 @@ try {
   }
 
   const browser = browserRun();
-  const cli = run(seed, undefined, browser.replay.actions, browser.replay.patrons);
+  // 반출된 split을 그대로 먹인다 — 안 먹이면 50:50으로 재생돼 호의 곡선부터 다른 게임이 된다
+  const cli = run(seed, undefined, browser.replay.actions, browser.replay.patrons, undefined, browser.replay.split);
 
   console.log(`clicked ${browser.order.length} decisions in the browser`);
   // 다섯 중 둘 — 하나만 남으면 시작이 막히고, 되돌리면 다시 열린다. `tall`은 접힌 편집기가 지키는 눈금이다
@@ -389,7 +410,7 @@ try {
   check("반출 순서", { diverged, length: exported.length }, { diverged: -1, length: browser.order.length });
   check("filename", browser.filename, `god-scales-run-${seed}.json`);
   // 조합이 반출에 없으면 이 파일은 조용히 제우스+아테나로 재생된다 — 다른 조합에서는 다른 게임이 된다
-  check("replay header", { seed: browser.replay.seed, mode: browser.replay.replay_mode, patrons: browser.replay.patrons }, { seed, mode: "action_log", patrons: ["zeus", "athena"] });
+  check("replay header", { seed: browser.replay.seed, mode: browser.replay.replay_mode, patrons: browser.replay.patrons, split: browser.replay.split }, { seed, mode: "action_log", patrons: ["zeus", "athena"], split: startingSplit });
   // 「시드 N」이 화면에서 사라졌다(P-54) — 시드는 반출 파일명·헤더 대조(위)가 계속 지킨다
   check("결과 조합", browser.eyebrow, `제우스 + 아테나 · ${browser.floors}/12층`);
   // 반출한 결정이 지금 규칙에서 전부 낼 수 있는 것이어야 한다 — 하나라도 아니면 봇이 대신 답한다

@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useState } from "react";
 import type { CSSProperties, FormEvent } from "react";
-import { favorBoundaries, favorStage, interventionEveryTurns } from "../../core/favor.ts";
+import { favorBoundaries, favorDecayPerEncounter, favorNeglectPenalty, favorStage, interventionEveryTurns } from "../../core/favor.ts";
 import type { GodId } from "../../core/rules.ts";
 import achievementData from "../../data/achievements.json" with { type: "json" };
 import { deckSize, favorPool, gods, startableCards, type PatronPair } from "../../sim/engine.ts";
@@ -125,7 +125,7 @@ function DeckEditor({ deck, picked, pair, split, onSplitChange, onChange, onRest
             */}
             <p className="hint">
               조합 밖 신의 카드도 넣을 수 있습니다. 다만 그 신의 호의는 아무것도 움직이지 않고, 조우마다
-              후원 신 호의가 −3씩(그 조우에 한 장도 안 쓴 신은 −2 더) 빠집니다 — 은혜와 융합이 그만큼 멀어집니다.
+              후원 신 호의가 −{-favorDecayPerEncounter}씩(그 조우에 한 장도 안 쓴 신은 −{-favorNeglectPenalty} 더) 빠집니다 — 은혜와 융합이 그만큼 멀어집니다.
             </p>
             <div className="deck-slots">
               {deck.map((id, index) => {
@@ -182,7 +182,6 @@ function SplitField({ pair, split, onChange }: { pair?: PatronPair; split: numbe
   const shown = pair ?? (gods.slice(0, 2) as unknown as PatronPair);
   return (
     <label className="split-field" style={pair ? undefined : { visibility: "hidden" }}>
-      시작 호의 배분 — 합은 언제나 {favorPool}입니다
       <span className="split-ends">
         {shown.map((god, index) => {
           const value = index === 0 ? split : favorPool - split;
@@ -194,7 +193,7 @@ function SplitField({ pair, split, onChange }: { pair?: PatronPair; split: numbe
         })}
       </span>
       <span className="split-track">
-        <input type="range" min={0} max={favorPool} value={split} disabled={!onChange} onChange={(event) => onChange?.(Number(event.target.value))} />
+        <input aria-label="시작 호의 배분" type="range" min={0} max={favorPool} value={split} disabled={!onChange} onChange={(event) => onChange?.(Number(event.target.value))} />
         {/* 눈금은 호의 값이지 퍼센트가 아니다 — 트랙 길이가 `favorPool`이므로 그것으로 나눈다 */}
         {Object.values(favorBoundaries).filter((at) => at > 0).map((at) => <i key={at} style={{ left: `${(at / favorPool) * 100}%` }} />)}
       </span>
@@ -209,7 +208,11 @@ function AchievementPicker({ onStart }: { onStart: (achievement: Achievement) =>
     <>
       <button type="button" onClick={() => setOpen(true)}>업적</button>
       {open && (
-        <Overlay wide title="업적" onClose={() => setOpen(false)}>
+        <Overlay
+          wide
+          title="업적"
+          onClose={() => setOpen(false)}
+        >
           <div className="achievement-picker">
             <select
               className="achievement-list"
@@ -229,7 +232,6 @@ function AchievementPicker({ onStart }: { onStart: (achievement: Achievement) =>
                   <b>{selected.name}</b>
                   {selected.pair.map((god) => <i key={god} style={{ "--god-color": `var(--${god})` } as CSSProperties} />)}
                 </span>
-                <p>{selected.text}</p>
               </header>
               <SplitField pair={selected.pair} split={selected.split} />
               <div className="deck-slots">
@@ -238,10 +240,7 @@ function AchievementPicker({ onStart }: { onStart: (achievement: Achievement) =>
                   return <GameCard key={`${id}-${index}`} cardId={id} card={held.card} />;
                 })}
               </div>
-              <div className="actions achievement-actions">
-                <button className="primary" type="button" onClick={() => onStart(selected)}>시작</button>
-                <button type="button" onClick={() => setOpen(false)}>취소</button>
-              </div>
+              <button className="achievement-start primary" type="button" onClick={() => onStart(selected)}>시작</button>
             </div>
           </div>
         </Overlay>

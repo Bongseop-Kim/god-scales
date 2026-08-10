@@ -12,3 +12,5 @@ reviews:
     - "!logs/**"
     - "!package-lock.json"
     - "!art/**"
+    - "!audio/**"
+    - "!submission/**"

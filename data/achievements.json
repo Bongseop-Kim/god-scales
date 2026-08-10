@@ -17,7 +17,7 @@
   {
     "id": "aegis_strike", "name": "아이기스 낙뢰", "pair": ["zeus", "athena"], "split": 20,
     "text": "성벽과 반사를 겹친 뒤 축적한 번개를 터뜨립니다.",
-    "deck": ["card_zeus_30", "card_zeus_30", "card_zeus_06", "card_zeus_23", "card_athena_17", "card_athena_17", "card_athena_24", "card_athena_24", "card_athena_23", "card_athena_04"]
+    "deck": ["card_zeus_30", "card_zeus_30", "card_zeus_06", "card_zeus_23", "card_athena_17", "card_athena_17", "card_athena_24", "card_athena_24", "card_athena_02", "card_athena_04"]
   },
   {
     "id": "storm_blood", "name": "폭풍과 피", "pair": ["zeus", "ares"], "split": 60,
@@ -27,7 +27,7 @@
   {
     "id": "overcharge_frenzy", "name": "과충전 광란", "pair": ["zeus", "ares"], "split": 80,
     "text": "자해와 과충전을 받아들이고 짧은 전투에 모든 힘을 겁니다.",
-    "deck": ["card_zeus_11", "card_zeus_11", "card_zeus_30", "card_zeus_30", "card_zeus_04", "card_ares_03", "card_ares_03", "card_ares_02", "card_ares_02", "card_ares_24"]
+    "deck": ["card_zeus_11", "card_zeus_11", "card_zeus_30", "card_zeus_30", "card_zeus_04", "card_ares_03", "card_ares_30", "card_ares_02", "card_ares_02", "card_ares_24"]
   },
   {
     "id": "lightning_hunt", "name": "번개 사냥", "pair": ["zeus", "artemis"], "split": 50,
@@ -77,7 +77,7 @@
   {
     "id": "thorn_frenzy", "name": "가시 광란", "pair": ["athena", "ares"], "split": 25,
     "text": "가시와 광란을 겹쳐 맞을수록 거세지는 전투를 만듭니다.",
-    "deck": ["card_athena_18", "card_athena_18", "card_athena_24", "card_athena_24", "card_athena_17", "card_ares_02", "card_ares_02", "card_ares_10", "card_ares_22", "card_ares_24"]
+    "deck": ["card_athena_18", "card_athena_18", "card_athena_02", "card_athena_24", "card_athena_17", "card_ares_02", "card_ares_02", "card_ares_10", "card_ares_22", "card_ares_24"]
   },
   {
     "id": "shield_moon", "name": "방패와 달빛", "pair": ["athena", "artemis"], "split": 50,

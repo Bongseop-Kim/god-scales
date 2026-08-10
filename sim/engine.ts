@@ -197,7 +197,7 @@ const godEnemies = enemyData.filter(({ tier }) => tier === "god").map(enemyDefin
 type EnemyView = { id: string; slot: number; span: number; hp: number; maxHp: number; block: number; tokens: Tokens; passives: Passives; intent?: EnemyAction };
 /** UI가 data/cards.json을 따로 읽으면 두 번째 진실이 된다 — 카드는 엔진이 준 것만 그린다 */
 type SealView = NonNullable<Card["seals"]>[number];
-export type CardView = { id: string; name: string; cost: number; target: Card["target"]; effects: Card["effects"]; reach?: string; weakened?: boolean; seals?: SealView[]; previewSeal?: SealView; fusesTo?: CardView };
+export type CardView = { id: string; name: string; cost: number; target: Card["target"]; effects: Card["effects"]; reach?: string; weakened?: boolean; seals?: SealView[]; fusesTo?: CardView };
 const cardView = ({ id, name, cost, target, effects, reach, seals }: Card): CardView => ({ id, name, cost, target, effects, ...(reach ? { reach } : {}), ...(seals?.length ? { seals } : {}) });
 export const allCards = cards.map((card) => ({ ...cardView(card), patron: card.patron, patronPair: card.patronPair }));
 /**
@@ -671,7 +671,7 @@ export function* runSteps(
           if (!cardOptions.includes(card.id)) return card;
           const seals = [...(card.seals ?? []), grace];
           const merges = fusionReady({ ...card, seals }, patrons);
-          return { ...card, previewSeal: grace, ...(merges ? { fusesTo: cardView(fusionCard) } : {}) };
+          return { ...card, ...(merges ? { fusesTo: cardView(fusionCard) } : {}) };
         }),
       },
     };
@@ -734,12 +734,12 @@ export function* runSteps(
     const offer = rewardOffer(createRng(seed * 1000 + nodeSeed), [done.patron]);
     const picked = yield {
       phase: "reward",
-      options: offer,
+      options: [...offer, skipReward],
       bot: chooseReward(offer, cardMap, noise),
       observation: { ...view(), cards: offer.map((id) => cardView(cardMap.get(id)!)), questResult, questReward: true },
     };
-    if (!offer.includes(picked)) throw new Error(`Invalid quest reward action: ${picked}`);
-    deck.push(picked);
+    if (picked !== skipReward && !offer.includes(picked)) throw new Error(`Invalid quest reward action: ${picked}`);
+    if (picked) deck.push(picked);
     actions.push({ type: "reward", choice: picked });
   }
 

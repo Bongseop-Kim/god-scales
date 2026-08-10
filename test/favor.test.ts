@@ -27,15 +27,15 @@ const state = (): GameState => ({
 });
 
 describe("favor", () => {
-  it("caps card gains at five and applies encounter decay and neglect", () => {
+  it("caps card gains at three uses and applies encounter decay and neglect", () => {
     const favor = { zeus: 50, poseidon: 50 };
     const uses: Record<string, number> = {};
     for (let count = 0; count < 8; count += 1) recordCardFavor(favor, "zeus", uses);
-    expect(favor.zeus).toBe(55);
+    expect(favor.zeus).toBe(56);
     finishCombatFavor(favor, ["zeus", "poseidon"], uses);
-    expect(favor).toEqual({ zeus: 52, poseidon: 45 });
+    expect(favor).toEqual({ zeus: 52, poseidon: 43 });
     finishRestFavor(favor, ["zeus", "poseidon"]);
-    expect(favor).toEqual({ zeus: 49, poseidon: 42 });
+    expect(favor).toEqual({ zeus: 49, poseidon: 40 });
   });
 
   it("clamps favor and classifies all four boundaries", () => {

@@ -35,8 +35,8 @@ button:active { transform: scale(.97); }
 .game-card { transition: transform 140ms var(--ease-out), border-color 160ms ease; }
 /* 컷인은 화면 전체(개입 오버레이·신 일러), 파티클은 host 가운데 한 장이다 */
 .fx { position: fixed; inset: 0; display: grid; place-items: center; z-index: 3; pointer-events: none; }
-/* 컷인은 판을 살짝 어둡혀 사건을 세우되, 그 사이 바뀐 상태는 읽힌다 */
-.fx.cut { background: rgba(6, 7, 11, .45); }
+/* 컷인 그림이 사라진 뒤 설명만 남을 수 있어 어두운 배경도 그림 층에 둔다 */
+.fx.cut .fx-view { background: rgba(6, 7, 11, .45); }
 .fx-view { position: absolute; inset: 0; display: grid; place-items: center; }
 .fx-view > img { max-width: 100%; max-height: 100%; }
 .fx.cut .fx-view > img { opacity: .7; }
@@ -50,11 +50,10 @@ button:active { transform: scale(.97); }
 .stage-field .fx.spark { top: 138px; }
 /* 두 칸짜리는 스프라이트가 2배(origin bottom)로 서 있다 — 보이는 중심은 스팬 위쪽 26px(250 - 448/2)이다 */
 .stage-field .enemy.wide .fx.spark { top: 26px; }
-/**
- * 컷인이 든 문장. **그림 위가 아니라 아래다** — 판을 덮으면 무엇이 바뀌었는지 볼 수가 없다.
- * 색 둘: 왼쪽 띠가 신(`--god-color`), 글자가 단계(`--stage-*`)다
- */
-.fx > b { position: absolute; bottom: 14%; left: 50%; max-width: min(680px, 84%); padding: 9px 16px; border-left: 4px solid var(--god-color); border-radius: 8px; background: rgba(12, 14, 20, .9); font-size: .86rem; line-height: 1.5; text-align: center; transform: translateX(-50%); }
+/** 신의 말이 아니라 전투 기록이다 — 셸 왼쪽에 제목과 효과를 나눠 3초 남긴다 */
+.fx-caption { position: absolute; top: 84px; right: max(16px, calc(50% - 520px)); display: grid; width: min(300px, calc(100vw - 32px)); gap: 3px; padding: 9px 12px; border-right: 3px solid var(--god-color); border-radius: 7px; background: rgba(12, 14, 20, .78); box-shadow: 0 4px 18px rgba(0, 0, 0, .18); text-align: left; }
+.fx-caption small { color: currentcolor; font-size: .68rem; font-weight: 700; letter-spacing: .04em; }
+.fx-caption b { color: #e3e5eb; font-size: .8rem; font-variant-numeric: tabular-nums; line-height: 1.4; }
 .fx.devotion { color: var(--stage-devotion); }
 .fx.calm { color: var(--stage-calm); }
 .fx.anger { color: var(--stage-anger); }
@@ -74,25 +73,19 @@ button:active { transform: scale(.97); }
 .fx.wrath .fx-view > img { opacity: .84; }
 .fx.wrath > .fx-view { animation: cut-wrath 1600ms var(--ease-out); }
 /**
- * 발화 셋. **레벨을 가르는 것은 자리와 무게다** — 판 아래 자막(1) · 화면 중앙(2) · 화면 전체(3).
- * 컷인(`z-index: 3`) 위에 선다: 그림은 신이 **무엇을 했는지**고 이것은 신이 **무엇을 말하는지**다
+ * 발화 셋. 모두 상태 바 아래의 가벼운 배너로 선다 — 대사가 판과 입력을 가리지 않고 4초 동안 읽힌다.
+ * 레벨은 기존 우선순위와 글자 크기만 가른다. 컷인(`z-index: 3`)보다 위인 층 질서는 그대로다
  */
-.voice { position: fixed; z-index: 4; display: grid; cursor: pointer; }
-.voice > b { border-left: 4px solid var(--god-color); background: rgba(12, 14, 20, .92); }
-/* 1 · 속삭임 — 런당 약 49번 뜨는 자리다. 배경을 안 어둡게 하고 판을 안 가린다 */
-.voice.l1 { inset: auto 0 6% 0; place-items: center; pointer-events: none; }
-.voice.l1 > b { max-width: min(680px, 84%); padding: 7px 14px; border-radius: 8px; color: var(--god-color); font-size: .82rem; line-height: 1.4; }
-/* 2 · 말 — 화면 중앙 · 배경 살짝 어둡게 · 신 색 글자 */
-.voice.l2 { inset: 0; place-items: center; background: rgba(6, 7, 11, .34); }
-.voice.l2 > b { max-width: min(720px, 86%); padding: 16px 26px; border-radius: 10px; color: var(--god-color); font-size: 1.15rem; line-height: 1.5; text-align: center; }
-/* 3 · 외침 — 배경 크게 어둡게 + 신 일러 슬라이드인 + 큰 글씨. 런당 0~10번뿐이라 이만큼 쓴다 */
-.voice.l3 { inset: 0; align-content: center; justify-items: center; gap: 12px; background: rgba(6, 7, 11, .72); }
-.voice.l3 > img { max-width: 60%; max-height: 42vh; animation: voice-enter 320ms var(--ease-out); }
-.voice.l3 > b { max-width: min(760px, 88%); padding: 18px 30px; border-radius: 12px; color: var(--god-color); font-size: 1.5rem; line-height: 1.45; text-align: center; }
-
-@keyframes voice-enter {
-  from { opacity: 0; transform: translateX(-40px); }
-}
+.voice { position: fixed; top: 76px; left: 50%; z-index: 4; display: flex; max-width: min(760px, calc(100vw - 32px)); align-items: center; gap: 8px; transform: translateX(-50%); cursor: pointer; }
+.voice > img { width: 48px; height: 48px; flex: 0 0 auto; border: 1px solid var(--god-color); border-radius: 50%; object-fit: cover; object-position: center top; opacity: .78; }
+.voice > b { max-width: 100%; padding: 9px 16px; border-left: 4px solid var(--god-color); border-radius: 8px; background: rgba(12, 14, 20, .6); color: var(--god-color); line-height: 1.45; text-align: center; }
+.voice.l2 > b { font-size: .92rem; }
+.voice.l3 > b { font-size: 1rem; }
+/* 개입(L1) 피드 — 자막이 아니라 알림이라 클릭을 안 받고, fx(3)와 voice(4) 사이 서열이다 */
+/* 컷인 캡션(top 84px, 높이 ~64px) 바로 아래 같은 오른쪽 열 — 「신이 한 일」 카드 밑에 그 말이 선다 */
+.god-hud { position: fixed; top: 156px; right: max(16px, calc(50% - 520px)); z-index: 3; display: flex; max-width: min(300px, 38vw); flex-direction: column; align-items: flex-end; gap: 6px; pointer-events: none; }
+.god-hud > div { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-right: 3px solid var(--god-color); border-radius: 6px; background: rgba(12, 14, 20, .7); color: var(--god-color); font-size: .8rem; line-height: 1.4; }
+.god-hud img { width: 32px; height: 32px; flex: 0 0 auto; border: 1px solid var(--god-color); border-radius: 50%; object-fit: cover; object-position: center top; opacity: .78; }
 
 /**
  * 스프라이트 스트립의 셀 수는 기본 넷이다. 전투 배우만 아홉 장이고 idle은 앞 넉 칸이라
@@ -123,11 +116,19 @@ button:active { transform: scale(.97); }
  * 쓴다. 진노만 조금 더 세게: 그 단계는 다음 조우 시작에 터지므로 들어서기 전에 읽혀야 한다
  */
 @keyframes stage-cross {
-  from { box-shadow: 0 0 0 0 currentColor; }
+  from { box-shadow: 0 0 0 0 currentcolor; }
   to { box-shadow: 0 0 0 var(--pulse, 7px) transparent; }
 }
 .favor.crossed { animation: stage-cross 320ms var(--ease-out); }
 .favor.wrath.crossed { --pulse: 12px; animation-duration: 600ms; }
+
+/* 우호도 변화량 칩 — 떠올랐다 사그라든다. transform·opacity만(UI.md) */
+@keyframes favor-delta {
+  from { opacity: 0; transform: translateY(4px); }
+  25% { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-7px); }
+}
+.favor .delta { animation: favor-delta 1.2s var(--ease-out) forwards; }
 
 /* 에너지 젬 맥동(P-58) — 낼 수 있는 카드가 남았다는 신호. 1.04라 시야에서 소리치지 않는다 */
 @keyframes gem-pulse {
@@ -163,11 +164,11 @@ button:active { transform: scale(.97); }
   [data-pose] .sprite img { animation: none; transform: none; }
   /* 컷인 그림은 멈추고 **문장은 남는다** — 문장은 모션이 아니라 정보다(`ui/fx.ts`가 3초 세워 둔다) */
   .fx > .fx-view { animation: none; }
-  /* 같은 이유로 신 일러만 멈춘다 — 대사는 `ui/fx.ts`가 페이드 없이 제 시간만큼 세워 둔다 */
-  .voice.l3 > img { animation: none; }
   button, .game-card { transition-property: opacity, border-color, background-color; }
   .stage-field .hp i, .favor .meter i { transition: none; }
   .favor.crossed { animation: none; }
+  /* 칩은 떠오르지 않고 서 있다가 다음 렌더에 지워진다 — 정보는 남고 모션만 꺼진다 */
+  .favor .delta { animation: none; }
   /* P-58 연출 — 전부 장식이라 즉시 완료(정지)다. 배너·화살표·피격은 JS 쪽 reducedMotion이 막는다 */
   .energy-gem.ready, .prop.floaty, .god-divider { animation: none; }
   /**
