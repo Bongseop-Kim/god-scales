@@ -1,0 +1,31 @@
+vars: {
+  d2-config: {
+    theme-id: 3
+    sketch: true
+    layout-engine: elk
+    pad: 32
+  }
+}
+
+direction: right
+
+flow: "" {
+  style: {stroke: "transparent"; fill: "transparent"}
+
+  spec: "plan = spec\n요구 · 비범위 · 완료 정의 · 검증 계획" {
+    style: {fill: "#E4DBFE"; stroke: "#1B2A55"; font-size: 18}
+  }
+  work: "구현 · 검증\n스펙을 코드로 번역 · 게이트가 반려" {
+    style: {fill: "#F0EAFF"; stroke: "#1B2A55"; font-size: 18}
+  }
+  evidence: "review = evidence\n달성 · 미달 · 되돌린 시도 · 실측 기록" {
+    style: {fill: "#C7F1FF"; stroke: "#1B2A55"; font-size: 18}
+  }
+  commit: "commit\n통과한 결과만 이력으로 고정" {
+    style: {fill: "#DEE1EB"; stroke: "#1B2A55"; font-size: 18}
+  }
+
+  spec -> work {style.stroke: "#1B2A55"}
+  work -> evidence {style.stroke: "#1B2A55"}
+  evidence -> commit {style.stroke: "#1B2A55"}
+}

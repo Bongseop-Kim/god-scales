@@ -213,6 +213,39 @@ table.tbl{border-collapse:collapse;width:100%;max-width:1020px;margin-top:26px;b
   <p class="a body" style="font-size:17px">두 신을 후원자로 모시고 12층을 오르는 덱빌딩 로그라이크. 카드 179 &middot; 은혜 45 &middot; 적 19 &middot; 신 5(조합 10) — 이 콘텐츠 전부가 아래에서 설명할 파이프라인의 산출물이다. 플레이: <span class="mono hi">bongseop-kim.github.io/god-scales</span></p>
 </div>
 
+<!-- 3A · AI 사용량 -->
+<div class="slide">
+  <div class="a tag">AI Usage</div>
+  <h2 class="a md">프로젝트 단위 AI 사용량 — Codex &amp; Claude</h2>
+  <div class="a cmp" style="align-items:stretch;max-width:980px">
+    <div class="cmp-col cmp-good">
+      <div class="cmp-label">Codex &middot; god-scales</div>
+      <div class="stats" style="grid-template-columns:repeat(2,1fr);gap:10px;margin-top:16px;max-width:none">
+        <div class="stat"><b>198.8M</b><span>총 토큰</span></div>
+        <div class="stat"><b>14</b><span>프로젝트 세션</span></div>
+        <div class="stat"><b>198.1M</b><span>입력 &middot; 캐시 187.4M</span></div>
+        <div class="stat"><b>674.6K</b><span>출력</span></div>
+      </div>
+      <p style="margin-top:18px"><b class="mono">gpt-5.6-sol</b> 191.5M &middot; 96.3%</p>
+      <p><span class="mono">gpt-5.6-terra</span> 5.84M &middot; <span class="mono">gpt-5.5</span> 1.32M</p>
+      <p><span class="mono">gpt-5.4-mini</span> 121.8K</p>
+    </div>
+    <div class="cmp-col cmp-good">
+      <div class="cmp-label">Claude &middot; god-scales</div>
+      <div class="stats" style="grid-template-columns:repeat(2,1fr);gap:10px;margin-top:16px;max-width:none">
+        <div class="stat"><b>779.5M</b><span>총 토큰</span></div>
+        <div class="stat"><b>71</b><span>세션 · 서브에이전트 포함</span></div>
+        <div class="stat"><b>775.1M</b><span>입력 &middot; 캐시 읽기 764.2M</span></div>
+        <div class="stat"><b>4.34M</b><span>출력</span></div>
+      </div>
+      <p style="margin-top:18px"><b class="mono">claude-opus-5</b> 707.9M &middot; 90.8%</p>
+      <p><span class="mono">claude-fable-5</span> 71.5M</p>
+      <p style="visibility:hidden">&nbsp;</p>
+    </div>
+  </div>
+  <p class="a caption">2026.08.10 KST 스냅샷. Codex는 Orca의 <span class="mono">god-scales</span> 워크트리 집계, Claude는 <span class="mono">~/.claude</span> 세션 로그 집계. Codex의 캐시 입력은 입력의 부분집합이라 총량에 다시 더하지 않았고, Claude의 캐시 읽기는 별도 항목이라 총량에 포함했다.</p>
+</div>
+
 <!-- 4 · 목차 -->
 <div class="slide">
   <div class="a tag">Agenda</div>
@@ -225,92 +258,27 @@ table.tbl{border-collapse:collapse;width:100%;max-width:1020px;margin-top:26px;b
   </div>
 </div>
 
-<!-- 5 · 개요 표 -->
+<!-- 5 · 개요 -->
 <div class="slide">
   <div class="a tag">Overview</div>
-  <h2 class="a md">일곱 영역 — 만든 것은 AI, 지킨 것은 게이트</h2>
-  <div class="a arch" style="max-width:1020px">
-  <svg viewBox="0 0 1020 392" role="img" aria-label="일곱 영역 아키텍처 — AI 생성기가 게이트 층을 지나야 산출물이 된다">
-    <defs>
-      <marker id="ar1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#c4c4c4"/></marker>
-      <marker id="ar1b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#0066cc"/></marker>
-    </defs>
-    <!-- 생성기 -->
-    <text class="glabel" x="20" y="22">AI가 만든다</text>
-    <rect class="grp" x="8" y="34" width="320" height="292" rx="14"/>
-    <rect class="box" x="20" y="46" width="296" height="40" rx="8"/>
-    <text class="t" x="34" y="63">코드 · 기획 · 콘텐츠</text><text class="s m" x="34" y="78">Claude Code · GPT</text>
-    <rect class="box" x="20" y="92" width="296" height="40" rx="8"/>
-    <text class="t" x="34" y="109">밸런스</text><text class="s" x="34" y="124">규칙 봇 수만 런 + LLM 에이전트</text>
-    <rect class="box" x="20" y="138" width="296" height="40" rx="8"/>
-    <text class="t" x="34" y="155">브라우저 E2E · 시각</text><text class="s" x="34" y="170">DOM 조작 + 스크린샷 판정</text>
-    <rect class="box" x="20" y="184" width="296" height="40" rx="8"/>
-    <text class="t" x="34" y="201">이미지 83장</text><text class="s m" x="34" y="216">GPT-image 2.0 · sprite-gen</text>
-    <rect class="box" x="20" y="230" width="296" height="40" rx="8"/>
-    <text class="t" x="34" y="247">BGM · 컷인 영상</text><text class="s m" x="34" y="262">Gemini</text>
-    <rect class="box" x="20" y="276" width="296" height="40" rx="8"/>
-    <text class="t" x="34" y="293">대사 음성 448줄</text><text class="s m" x="34" y="308">Qwen3-TTS 1.7B · 완전 로컬</text>
-    <!-- 게이트 -->
-    <text class="glabel b" x="400" y="22">게이트가 지킨다</text>
-    <rect class="grp" x="388" y="34" width="328" height="292" rx="14" style="stroke:#0066cc"/>
-    <rect class="box gate" x="400" y="46" width="304" height="40" rx="8"/>
-    <text class="t" x="414" y="63">테스트 204 · <tspan class="m">validate.ts</tspan></text><text class="s" x="414" y="78">반려 사유 코드 12종</text>
-    <rect class="box gate" x="400" y="92" width="304" height="40" rx="8"/>
-    <text class="t" x="414" y="109">조합 승률 하한 0.05</text><text class="s" x="414" y="124">테스트에 잠금 — 유일한 지표</text>
-    <rect class="box gate" x="400" y="138" width="304" height="40" rx="8"/>
-    <text class="t" x="414" y="155">12층 완주 E2E</text><text class="s" x="414" y="170">반출 JSON ↔ CLI 재생 대조</text>
-    <rect class="box gate" x="400" y="184" width="304" height="40" rx="8"/>
-    <text class="t" x="414" y="201">qa 접촉시트 · <tspan class="m">art --check</tspan></text><text class="s" x="414" y="216">런마다 대조 · 위반 0</text>
-    <rect class="box gate" x="400" y="230" width="304" height="40" rx="8"/>
-    <text class="t" x="414" y="247">장당 상한 · 무게 게이트</text><text class="s" x="414" y="262">배포 게이트에 포함</text>
-    <rect class="box gate" x="400" y="276" width="304" height="40" rx="8"/>
-    <text class="t" x="414" y="293">신별 스모크</text><text class="s" x="414" y="308">파이썬 ↔ TS 해시 패리티</text>
-    <!-- 행별 화살표 -->
-    <line class="ln" x1="328" y1="66" x2="382" y2="66" marker-end="url(#ar1)"/>
-    <line class="ln" x1="328" y1="112" x2="382" y2="112" marker-end="url(#ar1)"/>
-    <line class="ln" x1="328" y1="158" x2="382" y2="158" marker-end="url(#ar1)"/>
-    <line class="ln" x1="328" y1="204" x2="382" y2="204" marker-end="url(#ar1)"/>
-    <line class="ln" x1="328" y1="250" x2="382" y2="250" marker-end="url(#ar1)"/>
-    <line class="ln" x1="328" y1="296" x2="382" y2="296" marker-end="url(#ar1)"/>
-    <!-- 산출물 -->
-    <text class="glabel" x="812" y="22">산출물 — 저장소에 남는다</text>
-    <rect class="grp" x="800" y="34" width="212" height="292" rx="14"/>
-    <rect class="box" x="812" y="46" width="188" height="58" rx="8"/>
-    <text class="t" x="824" y="70">게임 배포</text><text class="s m" x="824" y="88">github.io/god-scales</text>
-    <rect class="box" x="812" y="116" width="188" height="58" rx="8"/>
-    <text class="t m" x="824" y="140">stats.html</text><text class="s" x="824" y="158">머지마다 2,000런 재집계</text>
-    <rect class="box" x="812" y="186" width="188" height="58" rx="8"/>
-    <text class="t" x="824" y="210"><tspan class="m">reviews/</tspan> 87건</text><text class="s" x="824" y="228">작업 이력 인덱스</text>
-    <rect class="box" x="812" y="256" width="188" height="58" rx="8"/>
-    <text class="t" x="824" y="280">프롬프트 · 로그 원문</text><text class="s" x="824" y="298">전 생성물 재추적 가능</text>
-    <!-- 통과분만 -->
-    <text class="lbl" x="755" y="172" text-anchor="middle">통과분만</text>
-    <line class="ln hi" x1="716" y1="180" x2="792" y2="180" marker-end="url(#ar1b)"/>
-    <!-- 교차 리뷰 -->
-    <rect class="dash" x="8" y="340" width="708" height="44" rx="10" style="fill:#fff"/>
-    <text class="t" x="362" y="358" text-anchor="middle" style="font-size:13px">교차 리뷰 — CodeRabbit 인라인 133건 · plan → review 문서 87건</text>
-    <text class="s" x="362" y="374" text-anchor="middle">작성 AI와 검토 AI를 분리 — 코드와 기록 전부를 다시 본다</text>
-  </svg>
+  <h2 class="a md">플랜에서 머지까지 — 게이트를 통과할 때까지 다시 실행한다</h2>
+  <div class="a arch" style="max-width:980px">
+    <img src="diagrams/overview.png" width="1536" height="1024" alt="AI 워크플로 — 플랜 작성, 파이프라인 실행, 게이트 판정을 거쳐 리뷰 작성, PR, 메인 머지로 끝난다. 게이트 미달 시 파이프라인을 재실행한다" style="display:block;width:100%;height:auto;max-height:56vh;object-fit:contain">
   </div>
+  <p class="a caption" style="margin-top:10px">보라 — 터미널에서 LLM이 만든다(1~4) · 하늘 — 게이트가 판정한다 · 회색 — GitHub(5~6). 게이트에 미달하면 원하는 결과가 나올 때까지 파이프라인을 재실행한다(루프 엔지니어링). 통과분만 리뷰 문서와 함께 PR로 나가고, 메인 머지로 한 플랜이 끝난다 — 다음 플랜은 새 세션이다. 구조 원본은 <span class="mono">submission/diagrams/overview.d2</span>, 최종 다이어그램은 <span class="mono">submission/diagrams/overview.png</span>이다.</p>
 </div>
 
 <!-- 6 · §1 워크플로 -->
 <div class="slide" data-ch="01">
-  <div class="a tag">Workflow</div>
-  <h2 class="a md">plan을 쓰고, 리뷰를 남기고, 커밋한다</h2>
-  <div class="a flow">
-    <div class="step"><div class="step-label"><span class="mono">plan</span></div><div class="step-sub">완료 정의 · 검증 계획 선기록</div></div>
-    <div class="arrow">&rarr;</div>
-    <div class="step"><div class="step-label">수행</div><div class="step-sub">게이트·테스트가 반려</div></div>
-    <div class="arrow">&rarr;</div>
-    <div class="step"><div class="step-label"><span class="mono">review</span></div><div class="step-sub">실측 기록 · plan 삭제</div></div>
-    <div class="arrow">&rarr;</div>
-    <div class="step"><div class="step-label"><span class="mono">commit</span></div><div class="step-sub">CodeRabbit 자동 리뷰</div></div>
+  <div class="a tag">Spec-Driven Development</div>
+  <h2 class="a md">스펙 주도 개발 (SDD)</h2>
+  <div class="a arch" style="max-width:1120px;margin-top:20px">
+    <img src="diagrams/sdd.png" width="1761" height="267" alt="스펙 주도 개발 흐름 — plan에 요구와 완료 정의를 고정하고 구현·검증한 뒤 review에 실측 증거를 남겨 통과한 결과만 커밋한다" style="display:block;width:100%;height:auto">
   </div>
   <ul class="a list" style="margin-top:28px">
-    <li>plan에는 <b>검증 섹션이 반드시 들어간다</b> — 무엇이 되면 끝인지 측정 전에 적어 두면, AI가 결과에 맞춰 목표를 고쳐 쓰지 못한다</li>
-    <li>리뷰는 감상이 아니라 수치다 — 에셋 배선(P-37)의 번들 무게 <b>681.50MiB &rarr; 2.39MiB</b>처럼 전후 실측이 남는다</li>
-    <li>리뷰 문서가 그대로 작업 이력이다 — <span class="mono">reviews/00-index.md</span> 한 줄이 작업 하나. 사람도, 다음 턴의 LLM도 인덱스만 읽으면 7일 전체를 따라갈 수 있다</li>
+    <li><span class="mono">plan</span>은 작업 메모가 아니라 이 저장소의 스펙이다 — 코드를 쓰기 전에 범위 · 완료 정의 · 검증 명령을 고정한다</li>
+    <li>AI는 스펙을 코드와 데이터로 번역하고, 테스트와 게이트가 수락 여부를 판정한다 — 실패하면 구현을 고치며 성공 조건을 낮추지 않는다</li>
+    <li><span class="mono">review</span>는 감상이 아니라 스펙 대비 증거다 — 달성 · 미달 · 대가를 실측으로 남기고 <span class="mono">plan</span>을 삭제한 뒤, 통과한 결과만 커밋한다</li>
   </ul>
 </div>
 

@@ -1,0 +1,52 @@
+vars: {
+  d2-config: {
+    theme-id: 3
+    sketch: true
+    layout-engine: elk
+    pad: 16
+  }
+}
+
+cycle: "" {
+  grid-columns: 3
+  grid-rows: 3
+  grid-gap: 90
+  style: {stroke: "transparent"; fill: "transparent"}
+
+  # 열 우선 채움 — col0(왼쪽 위→아래), col1, col2
+  plan: "1 · 플랜 문서 작성\nLLM · ponytail · effort 조절" {
+    style: {fill: "#E4DBFE"; font-size: 18}
+  }
+  spL: "" {style.opacity: 0; width: 200; height: 90}
+  merge: "6 · 메인 머지\n런 집계 · 리뷰 문서 관리" {
+    style: {fill: "#DEE1EB"; font-size: 18}
+  }
+
+  run: "2 · 파이프라인 실행" {
+    style: {fill: "#F0EAFF"; font-size: 18}
+    browser: "브라우저 조작" {style.fill: "#E4DBFE"}
+    image: "이미지 생성" {style.fill: "#E4DBFE"}
+    tts: "TTS" {style.fill: "#E4DBFE"}
+  }
+  spC: "" {style.opacity: 0; width: 200; height: 90}
+  pr: "5 · 커밋 · 푸시 · PR\nCodeRabbit 리뷰 반영" {
+    style: {fill: "#DEE1EB"; font-size: 18}
+  }
+
+  spTR: "" {style.opacity: 0; width: 200; height: 90}
+  gate: "3 · 게이트\n검증 · 달성 목표" {
+    style: {fill: "#C7F1FF"; font-size: 18}
+  }
+  review: "4 · 리뷰 문서 작성\n실측 기록 · 플랜 삭제" {
+    style: {fill: "#E4DBFE"; font-size: 18}
+  }
+
+  plan -> run
+  run -> gate
+  gate -> run: "미달 — 루프 엔지니어링" {
+    style.stroke-dash: 4
+  }
+  gate -> review: "통과"
+  review -> pr
+  pr -> merge
+}
