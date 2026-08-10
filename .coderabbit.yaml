@@ -7,6 +7,7 @@ reviews:
     - "!staging/**"
     # 문서·프롬프트·로그 — 코드 리뷰 대상 아님
     - "!plans/**"
+    - "!plans-done/**"
     - "!seed/**"
     - "!prompts/**"
     - "!logs/**"

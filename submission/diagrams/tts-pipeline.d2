@@ -1,0 +1,43 @@
+vars: {
+  d2-config: {
+    theme-id: 3
+    sketch: true
+    layout-engine: elk
+    pad: 12
+  }
+}
+
+pipeline: "Qwen3-TTS CustomVoice · 신마다 다른 목소리 생성" {
+  grid-columns: 5
+  grid-gap: 20
+  style: {fill: "#FFFFFF"; stroke-width: 0; font-size: 20}
+
+  lines: "대사 입력\ndata/gods.json · 448줄\n언어: Korean" {
+    width: 215
+    height: 116
+    style: {fill: "#E4DBFE"; stroke: "#1B2A55"; font-size: 17}
+  }
+  voice: "신별 음성 설계 5종\n기본 화자 선택\n+ 자연어 말투 지시문" {
+    width: 235
+    height: 116
+    style: {fill: "#DEE1EB"; stroke: "#1B2A55"; font-size: 17}
+  }
+  model: "Qwen3-TTS 1.7B\nCustomVoice\n로컬 MPS · 8개씩 생성" {
+    width: 235
+    height: 116
+    style: {fill: "#F0EAFF"; stroke: "#1B2A55"; font-size: 18}
+  }
+  wav: "모델 출력\n신별 음색과 말투를 반영한\nWAV 파형" {
+    width: 225
+    height: 116
+    style: {fill: "#DEE1EB"; stroke: "#1B2A55"; font-size: 17}
+  }
+  output: "게임용 음성 448개\nMP3 또는 M4A\nAPI 호출 없이 생성" {
+    width: 225
+    height: 116
+    style: {fill: "#C7F1FF"; stroke: "#0066CC"; font-size: 17}
+  }
+
+  lines -> voice -> model -> wav {style.stroke: "#1B2A55"}
+  wav -> output {style.stroke: "#0066CC"}
+}
