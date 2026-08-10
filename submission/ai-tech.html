@@ -169,7 +169,6 @@ table.tbl{border-collapse:collapse;width:100%;max-width:1020px;margin-top:26px;b
   .slide:last-child{page-break-after:auto}
   .slide .a{opacity:1!important;animation:none!important}
   #e2e .shot{max-width:560px!important}
-  #harness{zoom:0.78}
   @page{size:landscape;margin:0}
 }
 </style>
@@ -285,43 +284,48 @@ table.tbl{border-collapse:collapse;width:100%;max-width:1020px;margin-top:26px;b
 <!-- 7 · §1 하네스 구조 -->
 <div class="slide" data-ch="01" id="harness">
   <div class="a tag">Harness</div>
-  <h2 class="a md">규범 문서가 곧 하네스다</h2>
-  <div class="a code-block">
-    <pre><code class="language-markdown">커밋·푸시·PR 금지. 사용자가 그 턴에 시킬 때만.
-`plans/NN-*.md` 수행이 끝나면 `reviews/NN-*.md`에 리뷰를 남기고 해당 plan 파일을 삭제한다.
-밸런스 게이트는 조합 승률 하한 하나. 새 지표·밴드·회차 비교를 만들지 않고,
-통과 못 하는 값을 테스트에 넣지도 깎지도 않는다.
-브라우저 확인·E2E는 `aside` CLI로만 한다.
-게임에 들어가는 한글 텍스트(대사·카드·요구·UI)를 쓰거나 고칠 때는 `WRITING.md`를 먼저 읽고 따른다.
-UI·레이아웃·애니메이션을 만들거나 고칠 때는 `UI.md`를 먼저 읽고 따른다.</code></pre>
+  <h2 class="a md">규범 문서를 로드 시점으로 나눴다</h2>
+  <div class="a arch" style="max-width:960px;margin-top:40px">
+  <svg viewBox="0 0 920 240" role="img" aria-label="규범 문서 분리 구조 — CLAUDE.md와 AGENTS.md는 모든 턴에 로드되고, WRITING.md·UI.md·DEPLOY.md는 그 작업을 하는 턴에만 로드된다">
+    <rect class="grp" x="8" y="18" width="904" height="90" rx="12"/>
+    <text class="glabel" x="24" y="40">ALWAYS — 모든 턴에 로드</text>
+    <rect class="box gate" x="24" y="50" width="426" height="46" rx="10"/>
+    <text class="t m b" x="237" y="70" text-anchor="middle">CLAUDE.md</text>
+    <text class="s" x="237" y="87" text-anchor="middle">여섯 줄 헌법(constitution)</text>
+    <rect class="box" x="470" y="50" width="426" height="46" rx="10"/>
+    <text class="t m" x="683" y="70" text-anchor="middle">AGENTS.md</text>
+    <text class="s" x="683" y="87" text-anchor="middle">CLAUDE.md의 심링크 — 도구를 바꿔도 같은 헌법</text>
+    <rect class="grp" x="8" y="124" width="904" height="108" rx="12"/>
+    <text class="glabel" x="24" y="146">ON DEMAND — 그 작업을 하는 턴에만 로드</text>
+    <rect class="box" x="24" y="156" width="277" height="64" rx="10"/>
+    <text class="t m" x="162" y="176" text-anchor="middle">WRITING.md</text>
+    <text class="s b" x="162" y="193" text-anchor="middle">한글 텍스트를 쓰거나 고칠 때 (auto)</text>
+    <text class="s" x="162" y="209" text-anchor="middle">신별 문체를 종결어미 단위로 잠근다</text>
+    <rect class="box" x="321" y="156" width="277" height="64" rx="10"/>
+    <text class="t m" x="459" y="176" text-anchor="middle">UI.md</text>
+    <text class="s b" x="459" y="193" text-anchor="middle">UI·레이아웃·애니메이션을 고칠 때 (auto)</text>
+    <text class="s" x="459" y="209" text-anchor="middle">레이아웃 불변 — transform·opacity만</text>
+    <rect class="box" x="618" y="156" width="278" height="64" rx="10"/>
+    <text class="t m" x="757" y="176" text-anchor="middle">DEPLOY.md</text>
+    <text class="s b" x="757" y="193" text-anchor="middle">배포를 시킬 때 (manual)</text>
+    <text class="s" x="757" y="209" text-anchor="middle">테스트 · 밸런스 하한 · 번들 무게 · E2E 게이트</text>
+  </svg>
   </div>
-  <p class="a caption" style="margin-top:14px"><span class="mono">CLAUDE.md</span> 전문 — 상시 지시는 이 여섯 줄이 전부다. 규범은 파일로 쪼개 그 작업을 할 때만 읽는다. 상시 컨텍스트는 가볍게 유지되고, 규범을 한 번 고치면 이후 모든 작업에 적용된다.</p>
-  <div class="a cards" style="margin-top:12px">
-    <div class="card"><h3><span class="mono">WRITING.md</span></h3><p>신별 문체를 종결어미 단위로 잠근다 — 대사에서 이름을 지워도 어미만으로 누군지 알 수 있어야 한다. 아테나만 존댓말, 요구 수치는 한글 수사로만.</p></div>
-    <div class="card"><h3><span class="mono">UI.md</span></h3><p>「레이아웃은 움직이지 않는다」 — 조건부 컴포넌트는 자리를 남기고, 애니메이션은 transform·opacity만 쓴다.</p></div>
-    <div class="card"><h3><span class="mono">DEPLOY.md</span></h3><p>배포 전 게이트 목록 — 테스트 · 밸런스 하한 · 번들 무게 · E2E 완주. 절차가 문서라서 어느 턴의 AI가 배포해도 같은 게이트를 지난다.</p></div>
-    <div class="card"><h3><span class="mono">AGENTS.md</span></h3><p>CLAUDE.md의 심링크다. Claude Code든 다른 코딩 에이전트든 같은 헌법을 읽는다 — 도구를 바꿔도 하네스는 그대로다.</p></div>
-  </div>
-  <p class="a caption" style="margin-top:12px">문서 밖의 하네스는 둘 — plan 난이도에 따라 reasoning effort를 조절하고, 스킬은 최소주의 <b>ponytail</b> 하나만 얹는다(다음 장). 도구를 늘리는 대신 문서와 게이트를 늘리는 쪽을 골랐다.</p>
+  <p class="a caption" style="margin-top:24px">두 번 이상 말하게 되는 것만 문서로 옮긴다 — 상시 로드는 <span class="mono">CLAUDE.md</span> 여섯 줄이 전부고, 한 곳만 고치면 이후 모든 작업에 적용된다.</p>
 </div>
 
 <!-- 8 · §1 AI 상호 리뷰 -->
 <div class="slide" data-ch="01">
   <div class="a tag">Cross Review</div>
-  <h2 class="a md">AI가 쓴 것은 AI가 다시 본다 — 잡는 리뷰, 덜어내는 리뷰</h2>
-  <p class="a body" style="font-size:16px;margin-top:10px">사람 리뷰어가 없는 대신 리뷰를 둘로 나눴다. <b>검토 AI(CodeRabbit)</b>는 잘못을 잡고, <b>최소주의 스킬(ponytail)</b>은 군더더기를 덜어낸다 — 서로 다른 눈 둘이 작성 AI를 이중으로 본다.</p>
-  <div class="a gh">
-    <div class="head"><b>coderabbitai[bot]</b> &middot; PR #11 &middot; <span class="mono">reviews/00-index.md</span></div>
-    <div class="gbody"><span class="sev">🟠 Major</span><b>Restore the bundle size gate before marking P-57 as passed.</b> — 4.42MiB &gt; 4MiB 상한. 리뷰 문서가 &ldquo;초과는 이 작업 전부터&rdquo;라고 넘어가려던 것을 잡았다. 대응은 은폐가 아니라 <b>재측정</b> — 첫 화면 실측(988KiB)으로 상한이 재던 것이 틀렸음을 밝히고 근거와 함께 상한을 옮겼다.</div>
+  <h2 class="a md">코드 리뷰도 LLM이 한다 — 커밋 전 한 번, PR에서 한 번</h2>
+  <div class="a cards" style="max-width:920px;margin-top:28px">
+    <div class="card"><h3>&#9312; 커밋 전 — <span class="mono">ponytail</span> 스킬</h3><p>커밋하기 전에 최소주의 스킬로 다시 본다 — 군더더기를 <b>덜어내는</b> 리뷰. 테스트 픽스처가 <b>400줄 &rarr; 24줄</b>이 됐다(R-41).</p></div>
+    <div class="card"><h3>&#9313; PR — CodeRabbit (CI 자동 트리거)</h3><p>푸시하면 리뷰가 자동으로 달린다 — 잘못을 <b>잡는</b> 리뷰.</p></div>
   </div>
-  <div class="a gh">
-    <div class="head"><b>coderabbitai[bot]</b> &middot; PR #11 &middot; <span class="mono">reviews/55-battle-stage.md</span></div>
-    <div class="gbody"><span class="sev">Minor</span><b>The recorded measurements do not match <span class="mono">ui/style.css</span>.</b> — 리뷰 <b>문서의 수치</b>까지 코드와 대조한다. AI가 쓴 기록과 AI가 쓴 코드가 서로를 검증하는 구조라, 측정값을 적당히 적으면 여기서 걸린다.</div>
+  <div class="a shot" style="margin-top:20px;max-width:774px;background:#fff">
+    <img src="shots/coderabbit.png" width="774" height="235" alt="PR #11에 CodeRabbit이 자동으로 단 리뷰 — Major: Restore the bundle size gate before marking P-57 as passed. 번들 4.42MiB가 4MiB 상한을 넘었다고 지적한다">
   </div>
-  <ul class="a list" style="margin-top:16px;font-size:16px">
-    <li>덜어내는 리뷰의 실물 — ponytail로 다시 보게 하자 테스트 픽스처가 <b>400줄 &rarr; 24줄</b>이 됐고(R-41), 코드 곳곳의 <span class="mono">// ponytail:</span> 주석 8곳이 &ldquo;왜 이만큼만 만들었는지&rdquo;를 남긴다 — 짧은 코드는 리뷰도 유지보수도 싸다</li>
-    <li>멀티에이전트 하네스는 써 보고 뺐다 — 토큰을 과하게 쓰고 간단한 해법을 우회하는 경향이 보여, 도구를 늘리는 대신 검증을 늘리는 쪽을 골랐다</li>
-  </ul>
+  <p class="a caption" style="margin-top:12px">PR #11의 실제 코멘트 — 리뷰 문서가 번들 상한 초과(4.42MiB &gt; 4MiB)를 넘어가려던 것을 잡았다.</p>
 </div>
 
 <!-- 9 · §2 콘텐츠 파이프라인 -->
@@ -329,26 +333,8 @@ UI·레이아웃·애니메이션을 만들거나 고칠 때는 `UI.md`를 먼�
   <div class="a tag">Content Pipeline</div>
   <h2 class="a md">카드 179장 · 적 19종 — 게임 데이터도 LLM이 만들었다</h2>
   <p class="a body" style="font-size:16px;margin-top:10px">2장에서 말한 카드 179장이 여기서 나온다. 카드·적·요구·층 배치 같은 게임 데이터 자체를 LLM이 대량 생성했다. 생성물을 그대로 넣으면 스키마 오류 하나, 중복 한 장이 게임을 조용히 깨뜨리기 때문에 중간에 검증기 <span class="mono">validate.ts</span>를 세웠다 — 통과분만 게임에 들어가므로 <b>수백 개 데이터를 사람이 한 장씩 검수하지 않아도 된다</b>.</p>
-  <div class="a arch" style="max-width:900px">
-  <svg viewBox="0 0 920 150" role="img" aria-label="콘텐츠 파이프라인 — 반려분은 사유를 붙여 재생성되는 루프">
-    <defs>
-      <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#c4c4c4"/></marker>
-      <marker id="ar2b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#0066cc"/></marker>
-    </defs>
-    <rect class="box" x="8" y="24" width="194" height="60" rx="10"/>
-    <text class="t m b" x="105" y="49" text-anchor="middle">prompts/</text><text class="s" x="105" y="68" text-anchor="middle">프롬프트 13종 · 버전 관리</text>
-    <rect class="box" x="242" y="24" width="194" height="60" rx="10"/>
-    <text class="t m b" x="339" y="49" text-anchor="middle">staging/</text><text class="s" x="339" y="68" text-anchor="middle">생성물 34 JSON</text>
-    <rect class="box gate" x="476" y="24" width="194" height="60" rx="10"/>
-    <text class="t m b" x="573" y="49" text-anchor="middle">validate.ts</text><text class="s" x="573" y="68" text-anchor="middle">반려 사유 코드 12종</text>
-    <rect class="box" x="710" y="24" width="194" height="60" rx="10"/>
-    <text class="t m b" x="807" y="49" text-anchor="middle">data/</text><text class="s" x="807" y="68" text-anchor="middle">통과분만 진입</text>
-    <line class="ln" x1="202" y1="54" x2="238" y2="54" marker-end="url(#ar2)"/>
-    <line class="ln" x1="436" y1="54" x2="472" y2="54" marker-end="url(#ar2)"/>
-    <line class="ln hi" x1="670" y1="54" x2="706" y2="54" marker-end="url(#ar2b)"/>
-    <path class="dash" d="M573 84 V128 H339 V92" marker-end="url(#ar2b)"/>
-    <text class="lbl" x="456" y="121" text-anchor="middle">반려분 — 사유를 붙여 재생성</text>
-  </svg>
+  <div class="a arch" style="max-width:900px;margin-top:18px">
+    <img src="diagrams/content-loop.png" width="1536" height="1024" alt="콘텐츠 생성 루프 — 중앙 상단의 prompts에서 왼쪽 아래 LLM 생성, 오른쪽 아래 validate.ts 검증으로 순환한다. 반려 사유는 프롬프트에 추가되고 통과분만 data에 진입한다" style="display:block;width:100%;height:auto;max-height:55vh;object-fit:contain">
   </div>
   <p class="a caption">프롬프트가 버전 관리되므로 반려 사유는 다음 생성의 입력이 된다 — 실측은 다음 장.</p>
 </div>
@@ -374,6 +360,7 @@ UI·레이아웃·애니메이션을 만들거나 고칠 때는 `UI.md`를 먼�
 <div class="slide" data-ch="02">
   <div class="a tag">Browser Agent</div>
   <h2 class="a md">게임을 조작하는 AI — 방식부터 골랐다</h2>
+  <p class="a body" style="font-size:16px;margin-top:10px">앞 장의 검증기는 데이터의 <b>형식</b>만 본다. 화면이 깨지지 않는지, 플레이가 굴러가는지는 실제로 플레이해야 보인다 — 그래서 <b>AI 에이전트가 브라우저에서 게임을 직접 조작</b>하게 했다.</p>
   <table class="a tbl" style="max-width:980px">
     <tr><th style="width:24%">방식</th><th style="width:33%">원리</th><th>특성</th></tr>
     <tr><td>컴퓨터 유즈 (Anthropic)<br>CUA (OpenAI)</td><td>스크린샷을 보고 마우스·키보드를 직접 움직인다</td><td>사람과 같은 입력이라 어떤 화면이든 되지만, 매 걸음 모델 추론이 필요해 느리고 흔들린다</td></tr>
@@ -419,8 +406,8 @@ UI·레이아웃·애니메이션을 만들거나 고칠 때는 `UI.md`를 먼�
   </svg>
   </div>
   <ul class="a list" style="margin-top:26px;font-size:16.5px">
-    <li>밸런스 데이터의 몸통은 봇 시뮬이다 — 규칙 봇 하나를 <b>&epsilon;=0(강한 판)</b>과 <b>&epsilon;=0.45(사람 근사 판)</b>로 두 번 돌려 조합 10개를 잰다</li>
-    <li>그 위에 에이전트가 <b>DOM 진짜 클릭으로 플레이</b>해 사람 흐름의 로그를 보탠다 — 이번 제출 검증에서도 시드 7·42·313 세 런(승 2 · 패 1)을 플레이해 <span class="mono">logs/human/aside-v1/</span>에 남겼고, CLI가 한 결정도 바꾸지 않고 그대로 재생했다</li>
+    <li>밸런스 데이터의 몸통은 봇 시뮬이다 — 같은 규칙 봇을 <b>실수 없이 두는 판(&epsilon;=0)</b>과 <b>사람처럼 실수를 섞은 판(&epsilon;=0.45)</b>으로 두 번 돌려 조합 10개를 잰다</li>
+    <li>그 위에 에이전트가 <b>DOM 진짜 클릭으로 플레이</b>해 사람 흐름의 로그를 보탠다 — 이번 제출 검증에서도 시드 7·42·313 세 런(승 2 · 패 1)을 플레이해 <span class="mono">logs/human/aside-v1/</span>에 남겼고, 그 기록을 CLI 엔진이 처음부터 다시 돌렸을 때 한 결정도 달라지지 않았다 — 브라우저와 엔진이 같은 게임이라는 검증이다</li>
   </ul>
 </div>
 
@@ -429,8 +416,8 @@ UI·레이아웃·애니메이션을 만들거나 고칠 때는 `UI.md`를 먼�
   <div class="a tag">Play Data &middot; E2E</div>
   <h2 class="a md">12층 완주 E2E — 그리고 머지마다 통계가 새로 배포된다</h2>
   <ul class="a list" style="margin-top:18px;font-size:16px">
-    <li>같은 방식의 <b>12층 완주 E2E</b>가 plan 검증 단계에 상시로 돈다 — 모델 없는 DOM 조작 스크립트가 진짜 클릭만으로 완주하고, 반출 JSON을 CLI 재생과 대조해 결정열이 한 자리라도 다르면 실패한다 (<span class="mono">tools/e2e.ts</span>)</li>
-    <li>코드가 main에 머지되면 CI가 층화 2,000런을 자동으로 돌려 <span class="mono">stats.json</span>을 새로 만들고 게임과 함께 배포한다 — 변경이 밸런스에 미친 영향을 <span class="mono">stats.html</span>에서 바로 본다 &darr;</li>
+    <li>같은 방식의 <b>12층 완주 E2E</b>가 plan 검증 단계에 상시로 돈다 — 모델 없는 DOM 조작 스크립트가 진짜 클릭만으로 완주하고, 완주 기록(반출 JSON)을 CLI 엔진이 다시 재생해 결정이 하나라도 다르면 실패한다 (<span class="mono">tools/e2e.ts</span>)</li>
+    <li>코드가 main에 머지되면 CI가 조합 10개를 고르게 배분한 2,000런(층화)을 자동으로 돌려 <span class="mono">stats.json</span>을 새로 만들고 게임과 함께 배포한다 — 변경이 밸런스에 미친 영향을 <span class="mono">stats.html</span>에서 바로 본다 &darr;</li>
   </ul>
   <div class="a shot" style="max-width:640px"><img src="shots/stats-matrix.webp" alt="조합 승률 5×5 행렬과 격파율·패배 지점" loading="lazy"></div>
   <p class="a caption">조합 승률 5&times;5 행렬 · 층별 격파율 · 패배 지점 — <span class="mono">bongseop-kim.github.io/god-scales/stats.html</span> 실화면</p>
@@ -465,7 +452,7 @@ UI·레이아웃·애니메이션을 만들거나 고칠 때는 `UI.md`를 먼�
     <div class="bar-group"><div class="bar-value">89%</div><div class="bar" style="height:205px;background:rgba(0,102,204,0.88)"></div><div class="bar-label">athena<br>artemis</div></div>
     <div class="bar-group"><div class="bar-value">94%</div><div class="bar" style="height:217px;background:rgba(0,102,204,0.95)"></div><div class="bar-label">poseidon<br>athena</div></div>
   </div>
-  <p class="a caption" style="margin-top:30px">제출 시점 <span class="mono">npm run tune</span>, 규칙 봇 &epsilon;=0 기준. 같은 봇을 &epsilon;=0.45로 낮춘 판보다 10조합 전부 높다 — <span class="hi">잘하면 오르는 게임</span>이라는 증거.</p>
+  <p class="a caption" style="margin-top:30px">제출 시점 <span class="mono">npm run tune</span>, 실수 없이 두는 판(&epsilon;=0) 기준. 사람처럼 실수를 섞은 판(&epsilon;=0.45)보다 10조합 전부 높다 — <span class="hi">잘하면 오르는 게임</span>이라는 증거.</p>
 </div>
 
 <!-- 17 · §3 이미지 생성 파이프라인 -->

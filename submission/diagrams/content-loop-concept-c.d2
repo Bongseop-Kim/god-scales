@@ -1,0 +1,52 @@
+vars: {
+  d2-config: {
+    theme-id: 3
+    sketch: true
+    layout-engine: elk
+    pad: 32
+  }
+}
+
+direction: right
+
+cycle: "루프 엔지니어링" {
+  grid-columns: 2
+  grid-rows: 2
+  grid-gap: 72
+  style: {fill: "#FAFAFA"; stroke: "#1B2A55"; stroke-dash: 3; font-size: 18}
+
+  prompt: "prompts/\n프롬프트 13종 · 버전 관리" {
+    width: 280
+    height: 120
+    style: {fill: "#E4DBFE"; stroke: "#1B2A55"; font-size: 18}
+  }
+  spacer: "" {width: 280; height: 140; style.opacity: 0}
+  generate: "LLM 생성\n프롬프트 + 반려 사유" {
+    width: 380
+    height: 150
+    style: {fill: "#F0EAFF"; stroke: "#1B2A55"; font-size: 21}
+  }
+  gate: "validate.ts\n반려 사유 코드 12종" {
+    width: 380
+    height: 150
+    style: {fill: "#C7F1FF"; stroke: "#1B2A55"; font-size: 21}
+  }
+
+  prompt -> generate {style.stroke: "#1B2A55"}
+  generate -> gate: "후보 JSON · staging/" {
+    style: {stroke: "#1B2A55"; font-size: 16}
+  }
+  gate -> prompt: "반려 사유를 프롬프트에 추가" {
+    style: {stroke: "#1B2A55"; font-size: 16}
+  }
+}
+
+data: "data/\n통과분만 진입" {
+  width: 240
+  height: 110
+  style: {fill: "#DEE1EB"; stroke: "#1B2A55"; font-size: 18}
+}
+
+cycle.gate -> data: "통과" {
+  style: {stroke: "#1B2A55"; font-size: 16}
+}
