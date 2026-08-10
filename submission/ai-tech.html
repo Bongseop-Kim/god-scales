@@ -336,24 +336,7 @@ table.tbl{border-collapse:collapse;width:100%;max-width:1020px;margin-top:26px;b
   <div class="a arch" style="max-width:900px;margin-top:18px">
     <img src="diagrams/content-loop.png" width="1536" height="1024" alt="콘텐츠 생성 루프 — 중앙 상단의 prompts에서 왼쪽 아래 LLM 생성, 오른쪽 아래 validate.ts 검증으로 순환한다. 반려 사유는 프롬프트에 추가되고 통과분만 data에 진입한다" style="display:block;width:100%;height:auto;max-height:55vh;object-fit:contain">
   </div>
-  <p class="a caption">프롬프트가 버전 관리되므로 반려 사유는 다음 생성의 입력이 된다 — 실측은 다음 장.</p>
-</div>
-
-<!-- 10 · §2 콘텐츠 파이프라인 — 실측 -->
-<div class="slide" data-ch="02">
-  <div class="a tag">Content Pipeline &middot; 실측</div>
-  <h2 class="a md">제우스 카드 30장 &rarr; 최종 27장 — 반려가 버려지지 않는다</h2>
-  <div class="a flow" style="margin-top:36px">
-    <div class="step"><div class="step-label">30장 생성</div><div class="step-sub">카드 프롬프트 v1</div></div>
-    <div class="arrow">&rarr;</div>
-    <div class="step"><div class="step-label">20장 통과 &middot; 10장 반려</div><div class="step-sub"><span class="mono">validate.ts</span> 판정</div></div>
-    <div class="arrow">&rarr;</div>
-    <div class="step"><div class="step-label">재생성 &rarr; 7장 통과</div><div class="step-sub">반려 사유를 입력에 붙여</div></div>
-    <div class="arrow">&rarr;</div>
-    <div class="step"><div class="step-label">최종 27장 반영</div><div class="step-sub"><span class="mono">data/</span> 진입</div></div>
-  </div>
-  <p class="a body" style="font-size:16px;margin-top:26px">전 과정이 <span class="mono">logs/generation/card-v1-zeus.md</span>에 남아 어떤 카드가 왜 반려됐고 어떻게 고쳐졌는지 재추적된다.</p>
-  <p class="a caption">여기까지는 정적 검사다 — 스키마는 걸러도 게임이 되는지는 모른다. 다음 세 장은 게임을 대신 플레이하는 에이전트 이야기다.</p>
+  <p class="a caption">실측 — 제우스 카드 30장 중 10장을 반려해 재생성했고, 최종 27장을 반영했다. 전 과정은 <span class="mono">logs/generation/card-v1-zeus.md</span>에 남는다.</p>
 </div>
 
 <!-- 11 · §2 조작 방식 -->
