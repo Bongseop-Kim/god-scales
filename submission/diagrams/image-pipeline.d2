@@ -1,0 +1,80 @@
+vars: {
+  d2-config: {
+    theme-id: 3
+    sketch: true
+    layout-engine: elk
+    pad: 24
+  }
+}
+
+board: "" {
+  grid-columns: 1
+  grid-gap: 22
+  style: {fill: "#FFFFFF"; stroke-width: 0}
+
+  static: "정적 이미지 · 스타일 일관성" {
+    grid-columns: 4
+    grid-gap: 18
+    style: {fill: "#F6F2FF"; stroke: "#1B2A55"; stroke-dash: 3; font-size: 20}
+
+    question: "조건\n자산의 용도는 달라도\n한 화풍이어야 한다" {
+      width: 255
+      height: 118
+      style: {fill: "#E4DBFE"; stroke: "#1B2A55"; font-size: 18}
+    }
+    lock: "고정\n붓 질감 · 검은 윤곽\n신별 단색 팔레트" {
+      width: 255
+      height: 118
+      style: {fill: "#DEE1EB"; stroke: "#1B2A55"; font-size: 18}
+    }
+    vary: "변경\n일러 · 카드 · 배경별\n화면 비율과 구도" {
+      width: 255
+      height: 118
+      style: {fill: "#F0EAFF"; stroke: "#1B2A55"; font-size: 18}
+    }
+    output: "결과\n역할에 맞으면서도\n스타일은 일관된 이미지" {
+      width: 275
+      height: 118
+      style: {fill: "#C7F1FF"; stroke: "#0066CC"; font-size: 18}
+    }
+
+    question -> lock -> vary {style.stroke: "#1B2A55"}
+    vary -> output {style.stroke: "#0066CC"}
+  }
+
+  model: "두 파이프라인 모두 GPT-image 2.0 사용" {
+    width: 1100
+    height: 64
+    style: {fill: "#FAFAFA"; stroke: "#1B2A55"; font-size: 20}
+  }
+
+  sprite: "스프라이트 · 캐릭터 일관성" {
+    grid-columns: 4
+    grid-gap: 18
+    style: {fill: "#F6F2FF"; stroke: "#1B2A55"; stroke-dash: 3; font-size: 20}
+
+    question: "조건\n자세는 달라도\n같은 캐릭터여야 한다" {
+      width: 255
+      height: 118
+      style: {fill: "#E4DBFE"; stroke: "#1B2A55"; font-size: 18}
+    }
+    lock: "고정\n기준 이미지 · 외형\n상태별 프레임 수" {
+      width: 255
+      height: 118
+      style: {fill: "#DEE1EB"; stroke: "#1B2A55"; font-size: 18}
+    }
+    vary: "변경\n한 캔버스 안에서\n자세와 동작만 변경" {
+      width: 255
+      height: 118
+      style: {fill: "#F0EAFF"; stroke: "#1B2A55"; font-size: 18}
+    }
+    output: "결과\n분리해 바로 사용할 수 있는\n일관된 스프라이트 프레임" {
+      width: 275
+      height: 118
+      style: {fill: "#C7F1FF"; stroke: "#0066CC"; font-size: 18}
+    }
+
+    question -> lock -> vary {style.stroke: "#1B2A55"}
+    vary -> output {style.stroke: "#0066CC"}
+  }
+}

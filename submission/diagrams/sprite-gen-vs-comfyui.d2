@@ -1,0 +1,64 @@
+vars: {
+  d2-config: {
+    theme-id: 3
+    sketch: true
+    layout-engine: elk
+    pad: 24
+  }
+}
+
+direction: right
+
+current: "현재 · sprite-gen" {
+  grid-columns: 1
+  grid-gap: 18
+  style: {fill: "#FAFAFA"; stroke: "#1B2A55"; stroke-dash: 3; font-size: 19}
+
+  request: "기준 캐릭터 + sprite-request.json\n상태 · 자세 · 프레임 수" {
+    width: 360
+    height: 88
+    style: {fill: "#E4DBFE"; stroke: "#1B2A55"; font-size: 17}
+  }
+  generate: "GPT-image 2.0 · component-row\n한 캔버스에 여러 자세 생성" {
+    width: 360
+    height: 88
+    style: {fill: "#F0EAFF"; stroke: "#1B2A55"; font-size: 17}
+  }
+  extract: "크로마 제거 · 프레임 분리\n외형 유사도와 동작 검증" {
+    width: 360
+    height: 88
+    style: {fill: "#C7F1FF"; stroke: "#0066CC"; font-size: 17}
+  }
+
+  request -> generate {style.stroke: "#1B2A55"}
+  generate -> extract {style.stroke: "#0066CC"}
+}
+
+next: "예상 구축 · ComfyUI" {
+  grid-columns: 1
+  grid-gap: 18
+  style: {fill: "#FAFAFA"; stroke: "#1B2A55"; stroke-dash: 3; font-size: 19}
+
+  request: "기준 캐릭터 + sprite-request.json 유지\n같은 상태 · 자세 · 프레임 계약" {
+    width: 390
+    height: 88
+    style: {fill: "#E4DBFE"; stroke: "#1B2A55"; font-size: 17}
+  }
+  workflow: "workflow_api.json\nLoRA 정체성 · ControlNet 포즈 · seed" {
+    width: 390
+    height: 88
+    style: {fill: "#F0EAFF"; stroke: "#1B2A55"; font-size: 17}
+  }
+  gate: "개별 프레임 생성\n기존 외형·동작 검증 재사용" {
+    width: 390
+    height: 88
+    style: {fill: "#C7F1FF"; stroke: "#0066CC"; font-size: 17}
+  }
+
+  request -> workflow {style.stroke: "#1B2A55"}
+  workflow -> gate {style.stroke: "#0066CC"}
+}
+
+current -> next: "생성 제어 방식만 교체\n캐릭터 일관성 계약은 유지" {
+  style: {stroke: "#0066CC"; stroke-width: 3; font-size: 16}
+}
