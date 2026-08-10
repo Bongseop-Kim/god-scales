@@ -206,7 +206,7 @@ table.tbl{border-collapse:collapse;width:100%;max-width:1020px;margin-top:26px;b
 <!-- 3 · 출처 -->
 <div class="slide">
   <div class="a tag">Attribution</div>
-  <h2 class="a md">외부 에셋은 이 표가 전부다</h2>
+  <h2 class="a md">외부 에셋은 이 표 하나뿐</h2>
   <p class="a body" style="font-size:21px;margin-top:14px"><b class="hi">표에 명시한 외부 자산·도구를 제외하면</b>, 게임의 이미지·음악·음성·코드·콘텐츠는 모두 LLM으로 생성했다.</p>
   <table class="a tbl" style="margin-top:20px">
     <tr><th style="width:26%">자산</th><th style="width:46%">출처</th><th>라이선스</th></tr>
@@ -281,7 +281,7 @@ table.tbl{border-collapse:collapse;width:100%;max-width:1020px;margin-top:26px;b
 <!-- 5 · 개요 -->
 <div class="slide">
   <div class="a tag">Overview</div>
-  <h2 class="a md">실행 아키텍처 — LLM이 게이트를 통과할 때까지 스스로 반복한다</h2>
+  <h2 class="a md">실행 아키텍처 — 게이트 통과까지 스스로 도는 LLM 루프</h2>
   <div class="a arch" style="max-width:980px">
     <img src="diagrams/overview.png" width="1536" height="1024" alt="AI 워크플로 — 플랜 작성, 파이프라인 실행, 게이트 판정을 거쳐 리뷰 작성, PR, 메인 머지로 끝난다. 게이트 미달 시 파이프라인을 재실행한다" style="display:block;width:100%;height:auto;max-height:56vh;object-fit:contain">
   </div>
@@ -306,7 +306,7 @@ table.tbl{border-collapse:collapse;width:100%;max-width:1020px;margin-top:26px;b
 <!-- 7 · §1 하네스 구조 -->
 <div class="slide" data-ch="01" id="harness">
   <div class="a tag">Context Engineering</div>
-  <h2 class="a md"><span class="mono">CLAUDE.md</span>는 핵심만 — 세부 지침은 필요할 때 읽는다</h2>
+  <h2 class="a md"><span class="mono">CLAUDE.md</span>는 핵심만, 세부 지침은 필요한 턴에만</h2>
   <div class="a arch" style="max-width:960px;margin-top:40px">
   <svg viewBox="0 0 920 240" role="img" aria-label="규범 문서 분리 구조 — CLAUDE.md와 AGENTS.md는 모든 턴에 로드되고, WRITING.md·UI.md·DEPLOY.md는 그 작업을 하는 턴에만 로드된다">
     <rect class="grp" x="8" y="18" width="904" height="90" rx="12"/>
@@ -339,7 +339,7 @@ table.tbl{border-collapse:collapse;width:100%;max-width:1020px;margin-top:26px;b
 <!-- 8 · §1 AI 상호 리뷰 -->
 <div class="slide" data-ch="01">
   <div class="a tag">Cross Review</div>
-  <h2 class="a md">코드 리뷰도 LLM이 한다 — 커밋 전 한 번, PR에서 한 번</h2>
+  <h2 class="a md">LLM 코드 리뷰 — 커밋 전 한 번, PR에서 한 번</h2>
   <div class="a cards" style="max-width:920px;margin-top:28px">
     <div class="card"><h3>&#9312; 커밋 전 — <span class="mono">ponytail</span> 스킬</h3><p>커밋하기 전에 최소주의 스킬로 다시 본다 — 군더더기를 <b>덜어내는</b> 리뷰. 테스트 픽스처가 <b>400줄 &rarr; 24줄</b>이 됐다(R-41).</p></div>
     <div class="card"><h3>&#9313; PR — CodeRabbit (CI 자동 트리거)</h3><p>푸시하면 리뷰가 자동으로 달린다 — 잘못을 <b>잡는</b> 리뷰.</p></div>
@@ -353,7 +353,7 @@ table.tbl{border-collapse:collapse;width:100%;max-width:1020px;margin-top:26px;b
 <!-- 9 · §2 콘텐츠 파이프라인 -->
 <div class="slide" data-ch="02">
   <div class="a tag">Content Pipeline</div>
-  <h2 class="a md">카드 179장 · 적 19종 — 게이트 통과까지 도는 루프를 설계했다</h2>
+  <h2 class="a md">카드 179장 · 적 19종 — 게이트 통과까지 도는 생성 루프</h2>
   <p class="a body" style="font-size:16px;margin-top:10px">2장에서 말한 카드 179장이 여기서 나온다. 핵심은 LLM이 만들었다는 사실이 아니라 <b>통과 조건을 먼저 세운 것</b>이다. 검증기 <span class="mono">validate.ts</span>가 스키마 오류·중복·죽은 데이터를 걸러내고, 반려되면 그 사유를 프롬프트에 반영해 재생성한다 — 게이트를 통과할 때까지. 사람은 게이트를 설계하고, <b>수백 개 데이터를 한 장씩 검수하는 일은 루프가 대신한다</b>.</p>
   <div class="a arch" style="max-width:900px;margin-top:18px">
     <img src="diagrams/content-loop.png" width="1536" height="1024" alt="콘텐츠 생성 루프 — 중앙 상단의 prompts에서 왼쪽 아래 LLM 생성, 오른쪽 아래 validate.ts 검증으로 순환한다. 반려 사유는 프롬프트에 추가되고 통과분만 data에 진입한다" style="display:block;width:100%;height:auto;max-height:55vh;object-fit:contain">
@@ -364,7 +364,7 @@ table.tbl{border-collapse:collapse;width:100%;max-width:1020px;margin-top:26px;b
 <!-- 12 · §2 조작 방식 — 실측 -->
 <div class="slide" data-ch="02" id="e2e">
   <div class="a tag">Browser Agent &middot; 실측</div>
-  <h2 class="a md">브라우저 에이전트가 화면을 스스로 캡처하고 진단한다</h2>
+  <h2 class="a md">화면을 스스로 캡처하고 진단하는 브라우저 에이전트</h2>
   <p class="a body" style="font-size:16px;margin-top:10px">DOM 검증만으로는 못 잡는 버그가 있다 — 요소가 DOM에는 멀쩡히 있어도 화면에서는 겹치거나 가려질 수 있다. 그래서 브라우저 에이전트가 조작·측정은 빠르고 결정론적인 <b>DOM</b>으로 하고, 사용자 눈에 보이는 최종 화면은 <b>스크린샷을 찍어 직접 판정</b>한다. HUD·화면 버그 대부분이 사람 눈에 닿기 전에 여기서 잡혔고, 같은 에이전트가 <b>게임 플레이</b>까지 한다.</p>
   <img class="a" src="shots/aside.webp" alt="왼쪽 패널에서 게임을 실행하고 오른쪽에서 캡처한 화면을 분석하며 버그를 잡는 장면" loading="lazy" style="display:block;width:100%;max-width:1060px;height:auto;max-height:60vh;object-fit:contain;margin-top:18px;border-radius:12px">
   <p class="a caption">왼쪽에서 게임을 직접 조작해 「방어 4를 가진 적」 상황을 만들고, 오른쪽에서 캡처를 분석해 초록 방어량 4가 빨간 &minus;5 왼쪽에 뜨는지 판정하는 중.</p>
@@ -373,7 +373,7 @@ table.tbl{border-collapse:collapse;width:100%;max-width:1020px;margin-top:26px;b
 <!-- 13 · §2 플레이 데이터 -->
 <div class="slide" data-ch="02">
   <div class="a tag">Play Data &middot; E2E</div>
-  <h2 class="a md">스크립트 봇과 LLM 에이전트의 플레이가 밸런스 데이터가 된다</h2>
+  <h2 class="a md">스크립트 봇과 LLM 에이전트의 플레이가 곧 밸런스 데이터</h2>
   <div class="a arch" style="max-width:900px;margin-top:16px">
     <img src="diagrams/play-data.png" width="2072" height="759" alt="플레이 데이터 파이프라인 — LLM을 쓰지 않는 스크립트 봇 두 종류와 LLM 브라우저 에이전트의 플레이 데이터를 수집해 stats.html에서 보고 밸런스 조정에 사용한다" style="display:block;width:100%;height:auto;max-height:32vh;object-fit:contain">
   </div>
@@ -384,7 +384,7 @@ table.tbl{border-collapse:collapse;width:100%;max-width:1020px;margin-top:26px;b
 <!-- 17 · §3 이미지 생성 파이프라인 -->
 <div class="slide" data-ch="03">
   <div class="a tag">Image Pipeline</div>
-  <h2 class="a md">같은 GPT-image 2.0에 두 가지 일관성 계약을 걸었다</h2>
+  <h2 class="a md">같은 GPT-image 2.0, 두 가지 일관성 계약</h2>
   <div class="a arch" style="max-width:1050px;margin-top:16px">
     <img src="diagrams/image-pipeline-sketch.png" width="1881" height="836" alt="GPT-image 2.0 이미지 생성 구조 — 정적 이미지는 공통 화풍과 자산별 구도 규칙으로 전체 스타일을 맞추고, 스프라이트는 기준 캐릭터와 상태별 프레임 계약으로 여러 자세에서도 같은 캐릭터를 유지한다" style="display:block;width:100%;height:auto;max-height:48vh;object-fit:contain">
   </div>
@@ -394,13 +394,13 @@ table.tbl{border-collapse:collapse;width:100%;max-width:1020px;margin-top:26px;b
 <!-- 21 · §3 이미지 — 다음 단계 -->
 <div class="slide" data-ch="03">
   <div class="a tag">Image Pipeline &middot; Next</div>
-  <h2 class="a md">ComfyUI로 바꿔도 캐릭터 일관성 계약은 남긴다</h2>
+  <h2 class="a md">ComfyUI로 바꿔도 캐릭터 일관성 계약은 그대로</h2>
   <div class="a arch future-arch" style="max-width:980px;margin-top:16px">
     <div class="future-chip">기대 · 목표</div>
     <img src="diagrams/sprite-gen-vs-comfyui-sketch.png" width="2172" height="724" alt="현재 sprite-gen과 예상 ComfyUI 스프라이트 파이프라인 비교 — 기준 캐릭터와 상태별 프레임 계약, 외형과 동작 검증은 유지하고 GPT-image 2.0 한 캔버스 생성 방식을 LoRA와 ControlNet 기반 개별 프레임 생성으로 바꾼다" style="display:block;width:100%;height:auto;max-height:46vh;object-fit:contain">
   </div>
   <p class="a caption" style="margin-top:14px">현재는 한 캔버스 안에서 동일 캐릭터의 여러 자세를 만들어 정체성을 묶는다. 예상 ComfyUI 파이프라인은 LoRA로 캐릭터를, ControlNet으로 자세를 고정해 개별 프레임을 만들되 <span class="mono">sprite-request.json</span>과 외형·동작 검증은 재사용한다.</p>
-  <p class="a future-note">* ComfyUI 파이프라인은 현재 프로젝트에 활용되지 않은 예상 구축안입니다.</p>
+  <p class="a future-note">* ComfyUI 파이프라인은 현재 프로젝트에 활용되지 않은 예상 구축안이다.</p>
 </div>
 
 <!-- 22 · §4 TTS 파이프라인 -->
@@ -416,13 +416,13 @@ table.tbl{border-collapse:collapse;width:100%;max-width:1020px;margin-top:26px;b
 <!-- 23 · §4 TTS 다음 단계 -->
 <div class="slide" data-ch="04">
   <div class="a tag">TTS Pipeline &middot; Next</div>
-  <h2 class="a md">목소리를 매번 설계하지 않고, 기준 음성을 고정한다</h2>
+  <h2 class="a md">목소리는 매번 설계가 아니라 기준 음성 하나로 고정</h2>
   <div class="a arch future-arch" style="max-width:1080px;margin-top:16px">
     <div class="future-chip">기대 · 목표</div>
     <img src="diagrams/voice-design-roadmap-sketch.png" width="2128" height="739" alt="Qwen3-TTS 음성 개선 계획 — VoiceDesign으로 신별 후보 음성을 만든 뒤 사람이 기준 음성을 선택하고, Base 모델의 3초 Voice Clone 프롬프트로 고정한다" style="display:block;width:100%;height:auto;max-height:48vh;object-fit:contain">
   </div>
   <p class="a caption" style="margin-top:14px">다음 단계에서는 <span class="mono">VoiceDesign</span>을 후보 탐색에만 사용하고, 선택한 기준 음성을 <span class="mono">Voice Clone</span>으로 고정한다. 복제로도 부족할 때만 단일 화자 파인튜닝을 검토한다.</p>
-  <p class="a future-note">* VoiceDesign과 Voice Clone은 현재 프로젝트에 활용되지 않은 개선 목표입니다.</p>
+  <p class="a future-note">* VoiceDesign과 Voice Clone은 현재 프로젝트에 활용되지 않은 개선 목표다.</p>
 </div>
 
 <!-- 25 · 맺음 -->
