@@ -103,7 +103,28 @@
   </div>
 </section>
 
-<!-- 2 · 게임 방법 1: 시작과 지도 -->
+<!-- 2 · 실행 방법 -->
+<section class="page">
+  <h2>실행 방법</h2>
+  <div class="cols two">
+    <div>
+      <table>
+        <tr><th style="width: 28%;">바로 플레이</th><td><a href="https://bongseop-kim.github.io/god-scales/" style="color:#d9b45c;">https://bongseop-kim.github.io/god-scales/</a><br><span class="muted">정적 빌드 하나 — 설치·로그인·서버 없음. 데스크톱 브라우저(Chrome 권장) 1072px 이상 창.</span></td></tr>
+        <tr><th>로컬 실행</th><td><code>git clone https://github.com/Bongseop-Kim/god-scales</code><br><code>npm install && npm run dev</code> → <code>http://localhost:5173</code></td></tr>
+        <tr><th>조작</th><td>마우스 클릭이 전부다 — 카드 클릭 → 대상 클릭. 단축키(<span class="kbd">E</span> 턴 종료 · <span class="kbd">1~9</span> 카드 · <span class="kbd">D</span> 덱 · <span class="kbd">?</span> 도움말)는 보조.</td></tr>
+        <tr><th>한 판 길이</th><td>12층 완주 기준 15~25분.</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="frame">
+        <img src="shots/p-reward.webp" alt="전투 보상">
+      </div>
+      <p class="caption">전투 보상 — 후원 두 신의 카드 3장 중 하나를 덱에 넣거나 건너뛴다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 3 · 게임 방법 1: 시작과 지도 -->
 <section class="page">
   <h2>게임 방법 ① — 두 신을 고르고, 12층의 길을 스스로 정한다</h2>
   <div class="cols two">
@@ -138,7 +159,7 @@
   </div>
 </section>
 
-<!-- 3 · 게임 방법 2: 전투 -->
+<!-- 4 · 게임 방법 2: 전투 -->
 <section class="page">
   <h2>게임 방법 ② — 에너지 3으로 카드를 내고, 신이 끼어든다</h2>
   <div class="cols two" style="grid-template-columns: 1.35fr 1fr;">
@@ -169,7 +190,7 @@
   </div>
 </section>
 
-<!-- 4 · 게임 방법 3: 과업·은혜·승리 -->
+<!-- 5 · 게임 방법 3: 과업·은혜·승리 -->
 <section class="page">
   <h2>게임 방법 ③ — 두 신 사이에서 저울질하고, 은혜로 덱을 세운다</h2>
   <div class="cols three">
@@ -206,23 +227,39 @@
   </table>
 </section>
 
-<!-- 5 · 실행 방법 -->
+<!-- 6 · 게임 방법 4: 시작 설계와 게임 안 도감 -->
 <section class="page">
-  <h2>실행 방법</h2>
-  <div class="cols two">
+  <h2>게임 방법 ④ — 시작을 직접 설계하고, 모르는 것은 게임 안에서 찾는다</h2>
+  <div class="cols two" style="grid-template-columns: 113mm 113mm; gap: 5mm 8mm; justify-content: center;">
     <div>
-      <table>
-        <tr><th style="width: 28%;">바로 플레이</th><td><a href="https://bongseop-kim.github.io/god-scales/" style="color:#d9b45c;">https://bongseop-kim.github.io/god-scales/</a><br><span class="muted">정적 빌드 하나 — 설치·로그인·서버 없음. 데스크톱 브라우저(Chrome 권장) 1072px 이상 창.</span></td></tr>
-        <tr><th>로컬 실행</th><td><code>git clone https://github.com/Bongseop-Kim/god-scales</code><br><code>npm install && npm run dev</code> → <code>http://localhost:5173</code></td></tr>
-        <tr><th>조작</th><td>마우스 클릭이 전부다 — 카드 클릭 → 대상 클릭. 단축키(<span class="kbd">E</span> 턴 종료 · <span class="kbd">1~9</span> 카드 · <span class="kbd">D</span> 덱 · <span class="kbd">?</span> 도움말)는 보조.</td></tr>
-        <tr><th>한 판 길이</th><td>12층 완주 기준 15~25분.</td></tr>
-      </table>
+      <div class="frame">
+        <img src="shots/m-achieve.webp" alt="업적 모달">
+        <div class="note tail-l" style="left: 34%; top: 28%;"><b>업적 20종</b>조합 10가지마다 무난한 배분과 극단 배분 각 하나</div>
+        <div class="note tail-b" style="right: 4%; bottom: 26%;"><b>바로 시작</b>조합·호의 배분·덱 10장이 통째로 차려진다</div>
+      </div>
+      <p class="caption">업적 — 검증된 시작 구성 20벌. 신 선택 화면의 「업적」 버튼으로 연다.</p>
     </div>
     <div>
       <div class="frame">
-        <img src="shots/p-reward.webp" alt="전투 보상">
+        <img src="shots/m-deck.webp" alt="시작 덱 설정 모달">
+        <div class="note tail-t" style="left: 34%; top: 26%;"><b>시작 호의 배분</b>호의 100을 두 신에 나눈다 — 눈금은 헌신·평온·분노 경계</div>
+        <div class="note tail-l" style="right: 3%; bottom: 22%;"><b>신 다섯 탭</b>조합 밖 신의 카드도 넣을 수 있다 — 대신 그 신의 호의는 안 오른다</div>
       </div>
-      <p class="caption">전투 보상 — 후원 두 신의 카드 3장 중 하나를 덱에 넣거나 건너뛴다.</p>
+      <p class="caption">시작 덱 설정 — 기본 10장이 미리 차 있다. 슬롯 클릭이 빼기, 목록 클릭이 넣기 — 같은 카드 열 장도 막지 않는다.</p>
+    </div>
+    <div>
+      <div class="frame">
+        <img src="shots/m-dict.webp" alt="게임 사전 모달">
+        <div class="note tail-l" style="left: 60%; top: 30%;"><b>지속 시간까지 명시</b>이번 턴 · 다음 턴 · 1회 소모 · 전투 내내</div>
+      </div>
+      <p class="caption">게임 사전 — 토큰 13종·적 능력·카드 기호·적 의도·호의 단계까지 한 곳에. 우상단 「사전」 버튼 또는 <span class="kbd">T</span> 키로 어느 화면에서든.</p>
+    </div>
+    <div>
+      <div class="frame">
+        <img src="shots/m-cards.webp" alt="전체 카드 모달">
+        <div class="note tail-t" style="left: 40%; top: 26%;"><b>필터 일곱</b>전체 · 신 다섯 · 융합. 보상 전용 상위 카드까지 전부 공개</div>
+      </div>
+      <p class="caption">전체 카드 — 179장 전부를 앞면으로 훑는 카탈로그. 우상단 「전체 카드」 버튼으로 연다.</p>
     </div>
   </div>
   <p class="doc-title">신들의 저울 — 게임 소개 및 설명</p>

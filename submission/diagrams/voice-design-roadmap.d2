@@ -1,0 +1,48 @@
+vars: {
+  d2-config: {
+    theme-id: 3
+    sketch: true
+    layout-engine: elk
+    pad: 12
+  }
+}
+
+board: "" {
+  grid-columns: 1
+  grid-gap: 22
+  style: {fill: "#FFFFFF"; stroke-width: 0}
+
+  pipeline: "설명으로 후보를 찾고 · 선택한 기준 음성을 복제로 고정" {
+    grid-columns: 4
+    grid-gap: 20
+    style: {fill: "#FFFFFF"; stroke-width: 0; font-size: 20}
+
+    design: "VoiceDesign\n성별 · 나이 · 음색 · 말투를\n자연어로 설명" {
+      width: 225
+      height: 118
+      style: {fill: "#E4DBFE"; stroke: "#1B2A55"; font-size: 17}
+    }
+    candidates: "신별 음성 후보\n설명을 바꾸며\n여러 기준 음성 생성" {
+      width: 225
+      height: 118
+      style: {fill: "#DEE1EB"; stroke: "#1B2A55"; font-size: 17}
+    }
+    select: "사람이 직접 청취\n신마다 대표 음성\n한 개를 선택" {
+      width: 225
+      height: 118
+      style: {fill: "#F0EAFF"; stroke: "#1B2A55"; font-size: 17}
+    }
+    clone: "Base · 3초 Voice Clone\ncreate_voice_clone_prompt\n기준 음성을 재사용 가능하게 고정" {
+      width: 270
+      height: 118
+      style: {fill: "#DEE1EB"; stroke: "#1B2A55"; font-size: 17}
+    }
+    design -> candidates -> select -> clone {style.stroke: "#1B2A55"}
+  }
+
+  fallback: "복제로도 부족할 때만 · 깨끗한 WAV + 정확한 대본 → 단일 화자 SFT  ·  모델을 처음부터 학습하는 선택은 제외" {
+    width: 1000
+    height: 68
+    style: {fill: "#FAFAFA"; stroke: "#0066CC"; font-size: 18}
+  }
+}

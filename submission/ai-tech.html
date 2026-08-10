@@ -35,6 +35,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#fafafa;font-family:
 .md{font-size:36px;font-weight:700;color:#1a1a1a;line-height:1.3}
 .sub{font-size:19px;color:#555;margin-top:18px}
 .tag{font-size:13px;letter-spacing:4px;color:#0066cc;text-transform:uppercase;margin-bottom:14px}
+.future-arch{position:relative}
+.future-chip{position:absolute;top:10px;right:10px;z-index:1;padding:7px 13px;border:1px solid #c62828;border-radius:999px;background:#fff1f1;color:#b71c1c;font-size:12px;font-weight:800;letter-spacing:1px}
+.future-note{font-size:12px;color:#c62828;margin-top:7px;line-height:1.5}
 .num{font-size:150px;font-weight:900;color:rgba(0,0,0,0.07);position:absolute;top:26px;right:64px;line-height:1;pointer-events:none}
 .body{font-size:20px;color:#444;line-height:1.85;max-width:860px;margin-top:20px}
 .hi{color:#0066cc;font-weight:600}
@@ -184,8 +187,9 @@ table.tbl{border-collapse:collapse;width:100%;max-width:1020px;margin-top:26px;b
 <!-- 1 · Title -->
 <div class="slide active">
   <div class="a overline">NHN GAME X AI HACKATHON &middot; 사전 과제 &middot; AI 활용 기술 문서</div>
-  <h1 class="a xl">신들의 저울<br>AI를 어디에, 어떻게 부렸는가</h1>
+  <h1 class="a xl">신들의 저울</h1>
   <div class="a sub">2026.08.04 ~ 08.10 &middot; 7일 &middot; 1인 &middot; <span class="mono">github.com/Bongseop-Kim/god-scales</span></div>
+  <div class="a sub" style="margin-top:8px">배포: <a class="mono hi" href="https://bongseop-kim.github.io/god-scales/">https://bongseop-kim.github.io/god-scales/</a></div>
   <div class="a sub" style="margin-top:8px;color:#888">이 문서에 적힌 경로와 수치는 저장소에서 그대로 확인된다</div>
 </div>
 
@@ -197,7 +201,23 @@ table.tbl{border-collapse:collapse;width:100%;max-width:1020px;margin-top:26px;b
   <p class="a body">그래서 이 문서의 실제 주제는 검증이다 — <span class="hi">AI에게 시킨 모든 작업에 검증 단계를 붙인다</span>는 원칙 하나로 7일을 버텼다.</p>
 </div>
 
-<!-- 3 · 숫자로 보는 7일 -->
+<!-- 3 · 출처 -->
+<div class="slide">
+  <div class="a tag">Attribution</div>
+  <h2 class="a md">외부 에셋은 이 표가 전부다</h2>
+  <p class="a body" style="font-size:21px;margin-top:14px"><b class="hi">표에 명시한 외부 자산·도구를 제외하면</b>, 게임의 이미지·음악·음성·코드·콘텐츠는 모두 LLM으로 생성했다.</p>
+  <table class="a tbl" style="margin-top:20px">
+    <tr><th style="width:26%">자산</th><th style="width:46%">출처</th><th>라이선스</th></tr>
+    <tr><td>폰트 2벌</td><td>Galmuri11 (Lee Minseo)</td><td>SIL OFL 1.1</td></tr>
+    <tr><td>아이콘 28개</td><td>game-icons.net (Lorc, Delapouite, Sbed, Skoll)</td><td>CC BY 3.0</td></tr>
+    <tr><td>커서 3 · 파티클 4 · 효과음 4</td><td>Kenney (Cursor Pixel · Particle · Casino Audio)</td><td>CC0 1.0</td></tr>
+    <tr><td>효과음 5</td><td>Mixkit Sound Effects</td><td>Mixkit SFX Free License</td></tr>
+    <tr><td>도구</td><td colspan="2">sprite-gen(스프라이트) · ponytail(코딩 스킬) · Qwen3-TTS(음성, Apache 2.0) · aside(브라우저 E2E) · CodeRabbit(코드 리뷰)</td></tr>
+  </table>
+  <p class="a caption">정본: <span class="mono">ATTRIBUTION.md</span></p>
+</div>
+
+<!-- 4 · 숫자로 보는 7일 -->
 <div class="slide">
   <div class="a tag">Overview</div>
   <h2 class="a lg">숫자로 보는 7일</h2>
@@ -373,54 +393,34 @@ table.tbl{border-collapse:collapse;width:100%;max-width:1020px;margin-top:26px;b
 <div class="slide" data-ch="03">
   <div class="a tag">Image Pipeline &middot; Next</div>
   <h2 class="a md">ComfyUI로 바꿔도 캐릭터 일관성 계약은 남긴다</h2>
-  <div class="a arch" style="max-width:980px;margin-top:16px">
+  <div class="a arch future-arch" style="max-width:980px;margin-top:16px">
+    <div class="future-chip">기대 · 목표</div>
     <img src="diagrams/sprite-gen-vs-comfyui-sketch.png" width="2172" height="724" alt="현재 sprite-gen과 예상 ComfyUI 스프라이트 파이프라인 비교 — 기준 캐릭터와 상태별 프레임 계약, 외형과 동작 검증은 유지하고 GPT-image 2.0 한 캔버스 생성 방식을 LoRA와 ControlNet 기반 개별 프레임 생성으로 바꾼다" style="display:block;width:100%;height:auto;max-height:46vh;object-fit:contain">
   </div>
   <p class="a caption" style="margin-top:14px">현재는 한 캔버스 안에서 동일 캐릭터의 여러 자세를 만들어 정체성을 묶는다. 예상 ComfyUI 파이프라인은 LoRA로 캐릭터를, ControlNet으로 자세를 고정해 개별 프레임을 만들되 <span class="mono">sprite-request.json</span>과 외형·동작 검증은 재사용한다.</p>
+  <p class="a future-note">* ComfyUI 파이프라인은 현재 프로젝트에 활용되지 않은 예상 구축안입니다.</p>
 </div>
 
 <!-- 22 · §4 TTS 파이프라인 -->
 <div class="slide" data-ch="04">
   <div class="a tag">TTS Pipeline</div>
-  <h2 class="a md">대사 448줄을 로컬 TTS로 — API 비용 0원</h2>
-  <div class="a flow">
-    <div class="step"><div class="step-label"><span class="mono">gods.json</span></div><div class="step-sub">대사 448줄</div></div>
-    <div class="arrow">&rarr;</div>
-    <div class="step"><div class="step-label"><span class="mono">tools/tts.py</span></div><div class="step-sub">Qwen3-TTS 1.7B · 신별 화자·톤</div></div>
-    <div class="arrow">&rarr;</div>
-    <div class="step"><div class="step-label"><span class="mono">{해시}.m4a</span></div><div class="step-sub">FNV-1a · 증분 재생성</div></div>
-    <div class="arrow">&rarr;</div>
-    <div class="step"><div class="step-label"><span class="mono">speak()</span></div><div class="step-sub">호출부 7곳</div></div>
+  <h2 class="a md">로컬 TTS 모델 Qwen3-TTS 사용</h2>
+  <div class="a arch" style="max-width:1080px;margin-top:16px">
+    <img src="diagrams/tts-pipeline-sketch.png" width="2170" height="725" alt="Qwen3-TTS 로컬 음성 생성 구조 — gods.json의 448줄과 신별 화자·자연어 말투 지시문을 CustomVoice 모델에 넣어 전체 음성을 생성한다" style="display:block;width:100%;height:auto;max-height:49vh;object-fit:contain">
   </div>
-  <div class="a cards" style="margin-top:22px">
-    <div class="card"><h3>① 스모크 테스트</h3><p>본 생성 전에 신별 한 줄씩 뽑아 억양을 귀로 확인했다. 화자는 WRITING.md의 성격 표에 맞춰 골랐다 — 제우스는 노련한 저음, 아테나만 존댓말, 아르테미스는 한국어 네이티브 화자.</p></div>
-    <div class="card"><h3>② 해시 패리티 테스트</h3><p>텍스트가 바뀌면 파일명이 바뀌어 매니페스트 없이 증분 재생성된다. 파이썬(생성)과 TypeScript(재생)가 같은 해시를 내는지 vitest가 고정값으로 잠근다(<span class="mono">test/tts.test.ts</span>). 어긋나면 침묵이 아니라 테스트 실패로 드러난다.</p></div>
-  </div>
-  <p class="a caption" style="margin-top:20px">완전 로컬 생성이라 API 비용은 0원 — BGM 2곡 · 컷인 영상 5개는 Gemini로 만들었고, 이쪽도 비용은 없다.</p>
+  <p class="a caption" style="margin-top:14px">신마다 기본 화자와 자연어 말투 지시문을 다르게 넣고, <span class="mono">Qwen3-TTS CustomVoice</span>로 전체 448줄을 로컬에서 생성했다.</p>
 </div>
 
-<!-- 23 · §4 TTS 실물 -->
+<!-- 23 · §4 TTS 다음 단계 -->
 <div class="slide" data-ch="04">
-  <div class="a tag">TTS Pipeline &middot; 실물</div>
-  <h2 class="a md">게임에서 흘러나오는 448줄 — 그리고 남은 아쉬움</h2>
-  <div class="a shot" style="max-width:560px"><img src="shots/voice.webp" alt="전투 입장에서 제우스 대사가 말풍선과 음성으로 재생되는 장면" loading="lazy"></div>
-  <p class="a caption">전투에 들어서면 제우스의 「시작하게. 보고 있음세.」가 말풍선과 함께 <span class="mono">speak()</span>로 흘러나온다.</p>
-  <p class="a body" style="font-size:16px;margin-top:16px">아쉬움도 남는다 — 시간에 쫓겨 화자 탐색을 기본 화자 다섯에서 멈췄다. VoiceDesign으로 신별 음색을 새로 설계했다면 캐릭터에 더 붙는 목소리가 나왔을 것이다.</p>
-</div>
-
-<!-- 24 · 출처 -->
-<div class="slide">
-  <div class="a tag">Attribution</div>
-  <h2 class="a md">빌린 것과 만든 것 — 출처</h2>
-  <table class="a tbl">
-    <tr><th style="width:26%">자산</th><th style="width:46%">출처</th><th>라이선스</th></tr>
-    <tr><td>폰트 2벌</td><td>Galmuri11 (Lee Minseo)</td><td>SIL OFL 1.1</td></tr>
-    <tr><td>아이콘 28개</td><td>game-icons.net (Lorc, Delapouite, Sbed, Skoll)</td><td>CC BY 3.0</td></tr>
-    <tr><td>커서 3 · 파티클 4 · 효과음 4</td><td>Kenney (Cursor Pixel · Particle · Casino Audio)</td><td>CC0 1.0</td></tr>
-    <tr><td>효과음 5</td><td>Mixkit Sound Effects</td><td>Mixkit SFX Free License</td></tr>
-    <tr><td>도구</td><td colspan="2">sprite-gen(스프라이트) · ponytail(코딩 스킬) · Qwen3-TTS(음성, Apache 2.0) · aside(브라우저 E2E) · CodeRabbit(코드 리뷰)</td></tr>
-  </table>
-  <p class="a caption">정본: <span class="mono">ATTRIBUTION.md</span> — 이 표 밖의 자산(이미지·음악·음성·코드·콘텐츠)은 전부 AI 생성이다</p>
+  <div class="a tag">TTS Pipeline &middot; Next</div>
+  <h2 class="a md">목소리를 매번 설계하지 않고, 기준 음성을 고정한다</h2>
+  <div class="a arch future-arch" style="max-width:1080px;margin-top:16px">
+    <div class="future-chip">기대 · 목표</div>
+    <img src="diagrams/voice-design-roadmap-sketch.png" width="2128" height="739" alt="Qwen3-TTS 음성 개선 계획 — VoiceDesign으로 신별 후보 음성을 만든 뒤 사람이 기준 음성을 선택하고, Base 모델의 3초 Voice Clone 프롬프트로 고정한다" style="display:block;width:100%;height:auto;max-height:48vh;object-fit:contain">
+  </div>
+  <p class="a caption" style="margin-top:14px">다음 단계에서는 <span class="mono">VoiceDesign</span>을 후보 탐색에만 사용하고, 선택한 기준 음성을 <span class="mono">Voice Clone</span>으로 고정한다. 복제로도 부족할 때만 단일 화자 파인튜닝을 검토한다.</p>
+  <p class="a future-note">* VoiceDesign과 Voice Clone은 현재 프로젝트에 활용되지 않은 개선 목표입니다.</p>
 </div>
 
 <!-- 25 · 맺음 -->
