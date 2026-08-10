@@ -3,12 +3,73 @@
 두 신의 후원을 받아 지하 6층·지상 6층을 오르는 덱빌딩 로그라이크. 층마다 갈래가 셋이다.
 과업을 맡으면 상대 신이 화를 내고, 달성하면 고른 신의 호의와 카드가 따른다.
 
+NHN GAME X AI HACKATHON 사전 과제 — **7일, 1인 개발.** 이미지·음악·음성·코드·콘텐츠는 [명시한 외부 자산](ATTRIBUTION.md)을 제외하고 전부 LLM으로 생성했다.
+
 **플레이:** <https://bongseop-kim.github.io/god-scales/>
 
 ```bash
 npm install
 npm run dev        # http://localhost:5173
 ```
+
+## 7일 동안 남긴 데이터
+
+| | |
+|---|---|
+| plan 소비 | 88건 — 리뷰 문서와 1:1 |
+| CodeRabbit 지적 | 133건 · PR 15개 |
+| 테스트 | 204개 · 조합 승률 게이트 포함 |
+| 봇 시뮬 런 | 64,000 · 6회차 |
+| AI 생성 에셋 | 538개 — 이미지·음성·영상 |
+| LLM 토큰 | Claude 1.61B · Codex 201.6M |
+
+## 어떻게 만들었나
+
+**AI가 만들고, 게이트가 판정하고, 실패 결과를 반영해 통과할 때까지 다시 돌렸다.** 사람의 일은 게이트를 세우는 것이었다. 전체 이야기는 [submission/ai-tech.html](submission/ai-tech.html)([PDF](submission/ai-tech.pdf))에 있다.
+
+![실행 아키텍처 — 플랜 작성, 파이프라인 실행, 게이트 판정을 거쳐 리뷰 작성, PR, 메인 머지로 끝난다. 게이트 미달 시 파이프라인을 재실행한다](submission/diagrams/overview.png)
+
+### 스펙 주도 개발
+
+`plans/NN-*.md`에 범위·완료 정의·검증 명령을 먼저 고정하고, 끝나면 `reviews/NN-*.md`에 실측 증거를 남긴 뒤 [plans-done/](plans-done/)으로 옮긴다. 게이트에 실패하면 구현을 고치지 성공 조건을 낮추지 않는다.
+
+![스펙 주도 개발 흐름 — plan에 요구와 완료 정의를 고정하고 구현·검증한 뒤 review에 실측 증거를 남겨 통과한 결과만 커밋한다](submission/diagrams/sdd.png)
+
+`CLAUDE.md`는 여섯 줄 헌법(`AGENTS.md`는 그 심링크)이고, 글쓰기(`WRITING.md`)·UI(`UI.md`)·배포(`DEPLOY.md`) 지침은 그 작업을 하는 턴에만 로드해 상시 컨텍스트를 작게 유지한다.
+
+### 콘텐츠 생성 루프
+
+카드 179장·적 19종을 LLM이 만들고 `validate.ts`가 스키마 오류·중복·죽은 데이터를 걸러낸다. 반려 사유는 프롬프트에 반영해 재생성 — 게이트를 통과할 때까지. 실측으로 제우스 카드 30장 중 10장이 반려·재생성됐고, 전 과정은 `logs/generation/`에 남는다.
+
+![콘텐츠 생성 루프 — prompts에서 LLM 생성, validate.ts 검증으로 순환한다. 반려 사유는 프롬프트에 추가되고 통과분만 data에 진입한다](submission/diagrams/content-loop.png)
+
+### 플레이 데이터가 곧 밸런스 데이터
+
+LLM 없는 스크립트 봇 두 종류와 LLM 브라우저 에이전트(aside)의 플레이가 `stats.html`에 모이고, 조합 승률 하한 하나가 밸런스 변경의 수락 여부를 판정한다.
+
+![플레이 데이터 파이프라인 — 스크립트 봇 두 종류와 LLM 브라우저 에이전트의 플레이 데이터를 stats.html에서 보고 밸런스 조정에 사용한다](submission/diagrams/play-data.png)
+
+![stats.html의 조합 승률 5×5 행렬과 층별 격파율·패배 지점](submission/shots/stats-matrix.webp)
+
+브라우저 에이전트는 조작·측정을 DOM으로 하고, 사용자 눈에 보이는 최종 화면은 스크린샷을 찍어 직접 판정한다 — HUD·화면 버그 대부분이 사람 눈에 닿기 전에 여기서 잡혔다.
+
+![브라우저 에이전트가 왼쪽에서 게임을 조작해 상황을 만들고 오른쪽에서 캡처를 분석하며 버그를 잡는 장면](submission/shots/aside.webp)
+
+### 이미지 · 음성
+
+이미지는 GPT-image 2.0 하나로 두 계약을 지킨다 — 정적 이미지(신·카드·배경)는 공통 화풍, 스프라이트는 한 캔버스에서 같은 캐릭터의 자세만 바꾼다.
+
+![GPT-image 2.0 이미지 생성 구조 — 정적 이미지는 공통 화풍과 자산별 구도 규칙, 스프라이트는 기준 캐릭터와 상태별 프레임 계약으로 일관성을 유지한다](submission/diagrams/image-pipeline-sketch.png)
+
+음성은 신별 화자·말투 지시문을 넣어 Qwen3-TTS로 448줄을 로컬 생성했다.
+
+![Qwen3-TTS 로컬 음성 생성 구조 — gods.json의 448줄과 신별 화자·자연어 말투 지시문을 CustomVoice 모델에 넣어 전체 음성을 생성한다](submission/diagrams/tts-pipeline-sketch.png)
+
+### AI 상호 리뷰
+
+커밋 전 ponytail 스킬이 군더더기를 덜어내고(테스트 픽스처 400줄 → 24줄), PR에서 CodeRabbit이 잘못을 잡는다.
+
+![PR #11에 CodeRabbit이 자동으로 단 리뷰 — 번들 4.42MiB가 4MiB 상한을 넘었다고 지적한다](submission/shots/coderabbit.png)
 
 ## 한 런
 
@@ -57,6 +118,7 @@ npm run tune                               # 조합별 승률 ε=0 · ε=0.45 �
 
 | | |
 |---|---|
+| [submission/ai-tech.html](submission/ai-tech.html) | AI 활용 기술 문서 — 워크플로·파이프라인 전체 |
 | [CARDS.md](CARDS.md) | 배포된 카드 전체 — `npm run cards`가 데이터에서 만든다 |
 | [DEPLOY.md](DEPLOY.md) | 배포 절차와 게이트 |
 | [reports/final.md](reports/final.md) | 회차별 밸런스 리포트 · B-0 판정 |
